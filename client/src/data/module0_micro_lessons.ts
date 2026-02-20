@@ -150,7 +150,7 @@ uint32_t amdgpu_device_rreg(struct amdgpu_device *adev,
           },
           miniLab: {
             title: '通过 sysfs 读取你的 GPU 信息',
-            objective: '使用 Linux sysfs 接口读取你的 RX 7600 XT 的硬件信息，理解内核是如何将 GPU 状态暴露给用户空间的。',
+            objective: '使用 Linux sysfs 接口读取你手头 AMD GPU 的硬件信息（以 RX 7600 XT 为示例），理解内核是如何将 GPU 状态暴露给用户空间的。',
             steps: [
               '打开终端，运行 lspci -v | grep -A 10 "VGA\\|3D\\|Display"，找到你的 AMD GPU',
               '查看 GPU 的 PCI 设备 ID：cat /sys/class/drm/card0/device/device（应该输出 0x7480）',
@@ -542,21 +542,21 @@ $ git log --oneline --since="1 week ago" -- drivers/gpu/drm/amd/ | wc -l
       title: '认识你的 GPU 硬件',
       titleEn: 'Know Your Hardware',
       icon: '🔌',
-      description: '通过实际操作认识你的 RX 7600 XT——从 PCI 总线发现到 dmesg 日志分析，再到理解 amdgpu 驱动的完整启动序列。',
+      description: '通过实际操作认识你手头的 AMD GPU（本节以 RX 7600 XT / Navi33 为示例）——从 PCI 总线发现到 dmesg 日志分析，再到理解 amdgpu 驱动的完整启动序列。',
       lessons: [
         // ── Lesson 0.2.1 ──────────────────────────────────────
         {
           id: '0-2-1',
           number: '0.2.1',
-          title: '识别你的 RX 7600 XT',
+            title: '识别你的 AMD GPU（以 RX 7600 XT 为例）',
           titleEn: 'Identifying Your RX 7600 XT',
           duration: 15,
           difficulty: 'beginner',
           tags: ['PCI', 'lspci', 'sysfs', 'device-id'],
           concept: {
-            summary: 'Linux 通过 PCI 总线发现你的 GPU。每个 PCI 设备有唯一的 Vendor ID + Device ID 组合，amdgpu 驱动通过匹配这些 ID 来认领你的 GPU。RX 7600 XT 的 Device ID 是 0x7480，在内核代码中对应 CHIP_NAVI33。',
+            summary: 'Linux 通过 PCI 总线发现 GPU。每个 PCI 设备有唯一的 Vendor ID + Device ID 组合，amdgpu 驱动通过匹配这些 ID 来认领硬件。本节以 RX 7600 XT（Device ID 0x7480 / CHIP_NAVI33）为示例，相同方法适用于所有 AMD GPU。',
             explanation: [
-              '当你的电脑启动时，CPU 首先做的事情之一就是扫描 PCI 总线上的所有设备。每个 PCI 设备（GPU、网卡、声卡等）有一组标准的标识信息存储在其 PCI 配置空间（Configuration Space）中。最重要的两个是 Vendor ID（制造商标识）和 Device ID（设备型号标识）。AMD 的 Vendor ID 是 0x1002，你的 RX 7600 XT 的 Device ID 是 0x7480。',
+              'Throughout this platform, we use the RX 7600 XT (Navi33 / gfx1102) as our running example because it\'s a widely available, affordable RDNA3 GPU. If you have a different AMD GPU, the same concepts apply — just substitute your GPU\'s Device ID, chip codename, and IP version. You can find your GPU\'s specifics using: lspci -nn | grep AMD. 当电脑启动时，CPU 首先做的事情之一就是扫描 PCI 总线上的所有设备。每个 PCI 设备（GPU、网卡、声卡等）有一组标准的标识信息存储在其 PCI 配置空间（Configuration Space）中。最重要的两个是 Vendor ID（制造商标识）和 Device ID（设备型号标识）。AMD 的 Vendor ID 统一为 0x1002，不同 GPU 型号有各自的 Device ID（如 RX 7600 XT 为 0x7480，RX 7900 XTX 为 0x744C）。',
               '内核启动后，PCI 子系统会枚举所有设备，并尝试为每个设备找到匹配的驱动。amdgpu 驱动在 amdgpu_drv.c 中维护了一个 PCI 设备 ID 表（pciidlist[]），列出了所有支持的 AMD GPU 的 Device ID。当 PCI 子系统发现一个 Vendor ID=0x1002、Device ID=0x7480 的设备时，它知道 amdgpu 驱动可以处理这个设备，于是调用 amdgpu_pci_probe() 函数来初始化。',
               '每个 PCI 设备还有一个 BDF 地址（Bus:Device.Function），如 03:00.0，表示 PCI 总线 3、设备 0、功能 0。这个地址在 lspci 输出和 /sys/bus/pci/devices/ 下都能看到。对于调试来说，BDF 地址是定位特定设备的关键。',
               '除了 Vendor/Device ID，PCI 配置空间还包含 Class Code（设备类型，GPU 是 0x0300 "VGA controller"）、Subsystem Vendor/Device ID（子系统标识，区分同一芯片的不同品牌显卡）、BAR（Base Address Register，GPU 暴露的内存窗口地址）等信息。这些信息在 lspci -v 的输出中都能看到。',
@@ -681,7 +681,7 @@ $ cat /sys/class/drm/card0/device/uevent
 DRIVER=amdgpu
 PCI_ID=1002:7480
 PCI_SUBSYS_ID=...`,
-            hint: '如果你的系统有多个 GPU（如集成显卡 + 独显），确保你查看的是正确的设备。card0 可能是集显，card1 才是你的 RX 7600 XT。',
+            hint: '如果你的系统有多个 GPU（如集成显卡 + 独显），确保查看的是正确的设备。card0 可能是集显，card1 才是你的独立 AMD GPU。',
           },
           debugExercise: {
             title: '修复错误的 PCI 设备 ID 条目',
@@ -851,7 +851,7 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
             question: '当用户报告 GPU 驱动无法加载时，你会如何开始调试？描述你的前 5 个步骤。',
             difficulty: 'medium',
             hint: '从信息收集（dmesg、系统信息）到问题分类（固件、硬件、配置）的系统化调试流程。',
-            answer: '前 5 个调试步骤：（1）收集 dmesg：dmesg | grep -i "amdgpu\\|drm\\|error\\|fail" > /tmp/gpu_debug.log。首先看有没有明显的错误信息（如 firmware load failed、probe failed）。（2）确认硬件被发现：lspci -nn | grep AMD。如果 lspci 看不到 GPU，问题在 PCI 层（BIOS 设置、物理连接、PCIe 槽位）。（3）确认驱动已加载：lsmod | grep amdgpu。如果没有，检查内核是否编译了 amdgpu（zgrep AMDGPU /proc/config.gz 或 modinfo amdgpu）。（4）检查固件：ls /lib/firmware/amdgpu/ | wc -l。固件缺失是最常见的加载失败原因，特别是在使用新硬件或自编译内核时。（5）查看内核版本：uname -r。新的 GPU 需要较新的内核版本支持（例如 RDNA3 需要 Linux 6.1+）。如果前 5 步没有定位问题，接下来会启用动态调试（echo "module amdgpu +p" > dynamic_debug/control）获取更详细的日志。',
+            answer: '前 5 个调试步骤：（1）收集 dmesg：dmesg | grep -i "amdgpu\\|drm\\|error\\|fail" > /tmp/gpu_debug.log。首先看有没有明显的错误信息（如 firmware load failed、probe failed）。（2）确认硬件被发现：lspci -nn | grep AMD。如果 lspci 看不到 GPU，问题在 PCI 层（BIOS 设置、物理连接、PCIe 槽位）。（3）确认驱动已加载：lsmod | grep amdgpu。如果没有，检查内核是否编译了 amdgpu（zgrep AMDGPU /proc/config.gz 或 modinfo amdgpu）。（4）检查固件：ls /lib/firmware/amdgpu/ | wc -l。固件缺失是最常见的加载失败原因，特别是在使用新硬件或自编译内核时。（5）查看内核版本：uname -r。新 GPU 往往需要较新的内核和 linux-firmware 组合支持（建议优先参考当前发行版/官方支持矩阵，而不是记固定版本号）。如果前 5 步没有定位问题，接下来会启用动态调试（echo "module amdgpu +p" > dynamic_debug/control）获取更详细的日志。',
             amdContext: '这种系统化的调试思路是 AMD 面试中非常看重的。面试官想看到的不是"我会 Google 错误信息"，而是一个结构化的诊断流程。',
           },
         },

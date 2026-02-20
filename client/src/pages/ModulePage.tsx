@@ -5,21 +5,30 @@
    Tabs: Theory | Diagrams | Code | Project | Interview
    ============================================================ */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useProgress } from "@/contexts/ProgressContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLocale } from "@/contexts/LocaleContext";
+import { useTranslation } from "react-i18next";
 import { Link, useParams, useLocation } from "wouter";
-import { curriculum, difficultyColors, difficultyLabels, type Module, type GlossaryTerm } from "@/data/curriculum";
-import { glossaryByModule } from "@/data/glossary_data";
-import { microLessonsByModule } from "./MicroLessonPage";
+import { difficultyColors, type Module, type GlossaryTerm } from "@/data/curriculum";
+import { getCurriculum, getDifficultyLabels, getGlossaryByModule } from "@/data/curriculum_index";
+import { getMicroLessonsByModule } from "@/data/micro_lessons_index";
 import {
   BookOpen, Code2, Cpu, Target, ChevronLeft, ChevronRight,
   Clock, ExternalLink, Copy, Check, ChevronDown, ChevronUp,
-  Lightbulb, Wrench, FlaskConical, ArrowLeft, Menu, X, Sun, Moon
+  Lightbulb, Wrench, FlaskConical, ArrowLeft, Menu, X, Sun, Moon,
+  Search, PenLine
 } from "lucide-react";
+import { SearchModal, useSearchShortcut } from "@/components/SearchModal";
+import { useSearchHighlight } from "@/lib/highlight";
 
 // ─── Sidebar ────────────────────────────────────────────────
-function Sidebar({ currentId, onClose }: { currentId: string; onClose?: () => void }) {
+function Sidebar({ currentId, onClose, curriculum, difficultyLabels, t }: {
+  currentId: string; onClose?: () => void;
+  curriculum: Module[]; difficultyLabels: Record<string, string>;
+  t: (key: string) => string;
+}) {
   const [, navigate] = useLocation();
   const { getModuleStatus, getTotalCompleted } = useProgress();
   const totalCompleted = getTotalCompleted();
@@ -49,7 +58,7 @@ function Sidebar({ currentId, onClose }: { currentId: string; onClose?: () => vo
       {/* Progress Summary */}
       <div className="px-4 py-2.5 border-b border-border/30">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] text-muted-foreground/50 font-medium">学习进度</span>
+          <span className="text-[10px] text-muted-foreground/50 font-medium">{t("module.progress")}</span>
           <span className="text-[10px] font-mono" style={{ color: 'oklch(0.75 0.18 35)' }}>{totalCompleted}/{curriculum.length}</span>
         </div>
         <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--muted)' }}>
@@ -97,12 +106,12 @@ function Sidebar({ currentId, onClose }: { currentId: string; onClose?: () => vo
         <a href="https://docs.kernel.org/gpu/amdgpu/index.html" target="_blank" rel="noopener noreferrer"
           className="flex items-center gap-2 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors py-1">
           <ExternalLink className="w-3 h-3" />
-          AMDGPU 内核文档
+          {t("module.amdGpuDocs")}
         </a>
         <a href="https://rocm.docs.amd.com" target="_blank" rel="noopener noreferrer"
           className="flex items-center gap-2 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors py-1">
           <ExternalLink className="w-3 h-3" />
-          ROCm 文档
+          {t("module.rocmDocs")}
         </a>
       </div>
     </nav>
@@ -110,7 +119,7 @@ function Sidebar({ currentId, onClose }: { currentId: string; onClose?: () => vo
 }
 
 // ─── Code Block with Copy ────────────────────────────────────
-function CodeBlock({ code, language, annotations }: { code: string; language: string; annotations?: string[] }) {
+function CodeBlock({ code, language, annotations, t }: { code: string; language: string; annotations?: string[]; t: (k: string, opts?: Record<string, unknown>) => string }) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -128,7 +137,7 @@ function CodeBlock({ code, language, annotations }: { code: string; language: st
         <button onClick={handleCopy}
           className="flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
           {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-          {copied ? '已复制' : '复制'}
+          {copied ? t("module.copied") : t("module.copy")}
         </button>
       </div>
       {/* Code */}
@@ -140,7 +149,7 @@ function CodeBlock({ code, language, annotations }: { code: string; language: st
       {annotations && annotations.length > 0 && (
         <div className="px-4 py-3 border-t border-border/50 space-y-2"
           style={{ background: 'var(--muted)' }}>
-          <div className="text-xs text-muted-foreground/50 font-medium mb-2">注释说明</div>
+          <div className="text-xs text-muted-foreground/50 font-medium mb-2">{t("module.annotations")}</div>
           {annotations.map((note, i) => (
             <div key={i} className="flex items-start gap-2 text-xs">
               <span className="annotation-badge flex-shrink-0 mt-0.5">{i + 1}</span>
@@ -154,12 +163,12 @@ function CodeBlock({ code, language, annotations }: { code: string; language: st
 }
 
 // ─── Interview Card ──────────────────────────────────────────
-function InterviewCard({ q, index }: { q: Module['interviewQuestions'][0]; index: number }) {
+function InterviewCard({ q, index, t }: { q: Module['interviewQuestions'][0]; index: number; t: (k: string, opts?: Record<string, unknown>) => string }) {
   const [showHint, setShowHint] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
 
   const diffColor = q.difficulty === 'hard' ? 'text-red-400' : q.difficulty === 'medium' ? 'text-yellow-400' : 'text-green-400';
-  const diffLabel = q.difficulty === 'hard' ? '困难' : q.difficulty === 'medium' ? '中等' : '简单';
+  const diffLabel = q.difficulty === 'hard' ? t("module.hard") : q.difficulty === 'medium' ? t("module.medium") : t("module.easy");
 
   return (
     <div className="interview-card rounded-xl p-5" style={{ background: 'var(--card)' }}>
@@ -176,7 +185,7 @@ function InterviewCard({ q, index }: { q: Module['interviewQuestions'][0]; index
           onClick={() => setShowHint(!showHint)}
           className="flex items-center gap-2 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
           <Lightbulb className="w-3.5 h-3.5" />
-          {showHint ? '隐藏提示' : '查看提示'}
+          {showHint ? t("module.hideHint") : t("module.showHint")}
           {showHint ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
         </button>
         {showHint && (
@@ -191,7 +200,7 @@ function InterviewCard({ q, index }: { q: Module['interviewQuestions'][0]; index
           className="flex items-center gap-2 text-xs transition-colors"
           style={{ color: showAnswer ? 'oklch(0.75 0.18 35)' : 'oklch(0.55 0.015 240)' }}>
           <BookOpen className="w-3.5 h-3.5" />
-          {showAnswer ? '隐藏参考答案' : '查看参考答案'}
+          {showAnswer ? t("module.hideAnswer") : t("module.showAnswer")}
           {showAnswer ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
         </button>
         {showAnswer && (
@@ -206,14 +215,14 @@ function InterviewCard({ q, index }: { q: Module['interviewQuestions'][0]; index
 }
 
 // ─── Tab: Theory ─────────────────────────────────────────────
-function TheoryTab({ module }: { module: Module }) {
+function TheoryTab({ module, glossaryByModule, t }: { module: Module; glossaryByModule: Record<string, GlossaryTerm[]>; t: (k: string, opts?: Record<string, unknown>) => string }) {
   return (
     <div className="space-y-8">
       {/* Overview */}
       <div className="rounded-xl p-6 border border-border/50" style={{ background: 'var(--card)' }}>
         <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
           <BookOpen className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
-          模块概述
+          {t("module.overview")}
         </h3>
         <p className="text-sm text-muted-foreground/90 leading-relaxed">{module.theory.overview}</p>
       </div>
@@ -243,7 +252,7 @@ function TheoryTab({ module }: { module: Module }) {
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
             <BookOpen className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
-            推荐书籍
+            {t("module.books")}
           </h3>
           <div className="grid gap-3">
             {module.theory.keyBooks.map((book, i) => (
@@ -273,7 +282,7 @@ function TheoryTab({ module }: { module: Module }) {
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
             <ExternalLink className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
-            在线资源
+            {t("module.resources")}
           </h3>
           <div className="grid gap-2">
             {module.theory.onlineResources.map((res, i) => (
@@ -297,29 +306,30 @@ function TheoryTab({ module }: { module: Module }) {
       )}
 
       {/* Glossary — always at the end of theory */}
-      <GlossarySection moduleId={module.id} />
+      <GlossarySection moduleId={module.id} glossaryByModule={glossaryByModule} t={t} />
     </div>
   );
 }
 
-// ─── Glossary Section ───────────────────────────────────────
-const categoryConfig: Record<GlossaryTerm['category'], { label: string; color: string; bg: string }> = {
-  kernel:    { label: '内核子系统', color: 'oklch(0.70 0.15 200)', bg: 'oklch(0.55 0.18 200 / 0.12)' },
-  hardware:  { label: '硬件接口',   color: 'oklch(0.75 0.18 35)',  bg: 'oklch(0.62 0.22 35 / 0.12)'  },
-  graphics:  { label: '图形驱动',   color: 'oklch(0.72 0.18 290)', bg: 'oklch(0.55 0.18 290 / 0.12)' },
-  compute:   { label: 'GPU 计算',   color: 'oklch(0.70 0.18 145)', bg: 'oklch(0.55 0.18 145 / 0.12)' },
-  toolchain: { label: '工具链',     color: 'oklch(0.72 0.15 60)',  bg: 'oklch(0.55 0.15 60 / 0.12)'  },
-  general:   { label: '通用概念',   color: 'oklch(0.65 0.01 240)', bg: 'oklch(0.55 0.01 240 / 0.12)' },
-};
+function getCategoryConfig(t: (k: string, opts?: Record<string, unknown>) => string): Record<GlossaryTerm['category'], { label: string; color: string; bg: string }> {
+  return {
+    kernel:    { label: t("glossary.categoryKernel"), color: 'oklch(0.70 0.15 200)', bg: 'oklch(0.55 0.18 200 / 0.12)' },
+    hardware:  { label: t("glossary.categoryHardware"), color: 'oklch(0.75 0.18 35)', bg: 'oklch(0.62 0.22 35 / 0.12)' },
+    graphics:  { label: t("glossary.categoryGraphics"), color: 'oklch(0.72 0.18 290)', bg: 'oklch(0.55 0.18 290 / 0.12)' },
+    compute:   { label: t("glossary.categoryCompute"), color: 'oklch(0.70 0.18 145)', bg: 'oklch(0.55 0.18 145 / 0.12)' },
+    toolchain: { label: t("glossary.categoryToolchain"), color: 'oklch(0.72 0.15 60)', bg: 'oklch(0.55 0.15 60 / 0.12)' },
+    general:   { label: t("glossary.categoryGeneral"), color: 'oklch(0.65 0.01 240)', bg: 'oklch(0.55 0.01 240 / 0.12)' },
+  };
+}
 
-function GlossarySection({ moduleId }: { moduleId: string }) {
+function GlossarySection({ moduleId, glossaryByModule, t }: { moduleId: string; glossaryByModule: Record<string, GlossaryTerm[]>; t: (k: string, opts?: Record<string, unknown>) => string }) {
   const terms = glossaryByModule[moduleId];
   if (!terms || terms.length === 0) return null;
 
   // Group by category
-  const grouped = terms.reduce<Record<string, GlossaryTerm[]>>((acc, t) => {
-    if (!acc[t.category]) acc[t.category] = [];
-    acc[t.category].push(t);
+  const grouped = terms.reduce<Record<string, GlossaryTerm[]>>((acc, term) => {
+    if (!acc[term.category]) acc[term.category] = [];
+    acc[term.category].push(term);
     return acc;
   }, {});
 
@@ -332,19 +342,19 @@ function GlossarySection({ moduleId }: { moduleId: string }) {
           <BookOpen className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
         </div>
         <div>
-          <h3 className="text-base font-bold text-foreground">本章术语词典</h3>
-          <p className="text-xs text-muted-foreground/60 mt-0.5">缩写 · 英文全称 · 中文翻译 · 用途说明</p>
+          <h3 className="text-base font-bold text-foreground">{t("module.glossaryTitle")}</h3>
+          <p className="text-xs text-muted-foreground/60 mt-0.5">{t("module.glossarySubtitle")}</p>
         </div>
         <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded-full"
           style={{ background: 'oklch(0.62 0.22 35 / 0.15)', color: 'oklch(0.75 0.18 35)' }}>
-          {terms.length} 个术语
+          {t("module.termsCount", { count: terms.length })}
         </span>
       </div>
 
       {/* Grouped Terms */}
       <div className="space-y-6">
         {Object.entries(grouped).map(([cat, catTerms]) => {
-          const cfg = categoryConfig[cat as GlossaryTerm['category']];
+          const cfg = getCategoryConfig(t)[cat as GlossaryTerm['category']];
           return (
             <div key={cat}>
               <div className="flex items-center gap-2 mb-3">
@@ -387,7 +397,7 @@ function GlossarySection({ moduleId }: { moduleId: string }) {
 }
 
 // ─── Tab: Code Reading ───────────────────────────────────────
-function CodeTab({ module }: { module: Module }) {
+function CodeTab({ module, t }: { module: Module; t: (k: string, opts?: Record<string, unknown>) => string }) {
   return (
     <div className="space-y-8">
       {module.codeReading.map((code, i) => (
@@ -396,13 +406,13 @@ function CodeTab({ module }: { module: Module }) {
             <h3 className="text-base font-semibold text-foreground">{code.title}</h3>
             <p className="text-sm text-muted-foreground/75 mt-1 leading-relaxed">{code.description}</p>
           </div>
-          <CodeBlock code={code.code} language={code.language} annotations={code.annotations} />
+          <CodeBlock code={code.code} language={code.language} annotations={code.annotations} t={t} />
         </div>
       ))}
       {module.codeReading.length === 0 && (
         <div className="text-center py-16 text-muted-foreground/40">
           <Code2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">本模块的代码示例正在完善中</p>
+          <p className="text-sm">{t("module.codeEmpty")}</p>
         </div>
       )}
     </div>
@@ -410,7 +420,7 @@ function CodeTab({ module }: { module: Module }) {
 }
 
 // ─── Tab: Mini Project ───────────────────────────────────────
-function ProjectTab({ module }: { module: Module }) {
+function ProjectTab({ module, t }: { module: Module; t: (k: string, opts?: Record<string, unknown>) => string }) {
   const { miniProject: p } = module;
   return (
     <div className="space-y-6">
@@ -429,7 +439,7 @@ function ProjectTab({ module }: { module: Module }) {
       <div>
         <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
           <Target className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
-          学习目标
+          {t("module.objectives")}
         </h4>
         <div className="space-y-2">
           {p.objectives.map((obj, i) => (
@@ -448,7 +458,7 @@ function ProjectTab({ module }: { module: Module }) {
       <div>
         <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
           <FlaskConical className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
-          实施步骤
+          {t("module.steps")}
         </h4>
         <div className="space-y-3">
           {p.steps.map((step, i) => (
@@ -467,7 +477,7 @@ function ProjectTab({ module }: { module: Module }) {
       {/* Expected Output */}
       <div className="rounded-xl p-4 border border-border/50"
         style={{ background: 'oklch(0.55 0.18 200 / 0.05)', borderColor: 'oklch(0.55 0.18 200 / 0.2)' }}>
-        <h4 className="text-xs font-semibold mb-2" style={{ color: 'oklch(0.70 0.15 200)' }}>预期成果</h4>
+        <h4 className="text-xs font-semibold mb-2" style={{ color: 'oklch(0.70 0.15 200)' }}>{t("module.expectedOutput")}</h4>
         <p className="text-sm text-muted-foreground/80 leading-relaxed">{p.expectedOutput}</p>
       </div>
     </div>
@@ -475,19 +485,19 @@ function ProjectTab({ module }: { module: Module }) {
 }
 
 // ─── Tab: Interview ──────────────────────────────────────────
-function InterviewTab({ module }: { module: Module }) {
+function InterviewTab({ module, t }: { module: Module; t: (k: string, opts?: Record<string, unknown>) => string }) {
   return (
     <div className="space-y-4">
       <div className="text-sm text-muted-foreground/60 mb-6">
-        以下问题来自 AMD 及相关公司的真实面试场景，建议先独立思考再查看答案。
+        {t("module.interviewIntro")}
       </div>
       {module.interviewQuestions.map((q, i) => (
-        <InterviewCard key={i} q={q} index={i} />
+        <InterviewCard key={i} q={q} index={i} t={t} />
       ))}
       {module.interviewQuestions.length === 0 && (
         <div className="text-center py-16 text-muted-foreground/40">
           <Target className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">本模块的面试题正在完善中</p>
+          <p className="text-sm">{t("module.interviewEmpty")}</p>
         </div>
       )}
     </div>
@@ -498,10 +508,22 @@ function InterviewTab({ module }: { module: Module }) {
 export default function ModulePage() {
   const params = useParams<{ moduleId: string }>();
   const [, navigate] = useLocation();
+  const { locale } = useLocale();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'theory' | 'code' | 'project' | 'interview'>('theory');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { markTabComplete, getCompletedTabs, getModuleStatus, setModuleStatus } = useProgress();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  useSearchHighlight(contentRef);
+  const { markTabComplete, getCompletedTabs, getModuleStatus, setModuleStatus, saveNote, getNote } = useProgress();
   const { theme, toggleTheme } = useTheme();
+  useSearchShortcut(setSearchOpen);
+
+  const curriculum = getCurriculum(locale);
+  const glossaryByModule = getGlossaryByModule(locale);
+  const difficultyLabels = getDifficultyLabels(locale);
+  const microLessonsByModule = getMicroLessonsByModule(locale);
 
   const moduleId = params.moduleId;
   const module = curriculum.find(m => m.id === moduleId);
@@ -525,8 +547,8 @@ export default function ModulePage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <p className="text-muted-foreground mb-4">模块未找到</p>
-          <Link href="/"><button className="text-sm text-primary hover:underline">返回首页</button></Link>
+          <p className="text-muted-foreground mb-4">{t("module.notFound")}</p>
+          <Link href="/"><button className="text-sm text-primary hover:underline">{t("module.backHome")}</button></Link>
         </div>
       </div>
     );
@@ -543,17 +565,19 @@ export default function ModulePage() {
   };
 
   const tabs = [
-    { id: 'theory' as const, label: '理论讲解', icon: BookOpen },
-    { id: 'code' as const, label: '代码阅读', icon: Code2 },
-    { id: 'project' as const, label: '实战项目', icon: Wrench },
-    { id: 'interview' as const, label: '面试题', icon: Target },
+    { id: 'theory' as const, label: t("module.tabTheory"), icon: BookOpen },
+    { id: 'code' as const, label: t("module.tabCode"), icon: Code2 },
+    { id: 'project' as const, label: t("module.tabProject"), icon: Wrench },
+    { id: 'interview' as const, label: t("module.tabInterview"), icon: Target },
   ];
 
   return (
+    <>
+    <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
     <div className="min-h-screen bg-background flex">
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 fixed left-0 top-0 bottom-0 border-r border-border/50 overflow-hidden z-40">
-        <Sidebar currentId={moduleId || ''} />
+        <Sidebar currentId={moduleId || ''} curriculum={curriculum} difficultyLabels={difficultyLabels} t={t} />
       </aside>
 
       {/* Mobile Sidebar Overlay */}
@@ -561,7 +585,7 @@ export default function ModulePage() {
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="fixed inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
           <aside className="relative w-72 flex flex-col border-r border-border/50 overflow-hidden z-10">
-            <Sidebar currentId={moduleId || ''} onClose={() => setSidebarOpen(false)} />
+            <Sidebar currentId={moduleId || ''} onClose={() => setSidebarOpen(false)} curriculum={curriculum} difficultyLabels={difficultyLabels} t={t} />
           </aside>
         </div>
       )}
@@ -577,19 +601,23 @@ export default function ModulePage() {
                 <button onClick={() => setSidebarOpen(true)} className="lg:hidden mr-1 text-muted-foreground hover:text-foreground transition-colors">
                   <Menu className="w-4 h-4" />
                 </button>
-                <Link href="/"><span className="hover:text-muted-foreground transition-colors cursor-pointer">首页</span></Link>
+                <Link href="/"><span className="hover:text-muted-foreground transition-colors cursor-pointer">{t("nav.home")}</span></Link>
                 <ChevronRight className="w-3 h-3" />
                 <span className="text-foreground/70">Module {module.number}</span>
                 <ChevronRight className="w-3 h-3" />
                 <span className="text-foreground/90 font-medium truncate">{module.title}</span>
               </div>
-              <button
-                onClick={toggleTheme}
-                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                title="切换主题"
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setSearchOpen(true)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title={t("module.searchTitle")}>
+                  <Search className="w-4 h-4" />
+                </button>
+                <button onClick={() => setNotesOpen(o => !o)} className={`p-1.5 rounded-lg transition-colors ${notesOpen ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`} title={t("module.notesTitle")}>
+                  <PenLine className="w-4 h-4" />
+                </button>
+                <button onClick={toggleTheme} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title={t("module.themeTitle")}>
+                  {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             {/* Tabs */}
             <div className="flex gap-0 overflow-x-auto">
@@ -610,7 +638,7 @@ export default function ModulePage() {
         </div>
 
         {/* Content Area */}
-        <div className="max-w-4xl mx-auto px-4 md:px-8 py-8">
+        <div ref={contentRef} className="max-w-4xl mx-auto px-4 md:px-8 py-8">
           {/* Module Header */}
           <div className="mb-8">
             <div className="flex items-start gap-4">
@@ -627,10 +655,10 @@ export default function ModulePage() {
                   </span>
                   <span className="text-xs text-muted-foreground/50 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    预计 {module.estimatedHours} 小时
+                    {t("module.estimatedHours", { hours: module.estimatedHours })}
                   </span>
                   <span className="text-xs text-muted-foreground/50">
-                    {module.subModules.length} 个子模块
+                    {t("module.subModules", { count: module.subModules.length })}
                   </span>
                 </div>
               </div>
@@ -649,10 +677,10 @@ export default function ModulePage() {
 
           {/* Tab Content */}
           <div>
-            {activeTab === 'theory' && <TheoryTab module={module} />}
-            {activeTab === 'code' && <CodeTab module={module} />}
-            {activeTab === 'project' && <ProjectTab module={module} />}
-            {activeTab === 'interview' && <InterviewTab module={module} />}
+            {activeTab === 'theory' && <TheoryTab module={module} glossaryByModule={glossaryByModule} t={t} />}
+            {activeTab === 'code' && <CodeTab module={module} t={t} />}
+            {activeTab === 'project' && <ProjectTab module={module} t={t} />}
+            {activeTab === 'interview' && <InterviewTab module={module} t={t} />}
           </div>
 
           {/* Deep Dive button for modules with micro-lessons */}
@@ -660,17 +688,17 @@ export default function ModulePage() {
             <div className="mt-12 pt-8 border-t border-border/50">
               <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-primary" />
-                深入学习
+                {t("module.deepDive")}
               </h3>
               <div className="rounded-xl p-6 border border-border/50 bg-card/50">
                 <p className="text-sm text-muted-foreground/80 mb-4">
-                  本模块包含 {microLessonsByModule[module.id].groups?.reduce((sum, g) => sum + g.lessons.length, 0) || 0} 个深入微章节，涵盖更详细的原理、代码分析和实战练习。
+                  {t("module.deepDiveDesc", { count: microLessonsByModule[module.id].groups?.reduce((sum, g) => sum + g.lessons.length, 0) || 0 })}
                 </p>
                 <Link href={`/module/${module.id}/lesson/${microLessonsByModule[module.id].groups?.[0]?.lessons?.[0]?.id || ''}`}>
                   <button className="w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 hover:brightness-110 shadow-lg shadow-primary/20"
                     style={{ background: 'linear-gradient(135deg, #E8441A, #FF6B35)', color: 'white' }}>
                     <BookOpen className="w-4 h-4" />
-                    进入深入学习模式
+                    {t("module.enterDeepDive")}
                   </button>
                 </Link>
               </div>
@@ -684,7 +712,7 @@ export default function ModulePage() {
                 <button className="flex items-center gap-2 text-sm text-muted-foreground/70 hover:text-foreground transition-colors">
                   <ChevronLeft className="w-4 h-4" />
                   <div className="text-left">
-                    <div className="text-xs text-muted-foreground/40">上一章</div>
+                    <div className="text-xs text-muted-foreground/40">{t("module.prevChapter")}</div>
                     <div>{prevModule.title}</div>
                   </div>
                 </button>
@@ -693,7 +721,7 @@ export default function ModulePage() {
               <Link href="/">
                 <button className="flex items-center gap-2 text-sm text-muted-foreground/70 hover:text-foreground transition-colors">
                   <ArrowLeft className="w-4 h-4" />
-                  返回首页
+                  {t("module.backHome")}
                 </button>
               </Link>
             )}
@@ -702,7 +730,7 @@ export default function ModulePage() {
               <Link href={`/module/${nextModule.id}`}>
                 <button className="flex items-center gap-2 text-sm text-muted-foreground/70 hover:text-foreground transition-colors">
                   <div className="text-right">
-                    <div className="text-xs text-muted-foreground/40">下一章</div>
+                    <div className="text-xs text-muted-foreground/40">{t("module.nextChapter")}</div>
                     <div>{nextModule.title}</div>
                   </div>
                   <ChevronRight className="w-4 h-4" />
@@ -713,5 +741,36 @@ export default function ModulePage() {
         </div>
       </main>
     </div>
+
+    {/* Notes panel — slides in from right */}
+    {notesOpen && (
+      <div className="fixed inset-0 z-40 flex justify-end" onClick={e => { if (e.target === e.currentTarget) setNotesOpen(false); }}>
+        <div className="absolute inset-0 bg-black/20" onClick={() => setNotesOpen(false)} />
+        <div className="relative w-full max-w-sm h-full flex flex-col border-l border-border shadow-2xl bg-background">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
+            <div className="flex items-center gap-2">
+              <PenLine className="w-4 h-4 text-primary" />
+              <span className="text-sm font-semibold text-foreground">{t("module.notesTitle")}</span>
+              <span className="text-[10px] text-muted-foreground/50 ml-1">{module?.title}</span>
+            </div>
+            <button onClick={() => setNotesOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="flex-1 p-4">
+            <textarea
+              value={moduleId ? getNote(moduleId) : ''}
+              onChange={e => moduleId && saveNote(moduleId, e.target.value)}
+              placeholder={t("module.notesPlaceholder")}
+              className="w-full h-full resize-none bg-transparent text-sm text-foreground/85 placeholder:text-muted-foreground/30 outline-none leading-relaxed"
+            />
+          </div>
+          <div className="px-4 py-2 border-t border-border/30">
+            <p className="text-[10px] text-muted-foreground/30">{t("module.notesFooter")}</p>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

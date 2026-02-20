@@ -36,6 +36,7 @@ export const module10MicroLessons: MicroLessonModule = {
               'IGT 提供了丰富的断言宏：igt_assert(cond) 是最基本的断言，失败时终止当前子测试并报告 FAIL；igt_assert_eq(a, b) 比较两个值，失败时打印两个值方便调试；igt_assert_fd(fd) 断言文件描述符有效；igt_assert_lte(a, b) 断言 a <= b。这些宏内部使用 longjmp 实现跳转，确保测试失败后能正确清理资源。',
               'igt_require(cond) 是另一个关键宏——当条件不满足时，它跳过（SKIP）当前子测试而不是标记为 FAIL。这用于处理硬件能力差异：例如某个测试需要 VCN 视频引擎，但测试机器可能没有，此时 igt_require 会优雅地跳过而不是报错。这对于在不同硬件上运行同一套测试非常重要。',
               'amdgpu 的 IGT 测试集中在 tests/amdgpu/ 目录下，包括：amd_basic（基础功能测试：打开设备、查询信息）、amd_cs_nop（命令提交空操作测试）、amd_deadlock（死锁检测测试）、amd_pci_unplug（热插拔测试）等。每个文件测试 amdgpu 驱动的一个特定方面。此外 tests/ 根目录下的通用 DRM 测试（如 kms_flip、kms_cursor_crc、gem_create）也会在 amdgpu 上运行。',
+              'Inside IGT\'s tests/amdgpu/ directory, tests are organized by subsystem: amd_basic (sanity: BO alloc, CS submit, device query), amd_deadlock (stress: concurrent CS + reset, identifies lock ordering bugs), amd_pci_unplug (hotplug: tests safe GPU removal under load), amd_cs (command submission: various IB sizes, priorities, preemption), amd_vm (virtual memory: mapping, unmapping, fault injection), amd_hotunplug (PCI remove + re-probe simulation), and amd_abm (display: adaptive backlight management). When verifying your amdgpu patch, the selection rule is: always run amd_basic (quick sanity), then run the test matching your change area — e.g., if you modified amdgpu_cs.c, run amd_cs; if you changed amdgpu_vm.c, run amd_vm; if you changed display/dc/, run kms_* tests. The command: sudo ./build/tests/amdgpu/amd_basic --run-subtest cs-gfx is the minimum test every amdgpu patch must pass.',
             ],
             keyPoints: [
               'IGT 是 Linux GPU 驱动的标准测试框架，1000+ 测试用例覆盖所有 DRM 功能',
@@ -44,6 +45,7 @@ export const module10MicroLessons: MicroLessonModule = {
               'amdgpu 专用测试在 tests/amdgpu/ 目录，通用 DRM 测试也在 amdgpu 上运行',
               'IGT 测试结果有四种状态：PASS / FAIL / SKIP / TIMEOUT',
               '运行单个测试：./build/tests/amdgpu/amd_basic；运行子测试：--run-subtest "subtest-name"',
+              'tests/amdgpu/ organized by subsystem: amd_basic, amd_cs, amd_vm, amd_deadlock, amd_pci_unplug',
             ],
           },
           diagram: {
@@ -904,7 +906,7 @@ ok 4 drm_buddy_test_free_merge`,
 # FAIL: amd_basic@query-info
 #   Expected: gpu_info.vram_size > 0
 #   Actual:   gpu_info.vram_size == 0
-#   Log: https://ci.freedesktop.org/logs/...
+#   Log: <ci-job-log-url>
 #   dmesg: [drm] VRAM: 0M 0b (warning: VRAM not detected)
 #
 # FAIL: kms_cursor_crc@cursor-128x128-onscreen (KNOWN)

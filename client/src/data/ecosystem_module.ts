@@ -22,7 +22,7 @@ export const ecosystemModule: Module = {
     { id: 'eco-vs-nvidia', title: 'AMD vs NVIDIA vs Intel', titleEn: 'Competitive Landscape' },
   ],
   theory: {
-    overview: '很多人拿到 AMD GPU 后直接跳进内核代码，结果看到 gfx1102、RDNA3、KFD、DC 这些词时完全迷失。这个模块的目标是给你一张完整的地图：你的 RX 7600 XT 是什么，它在 AMD 产品线中的位置，驱动代码在整个软件栈中的位置，以及为什么 AMD 的开源策略对你学习驱动开发是一个巨大的优势。',
+    overview: '很多人拿到 AMD GPU 后直接跳进内核代码，结果看到 gfx1102、RDNA3、KFD、DC 这些词时完全迷失。这个模块的目标是给你一张完整的地图：以 RX 7600 XT（Navi33 / gfx1102）为贯穿示例，帮你理解任意 AMD GPU 在产品线中的位置、驱动代码在整个软件栈中的位置，以及为什么 AMD 的开源策略对学习驱动开发是一个巨大的优势。',
     sections: [
       {
         title: 'AMD 公司整体结构',
@@ -54,7 +54,7 @@ export const ecosystemModule: Module = {
       },
       {
         title: 'AMD GPU 产品线详解',
-        content: 'AMD GPU 产品线分为三个层次：消费级（Radeon RX）、专业级（Radeon Pro）和数据中心级（Instinct MI）。你的 RX 7600 XT 属于消费级产品线，使用 RDNA3 架构，芯片代号 Navi33，在内核代码中对应 gfx1102 IP。消费级 GPU 主要用于游戏和创意工作，驱动开发重点是 OpenGL/Vulkan 渲染性能和显示输出。Instinct MI 系列（如 MI300X）主要用于 AI 训练和 HPC，是 ROCm 平台的主要支持目标，与 NVIDIA A100/H100 直接竞争。了解这个区别很重要：ROCm 的很多功能优先在 Instinct 上支持，消费级 GPU 的 ROCm 支持相对有限。',
+        content: 'AMD GPU 产品线分为三个层次：消费级（Radeon RX）、专业级（Radeon Pro）和数据中心级（Instinct MI）。本教程以 RX 7600 XT（消费级，RDNA3，Navi33，gfx1102）为贯穿示例，但所有概念对其他 AMD GPU 同样适用。消费级 GPU 主要用于游戏和创意工作，驱动开发重点是 OpenGL/Vulkan 渲染性能和显示输出。Instinct MI 系列（如 MI300X）主要用于 AI 训练和 HPC，是 ROCm 平台的主要支持目标，与 NVIDIA A100/H100 直接竞争。了解这个区别很重要：ROCm 的很多功能优先在 Instinct 上支持，消费级 GPU 的 ROCm 支持相对有限。',
         diagram: {
           type: 'ascii',
           content: `AMD GPU 产品线层次
@@ -79,12 +79,12 @@ export const ecosystemModule: Module = {
     │  │  ← 你的 RX 7600 XT 在这里               │
     │  └──────────────────────────────────────────┘
     └──────────────────────────────────────────────→ 时间`,
-          caption: 'AMD GPU 三层产品线。你的 RX 7600 XT 是消费级产品，使用与 Instinct MI300 同代的 RDNA3 架构，内核代码完全共享。',
+          caption: 'AMD GPU 三层产品线。消费级 RX（如 RX 7600 XT）与 Instinct MI300 同代 RDNA3 架构，共享同一套 amdgpu 内核代码。',
         },
       },
       {
         title: 'GPU 命名规则完全解析',
-        content: '理解 AMD GPU 的命名规则，可以让你在看到任何型号时立刻知道它的架构代数、性能等级和特殊版本。以你的 RX 7600 XT 为例：RX = Radeon eXperience（消费级标识）；7 = 第七代（对应 RDNA3 架构）；6 = 性能等级（6=中端，9=旗舰）；00 = 具体型号；XT = 增强版（更高频率或更多计算单元）。在内核代码中，GPU 通过 PCI Device ID 识别，RX 7600 XT 的 Device ID 是 0x7480，芯片代号是 Navi33，IP 版本是 gfx1102（GFX IP 11.0.2）。',
+        content: '理解 AMD GPU 的命名规则，可以让你在看到任何型号时立刻知道它的架构代数、性能等级和特殊版本。以 RX 7600 XT 为例解析规则（其他 RX 系列 GPU 同样适用）：RX = Radeon eXperience（消费级标识）；7 = 第七代（对应 RDNA3 架构）；6 = 性能等级（6=中端，9=旗舰）；00 = 具体型号；XT = 增强版（更高频率或更多计算单元）。在内核代码中，GPU 通过 PCI Device ID 识别，RX 7600 XT 的 Device ID 是 0x7480，芯片代号是 Navi33，IP 版本是 gfx1102（GFX IP 11.0.2）。',
         diagram: {
           type: 'ascii',
           content: `AMD GPU 命名规则解析
@@ -119,7 +119,7 @@ export const ecosystemModule: Module = {
       },
       {
         title: 'AMD GPU 架构历史时间线',
-        content: 'AMD GPU 架构经历了几次重大转变。2012-2019 年的 GCN（Graphics Core Next）架构奠定了现代 AMD GPU 的基础，amdgpu 驱动中大量的 legacy code 都来自这个时代。2019 年的 RDNA 架构是一次彻底重新设计，大幅提升了每瓦性能。RDNA2（2020）引入了光线追踪硬件支持。RDNA3（2022，你的 RX 7600 XT）采用了 Chiplet 设计（Shader Engine 和 Memory Cache Die 分离），是 AMD 首个使用 Chiplet 的 GPU 架构。RDNA4（2025）进一步强化了光线追踪和 AI 加速能力。在内核代码中，每个架构对应一套 IP 实现文件，如 gfx_v11_0.c（RDNA3）、gfx_v10_3_0.c（RDNA2）等。',
+        content: 'AMD GPU 架构经历了几次重大转变。2012-2019 年的 GCN（Graphics Core Next）架构奠定了现代 AMD GPU 的基础，amdgpu 驱动中大量的 legacy code 都来自这个时代。2019 年的 RDNA 架构是一次彻底重新设计，大幅提升了每瓦性能。RDNA2（2020）引入了光线追踪硬件支持。RDNA3（2022）带来新的前端/指令与媒体能力；其中部分型号采用 Chiplet（如 Navi31/32），你的 RX 7600 XT（Navi33）是单晶粒实现。RDNA4（2025）进一步强化了光线追踪和 AI 加速能力。在内核代码中，每个架构对应一套 IP 实现文件，如 gfx_v11_0.c（RDNA3）、gfx_v10_3_0.c（RDNA2）等。',
         diagram: {
           type: 'ascii',
           content: `AMD GPU 架构历史时间线
@@ -147,7 +147,7 @@ export const ecosystemModule: Module = {
         │   硬件光线追踪 + Infinity Cache
         │
 2022  ──┼── RDNA 3.0 (gfx110x) ← 你的 RX 7600 XT (gfx1102)
-        │   Chiplet 设计（首个 GPU Chiplet）
+        │   家族内并存：Navi31/32 为 Chiplet，Navi33 为单晶粒
         │   AI 加速器 + 硬件 AV1 编码
         │
 2025  ──┴── RDNA 4.0 (gfx120x)
@@ -156,7 +156,7 @@ export const ecosystemModule: Module = {
 
 注：GCN 代码在 amdgpu 中仍然存在（legacy support）
     理解 GCN 有助于理解驱动的历史设计决策`,
-          caption: 'AMD GPU 架构演进时间线。每个架构在内核代码中对应不同的 gfxXXXX IP 版本。你的 RX 7600 XT 使用 gfx1102，属于 RDNA3 世代。',
+          caption: 'AMD GPU 架构演进时间线。每个架构在内核代码中对应不同的 gfxXXXX IP 版本。RX 7600 XT 使用 gfx1102（RDNA3），本教程以此为示例，所有概念对 gfx9/gfx10/gfx12 同样成立。',
         },
       },
       {
@@ -206,7 +206,7 @@ export const ecosystemModule: Module = {
 │                    硬件 (Hardware)                            │
 │                    RX 7600 XT (Navi33 / gfx1102)             │
 └──────────────────────────────────────────────────────────────┘`,
-          caption: 'AMD Linux 驱动完整技术栈。这张图是你整个学习路径的地图——每个模块都对应栈中的一层。你的 RX 7600 XT 在最底层，amdgpu 驱动是连接软件和硬件的桥梁。',
+          caption: 'AMD Linux 驱动完整技术栈。这张图是整个学习路径的地图——每个模块对应栈中的一层。图中以 RX 7600 XT 为示例，任意 AMD GPU 均可替换到最底层。',
         },
       },
       {
@@ -361,7 +361,7 @@ static struct pci_driver amdgpu_kms_pci_driver = {
   ],
   miniProject: {
     title: '建立 AMD GPU 知识地图',
-    description: '通过实际操作，将你的 RX 7600 XT 与内核代码中的具体实现对应起来，建立你的第一张"地图"。',
+    description: '通过实际操作，将你手头的 AMD GPU 与内核代码中的具体实现对应起来（以 RX 7600 XT / Navi33 为参考示例），建立你的第一张"地图"。',
     objectives: [
       '找到 RX 7600 XT 的 PCI Device ID 并在内核源码中定位',
       '绘制你理解的 AMD 驱动技术栈图',
@@ -375,7 +375,7 @@ static struct pci_driver amdgpu_kms_pci_driver = {
       '查看 gfx_v11_0.c 文件的开头注释，了解 RDNA3 GFX IP 的实现',
       '在你的学习日志中画出 AMD 驱动技术栈图，标注每一层对应的文件/目录',
     ],
-    expectedOutput: '一张手绘或数字绘制的 AMD 驱动技术栈图，标注了从你的 RX 7600 XT 硬件到用户态应用的完整路径，以及每一层对应的内核代码文件。',
+    expectedOutput: '一张手绘或数字绘制的 AMD 驱动技术栈图，标注了从你的 AMD GPU（如 RX 7600 XT）硬件到用户态应用的完整路径，以及每一层对应的内核代码文件。',
     githubTemplate: 'https://github.com/torvalds/linux/blob/master/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c',
   },
   interviewQuestions: [
@@ -386,10 +386,10 @@ static struct pci_driver amdgpu_kms_pci_driver = {
       answer: '完整的 AMD GPU 驱动栈：（1）用户应用通过 OpenGL/Vulkan API 调用 Mesa 3D 库（radeonsi/radv）；（2）Mesa 通过 libdrm 库发送 ioctl 到内核；（3）内核 DRM 子系统接收请求，调用 amdgpu 驱动；（4）amdgpu 驱动将命令写入 GPU 的命令环形缓冲区（Ring Buffer）；（5）GPU 硬件执行命令并通过中断通知 CPU 完成。对于计算工作负载（ROCm），路径是：HIP 应用 → ROCr 运行时 → /dev/kfd → KFD 驱动 → amdgpu → GPU。',
     },
     {
-      question: 'RDNA3 架构（你的 RX 7600 XT）与前代 RDNA2 的主要区别是什么？',
+      question: 'RDNA3 架构（以 RX 7600 XT / Navi33 / gfx1102 为例）与前代 RDNA2 的主要区别是什么？',
       difficulty: 'medium',
-      hint: '重点：Chiplet 设计、双发射 SIMD、AI 加速器、硬件 AV1 编码。',
-      answer: 'RDNA3（gfx110x）相比 RDNA2（gfx103x）的主要改进：（1）Chiplet 设计：RDNA3 是 AMD 首个使用 Chiplet 的 GPU，Shader Engine 和 Memory Cache Die（MCD）分离制造，降低成本；（2）双发射 SIMD：每个 CU 的 SIMD32 可以同时执行两条指令，理论峰值算力翻倍；（3）AI 加速器：新增专用 AI 加速单元，支持 INT8/INT4 矩阵运算；（4）硬件 AV1 编码：首个支持 AV1 硬件编码的 AMD GPU；（5）PCIe 4.0 x8（RX 7600 XT）或 PCIe 4.0 x16（RX 7900 XTX）接口。在内核代码中，RDNA3 对应 gfx_v11_0.c，而 RDNA2 对应 gfx_v10_3_0.c。',
+      hint: '重点：RDNA3 家族差异（是否 Chiplet）、双发射 SIMD、AI 加速器、硬件 AV1 编码。',
+      answer: 'RDNA3（gfx110x）相比 RDNA2（gfx103x）的主要改进：（1）家族实现分化：RDNA3 中既有 Chiplet 设计（如 Navi31/32），也有单晶粒设计（如 Navi33 / RX 7600 XT）；（2）双发射 SIMD：每个 CU 的 SIMD32 可以同时执行两条指令，理论峰值算力提升；（3）AI 相关能力增强：引入 WMMA 等矩阵计算能力；（4）硬件 AV1 编码：支持 AV1 硬件编码；（5）产品级 I/O 配置差异：如 RX 7600 XT 常见为 PCIe 4.0 x8，而高端型号可为 x16。在内核代码中，RDNA3 对应 gfx_v11_0.c，而 RDNA2 对应 gfx_v10_3_0.c。',
     },
     {
       question: 'AMD 的 amdgpu 驱动和 NVIDIA 的专有驱动在架构上有什么本质区别？',

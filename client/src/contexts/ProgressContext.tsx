@@ -10,6 +10,7 @@ interface ProgressState {
   [moduleId: string]: {
     status: ModuleStatus;
     completedTabs: string[];
+    completedLessons: string[];   // lesson IDs
     lastVisited: string;
     notes: string;
   };
@@ -24,6 +25,10 @@ interface ProgressContextType {
   getNote: (moduleId: string) => string;
   getTotalCompleted: () => number;
   getCompletedTabs: (moduleId: string) => string[];
+  markLessonComplete: (moduleId: string, lessonId: string) => void;
+  unmarkLessonComplete: (moduleId: string, lessonId: string) => void;
+  isLessonComplete: (moduleId: string, lessonId: string) => boolean;
+  getCompletedLessons: (moduleId: string) => string[];
   resetProgress: () => void;
 }
 
@@ -53,9 +58,11 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     return progress[moduleId]?.status ?? 'not-started';
   };
 
+  const blank = () => ({ status: 'not-started' as ModuleStatus, completedTabs: [] as string[], completedLessons: [] as string[], lastVisited: '', notes: '' });
+
   const markTabComplete = (moduleId: string, tab: string) => {
     setProgress(prev => {
-      const existing = prev[moduleId] ?? { status: 'not-started', completedTabs: [], lastVisited: '', notes: '' };
+      const existing = prev[moduleId] ?? blank();
       const completedTabs = existing.completedTabs.includes(tab)
         ? existing.completedTabs
         : [...existing.completedTabs, tab];
@@ -63,50 +70,55 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       const status: ModuleStatus = allTabs.every(t => completedTabs.includes(t))
         ? 'completed'
         : 'in-progress';
-      return {
-        ...prev,
-        [moduleId]: {
-          ...existing,
-          completedTabs,
-          status,
-          lastVisited: new Date().toISOString(),
-        },
-      };
+      return { ...prev, [moduleId]: { ...existing, completedTabs, status, lastVisited: new Date().toISOString() } };
     });
   };
 
   const setModuleStatus = (moduleId: string, status: ModuleStatus) => {
     setProgress(prev => ({
       ...prev,
-      [moduleId]: {
-        ...(prev[moduleId] ?? { completedTabs: [], lastVisited: '', notes: '' }),
-        status,
-        lastVisited: new Date().toISOString(),
-      },
+      [moduleId]: { ...(prev[moduleId] ?? blank()), status, lastVisited: new Date().toISOString() },
     }));
   };
 
   const saveNote = (moduleId: string, note: string) => {
     setProgress(prev => ({
       ...prev,
-      [moduleId]: {
-        ...(prev[moduleId] ?? { status: 'not-started', completedTabs: [], lastVisited: '' }),
-        notes: note,
-      },
+      [moduleId]: { ...(prev[moduleId] ?? blank()), notes: note },
     }));
   };
 
-  const getNote = (moduleId: string): string => {
-    return progress[moduleId]?.notes ?? '';
+  const getNote = (moduleId: string): string => progress[moduleId]?.notes ?? '';
+
+  const getTotalCompleted = (): number =>
+    Object.values(progress).filter(p => p.status === 'completed').length;
+
+  const getCompletedTabs = (moduleId: string): string[] =>
+    progress[moduleId]?.completedTabs ?? [];
+
+  const markLessonComplete = (moduleId: string, lessonId: string) => {
+    setProgress(prev => {
+      const existing = prev[moduleId] ?? blank();
+      const completedLessons = existing.completedLessons?.includes(lessonId)
+        ? existing.completedLessons
+        : [...(existing.completedLessons ?? []), lessonId];
+      return { ...prev, [moduleId]: { ...existing, completedLessons, status: 'in-progress', lastVisited: new Date().toISOString() } };
+    });
   };
 
-  const getTotalCompleted = (): number => {
-    return Object.values(progress).filter(p => p.status === 'completed').length;
+  const unmarkLessonComplete = (moduleId: string, lessonId: string) => {
+    setProgress(prev => {
+      const existing = prev[moduleId] ?? blank();
+      const completedLessons = (existing.completedLessons ?? []).filter(id => id !== lessonId);
+      return { ...prev, [moduleId]: { ...existing, completedLessons } };
+    });
   };
 
-  const getCompletedTabs = (moduleId: string): string[] => {
-    return progress[moduleId]?.completedTabs ?? [];
-  };
+  const isLessonComplete = (moduleId: string, lessonId: string): boolean =>
+    (progress[moduleId]?.completedLessons ?? []).includes(lessonId);
+
+  const getCompletedLessons = (moduleId: string): string[] =>
+    progress[moduleId]?.completedLessons ?? [];
 
   const resetProgress = () => {
     setProgress({});
@@ -123,6 +135,10 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       getNote,
       getTotalCompleted,
       getCompletedTabs,
+      markLessonComplete,
+      unmarkLessonComplete,
+      isLessonComplete,
+      getCompletedLessons,
       resetProgress,
     }}>
       {children}

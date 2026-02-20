@@ -35,7 +35,7 @@ export const module9MicroLessons: MicroLessonModule = {
               '对 AMD GPU 编译来说，前端是 Clang。HIP 代码（__global__ void kernel(...)）首先被 Clang 解析为 AST（抽象语法树），然后 Clang CodeGen 将 AST 降低为 LLVM IR。Clang 需要识别 GPU 特有的语义——比如 __global__ 属性变为 amdgpu_kernel 调用约定，threadIdx.x 变为对内置函数 llvm.amdgcn.workitem.id.x 的调用。OpenCL 的编译路径类似，只是前端的语法处理不同。',
               '中端是 LLVM 的 Pass Manager，它按顺序执行数百个 Pass 对 IR 进行优化。通用 Pass 包括 mem2reg（将内存中的变量提升为 SSA 寄存器）、instcombine（代数化简）、loop-unroll（循环展开）、inline（函数内联）等。此外还有 AMDGPU 专用的 Pass，如 amdgpu-promote-alloca（将栈分配提升到 LDS 或寄存器）、amdgpu-lower-kernel-arguments（降低内核参数传递）。这些 Pass 的执行顺序由 PassBuilder 控制，错误的顺序可能导致优化失效甚至产生错误代码。',
               '后端是 AMDGPU Target，它将优化后的 LLVM IR 编译为 AMDGPU ISA 机器码。后端的流程：SelectionDAG（将 IR 转换为 DAG 并做指令选择）→ MachineInstr（机器指令表示）→ Register Allocation（寄存器分配）→ Instruction Scheduling（指令调度）→ MC Layer（编码为二进制机器码）。最终输出 .hsaco 文件（ELF 格式的 GPU 可执行文件），包含 GPU 机器码、元数据和资源使用信息。',
-              'hipcc 是 HIP 编译工具链的入口。执行 hipcc vector_add.hip 时，实际发生的步骤是：(1) hipcc 调用 Clang 前端编译设备代码，target triple 设为 amdgcn-amd-amdhsa；(2) Clang 生成 LLVM IR，带有 amdgpu_kernel 标注；(3) LLVM 中端执行优化 Pass 序列；(4) AMDGPU 后端将 IR 编译为 gfx1102（你的 RX 7600 XT）的机器码；(5) Clang 前端同时编译主机代码（target triple 为 x86_64）；(6) clang-offload-bundler 将设备代码和主机代码打包为 fat binary。理解这个完整流程是调试编译器问题和做性能优化的基础。',
+              'hipcc 是 HIP 编译工具链的入口。执行 hipcc vector_add.hip 时，实际发生的步骤是：(1) hipcc 调用 Clang 前端编译设备代码，target triple 设为 amdgcn-amd-amdhsa；(2) Clang 生成 LLVM IR，带有 amdgpu_kernel 标注；(3) LLVM 中端执行优化 Pass 序列；(4) AMDGPU 后端将 IR 编译为目标 GPU（如 gfx1102 对应 RX 7600 XT，gfx1100 对应 RX 7900 XTX，gfx1030 对应 RX 6800 XT）的机器码；(5) Clang 前端同时编译主机代码（target triple 为 x86_64）；(6) clang-offload-bundler 将设备代码和主机代码打包为 fat binary。理解这个完整流程是调试编译器问题和做性能优化的基础。',
             ],
             keyPoints: [
               'LLVM 三段式：前端（Clang）→ 中端（Pass Manager）→ 后端（AMDGPU Target），通过 LLVM IR 解耦',
@@ -167,7 +167,7 @@ grep -E "NumSgprs|NumVgprs|ScratchSize" vector_add.s
 # .amdhsa_private_segment_fixed_size 0  ← 无栈溢出`,
             annotations: [
               'hipcc -v 显示实际的 clang 命令行，-triple amdgcn-amd-amdhsa 指定 GPU 目标',
-              '-target-cpu gfx1102 对应你的 RX 7600 XT (RDNA3 Navi33)',
+              '-target-cpu gfx1102 对应 RX 7600 XT (RDNA3 Navi33)；其他 GPU 使用对应 gfx 版本号（可通过 rocminfo 查看）',
               'LLVM IR 中的 amdgpu_kernel 调用约定告诉后端这是 GPU kernel 入口',
               'addrspace(1) 是 AMDGPU 的全局内存地址空间编号，0=private，3=LDS，4=constant',
               'v_add_f32_e32 是 RDNA3 的向量浮点加法指令，_e32 表示 32 位编码格式',
@@ -478,6 +478,7 @@ merge:
               '指令选择后，IR 从 LLVM IR 降低为 MachineInstr——一种接近最终机器码但仍使用虚拟寄存器的表示。此时的代码已经使用了具体的 AMDGPU 指令（V_ADD_F32、S_LOAD_DWORDX4、GLOBAL_LOAD_DWORD 等），但寄存器还是虚拟的（如 %vreg0、%vreg1）。后续的寄存器分配阶段会将虚拟寄存器映射到物理寄存器（v0、v1、s0、s1 等）。',
               'AMDGPU 后端包含多个 GPU 专用 Pass，它们处理 GPU 硬件的特殊需求：(1) AMDGPUPromoteAlloca——将 alloca（栈上的私有数组）提升到 LDS（Local Data Share）或向量寄存器，避免昂贵的 scratch 内存访问；(2) AMDGPULowerKernelArguments——将 kernel 参数从内核参数段（kern_arg_segment）加载到寄存器；(3) SIFixSGPRCopies——修复 SGPR↔VGPR 之间非法的复制操作；(4) SIInsertWaitcnts——在必要位置插入 s_waitcnt 指令，确保内存操作完成后再使用结果；(5) SIOptimizeExecMaskingPreRA——优化 exec mask 操作以减少控制流开销。这些 Pass 是 AMDGPU 后端区别于通用后端的核心所在。',
               '完整的 AMDGPU 后端 Pass 管线（从 LLVM IR 到机器码）大致为：LLVM IR → AMDGPULowerIntrinsics → AMDGPUPromoteAlloca → AMDGPULowerKernelArguments → SelectionDAG ISel → SIFixSGPRCopies → SIOptimizeExecMasking → Register Allocation → SIInsertWaitcnts → Post-RA Scheduling → MC Code Emission。可以用 llc -mtriple=amdgcn -mcpu=gfx1102 -debug-pass=Structure 查看完整的 Pass 列表。',
+              'Two AMDGPU-specific passes deserve special attention. SIInsertWaitcnts inserts s_waitcnt instructions to handle the GPU\'s asynchronous memory model — without these wait instructions, a shader might read data before the previous store completes, causing silent corruption. The pass analyzes data dependencies and inserts the minimum necessary waits (vmcnt for vector memory, lgkmcnt for LDS/GDS/scalar, expcnt for exports). The second critical pass is SIShrinkInstructions, which converts 64-bit VOP3 encoding to 32-bit VOP1/VOP2 where possible, saving instruction cache space. When VGPR pressure exceeds available registers, the compiler spills to scratch memory (private per-thread VRAM space accessed via MUBUF instructions), which is 100x slower than register access — this is why minimizing VGPR usage is critical for performance.',
             ],
             keyPoints: [
               'AMDGPUTargetMachine 是后端入口，通过 --mcpu=gfx1102 选择 RDNA3 子目标配置',
@@ -486,6 +487,8 @@ merge:
               'GPU 专用 Pass：promote-alloca（避免 scratch）、lower-kernel-arguments、fix-sgpr-copies、insert-waitcnts',
               'Pass 管线：IR → Lower → Promote → ISel → RegAlloc → Scheduling → MC Emit',
               '用 llc -debug-pass=Structure 查看完整的 Pass 列表和执行顺序',
+              'SIInsertWaitcnts pass prevents data corruption by inserting s_waitcnt for async memory ops',
+              'Scratch memory spill (VGPR overflow → VRAM) is 100x slower than register access',
             ],
           },
           diagram: {
@@ -689,6 +692,7 @@ s_endpgm`,
               'Uniformity Analysis 是编译器决定数据放 VGPR 还是 SGPR 的关键分析。如果一个值在 Wavefront 的所有线程中相同（uniform），它应该放在 SGPR 中。例如 kernel 参数、循环变量、blockDim.x 都是 uniform 的。如果一个值在不同线程中不同（divergent），它必须放在 VGPR 中。例如 threadIdx.x、a[threadIdx.x] 的加载结果都是 divergent 的。编译器的 Uniformity Analysis Pass 追踪每个值的 uniform/divergent 属性，并将结果传递给寄存器分配器。',
               'VGPR 使用量与 Occupancy（占用率）直接相关。Occupancy 是指 CU 上同时活跃的 Wavefront 数量与最大值的比率。RDNA3 每个 CU 最多同时运行 16 个 wave32。如果 kernel 使用 48 个 VGPR，那么 1536÷48=32 个 wave 可以共存，但由于上限是 16，所以 Occupancy=16/16=100%。如果使用 128 个 VGPR，则 1536÷128=12 个 wave，Occupancy=12/16=75%。如果使用 256 个 VGPR，只有 6 个 wave，Occupancy=6/16=37.5%。更低的 Occupancy 意味着更少的 Wavefront 可以隐藏内存延迟，通常导致性能下降。',
               '当 kernel 需要的寄存器超过可用量时，编译器被迫将部分寄存器值 spill（溢出）到 scratch memory。Scratch memory 是 VRAM 中为每个线程预留的栈空间，访问延迟比寄存器高 100 倍以上。Spill 的表现：编译输出中 .amdhsa_private_segment_fixed_size > 0（表示需要 scratch 空间）、汇编中出现 scratch_load/scratch_store 指令（将 VGPR 值保存到 scratch 并在需要时恢复）。寄存器压力是 GPU 编程中最重要的性能因素之一——减少 VGPR 使用（通过减少活跃变量、重组计算、使用 LDS 替代私有数组）是 GPU 性能优化的核心技巧。',
+              'The AMDGPU backend\'s wave size selection is controlled by the amdgpu-waves-per-eu attribute and target features. For RDNA GPUs (gfx10+), the compiler defaults to Wave32 for pixel shaders (better for small triangles with high divergence) and Wave64 for compute shaders (better throughput for uniform workloads). This is configured in AMDGPUSubtarget::getWavesPerEU() and affects register allocation pressure — Wave32 halves the VGPR file consumption compared to Wave64 for the same number of active waves. Game developers often force Wave32 for all shaders on RDNA, while HPC developers prefer Wave64 for maximum ALU throughput.',
             ],
             keyPoints: [
               'VGPR：每线程私有，RDNA3 每 CU 有 1536 个（wave32 分配单位），存储 divergent 数据',
@@ -697,6 +701,7 @@ s_endpgm`,
               'Occupancy = 并发 Wavefront 数 / 最大值；VGPR 使用量越少 → Occupancy 越高 → 延迟隐藏越好',
               'Spill：VGPR 不够时溢出到 scratch memory（VRAM），延迟增加 100 倍以上',
               '编译器输出中 .amdhsa_next_free_vgpr/sgpr 报告寄存器使用量，ScratchSize 报告 spill 大小',
+              'Wave32 default for pixel shaders (less divergence waste), Wave64 for compute (more throughput)',
             ],
           },
           diagram: {

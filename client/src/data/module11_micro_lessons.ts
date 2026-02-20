@@ -37,6 +37,7 @@ export const module11MicroLessons: MicroLessonModule = {
               'scripts/get_maintainer.pl 帮你找到应该将补丁发送给谁。运行方式：scripts/get_maintainer.pl 0001-your-patch.patch。它分析补丁修改的文件，从 MAINTAINERS 文件中查找对应的维护者和邮件列表。对于 amdgpu 补丁，通常输出 Alex Deucher（维护者）、amd-gfx@lists.freedesktop.org（邮件列表）等。你需要将他们添加到 git send-email 的 To/Cc 列表中。',
               'git send-email 将补丁文件通过 SMTP 发送到邮件列表。首次使用需要配置 SMTP 服务器：git config --global sendemail.smtpserver smtp.gmail.com 等。发送补丁系列时：git send-email --to amd-gfx@lists.freedesktop.org --cc alex.deucher@amd.com 0001-*.patch。补丁发送后，维护者和社区成员会在邮件列表上回复 Review 意见。如果需要修改，发送 v2 版本：git format-patch --subject-prefix="PATCH v2" HEAD~1。',
               '补丁版本迭代（v2/v3...）是常见的流程。v2 补丁应该在 commit message 末尾（--- 分隔符之后）添加 changelog，说明 v1 到 v2 的变更。封面邮件也应该更新 changelog。保持耐心和专业——大多数补丁需要 2-3 轮迭代才能被接受。',
+              'Since 2023, the b4 tool (https://b4.docs.kernel.org/) has become the recommended way to send kernel patches, replacing the manual git send-email workflow. b4 automates: retrieving maintainer lists, formatting cover letters, threading patch series, and tracking versions. Key commands: b4 prep (prepare a patch series from commits), b4 send (send the series to the correct mailing lists), b4 trailers (collect Reviewed-by/Acked-by from replies). Many AMD engineers now use b4 as their daily tool. While git send-email still works and is widely documented, showing familiarity with b4 in an interview signals that your knowledge is current.',
             ],
             keyPoints: [
               'Linux 内核通过邮件列表提交补丁，不使用 Pull Request',
@@ -45,6 +46,7 @@ export const module11MicroLessons: MicroLessonModule = {
               'scripts/get_maintainer.pl 找到正确的维护者和邮件列表',
               'git send-email 发送到 amd-gfx@lists.freedesktop.org 邮件列表',
               'v2/v3 版本迭代：--subject-prefix="PATCH v2"，附加 changelog',
+              'b4 is the modern (2023+) patch sending tool — automates maintainer lookup, threading, and version tracking',
             ],
           },
           diagram: {
@@ -652,8 +654,8 @@ amdgpu driver. I have hands-on experience with:
 
 | # | Subject | Status | Link |
 |---|---------|--------|------|
-| 1 | drm/amdgpu: fix TLB flush on VM unmap | Merged | [lore](https://lore.kernel.org/...) |
-| 2 | drm/amdgpu: add missing VRAM size check | Under Review | [lore](https://lore.kernel.org/...) |
+| 1 | drm/amdgpu: fix TLB flush on VM unmap | Merged | [lore](https://lore.kernel.org/amd-gfx/) |
+| 2 | drm/amdgpu: add missing VRAM size check | Under Review | [lore](https://lore.kernel.org/amd-gfx/) |
 
 ## Source Code Analysis
 
@@ -675,8 +677,8 @@ Processor reading from the GFX ring buffer.
 
 ## Technical Blog Posts
 
-- [深入 amdgpu VM 子系统：从页表到 TLB](https://blog.example.com/amdgpu-vm)
-- [我的第一个内核补丁之旅](https://blog.example.com/first-kernel-patch)
+- 示例：深入 amdgpu VM 子系统：从页表到 TLB（替换为你的真实博客链接）
+- 示例：我的第一个内核补丁之旅（替换为你的真实博客链接）
 
 ## Skills & Tools
 
@@ -708,7 +710,7 @@ Hardware:   RDNA3 (Navi33), RDNA2, PCIe, MMIO, VRAM
             objective: '创建 Portfolio 仓库的基础结构，并完成第一个内容——你在本课程学到的知识总结。',
             steps: [
               '在 GitHub 上创建仓库：gpu-driver-portfolio（Public，带 README）',
-              '克隆到本地：git clone https://github.com/yourname/gpu-driver-portfolio.git',
+              '克隆到本地：git clone https://github.com/<yourname>/gpu-driver-portfolio.git',
               '创建目录结构：mkdir -p patches analysis tests learning-notes',
               '编辑 README.md——参考上面的模板，填入你的真实信息（即使补丁列表暂时为空）',
               '写第一篇学习笔记：在 learning-notes/ 下创建一个你最感兴趣的模块的总结',

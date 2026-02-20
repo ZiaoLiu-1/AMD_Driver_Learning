@@ -35,7 +35,7 @@ export const module8MicroLessons: MicroLessonModule = {
               'HIP 的线程层次结构分三级：Thread（线程）是最小执行单元，每个线程有唯一的 threadIdx（块内索引）；Block（线程块）是一组线程的集合，同一个 Block 内的线程可以通过 LDS（Local Data Share，即共享内存）通信和同步（__syncthreads()），Block 大小通常为 64/128/256 个线程；Grid（网格）是所有 Block 的集合，通过 blockIdx 区分不同 Block。全局线程 ID 的计算公式是：globalId = blockIdx.x * blockDim.x + threadIdx.x。',
               '核函数（kernel）用 __global__ 修饰符声明，只能返回 void。启动核函数有两种语法：hipLaunchKernelGGL(kernel, gridDim, blockDim, sharedMem, stream, args...) 是 HIP 推荐的方式；kernel<<<gridDim, blockDim, sharedMem, stream>>>(args...) 是 CUDA 兼容语法。gridDim 和 blockDim 使用 dim3 类型指定三维大小，但一维问题通常只用 x 分量。',
               '设备内存管理是 HIP 编程的基础。hipMalloc() 在 GPU VRAM 上分配内存，hipMemcpy() 在 CPU 和 GPU 之间传输数据（方向由 hipMemcpyHostToDevice / hipMemcpyDeviceToHost 指定），hipFree() 释放 GPU 内存。整个流程是：分配 GPU 内存 → 拷贝输入数据到 GPU → 启动核函数 → 拷贝结果回 CPU → 释放 GPU 内存。hipDeviceSynchronize() 用于等待 GPU 上所有操作完成。',
-              '在底层，当你调用 hipLaunchKernelGGL 时，HIP 运行时将核函数编译好的 GPU 二进制代码（通过 LLVM AMDGPU 后端生成）和参数封装成 AQL（Architected Queuing Language）包，写入 KFD 创建的 HSA 队列。GPU 的命令处理器从队列中取出 AQL 包，将 Block 分配到可用的 Compute Unit（CU）上执行。对于你的 RX 7600 XT（32 CU），理论上可以同时执行数千个线程。',
+              '在底层，当你调用 hipLaunchKernelGGL 时，HIP 运行时将核函数编译好的 GPU 二进制代码（通过 LLVM AMDGPU 后端生成）和参数封装成 AQL（Architected Queuing Language）包，写入 KFD 创建的 HSA 队列。GPU 的命令处理器从队列中取出 AQL 包，将 Block 分配到可用的 Compute Unit（CU）上执行。CU 数量因型号而异（如 RX 7600 XT 为 32 CU，RX 7900 XTX 为 96 CU），理论上均可同时执行数千个线程。',
             ],
             keyPoints: [
               'HIP 线程层次：Grid（所有 Block）→ Block（共享 LDS 的线程组）→ Thread（最小执行单元）',
@@ -251,7 +251,7 @@ int main()
           concept: {
             summary: 'GPU 拥有深层的内存层次结构——从最快的寄存器到最慢的系统内存——每一层的延迟和带宽相差数十倍。理解这个层次结构并选择正确的内存分配策略（hipMalloc vs hipHostMalloc vs hipMallocManaged），是写出高性能 HIP 程序的关键。',
             explanation: [
-              'GPU 的内存层次结构从快到慢依次为：（1）寄存器（Register）：每个线程私有，访问延迟 ~1 cycle，RDNA3 每个 CU 有 192KB VGPR（向量通用寄存器）；（2）LDS（Local Data Share）：Block 内共享，延迟 ~4-10 cycles，每个 CU 64KB，等价于 CUDA 的 shared memory；（3）L1 缓存：每个 CU 独有，16-32KB，自动缓存全局内存访问；（4）L2 缓存：所有 CU 共享，RX 7600 XT 上为 32MB（RDNA3 的大 L2 是性能关键）；（5）VRAM（显存）：GPU 本地高带宽内存，8GB GDDR6，带宽 ~288 GB/s；（6）系统内存（System RAM）：通过 PCIe 总线访问，带宽仅 ~32 GB/s（PCIe 4.0 x16）。',
+              'GPU 的内存层次结构从快到慢依次为：（1）寄存器（Register）：每个线程私有，访问延迟 ~1 cycle，RDNA3 每个 CU 有 192KB VGPR（向量通用寄存器）；（2）LDS（Local Data Share）：Block 内共享，延迟 ~4-10 cycles，每个 CU 64KB，等价于 CUDA 的 shared memory；（3）L1 缓存：每个 CU 独有，16-32KB，自动缓存全局内存访问；（4）L2/Infinity Cache：L2 本体约 2MB，外加 32MB Infinity Cache（作为末级缓存），二者共同减少对 VRAM 的访问（RDNA3 的 Infinity Cache 是带宽关键）；（5）VRAM（显存）：GPU 本地高带宽内存，8GB GDDR6，带宽 ~288 GB/s；（6）系统内存（System RAM）：通过 PCIe 总线访问，带宽仅 ~32 GB/s（PCIe 4.0 x16）。',
               '选择正确的 HIP 内存分配函数至关重要：hipMalloc() 在 GPU VRAM 上分配内存，是最常用的方式，GPU 访问速度最快但 CPU 无法直接访问；hipHostMalloc() 在 CPU 端分配 pinned（page-locked）内存，可通过 hipHostMallocMapped 标志使其同时被 GPU 通过 PCIe 直接访问——这避免了显式的 hipMemcpy，但 GPU 访问速度受 PCIe 带宽限制；hipMallocManaged() 分配统一虚拟地址（Managed Memory），CPU 和 GPU 可以用同一个指针访问，运行时自动在 CPU/GPU 之间迁移数据（通过 page fault），开发简单但性能可能不如手动管理。',
               'Pinned memory（页锁定内存）对 DMA 传输至关重要。普通的 malloc 分配的内存可能被操作系统 swap 到磁盘，GPU 的 DMA 引擎无法直接访问这种内存。hipHostMalloc 分配的内存被锁定在物理 RAM 中（mlock），DMA 引擎可以直接在 PCIe 上传输，避免了操作系统的一次内存拷贝。这就是为什么 hipMemcpy 在使用 pinned 内存时比普通内存快 2-3 倍。',
               'HIP Stream 是实现异步执行和数据传输重叠的核心机制。一个 Stream 代表一个有序的操作序列（拷贝/核函数），不同 Stream 之间的操作可以并行执行。典型的双缓冲模式：Stream 0 执行当前批次的核函数时，Stream 1 同时传输下一批次的数据。hipMemcpyAsync() 发起异步数据传输（需要 pinned memory），hipStreamCreate/hipStreamSynchronize 管理 Stream 的生命周期。在底层，每个 Stream 对应 KFD 创建的一个 HSA 队列。',

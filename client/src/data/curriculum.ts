@@ -95,7 +95,7 @@ export interface GlossaryTerm {
   category: 'kernel' | 'hardware' | 'graphics' | 'compute' | 'toolchain' | 'general';
 }
 
-export const curriculum: Module[] = [
+export const curriculumZh: Module[] = [
   {
     id: 'intro',
     number: '0',
@@ -111,7 +111,7 @@ export const curriculum: Module[] = [
       { id: 'intro-setup', title: '环境搭建', titleEn: 'Environment Setup' },
     ],
     theory: {
-      overview: '这条学习路径旨在将你从一个 Linux 用户，培养成一名能够理解、调试并为 AMD GPU 驱动（amdgpu）贡献代码的内核工程师。你手中的 RX 7600 XT 不仅仅是一张显卡，它是你最好的学习工具。整个路径分为 11 个模块，预计总学习时间约为 400-600 小时（6-12 个月，取决于你的基础和投入程度）。',
+      overview: '这条学习路径旨在将你从一个 Linux 用户，培养成一名能够理解、调试并为 AMD GPU 驱动（amdgpu）贡献代码的内核工程师。你手中任意一块 AMD GPU（RDNA/GCN 均可）都是你最好的学习工具。整个路径分为 11 个模块，预计总学习时间约为 400-600 小时（6-12 个月，取决于你的基础和投入程度）。',
       sections: [
         {
           title: '为什么选择 AMD GPU 驱动开发？',
@@ -123,7 +123,7 @@ export const curriculum: Module[] = [
   Linux Kernel Active Subsystems (by lines of code)
   ─────────────────────────────────────────────────
 
-  drivers/gpu/drm/amd/  ████████████████████████  4M+ lines
+  drivers/gpu/drm/amd/   ████████████████████████  4M+ lines
   drivers/net/           ███████████████████       3M+ lines
   drivers/gpu/drm/i915/  ████████████              1.5M lines
   fs/                    ███████████               1.2M lines
@@ -139,7 +139,7 @@ export const curriculum: Module[] = [
   ✓ Active community   -- amd-gfx: 30+ patches/day
   ✓ Career opportunity -- AMD Markham/Shanghai hiring
   ✓ Cross-domain       -- kernel, compiler, graphics, AI
-  ✓ Accessible HW      -- consumer GPU (your RX 7600 XT)`,
+  ✓ Accessible HW      -- any AMD consumer GPU works`,
             caption: 'amdgpu 是 Linux 内核中最大的单个驱动子系统。完全开源的特性使其成为学习 GPU 驱动开发的最佳选择。',
           },
         },
@@ -154,31 +154,31 @@ Phase 1: 基础                Phase 2: 内核         Phase 3: 驱动        Ph
 (~80h)                       (~90h)                (~100h)              (~200h)
 
 ┌──────────┐
-│ M0: 引言 │─────┐
+│ M0: Intro│─────┐
 │ (2h)     │     │
 └──────────┘     │
                  ▼
 ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐
-│ M0.5:    │  │ M3: 内核 │  │ M5:AMDGPU│  │ M7: ROCm │
-│ 生态系统 │→ │ 开发     │→ │ 驱动     │→ │ 内核接口 │
+│ M0.5:    │  │M3:Kernel │  │ M5:AMDGPU│  │ M7: ROCm │
+│Ecosystem │→ │ Dev      │→ │ Driver   │→ │Kernel IF │
 │ (8h)     │  │ (30h)    │  │ (60h)    │  │ (40h)    │
 └──────────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘
                    │             │              │
 ┌──────────┐  ┌────▼─────┐  ┌────▼─────┐  ┌────▼─────┐
-│ M1: 预备 │  │ M4: DRM  │  │ M6: 调试 │  │ M8: ROCm │
-│ 知识     │→ │ 子系统   │→ │ (40h)    │  │ 计算     │
+│ M1: Prep │  │ M4: DRM  │  │ M6: Debug│  │ M8: ROCm │
+│ Prereqs  │→ │ Subsys   │→ │ (40h)    │  │ Compute  │
 │ (40h)    │  │ (60h)    │  └──────────┘  │ (50h)    │
 └──────────┘  └──────────┘                └────┬─────┘
                                                │
 ┌──────────┐                              ┌────▼─────┐
-│ M2: 硬件 │                              │ M9: LLVM │
-│ 接口     │                              │ 工具链   │
+│ M2: HW   │                              │ M9: LLVM │
+│Interface │                              │Toolchain │
 │ (40h)    │                              │ (60h)    │
 └──────────┘                              └────┬─────┘
                                                │
               ┌──────────┐  ┌──────────┐  ┌────▼─────┐
-              │ M10:测试 │  │ M11:职业 │← │ 所有模块 │
-              │ (30h)    │  │ (30h)    │  │ 汇聚     │
+              │ M10:Test │  │M11:Career│← │ All Mods │
+              │ (30h)    │  │ (30h)    │  │ Converge │
               └──────────┘  └──────────┘  └──────────┘`,
             caption: '学习路径的模块依赖关系。箭头表示推荐学习顺序。M10 和 M11 是贯穿整个路径的实践模块。',
           },
@@ -191,46 +191,46 @@ Phase 1: 基础                Phase 2: 内核         Phase 3: 驱动        Ph
             content: `Linux GPU 内核驱动栈分层模型
 
 ┌─────────────────────────────────────────────────────────────┐
-│ 用户空间                                                     │
+│ User Space                                                   │
 │                                                              │
-│  应用程序 (游戏 / AI 训练 / 视频编辑)                        │
+│  Applications (Games / AI Training / Video Editing)          │
 │       │                                                      │
-│  图形 API (OpenGL / Vulkan / HIP)                            │
+│  Graphics API (OpenGL / Vulkan / HIP)                        │
 │       │                                                      │
-│  用户态驱动 (Mesa radeonsi / radv / ROCr)                    │
+│  Userspace Drivers (Mesa radeonsi / radv / ROCr)             │
 │       │                                                      │
-│  libdrm (用户态 DRM 库，封装 ioctl 调用)                     │
+│  libdrm (Userspace DRM lib, wraps ioctl calls)               │
 │       │                                                      │
 ├───────┼──────────────────────────────────────────────────────┤
-│       │  系统调用边界  (ioctl / mmap / read / write)         │
+│       │  Syscall Boundary (ioctl / mmap / read / write)      │
 ├───────┼──────────────────────────────────────────────────────┤
-│ 内核空间                                                     │
+│ Kernel Space                                                 │
 │       │                                                      │
 │       ▼                                                      │
-│  DRM 核心 (drivers/gpu/drm/drm_*.c)                         │
-│  ├── 设备管理 (drm_device, drm_driver)                      │
-│  ├── 文件操作 (drm_file, drm_ioctl)                         │
-│  ├── GEM 内存管理框架                                        │
-│  └── KMS 显示管理框架                                        │
+│  DRM Core (drivers/gpu/drm/drm_*.c)                         │
+│  ├── Device Mgmt (drm_device, drm_driver)                   │
+│  ├── File Ops (drm_file, drm_ioctl)                         │
+│  ├── GEM Memory Mgmt Framework                              │
+│  └── KMS Display Mgmt Framework                             │
 │       │                                                      │
 │       ▼                                                      │
-│  amdgpu 驱动 (drivers/gpu/drm/amd/)                         │
-│  ├── amdgpu_drv.c     → PCI 驱动入口                        │
-│  ├── amdgpu_device.c  → GPU 设备初始化                      │
-│  ├── gfx_v11_0.c      → GFX IP (你的 RDNA3)                │
-│  ├── sdma_v6_0.c      → DMA 引擎                           │
-│  ├── dc/              → 显示核心 (Display Core)             │
-│  └── amdkfd/          → 计算接口 (KFD/ROCm)                │
+│  amdgpu Driver (drivers/gpu/drm/amd/)                       │
+│  ├── amdgpu_drv.c     → PCI Driver Entry                    │
+│  ├── amdgpu_device.c  → GPU Device Init                     │
+│  ├── gfx_v11_0.c      → GFX IP (Your RDNA3)                │
+│  ├── sdma_v6_0.c      → DMA Engine                          │
+│  ├── dc/              → Display Core                         │
+│  └── amdkfd/          → Compute Interface (KFD/ROCm)        │
 │       │                                                      │
 ├───────┼──────────────────────────────────────────────────────┤
 │       │  MMIO / PCIe                                         │
 ├───────┼──────────────────────────────────────────────────────┤
 │       ▼                                                      │
-│  GPU 硬件 (RX 7600 XT / Navi33 / gfx1102)                  │
-│  ├── GFX Engine (着色器核心)                                 │
-│  ├── SDMA Engine (DMA 传输)                                  │
-│  ├── Display Engine (DCN 显示控制器)                         │
-│  ├── VCN (视频编解码)                                        │
+│  GPU Hardware (RX 7600 XT / Navi33 / gfx1102)               │
+│  ├── GFX Engine (Shader Cores)                               │
+│  ├── SDMA Engine (DMA Transfer)                              │
+│  ├── Display Engine (DCN Display Controller)                 │
+│  ├── VCN (Video Codec)                                       │
 │  └── VRAM (8GB GDDR6)                                        │
 └─────────────────────────────────────────────────────────────┘`,
             caption: 'Linux GPU 驱动栈完整分层图。每一层都对应学习路径中的一个或多个模块。这张图是你整个学习过程的"地图"。',
@@ -238,7 +238,7 @@ Phase 1: 基础                Phase 2: 内核         Phase 3: 驱动        Ph
         },
         {
           title: '开发环境搭建',
-          content: '你需要准备：一台安装了 Ubuntu 22.04 LTS 或 Arch Linux 的机器（你的 RX 7600 XT 已经是最好的测试硬件）；安装 linux-headers、build-essential、git、clang、llvm 等开发工具；克隆 Linux 内核源码（约 3GB）；安装 ROCm 开发套件。建议使用 KVM 虚拟机进行危险的内核实验，避免破坏主机系统。关键工具链：（1）内核编译：gcc/clang + make/kbuild；（2）代码阅读：cscope + ctags 或 VS Code + clangd；（3）调试：ftrace + perf + trace-cmd；（4）GPU 监控：amdgpu_top + radeontop；（5）版本控制：git + git send-email（用于提交内核补丁）。',
+          content: '你需要准备：一台安装了 Ubuntu 22.04 LTS 或 Arch Linux 的机器（任意一块 AMD GPU 都是很好的测试硬件，RDNA2/3 尤佳）；安装 linux-headers、build-essential、git、clang、llvm 等开发工具；克隆 Linux 内核源码（约 3GB）；安装 ROCm 开发套件。建议使用 KVM 虚拟机进行危险的内核实验，避免破坏主机系统。关键工具链：（1）内核编译：gcc/clang + make/kbuild；（2）代码阅读：cscope + ctags 或 VS Code + clangd；（3）调试：ftrace + perf + trace-cmd；（4）GPU 监控：amdgpu_top + radeontop；（5）版本控制：git + git send-email（用于提交内核补丁）。',
         },
       ],
       keyBooks: [
@@ -254,7 +254,7 @@ Phase 1: 基础                Phase 2: 内核         Phase 3: 驱动        Ph
           author: 'Jonathan Corbet, Alessandro Rubini, Greg Kroah-Hartman',
           isbn: '978-0596005900',
           relevance: '驱动开发的圣经，虽然版本较旧但核心概念依然适用。可在 LWN.net 免费阅读。',
-          url: 'https://lwn.net/Kernel/LDD3/',
+          url: 'https://docs.kernel.org/driver-api/index.html',
         },
         {
           title: 'Understanding the Linux Kernel',
@@ -387,7 +387,7 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
       ],
       steps: [
         '在 GitHub 创建新仓库 amd-driver-journey，设为 Public',
-        '创建 README.md，写入你的 GPU 型号（RX 7600 XT）和学习目标',
+        '创建 README.md，写入你的 GPU 型号（如 RX 7600 XT / RX 7900 XTX 等）和学习目标',
         '创建 journal/ 目录，开始记录每天的学习笔记',
         '将 lspci 和 dmesg 的输出保存到 hardware-info.txt',
       ],
@@ -453,18 +453,18 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
             content: `
   内存布局示意图
   ┌─────────────────┐  高地址
-  │   内核空间       │  (Ring 0, 驱动运行于此)
-  │   (3GB~4GB)     │
+  │  Kernel Space    │  (Ring 0, drivers run here)
+  │  (3GB~4GB)       │
   ├─────────────────┤  0xC0000000
-  │   用户栈 Stack  │  (向下增长)
-  │        ↓        │
-  │   ...空闲...    │
-  │        ↑        │
-  │   用户堆 Heap   │  (向上增长)
+  │  User Stack      │  (grows down)
+  │        ↓         │
+  │  ...free...      │
+  │        ↑         │
+  │  User Heap       │  (grows up)
   ├─────────────────┤
-  │   BSS 段        │  (未初始化全局变量)
-  │   Data 段       │  (已初始化全局变量)
-  │   Text 段       │  (代码)
+  │  BSS Segment     │  (uninitialized globals)
+  │  Data Segment    │  (initialized globals)
+  │  Text Segment    │  (code)
   └─────────────────┘  低地址 0x00000000`,
             caption: '32位系统的虚拟内存布局（简化版）。内核驱动运行在内核空间，拥有访问所有物理内存的权限。',
           },
@@ -481,19 +481,19 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
             content: `
   MESI Cache 一致性协议状态转换
 
-  ┌──────────┐    本地读命中    ┌──────────┐
-  │ Modified │ ◄──────────── │ Exclusive│
-  │  (M)     │               │  (E)     │
-  │ 已修改   │               │ 独占     │
-  └──────────┘               └──────────┘
-       │                          │
-       │ 其他核心读               │ 其他核心读
-       ▼                          ▼
-  ┌──────────┐               ┌──────────┐
-  │  Shared  │               │ Invalid  │
-  │  (S)     │               │  (I)     │
-  │ 共享     │               │ 无效     │
-  └──────────┘               └──────────┘`,
+  ┌──────────┐    Local Read Hit   ┌──────────┐
+  │ Modified │ ◄──────────────── │ Exclusive│
+  │  (M)     │                   │  (E)     │
+  │ Dirty    │                   │ Clean    │
+  └──────────┘                   └──────────┘
+       │                              │
+       │ Other Core Read              │ Other Core Read
+       ▼                              ▼
+  ┌──────────┐                   ┌──────────┐
+  │  Shared  │                   │ Invalid  │
+  │  (S)     │                   │  (I)     │
+  │ ReadOnly │                   │ Stale    │
+  └──────────┘                   └──────────┘`,
             caption: 'MESI 协议的四种状态。GPU 驱动在进行 DMA 传输前后，需要正确处理 Cache 状态以避免数据不一致。',
           },
         },
@@ -624,7 +624,7 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
       { id: 'hw-irq', title: '2.3 中断机制', titleEn: 'Interrupt Mechanism' },
     ],
     theory: {
-      overview: 'PCIe（Peripheral Component Interconnect Express）是现代 GPU 连接到 CPU 的标准接口。你的 RX 7600 XT 通过 PCIe 4.0 x16 插槽与主板相连。理解 PCIe 的枚举、BAR 内存映射、DMA 传输和 MSI 中断，是理解 amdgpu 驱动如何初始化和操控 GPU 硬件的关键。',
+      overview: 'PCIe（Peripheral Component Interconnect Express）是现代 GPU 连接到 CPU 的标准接口。AMD GPU（如 RX 7600 XT / RX 7900 XTX 等）通过 PCIe 插槽与主板相连，常见为 PCIe 4.0 x8 或 x16。理解 PCIe 的枚举、BAR 内存映射、DMA 传输和 MSI 中断，是理解 amdgpu 驱动如何初始化和操控 GPU 硬件的关键。',
       sections: [
         {
           title: 'PCIe 枚举与配置空间',
@@ -683,7 +683,7 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
           title: 'Linux Device Drivers, 3rd Edition',
           author: 'Corbet, Rubini, Kroah-Hartman',
           relevance: '第 12-15 章专门讲解 PCI 驱动、DMA 和中断处理，是必读章节。',
-          url: 'https://lwn.net/Kernel/LDD3/',
+          url: 'https://docs.kernel.org/driver-api/index.html',
         },
       ],
       onlineResources: [
@@ -701,7 +701,7 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
         },
         {
           title: 'IOMMU Introduction',
-          url: 'https://docs.kernel.org/driver-api/iommu.html',
+          url: 'https://docs.kernel.org/arch/x86/iommu.html',
           type: 'doc',
           description: 'Linux 内核 IOMMU 子系统文档。',
         },
@@ -828,19 +828,19 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
          │
          ▼
   ┌─────────────────┐
-  │  module_init()  │  ← 注册设备、申请资源、初始化数据结构
+  │  module_init()  │  ← Register device, alloc resources, init structs
   └────────┬────────┘
            │
            ▼
   ┌─────────────────┐
-  │  模块运行中...   │  ← 响应系统调用、处理中断、与硬件交互
+  │ Module Running  │  ← Handle syscalls, interrupts, HW interaction
   └────────┬────────┘
            │
   用户执行 rmmod module
            │
            ▼
   ┌─────────────────┐
-  │  module_exit()  │  ← 注销设备、释放资源、清理数据结构
+  │  module_exit()  │  ← Unregister device, free resources, cleanup
   └─────────────────┘`,
             caption: '内核模块的生命周期。init 和 exit 函数必须成对实现，确保资源的正确申请和释放，避免内存泄漏。',
           },
@@ -857,20 +857,20 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
                ▼
 ┌──────────────────────────────────────────────────┐
 │  VFS (Virtual File System)                        │
-│  → 查找 inode → 找到 file_operations             │
+│  → Find inode → Locate file_operations            │
 └──────────────────────┬───────────────────────────┘
                        │
 ┌──────────────────────▼───────────────────────────┐
 │  DRM file_operations (drm_fops.c)                 │
 │                                                    │
-│  .open    = drm_open      → 创建 drm_file         │
-│  .release = drm_release   → 清理 drm_file         │
-│  .unlocked_ioctl = drm_ioctl → 分发 DRM 命令      │
-│  .mmap    = drm_gem_mmap  → 映射 GEM BO           │
+│  .open    = drm_open      → Create drm_file       │
+│  .release = drm_release   → Cleanup drm_file      │
+│  .unlocked_ioctl = drm_ioctl → Dispatch DRM Cmd   │
+│  .mmap    = drm_gem_mmap  → Map GEM BO            │
 └──────────────────────┬───────────────────────────┘
-                       │ drm_ioctl 分发
+                       │ drm_ioctl dispatch
 ┌──────────────────────▼───────────────────────────┐
-│  amdgpu ioctl 表 (amdgpu_ioctls.c)               │
+│  amdgpu ioctl Table (amdgpu_ioctls.c)             │
 │                                                    │
 │  DRM_IOCTL_AMDGPU_GEM_CREATE → amdgpu_gem_create │
 │  DRM_IOCTL_AMDGPU_CS         → amdgpu_cs_ioctl   │
@@ -907,16 +907,16 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
 
 amdgpu 中的实际使用：
 ┌───────────────────┬────────────────────────────────────┐
-│ Spinlock          │ adev->irq.lock (中断处理)           │
-│                   │ ring->fence_lock (fence 更新)       │
+│ Spinlock          │ adev->irq.lock (IRQ handling)      │
+│                   │ ring->fence_lock (fence update)    │
 ├───────────────────┼────────────────────────────────────┤
-│ Mutex             │ adev->vram_mgr.lock (VRAM 分配)    │
-│                   │ adev->pm.mutex (电源管理)           │
+│ Mutex             │ adev->vram_mgr.lock (VRAM alloc)   │
+│                   │ adev->pm.mutex (Power Mgmt)        │
 ├───────────────────┼────────────────────────────────────┤
-│ RW Semaphore      │ adev->reset.sem (GPU reset 保护)   │
+│ RW Semaphore      │ adev->reset.sem (GPU reset guard)  │
 ├───────────────────┼────────────────────────────────────┤
-│ Atomic            │ fence->refcount (引用计数)          │
-│                   │ adev->in_gpu_reset (reset 标志)    │
+│ Atomic            │ fence->refcount (Ref Counting)     │
+│                   │ adev->in_gpu_reset (reset flag)    │
 └───────────────────┴────────────────────────────────────┘`,
             caption: '内核同步机制选择指南及 amdgpu 驱动中的实际使用。选择错误的同步原语（如在中断上下文使用 mutex）会导致死锁或系统崩溃。',
           },
@@ -927,7 +927,7 @@ amdgpu 中的实际使用：
           title: 'Linux Device Drivers, 3rd Edition',
           author: 'Corbet, Rubini, Kroah-Hartman',
           relevance: '驱动开发的圣经，第 2-6 章讲解字符设备，第 12 章讲解 PCI 驱动。',
-          url: 'https://lwn.net/Kernel/LDD3/',
+          url: 'https://docs.kernel.org/driver-api/index.html',
         },
         {
           title: 'Linux Kernel Development, 3rd Edition',
@@ -1152,26 +1152,26 @@ module_exit(amdgpu_exit);`,
   Linux 图形栈架构
 
   ┌─────────────────────────────────────────┐
-  │              用户空间应用               │
-  │  (游戏、Blender、ROCm 程序等)           │
+  │       User Space Applications          │
+  │  (Games, Blender, ROCm programs)       │
   └────────────────┬────────────────────────┘
                    │ OpenGL/Vulkan/HIP API
   ┌────────────────▼────────────────────────┐
-  │         用户空间图形库                   │
+  │      Userspace Graphics Libraries       │
   │  Mesa 3D (radeonsi/radv) | ROCm/HIP     │
   └────────────────┬────────────────────────┘
                    │ DRM ioctl / libdrm
   ┌────────────────▼────────────────────────┐
-  │         内核 DRM 子系统                  │
+  │        Kernel DRM Subsystem              │
   │  ┌──────────┐  ┌──────────────────────┐ │
-  │  │  KMS     │  │  GEM/TTM 内存管理    │ │
-  │  │ (显示)   │  │  (VRAM/GTT 分配)     │ │
+  │  │  KMS     │  │  GEM/TTM Memory Mgmt │ │
+  │  │(Display) │  │  (VRAM/GTT alloc)    │ │
   │  └──────────┘  └──────────────────────┘ │
-  │         amdgpu 驱动                      │
+  │        amdgpu Driver                     │
   └────────────────┬────────────────────────┘
                    │ PCIe / MMIO / DMA
   ┌────────────────▼────────────────────────┐
-  │         AMD GPU 硬件                     │
+  │        AMD GPU Hardware                  │
   │  (RX 7600 XT - Navi33)                  │
   └─────────────────────────────────────────┘`,
             caption: 'Linux 图形栈的层次结构。DRM 是内核与用户空间图形库之间的桥梁，amdgpu 是 DRM 框架下的具体 GPU 驱动实现。',
@@ -1191,7 +1191,7 @@ module_exit(amdgpu_exit);`,
         │               │
   ┌─────▼────┐    ┌─────▼────┐
   │  Plane   │    │  Plane   │  (Primary/Overlay/Cursor)
-  │ (主平面) │    │ (叠加层) │
+  │ (Primary)│    │ (Overlay)│
   └─────┬────┘    └─────┬────┘
         └───────┬────────┘
                 │ 合成 (Composition)
@@ -1223,7 +1223,7 @@ module_exit(amdgpu_exit);`,
           title: 'Linux Graphics Internals',
           author: 'Luc Verhaegen (Online Resource)',
           relevance: '深入讲解 DRM/KMS 内部实现，虽然较旧但核心概念仍然适用。',
-          url: 'https://landley.net/kdocs/ols/2012/ols2012-pages-23-33.pdf',
+          url: 'https://docs.kernel.org/gpu/drm-kms.html',
         },
         {
           title: 'The DRM/KMS subsystem from a newbie\'s point of view',
@@ -1509,7 +1509,7 @@ static int amdgpu_device_ip_init(struct amdgpu_device *adev)
     ],
     miniProject: {
       title: '分析 amdgpu 驱动的 IP Block 列表',
-      description: '通过内核调试接口，查看你的 RX 7600 XT 的 IP Block 列表，理解 GPU 的功能模块组成。',
+      description: '通过内核调试接口，查看你手头 AMD GPU 的 IP Block 列表（本例以 RX 7600 XT / gfx1102 为参考），理解 GPU 的功能模块组成。',
       objectives: [
         '理解 IP Block 机制',
         '学会使用 debugfs 接口',
@@ -1564,27 +1564,27 @@ static int amdgpu_device_ip_init(struct amdgpu_device *adev)
             content: `内核调试输出层次
 
 ┌─────────────────────────────────────────────────────────────┐
-│  日志级别           │  宏               │  典型用途          │
+│  Log Level         │  Macro             │  Typical Use       │
 ├─────────────────────┼───────────────────┼───────────────────┤
-│  0 KERN_EMERG       │  pr_emerg()       │  系统即将崩溃      │
-│  1 KERN_ALERT       │  pr_alert()       │  需要立即处理      │
-│  2 KERN_CRIT        │  pr_crit()        │  严重错误          │
+│  0 KERN_EMERG       │  pr_emerg()       │  Crash imminent   │
+│  1 KERN_ALERT       │  pr_alert()       │  Immediate action │
+│  2 KERN_CRIT        │  pr_crit()        │  Critical error   │
 │  3 KERN_ERR         │  pr_err()         │  GPU hang/reset   │
-│  4 KERN_WARNING     │  pr_warn()        │  资源不足警告      │
-│  5 KERN_NOTICE      │  pr_notice()      │  正常但重要信息    │
-│  6 KERN_INFO        │  pr_info()        │  驱动加载/卸载    │
-│  7 KERN_DEBUG       │  pr_debug()       │  调试信息(默认关) │
+│  4 KERN_WARNING     │  pr_warn()        │  Resource warning │
+│  5 KERN_NOTICE      │  pr_notice()      │  Notable info     │
+│  6 KERN_INFO        │  pr_info()        │  Drv load/unload  │
+│  7 KERN_DEBUG       │  pr_debug()       │  Debug (dflt off) │
 └─────────────────────┴───────────────────┴───────────────────┘
 
 amdgpu 特有的调试接口：
 ┌─────────────────────────────────────────────────────────────┐
-│  DRM_DEBUG_DRIVER()    → drm.debug=0x1  (驱动基本信息)      │
-│  DRM_DEBUG_KMS()       → drm.debug=0x4  (KMS/显示信息)      │
+│  DRM_DEBUG_DRIVER()    → drm.debug=0x1  (driver info)       │
+│  DRM_DEBUG_KMS()       → drm.debug=0x4  (KMS/display info)  │
 │  amdgpu debugfs         → /sys/kernel/debug/dri/0/           │
-│  ├── amdgpu_gpu_recover → 手动触发 GPU reset                │
-│  ├── amdgpu_fence_info → 查看 fence 状态                    │
-│  ├── amdgpu_sa_info    → 查看 suballocation 内存            │
-│  └── amdgpu_vram_mm    → 查看 VRAM 使用情况                 │
+│  ├── amdgpu_gpu_recover → Manual GPU reset trigger           │
+│  ├── amdgpu_fence_info → View fence status                   │
+│  ├── amdgpu_sa_info    → View suballoc memory                │
+│  └── amdgpu_vram_mm    → View VRAM usage                     │
 └─────────────────────────────────────────────────────────────┘`,
             caption: 'Linux 内核日志级别和 amdgpu 特有的调试接口。日常调试首先查看 dmesg（级别 0-6），深入分析时使用 debugfs 和动态调试。',
           },
@@ -1638,10 +1638,10 @@ amdgpu 特有的调试接口：
             content: `性能分析工具链
 
 ┌─────────────────────────────────────────────────────────────┐
-│                    分析目标选择                               │
+│                  Analysis Target Selection                    │
 │                                                              │
-│  CPU 侧瓶颈？              GPU 侧瓶颈？                    │
-│  (驱动函数耗时)             (着色器/内存带宽)                │
+│  CPU Bottleneck?           GPU Bottleneck?                   │
+│  (Driver func latency)     (Shader/memory bandwidth)         │
 │       │                          │                          │
 │       ▼                          ▼                          │
 │  ┌──────────┐              ┌──────────┐                     │
@@ -1650,19 +1650,19 @@ amdgpu 特有的调试接口：
 │       │                         │                           │
 │  ┌────▼──────────┐        ┌────▼──────────┐                │
 │  │ perf top      │        │ rocprof       │                │
-│  │ 实时热点函数  │        │ --stats       │                │
-│  │               │        │ GPU 利用率    │                │
+│  │ Hot functions  │        │ --stats       │                │
+│  │               │        │ GPU usage rate │                │
 │  ├───────────────┤        ├───────────────┤                │
 │  │ perf record   │        │ rocprof       │                │
 │  │ + perf report │        │ -i metrics.txt│                │
-│  │ 采样分析      │        │ 硬件计数器    │                │
+│  │ Sampling       │        │ HW Counters    │                │
 │  ├───────────────┤        ├───────────────┤                │
 │  │ perf stat     │        │ rocprof       │                │
-│  │ 统计摘要      │        │ --hsa-trace   │                │
-│  │               │        │ API 追踪      │                │
+│  │ Stats summary  │        │ --hsa-trace   │                │
+│  │               │        │ API tracing    │                │
 │  └───────────────┘        └───────────────┘                │
 │                                                              │
-│  联合分析：perf (CPU) + rocprof (GPU) → 完整的性能画面      │
+│  Combined: perf (CPU) + rocprof (GPU) → Full perf picture   │
 └─────────────────────────────────────────────────────────────┘`,
             caption: 'CPU 和 GPU 性能分析工具链。perf 分析 CPU 侧的驱动开销，rocprof 分析 GPU 侧的硬件利用率，两者结合才能完整定位性能瓶颈。',
           },
@@ -1695,13 +1695,13 @@ dmesg: "amdgpu: GPU hang detected!"
 检查 Ring 状态
 ┌────────────────────────────────────────────────┐
 │  CP_RB_RPTR == CP_RB_WPTR                       │
-│  → Ring 为空，GPU 空闲但仍 Hang                 │
-│  → 可能是固件 Bug 或硬件问题                    │
+│  → Ring empty, GPU idle but still Hang          │
+│  → Possibly firmware Bug or HW issue            │
 │                                                  │
 │  CP_RB_RPTR != CP_RB_WPTR                       │
-│  → Ring 中有未执行的命令                        │
-│  → GPU 卡在某个命令上                           │
-│  → 分析 RPTR 指向的 PM4 命令内容               │
+│  → Ring has pending commands                    │
+│  → GPU stuck on a command                       │
+│  → Analyze PM4 command at RPTR                  │
 └────────────────────────────────────────────────┘
          │
          ▼
@@ -1850,25 +1850,25 @@ TRACE_EVENT(amdgpu_sched_run_job,
   HSA 软件栈架构
 
   ┌─────────────────────────────────────────┐
-  │         用户空间 ROCm 应用               │
-  │  (HIP 程序、TensorFlow、PyTorch 等)      │
+  │      User Space ROCm Applications       │
+  │  (HIP, TensorFlow, PyTorch, etc.)       │
   └────────────────┬────────────────────────┘
                    │
   ┌────────────────▼────────────────────────┐
-  │         ROCm 运行时                      │
+  │        ROCm Runtime                      │
   │  HSA Runtime (libhsa-runtime64.so)      │
   │  HIP Runtime (libamdhip64.so)           │
   └────────────────┬────────────────────────┘
                    │ ioctl
   ┌────────────────▼────────────────────────┐
-  │         内核 KFD 驱动                    │
-  │  /dev/kfd  (HSA 内核接口)               │
-  │  队列管理 | 内存管理 | 信号量            │
+  │        Kernel KFD Driver                 │
+  │  /dev/kfd  (HSA Kernel Interface)       │
+  │  Queue Mgmt | Memory Mgmt | Signals     │
   └────────────────┬────────────────────────┘
                    │
   ┌────────────────▼────────────────────────┐
-  │         amdgpu 驱动核心                  │
-  │  (KFD 通过 amdgpu 访问 GPU 硬件)        │
+  │        amdgpu Driver Core                │
+  │  (KFD accesses GPU HW via amdgpu)       │
   └─────────────────────────────────────────┘`,
             caption: 'ROCm/KFD 软件栈。KFD 通过 /dev/kfd 设备节点向用户空间暴露 HSA 接口，ROCm 运行时通过 ioctl 调用 KFD 来管理 GPU 资源。',
           },
@@ -2054,7 +2054,7 @@ static int kfd_ioctl_create_queue(struct file *filep,
         },
         {
           title: 'GPU 内存层次结构',
-          content: 'AMD GPU 有多级内存层次，访问速度和容量各不相同：寄存器（Register）：每个线程私有，访问速度最快（单周期），但数量有限；LDS（Local Data Share）：Block 内所有线程共享，速度极快（约 1-2 周期），容量约 64KB per CU；L1 Cache：每个 CU 私有，约 32KB；L2 Cache：所有 CU 共享，约 4MB；VRAM（HBM/GDDR6）：全局内存，所有线程可访问，容量最大但延迟最高（约 200-400 周期）。性能优化的关键是尽量使用 LDS 和 Cache，减少对 VRAM 的访问次数。',
+          content: 'AMD GPU 有多级内存层次，访问速度和容量各不相同：寄存器（Register）：每个线程私有，访问速度最快（单周期），但数量有限；LDS（Local Data Share）：Block 内所有线程共享，速度极快（约 1-2 周期），容量约 64KB per CU；L1 Cache：每个 CU 私有，约 32KB；L2/Infinity Cache：所有 CU 共享，容量因芯片而异（Navi33 约 32MB）；VRAM（HBM/GDDR6）：全局内存，所有线程可访问，容量最大但延迟最高（约 200-400 周期）。性能优化的关键是尽量使用 LDS 和 Cache，减少对 VRAM 的访问次数。',
           diagram: {
             type: 'ascii',
             content: `AMD GPU 内存层次结构（RX 7600 XT）
@@ -2062,35 +2062,35 @@ static int kfd_ioctl_create_queue(struct file *filep,
 速度 ←──────────────────────────────────────────→ 容量
 
   ┌────────────────┐
-  │   寄存器 VGPR  │  单周期延迟  │  256 个/lane × 32 CU
-  │   (线程私有)   │              │  约 2MB 总量
+  │  Register VGPR │  1 cycle      │  256 per lane × 32 CU
+  │  (per thread)  │              │  ~2MB total
   └───────┬────────┘
           │
   ┌───────▼────────┐
-  │     LDS        │  1-2 周期    │  64KB per CU
-  │ (Block 共享)   │              │  约 2MB 总量
+  │     LDS        │  1-2 cycles   │  64KB per CU
+  │ (Block shared) │              │  ~2MB total
   │ __shared__     │              │
   └───────┬────────┘
           │
   ┌───────▼────────┐
-  │   L0/L1 Cache  │  ~10 周期   │  16-32KB per CU
-  │   (CU 私有)    │              │
+  │   L0/L1 Cache  │  ~10 cycles   │  16-32KB per CU
+  │  (CU-private)  │              │
   └───────┬────────┘
           │
   ┌───────▼────────┐
-  │   L2 Cache     │  ~100 周期  │  4MB (共享)
-  │   (全局共享)   │              │  Infinity Cache
+  │   L2 Cache     │  ~100 cycles  │  32MB (shared)
+  │   (shared)     │              │  Infinity Cache
   └───────┬────────┘
           │
   ┌───────▼────────┐
-  │     VRAM       │  ~300 周期  │  8GB GDDR6
-  │ (全局内存)     │  288 GB/s   │
+  │     VRAM       │  ~300 cycles  │  8GB GDDR6
+  │ (Global mem)   │  288 GB/s    │
   │ hipMalloc()    │              │
   └───────┬────────┘
           │ PCIe 4.0
   ┌───────▼────────┐
-  │  系统内存 RAM  │  ~800 周期  │  主机内存
-  │ (CPU 内存)     │  ~32 GB/s   │
+  │  System RAM    │  ~800 cycles  │  Host memory
+  │ (CPU memory)   │  ~32 GB/s    │
   └────────────────┘
 
 优化策略：
@@ -2334,34 +2334,34 @@ int main()
 │  Compute Unit (CU)                                           │
 │                                                              │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  VGPR 文件 (Vector GPR)                               │  │
-│  │  256 个寄存器 × 64 lanes (per Wavefront)              │  │
+│  │  VGPR File (Vector GPR)                                  │  │
+│  │  256 Registers × 64 lanes (per Wavefront)               │  │
 │  │                                                        │  │
 │  │  Wavefront 0: v0[0..63] v1[0..63] ... v255[0..63]    │  │
 │  │  Wavefront 1: v0[0..63] v1[0..63] ... v255[0..63]    │  │
 │  │  ...                                                   │  │
 │  │                                                        │  │
-│  │  ► 线程私有数据：坐标、颜色值、threadIdx.x 相关计算    │  │
-│  │  ► 用越多 VGPR → CU 能容纳的 Wavefront 越少           │  │
+│  │  ► Thread-private: coords, colors, threadIdx.x calcs  │  │
+│  │  ► More VGPRs → fewer Wavefronts per CU               │  │
 │  │    (256 VGPR → 1 Wavefront, 128 → 2, 64 → 4...)      │  │
 │  └───────────────────────────────────────────────────────┘  │
 │                                                              │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  SGPR 文件 (Scalar GPR)                               │  │
-│  │  128 个寄存器 (整个 Wavefront 共享)                    │  │
+│  │  SGPR File (Scalar GPR)                               │  │
+│  │  128 Registers (shared by entire Wavefront)           │  │
 │  │                                                        │  │
-│  │  s0-s1: 内核参数基地址 (64-bit pointer)               │  │
-│  │  s2-s3: 全局偏移                                      │  │
-│  │  s4:    循环计数器 (所有线程相同)                      │  │
-│  │  s5-s6: 常量值                                         │  │
+│  │  s0-s1: Kernel param base addr (64-bit pointer)       │  │
+│  │  s2-s3: Global offset                                 │  │
+│  │  s4:    Loop counter (same for all threads)           │  │
+│  │  s5-s6: Constant values                               │  │
 │  │                                                        │  │
-│  │  ► Wavefront 内所有线程共享的数据                      │  │
-│  │  ► 标量操作比向量操作节能 64 倍                        │  │
+│  │  ► Data shared by all threads in a Wavefront          │  │
+│  │  ► Scalar ops 64x more power-efficient than vector    │  │
 │  └───────────────────────────────────────────────────────┘  │
 │                                                              │
-│  Occupancy 影响：                                            │
+│  Occupancy Impact:                                           │
 │  ┌─────────────────────────────────────────┐                │
-│  │ VGPR 使用量 │ 最大 Wavefront/CU │ 占用率 │                │
+│  │ VGPR Usage  │ Max Wavefront/CU  │ Occup. │                │
 │  ├─────────────┼──────────────────┼────────┤                │
 │  │ 24 VGPR     │ 10 Wavefront     │ 100%   │                │
 │  │ 48 VGPR     │ 5 Wavefront      │  50%   │                │
@@ -2559,7 +2559,7 @@ vector_add:
             content: `IGT 测试架构
 
 ┌─────────────────────────────────────────────────────────────┐
-│                    IGT 测试程序 (tests/)                      │
+│                    IGT Test Programs (tests/)                    │
 │                                                              │
 │  tests/amdgpu/        tests/kms_*        tests/gem_*        │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
@@ -2570,23 +2570,23 @@ vector_add:
 │         └──────────────────┴─────────────────┘               │
 │                            │                                 │
 ├────────────────────────────┼─────────────────────────────────┤
-│                    IGT 库 (lib/)                              │
+│                    IGT Library (lib/)                            │
 │                            │                                 │
 │  ┌────────────┐  ┌────────┴────────┐  ┌──────────────┐     │
 │  │ igt_core.h │  │ igt_kms.h      │  │ igt_amd.h    │     │
-│  │ assert宏   │  │ connector/crtc │  │ debugfs读取  │     │
-│  │ 子测试管理 │  │ framebuffer    │  │ AMD特定检查  │     │
+│  │ assertions  │  │ connector/crtc │  │ debugfs read  │     │
+│  │ subtest mgr │  │ framebuffer    │  │ AMD-specific  │     │
 │  └────────────┘  └────────┬────────┘  └──────────────┘     │
 │                            │                                 │
 ├────────────────────────────┼─────────────────────────────────┤
-│                     libdrm (用户态)                           │
+│                     libdrm (userspace)                         │
 │                            │ ioctl                           │
 ├────────────────────────────┼─────────────────────────────────┤
-│                     DRM 子系统 (内核)                         │
+│                     DRM Subsystem (kernel)                     │
 │                            │                                 │
-│                     amdgpu 驱动                              │
+│                     amdgpu Driver                             │
 ├────────────────────────────┼─────────────────────────────────┤
-│                     GPU 硬件                                 │
+│                     GPU Hardware                              │
 └─────────────────────────────────────────────────────────────┘`,
             caption: 'IGT 测试框架分层架构。测试程序通过 IGT 库调用 libdrm，最终通过 DRM ioctl 与内核 amdgpu 驱动交互。AMD 特定的辅助函数在 lib/igt_amd.h 中。',
           },
@@ -2599,26 +2599,26 @@ vector_add:
             content: `内核测试框架对比
 
 ┌──────────────────────────────────────────────────────────────┐
-│                       测试层次                                │
+│                       Test Layers                              │
 │                                                               │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
 │  │   IGT Tests     │  │  Kernel         │  │  KUnit       │ │
-│  │   (用户态)      │  │  Selftests      │  │  (内核态)    │ │
-│  │                 │  │  (用户态+内核)  │  │              │ │
-│  │ 运行环境:       │  │ 运行环境:       │  │ 运行环境:    │ │
-│  │   用户空间      │  │   用户空间      │  │   内核空间   │ │
+│  │   (Userspace)    │  │  Selftests      │  │  (Kernel)    │ │
+│  │                 │  │  (User+Kernel)  │  │              │ │
+│  │ Runs in:        │  │ Runs in:        │  │ Runs in:     │ │
+│  │   User space    │  │   User space    │  │ Kernel space │ │
 │  │                 │  │                 │  │              │ │
-│  │ 测试对象:       │  │ 测试对象:       │  │ 测试对象:    │ │
-│  │   DRM ioctl     │  │   sysfs/ioctl   │  │   内核函数   │ │
-│  │   显示/渲染     │  │   驱动行为      │  │   数据结构   │ │
+│  │ Tests:          │  │ Tests:          │  │ Tests:       │ │
+│  │   DRM ioctl     │  │   sysfs/ioctl   │  │ Kernel funcs │ │
+│  │   Display/render│  │   Drv behavior  │  │ Data structs │ │
 │  │                 │  │                 │  │              │ │
-│  │ 依赖:           │  │ 依赖:           │  │ 依赖:        │ │
-│  │   libdrm        │  │   最小化        │  │   无（纯内核）│ │
+│  │ Deps:           │  │ Deps:           │  │ Deps:        │ │
+│  │   libdrm        │  │   Minimal       │  │ N/A (kernel) │ │
 │  │   cairo/pixman  │  │                 │  │              │ │
 │  └─────────────────┘  └─────────────────┘  └──────────────┘ │
 │                                                               │
-│  覆盖范围:  功能/集成测试    回归/冒烟测试     单元测试       │
-│  适用阶段:  补丁提交前       内核编译后         开发阶段       │
+│  Scope:  Func/Integration    Regress/Smoke       Unit test      │
+│  Phase:  Pre-patch submit    After kernel build   During dev     │
 └──────────────────────────────────────────────────────────────┘`,
             caption: 'Linux GPU 驱动的三层测试体系。IGT 是最全面的功能测试，Kernel Selftests 用于快速冒烟测试，KUnit 用于内核内部数据结构的单元测试。',
           },
@@ -2647,7 +2647,7 @@ vector_add:
 │  Stage 2: Static Analysis                                    │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐                  │
 │  │ sparse   │  │ smatch   │  │checkpatch│                  │
-│  │ 类型检查 │  │ Bug模式  │  │ 风格检查 │                  │
+│  │ TypeCheck │  │BugPattern│  │StyleCheck│                  │
 │  └────┬─────┘  └────┬─────┘  └────┬─────┘                  │
 │       └──────────────┴─────────────┘                         │
 │                      │ PASS?                                 │
@@ -2668,19 +2668,19 @@ vector_add:
 ┌─────────────────────────────────────────────────────────────┐
 │  Stage 4: Regression Analysis                                │
 │  ┌──────────────────────────────────────────┐               │
-│  │  对比 baseline：新增 FAIL → 标记回归     │               │
-│  │  新增 PASS → 标记修复                    │               │
-│  │  SKIP 变化 → 检查是否误删功能            │               │
+│  │  vs baseline: new FAIL → mark regression │               │
+│  │  new PASS → mark as fixed               │               │
+│  │  SKIP change → check removed feature    │               │
 │  └──────────────────────────────────────────┘               │
 └──────────────────────┬──────────────────────────────────────┘
                        ▼
-              ┌─────────────────┐
-              │ 全部 PASS       │
-              │ → 补丁可合并    │
-              │                 │
-              │ 有 FAIL         │
-              │ → 需要修复      │
-              └─────────────────┘`,
+              ┌───────────────────┐
+              │ All PASS          │
+              │ → Merge ready     │
+              │                   │
+              │ Has FAIL          │
+              │ → Needs fixing    │
+              └───────────────────┘`,
             caption: 'AMD GPU 驱动的 CI 管线。补丁必须通过编译、静态分析和硬件测试三个阶段才能被合并。测试在多代 AMD GPU 硬件上并行运行。',
           },
         },
@@ -2692,10 +2692,10 @@ vector_add:
             content: `高质量 Bug 报告结构
 
 ┌─────────────────────────────────────────────────────────────┐
-│  Bug 报告标题: [amdgpu] GPU hang on RX 7600 XT with KMS    │
+│  Bug Title: [amdgpu] GPU hang on RX 7600 XT with KMS        │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  1. 系统信息                                                 │
+│  1. System Info                                              │
 │  ┌────────────────────────────────────────┐                 │
 │  │ Kernel: 6.8.0-rc3                      │                 │
 │  │ GPU:    AMD Navi33 [RX 7600 XT] (7480) │                 │
@@ -2703,26 +2703,26 @@ vector_add:
 │  │ Distro: Ubuntu 24.04                   │                 │
 │  └────────────────────────────────────────┘                 │
 │                                                              │
-│  2. 复现步骤（最小化）                                       │
+│  2. Steps to Reproduce (minimal)                             │
 │  ┌────────────────────────────────────────┐                 │
 │  │ $ sudo igt_runner -t kms_atomic        │                 │
-│  │ → 在 subtest atomic-setmode 时 hang    │                 │
+│  │ → Hangs at subtest atomic-setmode       │                 │
 │  └────────────────────────────────────────┘                 │
 │                                                              │
-│  3. 实际行为 + dmesg 输出                                    │
+│  3. Actual Behavior + dmesg Output                           │
 │  ┌────────────────────────────────────────┐                 │
 │  │ [drm] GPU hang detected!               │                 │
 │  │ [drm] GRBM_STATUS=0x00000300           │                 │
 │  │ [drm] ring gfx timeout                 │                 │
 │  └────────────────────────────────────────┘                 │
 │                                                              │
-│  4. 回归信息                                                 │
+│  4. Regression Info                                          │
 │  ┌────────────────────────────────────────┐                 │
 │  │ Good: v6.7   Bad: v6.8-rc1             │                 │
-│  │ Bisect → commit abc123 引入问题        │                 │
+│  │ Bisect → commit abc123 caused issue    │                 │
 │  └────────────────────────────────────────┘                 │
 │                                                              │
-│  5. 附件: dmesg 全文, gpu_metrics, IGT log                   │
+│  5. Attachments: dmesg full, gpu_metrics, IGT log            │
 └─────────────────────────────────────────────────────────────┘`,
             caption: '一个完整的 GPU 驱动 Bug 报告应包含这 5 个核心部分。回归信息（git bisect 结果）对维护者定位问题最有价值。',
           },
@@ -2739,7 +2739,7 @@ IGT 测试失败
      ▼
 启用 ftrace 追踪
 ┌────────────────────────────────────────────────────────────┐
-│  # 追踪 amdgpu 相关函数                                    │
+│  # Trace amdgpu related functions                           │
 │  echo function > /sys/kernel/debug/tracing/current_tracer  │
 │  echo "amdgpu_*" > /sys/kernel/debug/tracing/set_ftrace_filter │
 │  echo 1 > /sys/kernel/debug/tracing/tracing_on             │
@@ -2761,12 +2761,12 @@ IGT 测试失败
 ┌────────────────────────────────────────────────────────────┐
 │  trace-cmd report igt_fail_trace.log                       │
 │                                                             │
-│  输出示例：                                                 │
+│  Output example:                                            │
 │  kms_atomic-1234  [002] .... 10.123: amdgpu_dm_commit_planes │
 │  kms_atomic-1234  [002] .... 10.124: amdgpu_dm_update_plane  │
-│  kms_atomic-1234  [002] .... 10.125: dc_commit_state ← 卡这│
+│  kms_atomic-1234  [002] .... 10.125: dc_commit_state ← HANG│
 │                                                             │
-│  → 定位到 dc_commit_state 函数是失败点                      │
+│  → Located dc_commit_state as the failure point             │
 └────────────────────────────────────────────────────────────┘`,
             caption: 'ftrace 调试流程。通过追踪内核函数调用，可以精确定位 IGT 测试失败时内核中发生了什么，比单独看 dmesg 提供更细粒度的信息。',
           },
@@ -2778,7 +2778,7 @@ IGT 测试失败
           author: 'Jonathan Corbet, Alessandro Rubini, Greg Kroah-Hartman',
           isbn: '978-0596005900',
           relevance: '第 18 章（Debugging Techniques）详细介绍了内核调试和测试方法，包括 printk、oops 分析和测试策略。',
-          url: 'https://lwn.net/Kernel/LDD3/',
+          url: 'https://docs.kernel.org/driver-api/index.html',
         },
         {
           title: 'Linux Kernel in a Nutshell',
@@ -3365,6 +3365,8 @@ git format-patch HEAD~1 -o /tmp/patches/
     ],
   },
 ];
+
+export const curriculum = curriculumZh;
 
 export const totalHours = curriculum.reduce((sum, m) => sum + m.estimatedHours, 0);
 

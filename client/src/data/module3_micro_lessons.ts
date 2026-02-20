@@ -470,6 +470,7 @@ err_disable:
               '内核使用负的 errno 值作为错误码（如 -ENOMEM、-EINVAL、-EIO）。成功返回 0，失败返回负值。这个约定贯穿整个内核。IS_ERR(ptr) 宏检查一个指针是否编码了错误码（指针值在 -1 到 -MAX_ERRNO 范围内），PTR_ERR(ptr) 从编码了错误的指针中提取 errno 值，ERR_PTR(errno) 将 errno 编码为指针。这种"错误指针"机制让函数可以在一个返回值中同时表达"成功（返回有效指针）"和"失败（返回编码了错误码的假指针）"。',
               'amdgpu_device_init 是这种模式的典型案例。它需要初始化十几个子系统：doorbell、VRAM、IP discovery、固件加载、各个 IP Block 等。每个子系统的初始化都可能失败，而且后面的子系统依赖前面的。函数末尾有一个长长的 goto 标签链，确保任何步骤失败都能正确回滚。这不是糟糕的编码风格——这是经过数十年验证的、最可靠的内核资源管理模式。',
               '常见的反模式是忘记在错误路径中释放资源——这会导致内核内存泄漏。Linux 有专门的工具（kmemleak、smatch、sparse）来静态检测这类 Bug。在提交 amdgpu 补丁时，审查者会特别关注错误路径的资源释放是否完整。',
+              'Modern kernel development (5.x+) also uses dev_err_probe() for probe-time errors. This function combines dev_err() with returning the error code, and specially handles -EPROBE_DEFER (deferred probing — when a dependency isn\'t ready yet). In amdgpu, you\'ll see patterns like: return dev_err_probe(dev, ret, "failed to init GMC"); which prints the error AND returns the error code in one line. It\'s cleaner than the traditional if (ret) { dev_err(...); return ret; } pattern. Understanding dev_err_probe is essential because reviewers on amd-gfx will request you use it for new probe-path error handling.',
             ],
             keyPoints: [
               'goto 在内核中是推荐的错误处理模式——Linus 在 CodingStyle 中明确支持',
@@ -478,6 +479,7 @@ err_disable:
               'IS_ERR/PTR_ERR/ERR_PTR 宏用于指针编码的错误码——常见于返回指针的函数',
               'amdgpu_device_init 有 20+ 个 goto 标签，是 goto 链式清理的大型实例',
               '忘记在错误路径释放资源 = 内核内存泄漏 → kmemleak/smatch 可检测',
+              'dev_err_probe() is the modern (5.x+) pattern for probe-time errors — combines error logging and -EPROBE_DEFER handling',
             ],
           },
           diagram: {
@@ -637,7 +639,7 @@ int init() {
     buf = kmalloc(...);
     if (buf) {
         mutex_init(&lock);
-        wq = create_workqueue("my_wq");
+        wq = alloc_workqueue("my_wq", WQ_UNBOUND, 0);
         if (wq) {
             return 0;
         }
@@ -652,7 +654,7 @@ int init() {
     buf = kmalloc(...);
     if (!buf) { ret = -ENOMEM; goto err_buf; }
     mutex_init(&lock);
-    wq = create_workqueue("my_wq");
+    wq = alloc_workqueue("my_wq", WQ_UNBOUND, 0);
     if (!wq) { ret = -ENOMEM; goto err_wq; }
     return 0;
 err_wq:
@@ -787,7 +789,7 @@ amdgpu 中的实际使用：
           },
           codeWalk: {
             title: 'amdgpu 中 mutex 和 spinlock 的实际使用',
-            file: 'drivers/gpu/drm/amd/amdgpu/',
+            file: 'drivers/gpu/drm/amd/amdgpu/amdgpu_vram_mgr.c',
             language: 'c',
             code: `/* === 1. Mutex: 保护 VRAM 管理器 === */
 /* amdgpu_vram_mgr.c — VRAM 分配需要睡眠等待，使用 mutex */

@@ -32,7 +32,7 @@ export const module05MicroLessons: MicroLessonModule = {
             summary: 'AMD GPU 产品分三个层次：消费级 Radeon RX（游戏）、专业级 Radeon Pro（工作站）、数据中心级 Instinct MI（AI/HPC）。它们共享同一个 amdgpu 内核驱动，但固件和用户态配置不同。',
             explanation: [
               'AMD 的 GPU 业务由 Radeon Technologies Group (RTG) 负责，产品线分为三个明确的层次。理解这个分层对驱动开发者至关重要——因为同一个 amdgpu 内核驱动需要支持所有三个层次的产品，而每个层次的优化目标和功能需求截然不同。',
-              '消费级 Radeon RX：这是你最熟悉的产品线，你的 RX 7600 XT 就属于这里。主要面向游戏玩家和创意工作者。驱动优化的重点是 OpenGL/Vulkan 渲染性能、低延迟显示输出（FreeSync）、视频编解码（VCN 引擎）。在内核代码中，Radeon RX 系列通过标准的 /dev/dri/card0 DRM 接口暴露功能。价格范围：$200-$1200。',
+              '消费级 Radeon RX：面向游戏玩家和创意工作者的产品线（本教程以 RX 7600 XT 为示例）。主要面向游戏玩家和创意工作者。驱动优化的重点是 OpenGL/Vulkan 渲染性能、低延迟显示输出（FreeSync）、视频编解码（VCN 引擎）。在内核代码中，Radeon RX 系列通过标准的 /dev/dri/card0 DRM 接口暴露功能。价格范围：$200-$1200。',
               '专业级 Radeon Pro：面向 CAD 设计师、影视后期、科学可视化等专业场景。与消费级使用相同的 GPU 芯片（如 Pro W7900 使用 Navi31，和 RX 7900 XTX 同芯片），但固件配置不同：（1）驱动经过专业应用认证（如 SolidWorks、Maya）；（2）ECC 显存支持（错误校正，防止数据损坏）；（3）更保守的频率设置以确保长期稳定性。在 amdgpu 驱动中，Pro 和 RX 系列共享同一套代码，差异主要在固件层。',
               'Instinct MI 数据中心级：这是 AMD 用来与 NVIDIA A100/H100 竞争的产品线。MI300X 拥有 192GB HBM3 显存，专为 AI 训练和 HPC 设计。关键区别：（1）没有显示输出——Instinct GPU 是纯计算卡，没有 HDMI/DP 接口，amdgpu 驱动中的 DC（Display Core）模块不加载；（2）通过 ROCm/KFD 接口暴露计算能力；（3）支持 GPU-GPU 直连（AMD Infinity Fabric），多卡可以像一个大 GPU 一样工作。在内核代码中，Instinct 使用独立的 Device ID 范围，KFD 模块为其提供 HSA 接口。',
               '对驱动开发者的意义：你修改 amdgpu 代码中的任何一行，都可能影响这三个产品层次。一个 GEM 内存分配的 Bug 可能在 RX 上导致游戏崩溃，在 Pro 上导致 CAD 渲染错误，在 Instinct 上导致 AI 训练数据损坏。这就是为什么 amdgpu 的 CI 需要在多代、多层次的硬件上测试。',
@@ -90,7 +90,7 @@ export const module05MicroLessons: MicroLessonModule = {
   所有产品 → 同一个 amdgpu.ko → 通过 Device ID 区分
   RX/Pro   → 加载 DC (显示) + GFX + SDMA + VCN
   Instinct → 不加载 DC, 加载 KFD + GFX + SDMA`,
-            caption: 'AMD GPU 三层产品线。你的 RX 7600 XT (Navi33) 在最下层，与 Radeon Pro W7600 使用完全相同的芯片。amdgpu 驱动通过 PCI Device ID 区分不同产品，但共享绝大部分代码。',
+            caption: 'AMD GPU 三层产品线。RX 7600 XT (Navi33) 与 Radeon Pro W7600 使用完全相同的芯片。amdgpu 驱动通过 PCI Device ID 区分不同产品，但共享绝大部分代码——这一规律适用于整个 AMD 产品系列。',
           },
           codeWalk: {
             title: '在内核代码中区分消费级和数据中心 GPU',
@@ -207,7 +207,7 @@ int setup_display(struct amdgpu_device *adev)
           difficulty: 'beginner',
           tags: ['naming', 'Navi', 'RDNA', 'gfx1102', 'device-id'],
           concept: {
-            summary: '每个 AMD GPU 有四层命名：市场名（RX 7600 XT）、芯片代号（Navi33）、IP 版本（gfx1102）和 PCI Device ID（0x7480）。掌握这四层映射关系，你就能从任何一层推断出其他三层，在驱动代码中快速定位。',
+            summary: '每个 AMD GPU 有四层命名：市场名、芯片代号、IP 版本、PCI Device ID。掌握这四层映射关系，你就能从任何一层推断出其他三层，在驱动代码中快速定位。本节以 RX 7600 XT（Navi33 / gfx1102 / 0x7480）为贯穿示例，方法适用于所有 AMD GPU。',
             explanation: [
               '当你在 amdgpu 源码中看到 "gfx1102" 时，你需要立刻知道这对应的是 RDNA3 架构的 Navi33 芯片，市场上以 RX 7600 系列销售。这种快速映射能力是高效阅读驱动代码的关键。让我们拆解 AMD GPU 的完整命名体系。',
               '第一层：市场名（RX 7600 XT）。这是消费者看到的名称。RX = Radeon eXperience（消费级标识）；第一个数字 7 = 架构代数（7=RDNA3，6=RDNA2，5=RDNA1）；第二个数字 6 = 性能等级（9=旗舰，8=高端，7=中高端，6=中端，5=入门）；后两位 00 = 具体 SKU；后缀 XT = 增强版（更高频率或更多计算单元），XTX = 旗舰增强版。所以 RX 7600 XT = RDNA3 架构、中端性能、增强版。',
@@ -232,7 +232,7 @@ int setup_display(struct amdgpu_device *adev)
 ─────────────────  ──────────  ──────────  ──────────  ──────────────
 
 RDNA4 (2025):
-RX 9070 XT         Navi48       gfx1201     0x???       CHIP_NAVI48
+RX 9070 XT         Navi48       gfx1201     0x7550      CHIP_NAVI48
 
 RDNA3 (2022):
 RX 7900 XTX        Navi31       gfx1100     0x744C      CHIP_NAVI31
@@ -256,7 +256,7 @@ RX 5600 XT         Navi10       gfx1010     0x7340      CHIP_NAVI10
   gfx1102 → gfx_v11_0.c（共享 RDNA3 GFX 实现）
   gfx1030 → gfx_v10_3.c（RDNA2 GFX 实现）
   gfx1010 → gfx_v10_0.c（RDNA1 GFX 实现）`,
-            caption: '完整的 AMD GPU 四层命名映射。记住你的 GPU 对应链：RX 7600 XT ↔ Navi33 ↔ gfx1102 ↔ 0x7480。当你在代码中看到任何一层时，都能立即推断出其他三层。',
+            caption: 'AMD GPU 四层命名映射示例。理解这套映射规则后，遇到任何 AMD GPU 型号都能立即推断出其他三层（如 RX 7600 XT ↔ Navi33 ↔ gfx1102 ↔ 0x7480）。',
           },
           codeWalk: {
             title: '从 Device ID 到 IP 版本的完整映射链',
@@ -306,7 +306,7 @@ static int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
           },
           miniLab: {
             title: '建立你的 GPU 命名映射卡',
-            objective: '查找你的 RX 7600 XT 的四层命名，并在内核源码中验证每一层的对应关系。',
+            objective: '查找你手头 AMD GPU 的四层命名（以 RX 7600 XT 为参考示例），并在内核源码中验证每一层的对应关系。',
             steps: [
               '记录市场名：RX 7600 XT',
               '查找 Device ID：lspci -nn | grep AMD（记录 [1002:xxxx] 中的 xxxx）',
@@ -337,7 +337,7 @@ static int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
             title: '识别错误的 LLVM 目标名',
             language: 'bash',
             description: '你在编译一个 HIP 程序时指定了错误的 GPU 目标。分析错误并找出正确的目标名。',
-            question: '为什么这个编译命令会在你的 RX 7600 XT 上产生错误的代码？',
+            question: '为什么这个编译命令会在 RX 7600 XT（gfx1102）上产生错误的代码？（同样适用于其他 gfx 目标不匹配的情况）',
             buggyCode: `# 编译 HIP 程序，指定 GPU 目标
 hipcc --offload-arch=gfx1100 my_kernel.hip -o my_kernel
 
@@ -384,14 +384,14 @@ hipcc --offload-arch=gfx1100 my_kernel.hip -o my_kernel
               'GCN（Graphics Core Next，2012-2019）是 AMD GPU 的第一个统一着色器架构，奠定了现代 AMD GPU 的基础。GCN 的设计理念是"计算优先"——它的 Compute Unit（CU）结构非常适合 GPGPU 计算（这也是为什么 AMD 在 HPC 领域有竞争力），但在纯游戏渲染效率上不如 NVIDIA 的同代架构。GCN 从 1.0 到 5.0（Vega）共 5 代，在 amdgpu 驱动中对应 gfx6 到 gfx9。',
               'GCN 的关键设计：（1）64-wide Wavefront——每个 Wavefront 包含 64 个线程，在 4 个 SIMD16 单元上执行 4 个周期。这个设计在计算密集型任务中效率很高，但在图形渲染中（通常有大量小三角形和分支）会导致资源浪费。（2）统一的 CU 结构——每个 CU 包含 4 个 SIMD16、1 个标量单元和 64KB LDS。（3）固定的 L1/L2 缓存层次。在驱动代码中，GCN 的实现位于 gfx_v6_0.c（GCN1）到 gfx_v9_0.c（Vega）。',
               'RDNA（Radeon DNA，2019-至今）是一次从头设计的架构革命。核心改变：（1）引入 Workgroup Processor（WGP）结构——两个 CU 组成一个 WGP，共享指令缓存和 LDS 带宽，减少硬件冗余；（2）支持 Wave32 模式——Wavefront 可以是 32 或 64 线程，32 线程模式在图形渲染中更高效（更少的分支浪费）；（3）完全重新设计的缓存层次——增加了 L0 缓存（每个 CU 16KB），L1 缓存从 16KB 增加到 128KB，以及 Infinity Cache（RDNA2/3 的大容量 L3 缓存）。',
-              'RDNA 的三个代际：RDNA1（2019，gfx10，RX 5700 XT）引入了 WGP 和 Wave32；RDNA2（2020，gfx103x，RX 6800 XT）添加了硬件光线追踪和 Infinity Cache；RDNA3（2022，gfx110x，你的 RX 7600 XT）首次使用 Chiplet 设计（GCD + MCD 分离），引入了 WMMA（Wave Matrix Multiply Accumulate）AI 加速指令。',
+              'RDNA 的三个代际：RDNA1（2019，gfx10，RX 5700 XT）引入了 WGP 和 Wave32；RDNA2（2020，gfx103x，RX 6800 XT）添加了硬件光线追踪和 Infinity Cache；RDNA3（2022，gfx110x）引入了 WMMA（Wave Matrix Multiply Accumulate）等新能力。RDNA3 家族中既有采用 Chiplet 的型号（如 Navi31/32），也有单晶粒型号（如你的 RX 7600 XT / Navi33）。',
               '对驱动代码的影响：amdgpu 需要同时支持 GCN 和 RDNA 所有架构，这导致大量条件编译和 IP 版本检查。gfx_v11_0.c（你的 GPU）和 gfx_v9_0.c（Vega）的代码结构相似但细节完全不同——寄存器地址、命令格式、中断处理都有差异。理解这个历史演进，能帮助你在看到 "if (adev->ip_versions[GC_HWIP][0] >= IP_VERSION(10, 0, 0))" 这类代码时理解它在区分 GCN 和 RDNA。',
             ],
             keyPoints: [
               'GCN (2012-2019): gfx6-gfx9, 64-wide Wavefront, 计算优先设计',
               'RDNA1 (2019): gfx10, 引入 WGP 和 Wave32, 每瓦性能大幅提升',
               'RDNA2 (2020): gfx103x, 硬件光线追踪 + Infinity Cache',
-              'RDNA3 (2022): gfx110x, Chiplet 设计 + WMMA AI 指令, 你的 RX 7600 XT',
+              'RDNA3 (2022): gfx110x, WMMA AI 指令（部分型号为 Chiplet，Navi33 为单晶粒）',
               'RDNA4 (2025): gfx120x, 增强光追 + AI 性能, RX 9070 XT',
               'amdgpu 驱动中 GCN 代码仍然存在（legacy support）——理解历史有助于理解代码结构',
             ],
@@ -423,7 +423,7 @@ hipcc --offload-arch=gfx1100 my_kernel.hip -o my_kernel
          │ 也用于 PS5 和 Xbox Series X
          │
 2022 ─── RDNA 3.0 ─────────────────── gfx110x ── RX 7600 XT ← 你
-         │ Chiplet (GCD 5nm + MCD 6nm)
+         │ RDNA3 家族：Navi31/32 为 Chiplet，Navi33 为单晶粒
          │ WMMA AI 加速指令, AV1 硬件编码
          │
 2025 ─── RDNA 4.0 ─────────────────── gfx120x ── RX 9070 XT
@@ -437,7 +437,7 @@ hipcc --offload-arch=gfx1100 my_kernel.hip -o my_kernel
   gfx10 → gfx_v10_0.c, sdma_v5_0.c
   gfx11 → gfx_v11_0.c, sdma_v6_0.c ← 你的 GPU
   gfx12 → gfx_v12_0.c (最新)`,
-            caption: 'AMD GPU 从 GCN 到 RDNA 的完整演进。2019 年的 RDNA1 是一次架构革命，性能/瓦提升了 50%。你的 RX 7600 XT 使用 RDNA3 (gfx1102)，是 Chiplet 设计的首个 GPU 架构。',
+            caption: 'AMD GPU 从 GCN 到 RDNA 的完整演进。2019 年的 RDNA1 是一次架构革命，性能/瓦提升了 50%。图中以 RX 7600 XT (gfx1102 / Navi33) 作为示例 GPU 标注，其他 AMD GPU 可参照此图定位自己的位置。',
           },
           codeWalk: {
             title: '驱动代码中的架构区分',
@@ -470,16 +470,16 @@ bool amdgpu_gfx_has_wmma(struct amdgpu_device *adev)
  *   RDNA: mmGRBM_STATUS = 0xD040
  * 每个 gfx_vXX_0.c 文件定义自己的寄存器映射 */
 
-/* 4. Chiplet 相关的新逻辑 (RDNA3 only) */
-/* RDNA3 的 Chiplet 设计引入了 GCD (Graphics Compute Die)
- * 和 MCD (Memory Cache Die) 的概念
- * 驱动需要处理跨 die 的内存访问延迟差异 */`,
+/* 4. RDNA3 家族中的实现差异 */
+/* RDNA3 既包含 Chiplet 实现（如 Navi31/32）
+ * 也包含单晶粒实现（如 Navi33）。
+ * 驱动需要根据具体 IP/ASIC 处理差异化寄存器与性能特征。 */`,
             annotations: [
               'IP_VERSION(10, 0, 0) 是 RDNA1 的起点——这个检查区分了 GCN 和 RDNA 两个世代',
               'Wave32 是 RDNA 的关键创新——在图形渲染中减少了 50% 的分支浪费',
               'WMMA 指令是 RDNA3 独有的——用于 AI 推理中的矩阵乘法加速',
               '寄存器地址在不同架构之间不兼容——每代有自己的寄存器定义头文件',
-              'Chiplet 是 RDNA3 的物理设计创新——GCD 用 5nm 制程，MCD 用 6nm',
+              'RDNA3 在不同芯片上有不同物理实现——Navi31/32 为 Chiplet，Navi33 为单晶粒',
             ],
             explanation: '这段代码展示了 amdgpu 驱动如何在一套代码中处理跨越 13 年、多个架构世代的 GPU。IP 版本检查（IP_VERSION 宏）是最常用的架构区分方法。当你在代码中看到这种检查时，你可以根据版本号判断这段代码针对的是哪个架构。',
           },
@@ -502,7 +502,7 @@ bool amdgpu_gfx_has_wmma(struct amdgpu_device *adev)
 - L2 Cache: 32MB (Infinity Cache)
 - VRAM: 8GB GDDR6 @ 288 GB/s
 - 支持 WMMA AI 指令
-- Chiplet 设计: GCD (5nm) + MCD (6nm)`,
+- Navi33（RX 7600 XT）为单晶粒实现（非 Chiplet）`,
             hint: '如果 dmesg 信息不够详细，可以安装 rocminfo（ROCm 工具）：rocminfo 会输出非常详细的 GPU 架构信息。',
           },
           debugExercise: {
@@ -681,14 +681,14 @@ int amdgpu_gem_create_ioctl(struct drm_device *dev, void *data,
               'amdgpu 驱动版本：modinfo amdgpu | grep "^version"',
               '内核版本：uname -r',
             ],
-            expectedOutput: `你的驱动栈版本档案：
+            expectedOutput: `你的驱动栈版本档案（示例，实际以本机输出为准）：
 ┌──────────────┬───────────────────────────────┐
-│ Mesa         │ 24.1.0 (或你的版本)           │
-│ Vulkan (radv)│ Mesa 24.1.0 (ACO)             │
-│ libdrm       │ 2.4.120                       │
-│ DRM Core     │ 3.54.0                        │
+│ Mesa         │ <your-mesa-version>           │
+│ Vulkan (radv)│ <your-radv-driver-info>       │
+│ libdrm       │ <your-libdrm-version>         │
+│ DRM Core     │ <your-drm-core-version>       │
 │ amdgpu       │ (随内核版本)                   │
-│ 内核         │ 6.8.0-xx                       │
+│ 内核         │ <your-kernel-version>          │
 └──────────────┴───────────────────────────────┘`,
             hint: '如果 vulkaninfo 不可用，安装 vulkan-tools（sudo apt install vulkan-tools）。如果 glxinfo 不可用，安装 mesa-utils。',
           },
