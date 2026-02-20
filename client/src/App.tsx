@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
@@ -51,16 +51,13 @@ function SearchButton() {
 }
 
 function LocaleRouter({ locale }: { locale: "zh" | "en" }) {
-  useEffect(() => {
-    changeLanguage(locale);
-  }, [locale]);
+  // Sync language immediately (not in useEffect) so first render uses correct locale
+  changeLanguage(locale);
   return (
-    <Router base={`/${locale}`}>
-      <LocaleProvider locale={locale} onLocaleChange={(l) => changeLanguage(l)}>
-        <InnerRoutes />
-        <SearchButton />
-      </LocaleProvider>
-    </Router>
+    <LocaleProvider locale={locale} onLocaleChange={(l) => changeLanguage(l)}>
+      <InnerRoutes />
+      <SearchButton />
+    </LocaleProvider>
   );
 }
 
