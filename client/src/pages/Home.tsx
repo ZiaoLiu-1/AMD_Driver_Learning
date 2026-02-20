@@ -12,7 +12,7 @@ import { curriculum, totalHours, difficultyColors, difficultyLabels } from "@/da
 import { useProgress } from "@/contexts/ProgressContext";
 import { ArrowRight, Clock, BookOpen, Code2, Target, ChevronRight, Cpu, Zap, CheckCircle2, Circle, Loader2, BarChart3 } from "lucide-react";
 
-const HERO_BG = "https://files.manuscdn.com/user_upload_by_module/session_file/310419663030974181/KumqyzRnkUJtBwIl.jpg";
+const HERO_BG_GRADIENT = "radial-gradient(ellipse at 30% 20%, oklch(0.22 0.06 260) 0%, oklch(0.08 0.02 250) 50%, oklch(0.04 0.01 240) 100%)";
 
 // Learning path stages grouping
 const STAGES = [
@@ -90,7 +90,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative min-h-[88vh] flex items-center overflow-hidden pt-14">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${HERO_BG})` }} />
+        <div className="absolute inset-0" style={{ background: HERO_BG_GRADIENT }} />
         <div className="hero-overlay absolute inset-0" />
         <div className="absolute inset-0 opacity-[0.03]" style={{
           backgroundImage: 'linear-gradient(oklch(0.92 0.008 240) 1px, transparent 1px), linear-gradient(90deg, oklch(0.92 0.008 240) 1px, transparent 1px)',
