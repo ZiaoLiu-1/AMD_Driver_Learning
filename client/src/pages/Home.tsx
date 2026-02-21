@@ -17,8 +17,6 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, Clock, BookOpen, Code2, Target, ChevronRight, Cpu, Zap, CheckCircle2, Circle, Loader2, BarChart3, Terminal, Sun, Moon, GraduationCap, BookMarked, Languages } from "lucide-react";
 
-const HERO_BG_GRADIENT = "radial-gradient(ellipse at 30% 20%, oklch(0.22 0.06 260) 0%, oklch(0.08 0.02 250) 50%, oklch(0.04 0.01 240) 100%)";
-
 const STAGE_KEYS = ['stage1', 'stage2', 'stage3', 'stage4', 'stage5'] as const;
 const STAGE_MODULES = [
   ['intro', 'ecosystem', 'prerequisites'],
@@ -50,13 +48,13 @@ export default function Home() {
     setLocale(newLocale);
     const path = window.location.pathname;
     const newPath = path.replace(/^\/(zh|en)/, `/${newLocale}`) || `/${newLocale}`;
-    navigate(newPath);
+    window.location.pathname = newPath;
   };
 
   return (
     <div className="min-h-screen bg-background">
       {/* Top Nav */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 backdrop-blur-md" style={{ background: 'var(--background)' }}>
+      <header className="sticky top-0 z-50 border-b border-border/50 backdrop-blur-md bg-background/80">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E8441A, #FF6B35)' }}>
@@ -69,9 +67,9 @@ export default function Home() {
             <Link href="/glossary"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><BookMarked className="w-3.5 h-3.5" />{t("nav.glossary")}</span></Link>
             <Link href="/setup"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><Terminal className="w-3.5 h-3.5" />{t("nav.setup")}</span></Link>
             <a href="https://docs.kernel.org/gpu/amdgpu/index.html" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors hidden lg:block">{t("nav.kernelDocs")}</a>
-            <button onClick={switchLocale} className="flex items-center gap-1 px-2 py-1 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
+            <button onClick={switchLocale} className="flex items-center justify-center gap-1 w-14 py-1 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
               <Languages className="w-3.5 h-3.5" />
-              {locale === "zh" ? "En" : "中"}
+              <span>{locale === "zh" ? "En" : "中"}</span>
             </button>
             <button onClick={toggleTheme} className="p-1.5 rounded-lg hover:text-foreground hover:bg-muted/50 transition-colors">
               {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -91,18 +89,30 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative min-h-[88vh] flex items-center overflow-hidden pt-14">
-        <div className="absolute inset-0" style={{ background: HERO_BG_GRADIENT }} />
-        <div className="hero-overlay absolute inset-0" />
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: 'linear-gradient(oklch(0.92 0.008 240) 1px, transparent 1px), linear-gradient(90deg, oklch(0.92 0.008 240) 1px, transparent 1px)',
+      <section className="relative min-h-[88vh] flex items-center overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden bg-background">
+          <div className="absolute -top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full opacity-30 mix-blend-screen bg-primary/40 blur-[120px] animate-blob"></div>
+          <div className="absolute top-[20%] -right-[10%] w-[40%] h-[60%] rounded-full opacity-20 mix-blend-screen bg-blue-500/30 blur-[120px] animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[50%] rounded-full opacity-20 mix-blend-screen bg-orange-500/30 blur-[120px] animate-blob animation-delay-4000"></div>
+          {/* Decorative Large Text Background to fill empty space */}
+          <div className="absolute right-[-2%] top-[15%] opacity-5 pointer-events-none select-none hidden lg:block" style={{ transform: 'rotate(-5deg)' }}>
+            <div className="text-[220px] font-black leading-[0.85] tracking-tighter" style={{ background: 'linear-gradient(to bottom right, var(--foreground), transparent)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              RDNA3<br />NAVI33
+            </div>
+          </div>
+          <div className="hero-bg-layer absolute inset-0 mix-blend-overlay opacity-50 dark:opacity-60"></div>
+        </div>
+
+        <div className="absolute inset-0 hero-overlay backdrop-blur-[2px]" />
+        <div className="absolute inset-0 opacity-10 dark:opacity-[0.04]" style={{
+          backgroundImage: 'linear-gradient(var(--foreground) 1px, transparent 1px), linear-gradient(90deg, var(--foreground) 1px, transparent 1px)',
           backgroundSize: '40px 40px'
         }} />
 
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-24">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium mb-8 border"
-              style={{ background: 'oklch(0.62 0.22 35 / 0.15)', borderColor: 'oklch(0.62 0.22 35 / 0.4)', color: 'oklch(0.85 0.15 35)' }}>
+              style={{ background: 'rgba(232, 68, 26, 0.15)', borderColor: 'rgba(232, 68, 26, 0.4)', color: '#FFB347' }}>
               <Zap className="w-3 h-3" />
               AMD Markham Engineer Track · RX 7600 XT (Navi33 / gfx1102)
             </div>
@@ -122,17 +132,17 @@ export default function Home() {
               {t("home.heroGoal")}
             </p>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-4 mt-8">
               <Link href={`/module/${continueModule.id}`}>
-                <button className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02]"
+                <button className="flex items-center gap-2 px-8 py-4 rounded-xl font-semibold text-white transition-all amd-glow hover-lift"
                   style={{ background: 'linear-gradient(135deg, #E8441A, #FF6B35)' }}>
                   {totalCompleted > 0 ? t("home.continueLearning") : t("home.startLearning")}
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-5 h-5 ml-1" />
                 </button>
               </Link>
               <Link href="/setup">
-                <button className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold border border-primary/40 text-primary hover:border-primary/70 hover:bg-primary/5 transition-all">
-                  <Terminal className="w-4 h-4" />
+                <button className="flex items-center gap-2 px-8 py-4 rounded-xl font-semibold glass-panel text-foreground hover:bg-muted/50 hover-lift transition-all">
+                  <Terminal className="w-5 h-5" />
                   {t("home.setupEnv")}
                 </button>
               </Link>
@@ -241,7 +251,7 @@ export default function Home() {
             const stageTotal = stageModules.length;
 
             return (
-              <div key={stageIdx} className="rounded-xl border overflow-hidden"
+              <div key={stageIdx} className="rounded-2xl border overflow-hidden glass-panel hover-lift transition-all"
                 style={{ background: stageStyle.bg, borderColor: stageStyle.border }}>
                 {/* Stage Header */}
                 <div className="px-5 py-3 flex items-center justify-between border-b"
@@ -271,10 +281,12 @@ export default function Home() {
                     const status = getModuleStatus(module.id);
                     return (
                       <Link key={module.id} href={`/module/${module.id}`}>
-                        <div className="flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all hover:border-opacity-70 group"
+                        <div className="flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all hover:border-opacity-100 hover:scale-[1.02] hover:shadow-lg group"
                           style={{
-                            background: 'var(--card)',
-                            borderColor: status === 'completed' ? 'oklch(0.55 0.18 145 / 0.4)' : 'oklch(0.20 0.015 255)',
+                            background: status === 'completed' ? 'var(--card)' : 'transparent',
+                            borderColor: status === 'completed' ? 'oklch(0.55 0.18 145 / 0.4)' : 'oklch(0.20 0.015 255 / 0.5)',
+                            backdropFilter: 'blur(8px)',
+                            boxShadow: status === 'completed' ? '0 4px 20px oklch(0.55 0.18 145 / 0.05)' : 'none'
                           }}>
                           {/* Status Icon */}
                           <div className="flex-shrink-0">
@@ -338,9 +350,9 @@ export default function Home() {
               { icon: Target, label: t("home.projectLabel"), desc: t("home.projectDesc"), color: 'oklch(0.70 0.18 280)' },
               { icon: Zap, label: t("home.interviewLabel"), desc: t("home.interviewDesc"), color: 'oklch(0.70 0.20 50)' },
             ].map((item, i) => (
-              <div key={i} className="rounded-xl p-5 border border-border/40"
+              <div key={i} className="rounded-2xl p-6 border border-border/40 glass-panel hover-lift transition-all"
                 style={{ background: 'var(--card)' }}>
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-4"
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 amd-glow"
                   style={{ background: `${item.color.replace(')', ' / 0.12)')}`, border: `1px solid ${item.color.replace(')', ' / 0.3)')}` }}>
                   <item.icon className="w-4.5 h-4.5" style={{ color: item.color }} />
                 </div>

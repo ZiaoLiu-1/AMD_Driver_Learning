@@ -337,7 +337,7 @@ export default function MicroLessonPage() {
     setLocale(newLocale);
     const path = window.location.pathname;
     const newPath = path.replace(/^\/(zh|en)/, `/${newLocale}`) || `/${newLocale}`;
-    navigate(newPath);
+    window.location.pathname = newPath;
   };
   const lessonId = params.lessonId || "";
   const mod = microLessonsByModule[moduleId];

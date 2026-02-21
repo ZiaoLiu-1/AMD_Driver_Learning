@@ -86,7 +86,7 @@ export default function GlossaryPage() {
     setLocale(newLocale);
     const path = window.location.pathname;
     const newPath = path.replace(/^\/(zh|en)/, `/${newLocale}`) || `/${newLocale}`;
-    navigate(newPath);
+    window.location.pathname = newPath;
   };
 
   const categoryConfig = useMemo(() => ({
