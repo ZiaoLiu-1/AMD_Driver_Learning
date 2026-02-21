@@ -609,6 +609,389 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
       },
     ],
   },
+  // ═══════════════════════════════════════════════════════════════
+  // Module 1.5 — 实时图形 API 与 GPU 架构
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 'graphics-apis',
+    number: '1.5',
+    title: '实时图形 API 与 GPU 架构',
+    titleEn: 'Real-Time Graphics APIs & GPU Architecture',
+    icon: 'Monitor',
+    description: '从应用开发者的视角理解 GPU 的用途：实时渲染流水线、OpenGL、Vulkan、OpenCL 和 DirectX 12。掌握这层知识，才能真正理解驱动为"上层"服务的意义。',
+    estimatedHours: 30,
+    difficulty: 'intermediate',
+    subModules: [
+      { id: 'gfx-pipeline', title: '1.5.1 实时渲染流水线', titleEn: 'Real-Time Rendering Pipeline' },
+      { id: 'gfx-opengl', title: '1.5.2 OpenGL 状态机模型', titleEn: 'OpenGL State Machine' },
+      { id: 'gfx-vulkan', title: '1.5.3 Vulkan：现代显式 API', titleEn: 'Vulkan: Modern Explicit API' },
+      { id: 'gfx-opencl', title: '1.5.4 OpenCL 计算模型', titleEn: 'OpenCL Compute Model' },
+      { id: 'gfx-dx12', title: '1.5.5 DirectX 12 概念与对比', titleEn: 'DirectX 12 Concepts & Comparison' },
+    ],
+    theory: {
+      overview: `本模块从图形应用开发者的视角出发，系统讲解 GPU 的使用方式。理解应用如何通过图形 API 驱动 GPU，是理解驱动"服务对象"的关键。
+
+AMD Markham 的多个团队（Display、3D/Graphics、Compute/ROCm）都直接服务于这些 API 的实现：
+- Mesa radeonsi/radv 实现 OpenGL 和 Vulkan
+- ROCm 实现 OpenCL 和 HIP
+- LLVM AMDGPU 后端编译所有着色器和计算核心
+
+本模块不要求你成为图形程序员，但要求你建立"API → 驱动 → 硬件"的完整心智模型。`,
+      sections: [
+        {
+          title: '1. 实时渲染流水线',
+          content: `现代 GPU 的核心任务是执行图形渲染流水线（Graphics Pipeline）。理解这条流水线，就理解了为什么 GPU 需要大量并行计算单元。
+
+**完整流水线：**
+CPU 将顶点数据（Vertex Buffer）和绘制命令提交给 GPU → GPU 执行流水线 → 结果写入 Framebuffer → 显示。
+
+**关键阶段：**
+1. **Input Assembler（输入汇编）**：从顶点缓冲区读取顶点数据，组装成三角形图元。
+2. **Vertex Shader（顶点着色器）**：对每个顶点执行，做坐标变换（模型空间→裁剪空间），可编程。
+3. **Rasterization（光栅化）**：将三角形离散化为屏幕像素（Fragment），插值顶点属性。固定功能硬件执行。
+4. **Fragment Shader（片段着色器）/ Pixel Shader**：对每个像素执行，计算颜色，采样纹理，可编程。这是最耗时的阶段。
+5. **Output Merger（输出合并）**：深度测试（Z-test）、模板测试、Alpha 混合，写入 Framebuffer。
+
+**对驱动的意义**：每个"可编程"阶段（顶点/片段/计算着色器）都需要驱动将 GLSL/HLSL 代码编译为 GPU ISA，这正是 LLVM AMDGPU 后端的工作。`,
+          diagram: {
+            type: 'ascii',
+            content: `CPU Side                          GPU Side
+─────────                         ──────────────────────────────────────
+VBO/IBO ──► Command Buffer ──►  Input Assembler
+SSBO/UBO         (Ring)          │
+Textures                         ▼
+                              Vertex Shader  ◄── GLSL/SPIR-V compiled
+                              (per vertex)       to AMDGPU ISA
+                                 │
+                                 ▼
+                              Tessellation (optional)
+                                 │
+                                 ▼
+                              Geometry Shader (optional)
+                                 │
+                                 ▼
+                              Rasterizer  (fixed-function HW)
+                              (triangle → pixels)
+                                 │
+                                 ▼
+                              Fragment Shader  ◄── Another compiled
+                              (per pixel)          kernel runs here
+                                 │
+                                 ▼
+                              Output Merger
+                              (depth test, blend)
+                                 │
+                                 ▼
+                              Framebuffer ──► Display Engine (DCN)`,
+            caption: 'GPU 渲染流水线：从 CPU 提交的顶点数据到最终显示的完整路径。驱动负责管理每个阶段的资源、编译着色器并调度执行。',
+          },
+        },
+        {
+          title: '2. OpenGL — 经典图形 API',
+          content: `OpenGL 是历史最悠久的跨平台图形 API（1992年），是 AMD Markham Display/3D 团队日常工作的重要背景。Mesa 的 radeonsi 驱动实现了 AMD GPU 的 OpenGL 支持。
+
+**核心概念：**
+- **状态机模型（State Machine）**：OpenGL 是一个巨大的状态机。每次 API 调用都修改全局状态（当前绑定的 VAO、Shader Program、Framebuffer 等），后续的绘制调用使用这些状态。这种设计简单但容易出错（驱动需要追踪大量状态）。
+- **对象（Objects）**：VBO（顶点缓冲区）、VAO（顶点数组对象）、Texture、FBO（帧缓冲对象）、Shader Program。所有对象都通过整数 ID 引用。
+- **着色器（Shaders）**：用 GLSL（OpenGL Shading Language）编写，编译到 GPU 上执行。
+
+**与驱动的关系**：
+当应用调用 \`glDrawArrays()\` 时，Mesa radeonsi 驱动需要：
+1. 收集当前所有 GL 状态（Shader、纹理绑定、混合状态...）
+2. 生成对应的 GPU 命令包（PM4 格式）
+3. 通过 libdrm 的 \`ioctl\` 提交到 amdgpu 内核驱动
+4. 内核驱动将命令写入 Ring Buffer，GPU 执行
+
+这条调用链说明：学习驱动不能脱离"上层 API 的期望"。`,
+        },
+        {
+          title: '3. Vulkan — 现代显式图形 API',
+          content: `Vulkan（2016年）是 Khronos 组织为替代 OpenGL 设计的现代低开销图形 API。AMD 的 Mesa radv 驱动实现了 Vulkan。与 OpenGL 相比，Vulkan 将以前隐藏在驱动内部的工作"暴露"给应用开发者。
+
+**核心特性：**
+- **显式内存管理（Explicit Memory）**：应用负责分配 GPU 内存（VkDeviceMemory）、选择内存类型（Device Local、Host Visible 等）。驱动不再自动管理。
+- **命令缓冲区（Command Buffer）**：应用预先录制所有 GPU 命令，然后一次性提交。减少了 CPU-GPU 同步开销。
+- **渲染过程（Render Pass）**：显式描述渲染目标的生命周期（Load/Store 操作），允许 GPU tile-based 架构优化。
+- **描述符集（Descriptor Set）**：绑定着色器资源（纹理、UBO）的方式，比 OpenGL 的全局状态更高效。
+- **Pipeline State Object（PSO）**：将所有固定功能状态（深度测试、混合、光栅化器配置）打包成不可变对象，消除运行时状态组合的驱动开销。
+
+**对驱动的意义**：Vulkan 驱动（radv）比 OpenGL 驱动（radeonsi）薄很多——因为 Vulkan 把内存管理、同步、状态管理都交给了应用。但 Vulkan 驱动需要正确实现 Vulkan 规范的每一个细节，否则应用会崩溃。`,
+          diagram: {
+            type: 'ascii',
+            content: `OpenGL (厚驱动)              Vulkan (薄驱动)
+──────────────────           ──────────────────────────────
+应用调用 glDraw()            应用录制 vkCmdDraw()
+    │                            │
+    ▼                            ▼
+驱动做的事:                  驱动做的事:
+• 追踪全局状态                • 几乎原样转为 PM4 命令
+• 验证状态合法性              • 应用已经保证正确性
+• 编译/缓存 Shader           • Shader 在 PSO 创建时已编译
+• 决定内存放置               • 应用已指定内存类型
+• 管理同步                   • 应用用 VkFence/Semaphore 同步
+    │                            │
+    ▼                            ▼
+提交 PM4 到 Ring             直接提交 PM4 到 Ring
+(经过多层抽象)               (路径更短，延迟更低)`,
+            caption: 'OpenGL 和 Vulkan 驱动工作量对比。Vulkan 将大量驱动工作移到应用侧，减少 CPU overhead，但对应用开发者要求更高。',
+          },
+        },
+        {
+          title: '4. OpenCL — 通用 GPU 计算',
+          content: `OpenCL（Open Computing Language）是第一个跨平台的 GPU 通用计算 API（2008年），由 Khronos 定义，AMD 通过 ROCm 提供 OpenCL 实现。
+
+**执行模型：**
+- **平台（Platform）**：一个或多个 OpenCL 实现（如 AMD ROCm、Intel OpenCL）
+- **设备（Device）**：具体的计算设备（CPU、GPU）
+- **上下文（Context）**：管理设备、内存、命令队列的容器
+- **命令队列（Command Queue）**：向设备提交命令（内核执行、内存传输）
+- **内核（Kernel）**：在设备上执行的函数，用 OpenCL C 语言编写
+- **工作项（Work-Item）/工作组（Work-Group）**：对应 GPU 的线程/线程块
+
+**与 HIP/CUDA 的对比：**
+OpenCL 概念上与 HIP 非常相似（HIP 参考了 CUDA，而 CUDA 设计又借鉴了 OpenCL）。主要差异：OpenCL 是标准 API（多厂商），HIP/CUDA 是专有 API；OpenCL 的 JIT 编译在运行时发生，HIP 编译在构建时完成（性能更可预测）。
+
+**在 AMD 驱动栈中**：OpenCL 内核经过 clang/LLVM 编译为 AMDGPU ISA，通过 KFD（ROCm 内核驱动）提交给 GPU 执行，与 HIP 走同一条底层路径。`,
+        },
+        {
+          title: '5. DirectX 12 概念与驱动对比',
+          content: `DirectX 12（D3D12）是 Microsoft 在 Windows 上的现代图形 API，与 Vulkan 几乎同时发布（2015年），设计理念高度相似。虽然 AMD Linux 驱动不直接实现 D3D12，但理解它对于 AMD Markham 工程师有重要意义：
+
+**为什么要了解 D3D12？**
+1. AMD GPU 在 Windows 上通过 WDDM（Windows Display Driver Model）支持 D3D12，AMD 内部有专门的 Windows 驱动团队
+2. D3D12 和 Vulkan 共享相同的设计哲学（显式内存、命令录制、PSO），理解一个有助于理解另一个
+3. 跨平台游戏引擎（如 UE5）同时使用 D3D12 和 Vulkan，AMD 需要两边都优化
+
+**D3D12 vs Vulkan 核心对比：**
+| 概念 | D3D12 | Vulkan |
+|------|-------|--------|
+| 命令提交 | Command List + Queue | Command Buffer + Queue |
+| 资源绑定 | Descriptor Heap | Descriptor Set |
+| 内存管理 | Heap (D3D12MA) | DeviceMemory (VMA) |
+| 渲染状态 | Pipeline State Object | Pipeline |
+| 同步 | Fence + Event | VkFence + VkSemaphore |
+| 着色器语言 | HLSL → DXIL | GLSL/HLSL → SPIR-V |
+
+**关键区别**：D3D12 着色器编译为 DXIL（LLVM IR 派生），Vulkan 着色器编译为 SPIR-V（也可由 LLVM 生成）。AMD 的 LLVM AMDGPU 后端最终将两者都编译到 GPU ISA。`,
+        },
+      ],
+      keyBooks: [
+        {
+          title: 'Real-Time Rendering, 4th Edition',
+          author: 'Tomas Akenine-Möller et al.',
+          relevance: '图形学圣经，详细讲解渲染流水线各阶段的理论与硬件实现。面试中关于渲染管线的问题均可在此找到答案。',
+          url: 'https://www.realtimerendering.com/',
+        },
+        {
+          title: 'Vulkan Programming Guide',
+          author: 'Graham Sellers & John Kessenich',
+          relevance: '官方 Vulkan 教材，深入讲解 Vulkan API 设计哲学，有助于理解 radv 驱动的实现目标。',
+        },
+        {
+          title: 'OpenCL Programming Guide',
+          author: 'Aaftab Munshi et al.',
+          relevance: 'OpenCL 标准参考，涵盖执行模型、内存模型和优化策略，与 ROCm HIP 高度对应。',
+        },
+      ],
+      onlineResources: [
+        {
+          title: 'Khronos OpenGL Reference',
+          url: 'https://www.khronos.org/opengl/',
+          type: 'doc',
+          description: 'OpenGL 官方文档，包含 API 规范和着色器语言参考。',
+        },
+        {
+          title: 'Vulkan Tutorial (vulkan-tutorial.com)',
+          url: 'https://vulkan-tutorial.com/',
+          type: 'doc',
+          description: '业界最佳的 Vulkan 入门教程，从三角形到完整渲染器，代码清晰易懂。',
+        },
+        {
+          title: 'Mesa Radeonsi/RADV Source Code',
+          url: 'https://gitlab.freedesktop.org/mesa/mesa',
+          type: 'repo',
+          description: 'AMD OpenGL(radeonsi) 和 Vulkan(radv) 驱动的用户态实现，是理解 API→驱动映射的最佳代码库。',
+        },
+        {
+          title: 'GPUOpen - AMD Developer Resources',
+          url: 'https://gpuopen.com/',
+          type: 'doc',
+          description: 'AMD 官方开发者资源，包含 GPU 架构白皮书、性能分析工具和图形编程最佳实践。',
+        },
+        {
+          title: 'The Book of Shaders',
+          url: 'https://thebookofshaders.com/',
+          type: 'doc',
+          description: '交互式着色器学习教程，通过可视化方式理解 GLSL 片段着色器的工作原理。',
+        },
+      ],
+    },
+    codeReading: [
+      {
+        title: 'OpenGL 三角形绘制调用链',
+        description: '一次 glDrawArrays() 调用如何从 OpenGL 状态机转化为 GPU PM4 命令',
+        file: 'mesa/src/gallium/drivers/radeonsi/si_draw.c',
+        language: 'c',
+        code: `/* Mesa radeonsi: 一次 OpenGL 绘制调用的起点 */
+/* 应用调用 glDrawArrays(GL_TRIANGLES, 0, 3) 时，最终到达这里 */
+
+static void si_draw_vbo(struct pipe_context *ctx,
+                        const struct pipe_draw_info *info, ...)
+{
+    struct si_context *sctx = (struct si_context *)ctx;
+
+    /* 1. 检查并更新所有 dirty 状态位 */
+    /*    OpenGL 是状态机，每次绘制前需要同步所有改变过的状态 */
+    if (sctx->dirty_atoms)
+        si_emit_atoms(sctx);     /* 发射 dirty 的状态寄存器写入命令 */
+
+    /* 2. 确保着色器已编译并上传到 GPU */
+    if (!si_shader_cache_load_shader(sctx))
+        si_update_shaders(sctx); /* 可能触发 JIT 编译 → LLVM AMDGPU */
+
+    /* 3. 绑定顶点缓冲区 */
+    si_emit_vertex_buffers(sctx, info->index_size);
+
+    /* 4. 写入 DRAW_INDEX_AUTO PM4 包到命令流 */
+    /*    这是真正告诉 GPU "开始画三角形"的命令 */
+    si_emit_draw_packets(sctx, info, drawid_base, draws, num_draws,
+                         indirect, dispatch_draw, min_index, max_index);
+
+    /* 5. 更新 streamout/transform feedback 状态（如果启用）*/
+    if (sctx->streamout.begin_emitted)
+        si_emit_streamout_end(sctx);
+}
+
+/* PM4 绘制包的最终形式（简化）：
+ *
+ * PACKET3_SET_SH_REG  VGT_PRIMITIVE_TYPE = TRILIST
+ * PACKET3_DRAW_INDEX_AUTO
+ *   vertex_count = 3
+ *   flags = USE_OPAQUE
+ *
+ * GPU 的 Command Processor (CP) 读到这个包后，
+ * 开始从 VBO 取顶点数据，分发给 Vertex Shader 执行
+ */`,
+        annotations: [
+          'si_emit_atoms() 遍历 dirty 状态位图，将所有改变的 GL 状态转换为 GPU 寄存器写入命令',
+          'si_update_shaders() 在着色器首次使用或状态组合改变时触发，调用 LLVM AMDGPU 后端编译 GLSL 为 GPU ISA',
+          'si_emit_draw_packets() 生成 PACKET3_DRAW_INDEX_AUTO 或 PACKET3_DRAW_INDEX_2，这是最终的 PM4 绘制命令',
+          '整个过程通过 Gallium 抽象层（pipe_context）与 DRM/amdgpu 内核接口通信，最终通过 ioctl 提交命令缓冲区',
+        ],
+      },
+      {
+        title: 'Vulkan vs OpenGL 驱动层对比',
+        description: '同样是提交一次三角形绘制，Vulkan 驱动（radv）与 OpenGL 驱动（radeonsi）的代码路径对比',
+        file: 'mesa/src/amd/vulkan/radv_cmd_buffer.c',
+        language: 'c',
+        code: `/* ─── Vulkan 路径（radv） ─── */
+/* vkCmdDraw() 在 Command Buffer 录制阶段调用，不立即执行 */
+
+VKAPI_ATTR void VKAPI_CALL
+radv_CmdDraw(VkCommandBuffer commandBuffer,
+             uint32_t vertexCount, uint32_t instanceCount,
+             uint32_t firstVertex, uint32_t firstInstance)
+{
+    RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
+
+    /* Vulkan: 状态已在 vkCmdSetXxx() 和 vkCmdBindPipeline() 时记录 */
+    /* 驱动不需要追踪全局状态，只需读取 cmd_buffer->state */
+
+    /* 检查动态状态是否需要更新 */
+    radv_cmd_buffer_flush_dynamic_state(cmd_buffer,
+                                        cmd_buffer->state.dirty);
+
+    /* 直接写入 PM4 DRAW_INDEX_AUTO 包到 cmd_buffer 的 CS 流 */
+    radv_emit_draw_packets_indexed_multi_draw(cmd_buffer, draws, 1,
+                                              draw_vertex_count);
+}
+/* 关键：此函数执行极快（微秒级），因为不需要解析全局状态  */
+/* PM4 命令会在 vkQueueSubmit() 时才真正提交给 GPU          */
+
+/* ─── 对比 OpenGL 路径（radeonsi）─── */
+/* glDrawArrays() 立即提交，驱动必须在此刻解析所有状态 */
+
+/* radeonsi 在每次 draw call 前检查的状态 dirty bit 数（简化）: */
+/* SI_STATE_BIT_FRAMEBUFFER      - FBO 绑定       */
+/* SI_STATE_BIT_SCISSOR           - 裁剪矩形       */
+/* SI_STATE_BIT_VIEWPORT          - 视口变换       */
+/* SI_STATE_BIT_BLEND             - Alpha 混合     */
+/* SI_STATE_BIT_DEPTH_STENCIL     - 深度/模板测试  */
+/* SI_STATE_BIT_RASTERIZER        - 光栅化配置     */
+/* SI_STATE_BIT_VS / FS / GS / HS - 各阶段着色器  */
+/* ... 总共 30+ 个状态位需要检查 */
+/* 这解释了为什么 OpenGL 的 CPU overhead 更高           */`,
+        annotations: [
+          'Vulkan CmdDraw 设计为录制命令，几乎没有状态追踪开销，是 Vulkan 低 CPU 占用的核心原因',
+          'radeonsi 需要在每次 draw call 时检查 30+ 个状态 dirty 位，这是 OpenGL"厚驱动"特性的代价',
+          'radv（Vulkan）和 radeonsi（OpenGL）最终都生成相同格式的 PM4 命令包，提交到同一个 amdgpu 内核驱动',
+          '理解这个差异对于 AMD 面试中关于"驱动层架构"的问题至关重要',
+        ],
+      },
+    ],
+    miniProject: {
+      title: '绘制你的第一个 GPU 三角形，并跟踪它到驱动层',
+      description: '用 OpenGL 绘制一个彩色三角形，然后用 apitrace 工具抓取 API 调用，观察它如何变成内核 ioctl，理解 API → Mesa → DRM → GPU 的完整路径。',
+      objectives: [
+        '用 GLFW + OpenGL 3.3 Core Profile 渲染一个彩色三角形（着色器插值颜色）',
+        '使用 apitrace 录制 GL 调用序列，识别 glDrawArrays 的参数和前置状态',
+        '使用 strace 抓取 DRM ioctl 调用，找到 DRM_IOCTL_AMDGPU_CS 命令',
+        '对比 Vulkan 版本的三角形（用 vulkan-tutorial 第一章代码），观察 API 调用数量差异',
+      ],
+      steps: [
+        '安装依赖：sudo apt install libglfw3-dev libglew-dev vulkan-tools libvulkan-dev',
+        '编写 OpenGL 三角形：顶点着色器做坐标传递，片段着色器输出颜色',
+        '运行 apitrace：apitrace trace --api gl ./your_triangle',
+        '查看 trace：qapitrace trace.trace，找到 glDrawArrays 调用和它之前的状态设置',
+        '运行 strace：strace -e ioctl ./your_triangle 2>&1 | grep AMDGPU_CS，观察 ioctl 参数',
+        '（可选）复制 vulkan-tutorial.com 第一章代码，对比 Vulkan 路径的 vkQueueSubmit ioctl',
+      ],
+      expectedOutput: `运行 apitrace 后，你应该看到类似：
+glUseProgram(1)                    # 绑定编译好的着色器程序
+glBindVertexArray(1)               # 绑定顶点数据
+glDrawArrays(GL_TRIANGLES, 0, 3)   # ← 触发渲染的关键调用
+
+strace 输出应包含：
+ioctl(3, DRM_IOCTL_AMDGPU_CS, ...) # 这就是 Mesa 把 PM4 命令
+                                    # 提交给 GPU 的系统调用
+
+窗口中显示：一个顶点分别为红、绿、蓝色的三角形，
+颜色在内部平滑插值（Gouraud shading）。`,
+    },
+    interviewQuestions: [
+      {
+        question: '描述 OpenGL 和 Vulkan 在驱动架构上的根本区别，以及为什么 Vulkan 驱动的 CPU overhead 更低？',
+        difficulty: 'medium',
+        hint: '从"状态机 vs 显式状态"、"命令录制 vs 立即执行"两个角度回答。',
+        answer: 'OpenGL 是一个全局状态机，每次 draw call 时驱动都必须检查所有 dirty 状态位（30+）、验证状态合法性、按需编译/缓存着色器，这些工作占用大量 CPU 时间。Vulkan 是显式 API：（1）状态在 Pipeline State Object（PSO）创建时就已固化，draw time 驱动只需写入 PM4；（2）命令缓冲区录制与提交分离，录制阶段可多线程并行；（3）内存管理、同步原语完全由应用控制，驱动无需猜测。结果：Vulkan draw call CPU overhead 通常比 OpenGL 低 5-10x，对 draw call 密集的游戏引擎意义重大。',
+      },
+      {
+        question: '解释 GPU 实时渲染流水线中顶点着色器和片段着色器的区别，以及各自在 GPU 上的执行方式。',
+        difficulty: 'easy',
+        hint: '从"每顶点 vs 每像素"、"输入输出"、"Wavefront 规模"三个角度回答。',
+        answer: '顶点着色器（Vertex Shader）：每个顶点执行一次，输入是顶点属性（位置、法线、UV 坐标），输出是裁剪空间坐标和插值属性。顶点数量通常较少（数千到数百万），每次 Wavefront 可处理 64 个顶点。片段着色器（Fragment Shader）：每个光栅化后的像素（Fragment）执行一次，输入是插值后的顶点属性，输出是该像素的颜色值。一帧画面可能有数百万个 Fragment，是流水线中最耗时的阶段。两者都是"可编程着色器"——驱动将 GLSL/SPIR-V 代码编译为 AMDGPU ISA，在 CU 的 SIMD 单元上以 Wavefront（64 线程）为单位并行执行。',
+      },
+      {
+        question: 'OpenCL 的工作项（Work-Item）和工作组（Work-Group）与 HIP 的 Thread 和 Block 有何对应关系？在 AMD GPU 硬件上如何映射？',
+        difficulty: 'medium',
+        hint: '从编程模型对应关系和 Wavefront 的角度回答。',
+        answer: 'OpenCL Work-Item = HIP Thread = CUDA Thread：最小执行单元，每个 Work-Item 执行同一个 Kernel 函数但处理不同数据。OpenCL Work-Group = HIP Block = CUDA Block：一组可以同步（barrier）和共享本地内存（Local Memory = LDS）的 Work-Item。在 AMD GPU 硬件上：Work-Group 被调度到一个 CU（Compute Unit）执行；CU 将 Work-Group 拆分为 Wavefront（64 个 Work-Item）；每个 Wavefront 在一个 SIMD 单元上以 SIMT（Single Instruction Multiple Thread）方式执行。区别：OpenCL Work-Group 最大 1024 个 Work-Item，HIP Block 也是 1024；OpenCL 的同步用 barrier(CLK_LOCAL_MEM_FENCE)，HIP 用 __syncthreads()，硬件指令相同（S_BARRIER）。',
+      },
+      {
+        question: 'Vulkan 的 Render Pass 和 Subpass 是什么，为什么它们对 AMD GPU 的 tile-based 架构有重要意义？',
+        difficulty: 'hard',
+        hint: '考虑 AMD Vega/RDNA 的 RB+（Render Backend Plus）和带宽节省。',
+        answer: 'Render Pass 描述了一组渲染操作共同使用的 Attachment（颜色、深度缓冲）以及它们在 Pass 开始/结束时的 Load/Store 操作。Subpass 是 Render Pass 内部可以依赖前一 Subpass 输出的渲染步骤。对 AMD GPU 的意义：（1）AMD RDNA GPU 的 RB+（Render Backend）支持 "Render Compression"，如果 Render Pass 明确声明深度缓冲最后 DONT_CARE（不需要保存到内存），GPU 可以在 tile cache 内完成深度测试而无需写回 VRAM，节省大量带宽。（2）Subpass dependencies 允许驱动知道两个渲染步骤之间的依赖关系，从而正确插入内存屏障（Cache flush），避免读脏数据。（3）相比 OpenGL 驱动猜测何时需要 cache flush，Vulkan 的显式信息让 radv 能生成更高效的命令序列。这类知识在面试 AMD Vulkan 驱动岗位时非常加分。',
+      },
+      {
+        question: '一个 OpenCL 内核从源码到在 AMD GPU 上执行，经历了哪些编译和运行时步骤？',
+        difficulty: 'hard',
+        hint: '涉及 clang、LLVM AMDGPU 后端、KFD、AMDGPU 内核驱动。',
+        answer: 'OpenCL 内核的完整编译执行路径：（1）编译阶段：clClBuildProgram() 调用 clang 前端将 OpenCL C 源码解析为 LLVM IR；LLVM 中端 Pass 进行优化（循环展开、向量化）；LLVM AMDGPU 后端将优化后的 IR 编译为目标 GPU 的 ISA（如 gfx1102）；输出为 ELF 格式的 Code Object，包含 GPU 机器码和元数据（寄存器使用量、LDS 大小等）。（2）运行时阶段：clEnqueueNDRangeKernel() 通过 ROCm OpenCL 运行时 → amdocl → HIP 运行时层；最终调用 KFD（ROCm Kernel Fusion Driver）的 ioctl（KFD_IOC_DISPATCH_QUEUE）；KFD 将 Dispatch Packet 放入 GPU 队列（AQL Queue，AMD Queue Language 格式）；GPU 的 Command Processor 读取 AQL Packet，将 Wavefront 分发到空闲的 CU 上执行。（3）同步：clWaitForEvents() 等待 GPU 完成，底层是 KFD 的 ioctl(KFD_IOC_WAIT_EVENTS) 等待 GPU fence 信号。',
+      },
+    ],
+  },
+  // ═══════════════════════════════════════════════════════════════
   {
     id: 'hardware',
     number: '2',

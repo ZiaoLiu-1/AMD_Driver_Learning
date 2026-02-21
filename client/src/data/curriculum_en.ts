@@ -419,6 +419,390 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
       },
     ],
   },
+  // ═══════════════════════════════════════════════════════════════
+  // Module 1.5 — Real-Time Graphics APIs & GPU Architecture
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: 'graphics-apis',
+    number: '1.5',
+    title: 'Real-Time Graphics APIs & GPU Architecture',
+    titleEn: 'Real-Time Graphics APIs & GPU Architecture',
+    icon: 'Monitor',
+    description:
+      'Understand how GPUs are actually used — from the application developer perspective. Real-time rendering pipeline, OpenGL, Vulkan, OpenCL, and DirectX 12 concepts. Knowing this layer makes you understand what the driver ultimately serves.',
+    estimatedHours: 30,
+    difficulty: 'intermediate',
+    subModules: [
+      { id: 'gfx-pipeline', title: '1.5.1 Real-Time Rendering Pipeline', titleEn: 'Real-Time Rendering Pipeline' },
+      { id: 'gfx-opengl', title: '1.5.2 OpenGL State Machine', titleEn: 'OpenGL State Machine' },
+      { id: 'gfx-vulkan', title: '1.5.3 Vulkan: Modern Explicit API', titleEn: 'Vulkan: Modern Explicit API' },
+      { id: 'gfx-opencl', title: '1.5.4 OpenCL Compute Model', titleEn: 'OpenCL Compute Model' },
+      { id: 'gfx-dx12', title: '1.5.5 DirectX 12 Concepts & Comparison', titleEn: 'DirectX 12 Concepts & Comparison' },
+    ],
+    theory: {
+      overview: `This module approaches the GPU from the application developer's perspective — understanding how graphics and compute APIs drive the hardware. This is crucial for AMD engineers because the driver's entire purpose is to faithfully implement these APIs.
+
+AMD Markham teams serve these APIs directly:
+- Mesa radeonsi/radv implements OpenGL and Vulkan
+- ROCm implements OpenCL and HIP
+- The LLVM AMDGPU backend compiles all shaders and compute kernels
+
+The goal is not to make you a graphics programmer, but to build the complete mental model of API → Driver → Hardware.`,
+      sections: [
+        {
+          title: '1. The Real-Time Rendering Pipeline',
+          content: `The GPU's primary task is executing the graphics rendering pipeline. Understanding this pipeline explains why GPUs have thousands of parallel execution units.
+
+**The pipeline, end-to-end:**
+CPU submits vertex data (Vertex Buffer) and draw commands → GPU runs the pipeline → result written to Framebuffer → Display Engine (DCN) scans out.
+
+**Key stages:**
+1. **Input Assembler**: Reads vertex data from vertex/index buffers and assembles geometric primitives (triangles).
+2. **Vertex Shader**: Runs once per vertex — transforms coordinates from model space to clip space. Fully programmable.
+3. **Rasterization**: Converts triangles into screen-space pixels (Fragments), interpolating vertex attributes. Executed by fixed-function hardware.
+4. **Fragment Shader** (Pixel Shader): Runs once per pixel — computes final color, samples textures. Fully programmable. Usually the performance bottleneck.
+5. **Output Merger**: Depth test (Z-buffer), stencil test, alpha blending. Result written to the Framebuffer.
+
+**Driver implication**: Every programmable stage requires the driver to compile GLSL/HLSL/SPIR-V source into GPU ISA — that is exactly what the LLVM AMDGPU backend does.`,
+          diagram: {
+            type: 'ascii',
+            content: `CPU Side                          GPU Side
+─────────                         ──────────────────────────────────────
+VBO/IBO ──► Command Buffer ──►  Input Assembler
+SSBO/UBO         (Ring)          │
+Textures                         ▼
+                              Vertex Shader  ◄── GLSL/SPIR-V compiled
+                              (per vertex)       to AMDGPU ISA
+                                 │
+                                 ▼
+                              Tessellation (optional)
+                                 │
+                                 ▼
+                              Geometry Shader (optional)
+                                 │
+                                 ▼
+                              Rasterizer  (fixed-function HW)
+                              (triangle → pixels)
+                                 │
+                                 ▼
+                              Fragment Shader  ◄── Another compiled
+                              (per pixel)          kernel runs here
+                                 │
+                                 ▼
+                              Output Merger
+                              (depth test, blend)
+                                 │
+                                 ▼
+                              Framebuffer ──► Display Engine (DCN)`,
+            caption: 'GPU rendering pipeline: from vertex data submitted by the CPU to pixels on screen. The driver manages resources, compiles shaders, and schedules execution at every stage.',
+          },
+        },
+        {
+          title: '2. OpenGL — The Classic Graphics API',
+          content: `OpenGL (1992) is the oldest cross-platform graphics API and the historical foundation for AMD's Mesa radeonsi driver. Understanding OpenGL explains why the driver is complex.
+
+**Core concepts:**
+- **State Machine Model**: OpenGL is a massive global state machine. Every API call modifies global state (currently bound VAO, Shader Program, Framebuffer, etc.), and subsequent draw calls use that state. Simple to use, but drivers must track enormous state.
+- **Objects**: VBO (Vertex Buffer), VAO (Vertex Array Object), Texture, FBO (Framebuffer Object), Shader Program — all referenced by integer IDs.
+- **Shaders**: Written in GLSL (OpenGL Shading Language), compiled to GPU ISA by the driver.
+
+**What happens on glDrawArrays():**
+1. Mesa radeonsi collects all current GL state (shader, texture bindings, blend state, viewport...)
+2. Generates corresponding GPU command packets (PM4 format)
+3. Submits via libdrm ioctl to the amdgpu kernel driver
+4. Kernel driver writes to Ring Buffer, GPU executes
+
+This call chain means: you cannot understand the driver without understanding the API it serves.`,
+        },
+        {
+          title: '3. Vulkan — Modern Explicit API',
+          content: `Vulkan (2016) was designed to expose GPU hardware more directly, moving work previously hidden inside drivers to the application. AMD's Mesa radv driver implements Vulkan for all RDNA/GCN GPUs.
+
+**Key design principles:**
+- **Explicit Memory Management**: Apps allocate GPU memory (VkDeviceMemory) and choose memory types (Device Local, Host Visible, etc.). No driver magic.
+- **Command Buffers**: Apps pre-record all GPU commands, then submit in bulk. Enables multi-threaded command recording and eliminates per-draw-call driver overhead.
+- **Render Passes**: Explicitly describe attachment lifetimes (Load/Store ops), enabling tile-based GPU optimizations — AMD's RB+ can keep depth data in tile cache without writing to VRAM.
+- **Descriptor Sets**: Explicit shader resource binding (textures, UBOs), more efficient than OpenGL's global state.
+- **Pipeline State Objects (PSO)**: All fixed-function state (depth test, blend, rasterizer config) baked into an immutable object at creation time — no runtime state permutation overhead.
+
+**Driver implication**: The Vulkan driver (radv) is dramatically simpler at draw time than OpenGL (radeonsi) — state has already been resolved. But Vulkan requires the driver to correctly implement every detail of the spec, since apps depend on explicit guarantees.`,
+          diagram: {
+            type: 'ascii',
+            content: `OpenGL (fat driver)              Vulkan (thin driver)
+──────────────────           ──────────────────────────────
+App calls glDraw()           App records vkCmdDraw()
+    │                            │
+    ▼                            ▼
+Driver work:                 Driver work:
+• Track all global state      • Almost direct PM4 translation
+• Validate state legality     • App guarantees correctness
+• Compile/cache shader        • Shader compiled at PSO creation
+• Decide memory placement     • App specified memory type
+• Manage synchronization      • App uses VkFence/Semaphore
+    │                            │
+    ▼                            ▼
+Submit PM4 to Ring           Submit PM4 to Ring
+(through many layers)        (shorter path, lower latency)`,
+            caption: 'OpenGL vs Vulkan driver workload. Vulkan moves driver complexity to the application, reducing CPU overhead at draw time by 5–10x in draw-call-heavy workloads.',
+          },
+        },
+        {
+          title: '4. OpenCL — General-Purpose GPU Compute',
+          content: `OpenCL (Open Computing Language, 2008) is the first cross-platform GPU compute API. AMD provides OpenCL support via ROCm. Its programming model is the foundation that CUDA and HIP were designed around.
+
+**Execution Model:**
+- **Platform**: One or more OpenCL implementations (AMD ROCm, Intel OpenCL, etc.)
+- **Device**: A compute device (CPU, GPU, FPGA)
+- **Context**: Container managing devices, memory, command queues
+- **Command Queue**: Submits commands (kernel execution, memory transfers) to a device
+- **Kernel**: A function executing on the device, written in OpenCL C
+- **Work-Item / Work-Group**: Maps directly to GPU Thread / Thread Block
+
+**Mapping to AMD hardware:**
+A Work-Group is scheduled to one CU (Compute Unit). The CU splits it into Wavefronts (64 Work-Items each). Each Wavefront executes on one SIMD unit in SIMT fashion — exactly the same hardware path as HIP.
+
+**On AMD:** OpenCL kernels go through clang → LLVM AMDGPU backend → GPU ISA, then submitted via KFD (ROCm Kernel Fusion Driver) to the GPU. The low-level path is identical to HIP, just with a different API surface.`,
+        },
+        {
+          title: '5. DirectX 12 — Concepts & Vulkan Comparison',
+          content: `DirectX 12 (D3D12, 2015) is Microsoft's modern low-level graphics API for Windows, sharing the same design philosophy as Vulkan. While AMD's Linux driver doesn't implement D3D12, understanding it matters for AMD Markham engineers.
+
+**Why it's relevant:**
+1. AMD has a dedicated Windows driver team implementing D3D12 via WDDM
+2. D3D12 and Vulkan share the same architecture — explicit memory, command recording, PSOs
+3. Cross-platform engines (UE5, Unity) ship D3D12 and Vulkan backends — AMD optimizes both
+4. Interview questions often compare the two
+
+**D3D12 vs Vulkan concept mapping:**
+| Concept | D3D12 | Vulkan |
+|---------|-------|--------|
+| Command submission | Command List + Queue | Command Buffer + Queue |
+| Resource binding | Descriptor Heap | Descriptor Set |
+| Memory | Heap (D3D12MA) | DeviceMemory (VMA) |
+| Render state | Pipeline State Object | Pipeline |
+| Synchronization | Fence + Event | VkFence + VkSemaphore |
+| Shader language | HLSL → DXIL | GLSL/HLSL → SPIR-V |
+
+**The compiler connection:** D3D12 shaders compile to DXIL (LLVM IR derivative). Vulkan shaders compile to SPIR-V (also LLVM-generable). AMD's LLVM AMDGPU backend ultimately compiles both to GPU ISA — the toolchain work is deeply related regardless of API.`,
+        },
+      ],
+      keyBooks: [
+        {
+          title: 'Real-Time Rendering, 4th Edition',
+          author: 'Tomas Akenine-Möller et al.',
+          relevance: 'The definitive graphics textbook. Covers every pipeline stage in depth with hardware context. Essential preparation for any AMD graphics interview.',
+          url: 'https://www.realtimerendering.com/',
+        },
+        {
+          title: 'Vulkan Programming Guide',
+          author: 'Graham Sellers & John Kessenich',
+          relevance: 'Official Vulkan guide. Explains the API design philosophy in depth, directly applicable to understanding radv driver requirements.',
+        },
+        {
+          title: 'OpenCL Programming Guide',
+          author: 'Aaftab Munshi et al.',
+          relevance: 'OpenCL reference covering execution model, memory model, and optimization strategies — maps directly to ROCm HIP concepts.',
+        },
+      ],
+      onlineResources: [
+        {
+          title: 'Vulkan Tutorial (vulkan-tutorial.com)',
+          url: 'https://vulkan-tutorial.com/',
+          type: 'doc',
+          description: 'Best Vulkan intro tutorial on the web. From a triangle to a full renderer with clear code. Highly recommended for understanding what radv must implement.',
+        },
+        {
+          title: 'Mesa Radeonsi/RADV Source',
+          url: 'https://gitlab.freedesktop.org/mesa/mesa',
+          type: 'repo',
+          description: "AMD's OpenGL (radeonsi) and Vulkan (radv) userspace driver implementations. The best code reference for API→driver mapping.",
+        },
+        {
+          title: 'GPUOpen — AMD Developer Resources',
+          url: 'https://gpuopen.com/',
+          type: 'doc',
+          description: 'AMD official dev resources: GPU architecture whitepapers, profiling tools, and graphics best practices.',
+        },
+        {
+          title: 'Khronos Vulkan Specification',
+          url: 'https://registry.khronos.org/vulkan/',
+          type: 'doc',
+          description: 'The authoritative Vulkan spec. radv must implement every mandatory feature in this document.',
+        },
+        {
+          title: 'The Book of Shaders',
+          url: 'https://thebookofshaders.com/',
+          type: 'doc',
+          description: 'Interactive, visual introduction to GLSL fragment shaders. Great for building intuition about programmable GPU stages.',
+        },
+      ],
+    },
+    codeReading: [
+      {
+        title: 'OpenGL Draw Call to PM4 Command',
+        description: 'How a single glDrawArrays() call becomes a GPU PM4 command packet inside Mesa radeonsi',
+        file: 'mesa/src/gallium/drivers/radeonsi/si_draw.c',
+        language: 'c',
+        code: `/* Mesa radeonsi: entry point for an OpenGL draw call */
+/* Called when the app calls glDrawArrays(GL_TRIANGLES, 0, 3) */
+
+static void si_draw_vbo(struct pipe_context *ctx,
+                        const struct pipe_draw_info *info, ...)
+{
+    struct si_context *sctx = (struct si_context *)ctx;
+
+    /* 1. Flush all dirty state bits */
+    /*    OpenGL is a state machine — before drawing, sync everything */
+    /*    that changed since the last draw call                        */
+    if (sctx->dirty_atoms)
+        si_emit_atoms(sctx);   /* write dirty state regs to cmd stream */
+
+    /* 2. Ensure shaders are compiled and uploaded to GPU memory */
+    if (!si_shader_cache_load_shader(sctx))
+        si_update_shaders(sctx); /* may trigger LLVM AMDGPU JIT compile */
+
+    /* 3. Bind vertex buffers */
+    si_emit_vertex_buffers(sctx, info->index_size);
+
+    /* 4. Write DRAW_INDEX_AUTO PM4 packet to command stream */
+    /*    THIS is the instruction that tells the GPU to start rendering */
+    si_emit_draw_packets(sctx, info, drawid_base, draws, num_draws,
+                         indirect, dispatch_draw, min_index, max_index);
+}
+
+/* The final PM4 packet looks like (simplified):
+ *
+ * PACKET3_SET_SH_REG  VGT_PRIMITIVE_TYPE = TRILIST
+ * PACKET3_DRAW_INDEX_AUTO
+ *   vertex_count = 3
+ *   flags = USE_OPAQUE
+ *
+ * The GPU's Command Processor (CP) reads this and
+ * starts fetching vertices from the VBO, dispatching
+ * them to Vertex Shader Wavefronts on idle CUs.
+ */`,
+        annotations: [
+          'si_emit_atoms() iterates the dirty state bitmap and translates all changed GL state into GPU register write commands',
+          'si_update_shaders() is called on first use or when the state combination changes — invokes LLVM AMDGPU backend to compile GLSL to GPU ISA',
+          'si_emit_draw_packets() generates the actual PACKET3_DRAW_INDEX_AUTO or PACKET3_DRAW_INDEX_2 PM4 draw command',
+          'The entire path goes through the Gallium abstraction layer (pipe_context) → libdrm → DRM ioctl → amdgpu kernel driver',
+        ],
+      },
+      {
+        title: 'Vulkan vs OpenGL Draw Path Comparison',
+        description: 'Side-by-side comparison of radv (Vulkan) and radeonsi (OpenGL) draw call implementations',
+        file: 'mesa/src/amd/vulkan/radv_cmd_buffer.c',
+        language: 'c',
+        code: `/* ─── Vulkan path (radv) ─── */
+/* vkCmdDraw() is called during Command Buffer recording, not execution */
+
+VKAPI_ATTR void VKAPI_CALL
+radv_CmdDraw(VkCommandBuffer commandBuffer,
+             uint32_t vertexCount, uint32_t instanceCount,
+             uint32_t firstVertex, uint32_t firstInstance)
+{
+    RADV_FROM_HANDLE(radv_cmd_buffer, cmd_buffer, commandBuffer);
+
+    /* Vulkan: state was set by vkCmdSetXxx() and vkCmdBindPipeline() */
+    /* No global state to track — just read cmd_buffer->state          */
+
+    /* Flush dynamic state if changed since last draw */
+    radv_cmd_buffer_flush_dynamic_state(cmd_buffer,
+                                        cmd_buffer->state.dirty);
+
+    /* Directly write PM4 DRAW_INDEX_AUTO to the command buffer stream */
+    radv_emit_draw_packets_indexed_multi_draw(cmd_buffer, draws, 1,
+                                              draw_vertex_count);
+}
+/* Key: this function runs in microseconds — no global state parsing  */
+/* PM4 commands are submitted to the GPU only at vkQueueSubmit()       */
+
+/* ─── Comparison: OpenGL path (radeonsi) ─── */
+/* glDrawArrays() submits immediately; driver must resolve state NOW   */
+
+/* State dirty bits radeonsi checks before every draw (simplified):    */
+/*   SI_STATE_BIT_FRAMEBUFFER    - bound FBO                           */
+/*   SI_STATE_BIT_SCISSOR        - scissor rect                        */
+/*   SI_STATE_BIT_VIEWPORT       - viewport transform                  */
+/*   SI_STATE_BIT_BLEND          - alpha blending                      */
+/*   SI_STATE_BIT_DEPTH_STENCIL  - depth/stencil test                  */
+/*   SI_STATE_BIT_RASTERIZER     - rasterizer config                   */
+/*   SI_STATE_BIT_VS/FS/GS/HS   - shader stages                       */
+/*   ... 30+ bits total                                                 */
+/* This explains why OpenGL has higher CPU overhead per draw call       */`,
+        annotations: [
+          'radv CmdDraw is a recording-time operation with near-zero state overhead — the key reason Vulkan wins on CPU-bound workloads',
+          'radeonsi must check 30+ state dirty bits on every draw call — the tax of the OpenGL "fat driver" design',
+          'Both radv (Vulkan) and radeonsi (OpenGL) ultimately generate the same PM4 command format, submitted to the same amdgpu kernel driver',
+          'This comparison comes up frequently in AMD graphics driver interviews',
+        ],
+      },
+    ],
+    miniProject: {
+      title: 'Draw Your First GPU Triangle and Trace It to the Driver',
+      description: 'Render a colored triangle with OpenGL, then use apitrace to capture API calls and strace to observe kernel ioctls — building the complete API → Mesa → DRM → GPU mental model.',
+      objectives: [
+        'Render a color-interpolated triangle with GLFW + OpenGL 3.3 Core Profile (Gouraud shading via vertex colors)',
+        'Use apitrace to record the GL call sequence and identify draw call state setup',
+        'Use strace to capture DRM ioctls and find the DRM_IOCTL_AMDGPU_CS submission',
+        'Compare API call count between OpenGL and Vulkan (vulkan-tutorial.com Chapter 1)',
+      ],
+      steps: [
+        'Install: sudo apt install libglfw3-dev libglew-dev vulkan-tools libvulkan-dev apitrace',
+        'Write OpenGL triangle: vertex shader passes through position/color, fragment shader outputs interpolated color',
+        'Build and run: gcc triangle.c -lGL -lglfw -lGLEW -o triangle && ./triangle',
+        'Trace with apitrace: apitrace trace --api gl ./triangle',
+        'View trace: qapitrace trace.apitrace — find glDrawArrays and examine preceding state calls',
+        'Trace ioctls: strace -e ioctl ./triangle 2>&1 | grep AMDGPU_CS',
+        '(Optional) Run vulkan-tutorial.com Chapter 1 code — compare the ioctl volume between OpenGL and Vulkan',
+      ],
+      expectedOutput: `apitrace output should show:
+glUseProgram(1)                    # bind compiled shader program
+glBindVertexArray(1)               # bind vertex attribute config
+glDrawArrays(GL_TRIANGLES, 0, 3)   # ← the actual draw trigger
+
+strace output should include:
+ioctl(3, DRM_IOCTL_AMDGPU_CS, ...) # Mesa submitting PM4 command
+                                    # buffer to the kernel driver
+
+Window displays: a triangle with red, green, and blue
+corners — colors smoothly interpolated across the surface
+(Gouraud shading via built-in rasterizer interpolation).`,
+    },
+    interviewQuestions: [
+      {
+        question: 'Describe the fundamental architectural difference between OpenGL and Vulkan drivers, and why Vulkan achieves lower CPU overhead per draw call.',
+        difficulty: 'medium',
+        hint: 'Cover "state machine vs explicit state" and "immediate vs deferred command recording."',
+        answer: "OpenGL is a global state machine: at every draw call, the driver must check 30+ dirty state bits, validate state legality, and potentially compile/cache shaders — all on the application's thread. Vulkan is explicit: (1) State is baked into Pipeline State Objects at creation time, not resolved at draw time; (2) Command buffers decouple recording from submission, enabling multi-threaded recording; (3) Memory management and synchronization are fully app-controlled, eliminating driver guesswork. Result: Vulkan draw call CPU overhead is typically 5–10x lower than OpenGL, which matters enormously for draw-call-heavy game engines.",
+      },
+      {
+        question: 'Explain the difference between a Vertex Shader and a Fragment Shader, and how each executes on AMD GPU hardware.',
+        difficulty: 'easy',
+        hint: 'Cover per-vertex vs per-pixel execution, input/output, and Wavefront granularity.',
+        answer: 'Vertex Shader: executes once per vertex. Input: vertex attributes (position, normal, UV). Output: clip-space coordinates and interpolated attributes. Vertex count is typically small (thousands to millions). Fragment Shader: executes once per rasterized pixel (Fragment). Input: interpolated vertex attributes. Output: pixel color. A single frame may have millions of fragments — this is almost always the bottleneck. Both are "programmable shaders" — the driver compiles GLSL/SPIR-V to AMDGPU ISA. On hardware, both run on CU SIMD units in Wavefronts of 64 threads. The CU schedules vertex shader Wavefronts and fragment shader Wavefronts the same way — they are just different kernel functions dispatched at different pipeline stages.',
+      },
+      {
+        question: 'How do OpenCL Work-Items and Work-Groups correspond to HIP Threads and Blocks, and how do they map to AMD GPU hardware?',
+        difficulty: 'medium',
+        hint: 'Cover the API-to-hardware mapping through Wavefronts and CUs.',
+        answer: 'OpenCL Work-Item = HIP Thread: the smallest execution unit, each running the same kernel on different data. OpenCL Work-Group = HIP Block: a group that can synchronize (barrier) and share Local Memory (LDS). On AMD hardware: a Work-Group is dispatched to one CU; the CU splits it into Wavefronts (64 Work-Items); each Wavefront executes on one SIMD unit in SIMT mode. The max Work-Group size is 1024 (same as HIP Block). OpenCL barrier(CLK_LOCAL_MEM_FENCE) and HIP __syncthreads() compile to the same S_BARRIER hardware instruction. The low-level execution path through KFD and the amdgpu kernel driver is identical.',
+      },
+      {
+        question: "What are Vulkan Render Passes and why do they matter for AMD GPU's RB+ (Render Backend Plus) architecture?",
+        difficulty: 'hard',
+        hint: 'Consider VRAM bandwidth savings when depth attachments are declared DONT_CARE.',
+        answer: "A Render Pass describes the attachments (color, depth) used by a set of rendering operations and their Load/Store behavior at Pass boundaries. For AMD: (1) When depth is declared STORE_OP_DONT_CARE, the driver knows it doesn't need to be written back to VRAM — AMD's RB+ can complete depth testing entirely in tile cache, saving significant bandwidth on high-res targets. (2) Subpass dependencies tell the driver exactly when to insert memory barriers (cache flushes), avoiding both under-synchronization (data hazards) and over-synchronization (unnecessary stalls). (3) Versus OpenGL, where the driver must heuristically guess cache flush points — Vulkan's explicit information lets radv generate more optimal command sequences. This is a common topic in AMD Vulkan driver interviews.",
+      },
+      {
+        question: 'Walk through the full path from OpenCL kernel source code to execution on AMD GPU hardware.',
+        difficulty: 'hard',
+        hint: 'Cover clang, LLVM AMDGPU backend, KFD, AQL queue, and Command Processor.',
+        answer: 'Compilation phase: clBuildProgram() invokes clang to parse OpenCL C into LLVM IR. LLVM middle-end runs optimization passes (loop unrolling, vectorization). LLVM AMDGPU backend compiles optimized IR to target GPU ISA (e.g., gfx1102). Output is an ELF Code Object containing GPU machine code and metadata (register usage, LDS size). Runtime phase: clEnqueueNDRangeKernel() flows through ROCm OpenCL runtime → amdocl → HIP runtime layer. KFD ioctl (KFD_IOC_DISPATCH_QUEUE) queues an AQL (AMD Queue Language) dispatch packet into the GPU queue. The GPU Command Processor reads the AQL packet and dispatches Wavefronts to idle CUs. Synchronization: clWaitForEvents() calls KFD_IOC_WAIT_EVENTS, blocking until the GPU signals the completion fence.',
+      },
+    ],
+  },
+  // ═══════════════════════════════════════════════════════════════
   {
     id: 'hardware',
     number: '2',

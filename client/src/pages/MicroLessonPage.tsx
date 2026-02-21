@@ -12,6 +12,7 @@ import { useProgress } from "@/contexts/ProgressContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { SearchModal } from "@/components/SearchModal";
+import { DynamicIcon } from "@/components/DynamicIcon";
 import { useSearchHighlight } from "@/lib/highlight";
 import { getCurriculum } from "@/data/curriculum_index";
 import { getMicroLessonsByModule } from "@/data/micro_lessons_index";
