@@ -6,10 +6,11 @@
 
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useSearchHighlight } from "@/lib/highlight";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import {
   ArrowLeft, Copy, Check, ChevronRight, Sun, Moon,
   Terminal, Monitor, HardDrive, Cpu, Download, Settings, Languages
@@ -58,19 +59,11 @@ function Section({ icon: Icon, title, children, id }: { icon: typeof Terminal; t
 
 export default function SetupGuide() {
   const { theme, toggleTheme } = useTheme();
-  const { locale, setLocale } = useLocale();
+  const { locale } = useLocale();
+  const { switchLocale } = useSwitchLocale();
   const contentRef = useRef<HTMLDivElement>(null);
   useSearchHighlight(contentRef);
-  const [, navigate] = useLocation();
   const { t } = useTranslation();
-
-  const switchLocale = () => {
-    const newLocale = locale === "zh" ? "en" : "zh";
-    setLocale(newLocale);
-    const path = window.location.pathname;
-    const newPath = path.replace(/^\/(zh|en)/, `/${newLocale}`) || `/${newLocale}`;
-    window.location.pathname = newPath;
-  };
 
   return (
     <div className="min-h-screen bg-background">

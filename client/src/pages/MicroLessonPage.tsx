@@ -10,6 +10,7 @@ import { Link, useParams, useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useProgress } from "@/contexts/ProgressContext";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { SearchModal } from "@/components/SearchModal";
 import { useSearchHighlight } from "@/lib/highlight";
 import { getCurriculum } from "@/data/curriculum_index";
@@ -324,7 +325,8 @@ export default function MicroLessonPage() {
   const contentRef = useRef<HTMLDivElement>(null);
   useSearchHighlight(contentRef);
   const { theme, toggleTheme } = useTheme();
-  const { locale, setLocale } = useLocale();
+  const { locale } = useLocale();
+  const { switchLocale } = useSwitchLocale();
   const { t } = useTranslation();
   const { isLessonComplete, markLessonComplete, unmarkLessonComplete } = useProgress();
 
@@ -332,13 +334,6 @@ export default function MicroLessonPage() {
   const microLessonsByModule = getMicroLessonsByModule(locale);
   const moduleId = params.moduleId || "prerequisites";
 
-  const switchLocale = () => {
-    const newLocale = locale === "zh" ? "en" : "zh";
-    setLocale(newLocale);
-    const path = window.location.pathname;
-    const newPath = path.replace(/^\/(zh|en)/, `/${newLocale}`) || `/${newLocale}`;
-    window.location.pathname = newPath;
-  };
   const lessonId = params.lessonId || "";
   const mod = microLessonsByModule[moduleId];
   const curriculumModule = curriculum.find(m => m.id === moduleId);

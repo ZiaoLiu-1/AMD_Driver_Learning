@@ -3,9 +3,10 @@
 // ============================================================
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useSearch, useLocation } from "wouter";
+import { Link, useSearch } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { getCurriculum, getGlossaryByModule } from "@/data/curriculum_index";
 import type { GlossaryTerm } from "@/data/curriculum";
 import { useSearchHighlight } from "@/lib/highlight";
@@ -62,8 +63,8 @@ function buildTermList(
 
 export default function GlossaryPage() {
   const { theme, toggleTheme } = useTheme();
-  const { locale, setLocale } = useLocale();
-  const [, navigate] = useLocation();
+  const { locale } = useLocale();
+  const { switchLocale } = useSwitchLocale();
   const { t } = useTranslation();
   const searchString = useSearch();
 
@@ -80,14 +81,6 @@ export default function GlossaryPage() {
   const [activeCategory, setActiveCategory] = useState<Category | "all">("all");
   const contentRef = useRef<HTMLDivElement>(null);
   useSearchHighlight(contentRef);
-
-  const switchLocale = () => {
-    const newLocale = locale === "zh" ? "en" : "zh";
-    setLocale(newLocale);
-    const path = window.location.pathname;
-    const newPath = path.replace(/^\/(zh|en)/, `/${newLocale}`) || `/${newLocale}`;
-    window.location.pathname = newPath;
-  };
 
   const categoryConfig = useMemo(() => ({
     kernel:    { ...categoryColors.kernel, label: t("glossary.categoryKernel") },

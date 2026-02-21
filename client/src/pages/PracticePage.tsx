@@ -4,9 +4,10 @@
 // ============================================================
 import { useState, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { getCurriculum } from "@/data/curriculum_index";
 import { getMicroLessonsByModule } from "@/data/micro_lessons_index";
 import type { Module } from "@/data/curriculum";
@@ -83,8 +84,8 @@ const diffStyles = {
 
 export default function PracticePage() {
   const { theme, toggleTheme } = useTheme();
-  const { locale, setLocale } = useLocale();
-  const [, navigate] = useLocation();
+  const { locale } = useLocale();
+  const { switchLocale } = useSwitchLocale();
   const { t } = useTranslation();
   const curriculum = getCurriculum(locale);
   const microLessonsByModule = getMicroLessonsByModule(locale);
@@ -124,14 +125,6 @@ export default function PracticePage() {
     setSkipped(0);
     setFinished(false);
   }, [allQs]);
-
-  const switchLocale = () => {
-    const newLocale = locale === "zh" ? "en" : "zh";
-    setLocale(newLocale);
-    const path = window.location.pathname;
-    const newPath = path.replace(/^\/(zh|en)/, `/${newLocale}`) || `/${newLocale}`;
-    window.location.pathname = newPath;
-  };
 
   const applyFilter = useCallback(() => {
     setIdx(0);

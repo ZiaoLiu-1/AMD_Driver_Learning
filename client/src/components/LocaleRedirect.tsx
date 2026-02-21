@@ -13,8 +13,8 @@ function getPreferredLocale(): "zh" | "en" {
     if (stored === "en" || stored === "zh") return stored;
   }
   const browser = navigator.language?.toLowerCase() ?? "";
-  if (browser.startsWith("en")) return "en";
-  return "zh";
+  if (browser.startsWith("zh")) return "zh";
+  return "en";
 }
 
 export default function LocaleRedirect() {

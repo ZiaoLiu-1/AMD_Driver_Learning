@@ -7,13 +7,14 @@
    - Staged learning path timeline
    ============================================================ */
 
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { difficultyColors } from "@/data/curriculum";
 import { getCurriculum, getTotalHours, getDifficultyLabels } from "@/data/curriculum_index";
 import { getMicroLessonsByModule } from "@/data/micro_lessons_index";
 import { useProgress } from "@/contexts/ProgressContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, Clock, BookOpen, Code2, Target, ChevronRight, Cpu, Zap, CheckCircle2, Circle, Loader2, BarChart3, Terminal, Sun, Moon, GraduationCap, BookMarked, Languages } from "lucide-react";
 
@@ -27,8 +28,8 @@ const STAGE_MODULES = [
 ];
 
 export default function Home() {
-  const { locale, setLocale, basePath } = useLocale();
-  const [, navigate] = useLocation();
+  const { locale, basePath } = useLocale();
+  const { switchLocale } = useSwitchLocale();
   const { t } = useTranslation();
   const { getModuleStatus, getTotalCompleted } = useProgress();
   const { theme, toggleTheme } = useTheme();
@@ -42,14 +43,6 @@ export default function Home() {
   const progressPct = Math.round((totalCompleted / curriculum.length) * 100);
 
   const continueModule = curriculum.find(m => getModuleStatus(m.id) !== 'completed') ?? curriculum[0];
-
-  const switchLocale = () => {
-    const newLocale = locale === 'zh' ? 'en' : 'zh';
-    setLocale(newLocale);
-    const path = window.location.pathname;
-    const newPath = path.replace(/^\/(zh|en)/, `/${newLocale}`) || `/${newLocale}`;
-    window.location.pathname = newPath;
-  };
 
   return (
     <div className="min-h-screen bg-background">
