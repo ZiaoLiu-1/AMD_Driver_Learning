@@ -9,7 +9,7 @@ export const ecosystemModule: Module = {
   number: '0.5',
   title: 'AMD 生态系统概览',
   titleEn: 'AMD Ecosystem Overview',
-  icon: '🌐',
+  icon: 'Globe',
   description: '在深入驱动代码之前，先建立完整的"地图感"：AMD 产品线、GPU 命名规则、架构历史、驱动技术栈，以及 AMD vs NVIDIA 的竞争格局。',
   estimatedHours: 8,
   difficulty: 'beginner',

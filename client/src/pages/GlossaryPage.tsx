@@ -11,6 +11,7 @@ import { getCurriculum, getGlossaryByModule } from "@/data/curriculum_index";
 import type { GlossaryTerm } from "@/data/curriculum";
 import { useSearchHighlight } from "@/lib/highlight";
 import { ArrowLeft, Search, Sun, Moon, ChevronRight, X, Languages } from "lucide-react";
+import { DynamicIcon } from "@/components/DynamicIcon";
 
 type Category = GlossaryTerm["category"];
 const categoryKeys: Record<Category, string> = {
@@ -22,12 +23,12 @@ const categoryKeys: Record<Category, string> = {
   general: "glossary.categoryGeneral",
 };
 const categoryColors: Record<Category, { color: string; bg: string }> = {
-  kernel:    { color: "oklch(0.70 0.15 200)", bg: "oklch(0.55 0.18 200 / 0.12)" },
-  hardware:  { color: "oklch(0.75 0.18 35)",  bg: "oklch(0.62 0.22 35 / 0.12)"  },
-  graphics:  { color: "oklch(0.72 0.18 290)", bg: "oklch(0.55 0.18 290 / 0.12)" },
-  compute:   { color: "oklch(0.70 0.18 145)", bg: "oklch(0.55 0.18 145 / 0.12)" },
-  toolchain: { color: "oklch(0.72 0.15 60)",  bg: "oklch(0.55 0.15 60 / 0.12)"  },
-  general:   { color: "oklch(0.65 0.01 240)", bg: "oklch(0.55 0.01 240 / 0.12)" },
+  kernel: { color: "oklch(0.70 0.15 200)", bg: "oklch(0.55 0.18 200 / 0.12)" },
+  hardware: { color: "oklch(0.75 0.18 35)", bg: "oklch(0.62 0.22 35 / 0.12)" },
+  graphics: { color: "oklch(0.72 0.18 290)", bg: "oklch(0.55 0.18 290 / 0.12)" },
+  compute: { color: "oklch(0.70 0.18 145)", bg: "oklch(0.55 0.18 145 / 0.12)" },
+  toolchain: { color: "oklch(0.72 0.15 60)", bg: "oklch(0.55 0.15 60 / 0.12)" },
+  general: { color: "oklch(0.65 0.01 240)", bg: "oklch(0.55 0.01 240 / 0.12)" },
 };
 
 interface FlatTerm extends GlossaryTerm {
@@ -49,7 +50,7 @@ function buildTermList(
         ...t,
         moduleId,
         moduleTitle: mod?.title ?? moduleId,
-        moduleIcon: mod?.icon ?? "📖",
+        moduleIcon: mod?.icon ?? "BookOpen",
       });
     }
   }
@@ -83,12 +84,12 @@ export default function GlossaryPage() {
   useSearchHighlight(contentRef);
 
   const categoryConfig = useMemo(() => ({
-    kernel:    { ...categoryColors.kernel, label: t("glossary.categoryKernel") },
-    hardware:  { ...categoryColors.hardware, label: t("glossary.categoryHardware") },
-    graphics:  { ...categoryColors.graphics, label: t("glossary.categoryGraphics") },
-    compute:   { ...categoryColors.compute, label: t("glossary.categoryCompute") },
+    kernel: { ...categoryColors.kernel, label: t("glossary.categoryKernel") },
+    hardware: { ...categoryColors.hardware, label: t("glossary.categoryHardware") },
+    graphics: { ...categoryColors.graphics, label: t("glossary.categoryGraphics") },
+    compute: { ...categoryColors.compute, label: t("glossary.categoryCompute") },
     toolchain: { ...categoryColors.toolchain, label: t("glossary.categoryToolchain") },
-    general:   { ...categoryColors.general, label: t("glossary.categoryGeneral") },
+    general: { ...categoryColors.general, label: t("glossary.categoryGeneral") },
   }), [t]);
 
   const filtered = allTerms.filter(t => {
@@ -170,18 +171,16 @@ export default function GlossaryPage() {
             <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 flex-shrink-0">
               <button
                 onClick={() => setActiveCategory("all")}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all border ${
-                  activeCategory === "all" ? "border-primary/50 bg-primary/10 text-primary" : "border-border/50 text-muted-foreground/60 hover:border-border"
-                }`}>
+                className={`text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all border ${activeCategory === "all" ? "border-primary/50 bg-primary/10 text-primary" : "border-border/50 text-muted-foreground/60 hover:border-border"
+                  }`}>
                 {t("glossary.all")} ({allTerms.length})
               </button>
               {(Object.entries(categoryConfig) as [Category, typeof categoryConfig[Category]][]).map(([cat, cfg]) => (
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all border ${
-                    activeCategory === cat ? "border-current" : "border-border/50 hover:border-border"
-                  }`}
+                  className={`text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all border ${activeCategory === cat ? "border-current" : "border-border/50 hover:border-border"
+                    }`}
                   style={activeCategory === cat ? { color: cfg.color, background: cfg.bg, borderColor: cfg.color } : { color: "var(--muted-foreground)" }}>
                   {cfg.label} ({categoryCounts[cat] ?? 0})
                 </button>
@@ -231,7 +230,7 @@ export default function GlossaryPage() {
                   <div className="flex-shrink-0 text-right hidden sm:block">
                     <Link href={`/module/${term.moduleId}`}>
                       <div className="text-[10px] text-muted-foreground/40 hover:text-primary transition-colors cursor-pointer flex items-center gap-1 justify-end">
-                        <span>{term.moduleIcon}</span>
+                        <DynamicIcon name={term.moduleIcon} className="w-3 h-3" />
                         <span className="max-w-[80px] truncate">{term.moduleTitle}</span>
                       </div>
                     </Link>

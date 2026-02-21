@@ -16,7 +16,7 @@ export const module7MicroLessons: MicroLessonModule = {
       number: '7.1',
       title: 'HSA 架构与 KFD 基础',
       titleEn: 'HSA Architecture & KFD Basics',
-      icon: '⚡',
+      icon: 'Zap',
       description: '理解 HSA 异构计算标准、KFD 在 amdgpu 中的角色、/dev/kfd 设备节点的运作机制，以及 KFD 与传统 DRM 接口的核心差异。',
       lessons: [
         // ── Lesson 7.1.1 ──────────────────────────────────────
@@ -450,7 +450,7 @@ ioctl(4, AMDKFD_IOC_CREATE_QUEUE, ...) = -1 ENOMEM
       number: '7.2',
       title: 'GPU 内存与同步',
       titleEn: 'GPU Memory & Synchronization',
-      icon: '🔗',
+      icon: 'Link',
       description: 'SVM 统一虚拟地址空间让 CPU 和 GPU 共享指针，GPU page fault 和页面迁移实现按需数据移动。HSA 信号量和 KFD 事件机制实现高效的 CPU-GPU 同步。',
       lessons: [
         // ── Lesson 7.2.1 ──────────────────────────────────────

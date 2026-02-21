@@ -9,7 +9,7 @@ export const ecosystemModuleEn: Module = {
   number: '0.5',
   title: 'AMD Ecosystem Overview',
   titleEn: 'AMD Ecosystem Overview',
-  icon: '🌐',
+  icon: 'Globe',
   description:
     'Before diving into driver code, build a complete "mental map": AMD product lines, GPU naming conventions, architecture history, driver stack, and the AMD vs NVIDIA competitive landscape.',
   estimatedHours: 8,

@@ -742,7 +742,7 @@ void update_display(int fd, uint32_t crtc_id,
       number: '4.2',
       title: 'GPU 内存管理',
       titleEn: 'GPU Memory Management',
-      icon: '💾',
+      icon: 'HardDrive',
       description: '掌握 DRM 的两大 GPU 内存管理框架 GEM 和 TTM，理解 Buffer Object 的生命周期和内存域迁移，以及 DMA-BUF 跨设备零拷贝共享协议。',
       lessons: [
         // ── Lesson 4.2.1 ──────────────────────────────────────

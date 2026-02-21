@@ -16,7 +16,7 @@ export const module10MicroLessons: MicroLessonModule = {
       number: '10.1',
       title: '测试框架',
       titleEn: 'Testing Frameworks',
-      icon: '🧪',
+      icon: 'FlaskConical',
       description: '深入理解 IGT GPU Tools 测试框架的架构和用法，学会编写 amdgpu 专用的 IGT 测试用例，从读懂现有测试到独立编写新测试。',
       lessons: [
         // ── Lesson 10.1.1 ──────────────────────────────────────
@@ -88,7 +88,7 @@ IGT 测试结果状态：
   PASS    ✓  所有断言通过
   FAIL    ✗  某个 igt_assert 失败
   SKIP    ○  igt_require 条件不满足（硬件不支持等）
-  TIMEOUT ⏰ 测试超过最大运行时间（默认 120s）`,
+  TIMEOUT 测试超过最大运行时间（默认 120s）`,
             caption: 'IGT 测试由 igt_main 入口、igt_fixture 共享初始化/清理、igt_subtest 独立子测试三部分组成。每个子测试独立运行，互不影响。',
           },
           codeWalk: {
@@ -519,7 +519,7 @@ Subtest query-fw-version: SUCCESS (0.001s)`,
       number: '10.2',
       title: 'CI 与内核测试',
       titleEn: 'CI & Kernel Testing',
-      icon: '🔄',
+      icon: 'RefreshCw',
       description: '掌握内核自测试框架（kselftest 和 KUnit）的使用方法，理解 AMD CI 基础设施的架构，学会解读 CI 管线结果并处理回归测试。',
       lessons: [
         // ── Lesson 10.2.1 ──────────────────────────────────────
@@ -878,7 +878,7 @@ ok 4 drm_buddy_test_free_merge`,
               │  ● 新回归: 1            │
               │    amd_basic@query      │
               │  ● 已知失败: 1 (忽略)   │
-              │  ● 状态: BLOCKED ⛔      │
+              │  ● 状态: BLOCKED │
               │  → 修复后重新提交       │
               └─────────────────────────┘`,
             caption: 'CI 管线三阶段流程。关键是 baseline comparison——将实际 FAIL 与 expected-failures 文件对比，只有新出现的回归才阻塞合并。这确保了 CI 的实用性。',

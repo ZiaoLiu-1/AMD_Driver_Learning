@@ -17,6 +17,7 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, Clock, BookOpen, Code2, Target, ChevronRight, Cpu, Zap, CheckCircle2, Circle, Loader2, BarChart3, Terminal, Sun, Moon, GraduationCap, BookMarked, Languages } from "lucide-react";
+import { DynamicIcon } from "@/components/DynamicIcon";
 
 const STAGE_KEYS = ['stage1', 'stage2', 'stage3', 'stage4', 'stage5'] as const;
 const STAGE_MODULES = [
@@ -297,8 +298,8 @@ export default function Home() {
 
                           {/* Module Info */}
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 mb-0.5">
-                              <span className="text-sm">{module.icon}</span>
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <DynamicIcon name={module.icon} className="w-4 h-4 text-foreground/70" />
                               <span className="text-xs font-medium text-foreground/85 truncate group-hover:text-foreground transition-colors">
                                 {module.title}
                               </span>

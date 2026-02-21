@@ -16,7 +16,7 @@ export const module11MicroLessons: MicroLessonModule = {
       number: '11.1',
       title: '内核补丁实战',
       titleEn: 'Kernel Patch Workflow in Practice',
-      icon: '📮',
+      icon: 'Mail',
       description: '掌握从 git format-patch 到 git send-email 的完整内核补丁提交流程，学会写出高质量的 commit message 并专业地回应代码审查。',
       lessons: [
         // ── Lesson 11.1.1 ──────────────────────────────────────
@@ -332,7 +332,7 @@ git send-email \\
             title: 'Commit Message 剖析：好的 vs 差的',
             content: `Commit Message 对比
 
-❌ 差的 Commit Message
+差的 Commit Message
 ──────────────────────
 fix bug
 
@@ -346,7 +346,7 @@ Signed-off-by: dev@email.com
 └─ 5 年后看到这个 commit 不知道它修了什么
 
 
-✅ 好的 Commit Message
+好的 Commit Message
 ──────────────────────
 drm/amdgpu: fix page fault on VM unmap due to missing TLB flush
                 │                        │
@@ -544,7 +544,7 @@ Fixes: some old commit`,
       number: '11.2',
       title: '职业发展',
       titleEn: 'Career Development',
-      icon: '🚀',
+      icon: 'Rocket',
       description: '将你在本课程中积累的技能和项目转化为职业优势——构建引人注目的工程师 Portfolio，深入了解 AMD 的团队结构和面试流程。',
       lessons: [
         // ── Lesson 11.2.1 ──────────────────────────────────────

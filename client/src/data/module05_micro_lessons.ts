@@ -16,7 +16,7 @@ export const module05MicroLessons: MicroLessonModule = {
       number: '0.5.1',
       title: 'AMD 产品线与命名规则',
       titleEn: 'AMD Products & Naming',
-      icon: '🏢',
+      icon: 'Building',
       description: '理解 AMD 的公司结构、GPU 产品层次、命名规则，以及如何从一个型号推断出它在内核代码中对应的芯片代号和 IP 版本。',
       lessons: [
         // ── Lesson 0.5.1.1 ────────────────────────────────────
