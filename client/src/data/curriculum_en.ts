@@ -28,7 +28,7 @@ export const curriculumEn: Module[] = [
         {
           title: 'Why Choose AMD GPU Driver Development?',
           content:
-            'The AMD GPU driver stack (amdgpu) is one of the most complex and active subsystems in the Linux kernel. The entire stack is fully open source, from kernel driver to userspace ROCm compute framework, providing unmatched transparency for learning. AMD Markham (Canada) is one of AMD\'s primary GPU driver development centers, with many kernel engineer positions. Mastering the skills on this path will make you a highly competitive candidate. The amdgpu driver exceeds 4 million lines (drivers/gpu/drm/amd/), one of the largest single subsystems in the Linux kernel. It includes Display Core (DC), Graphics/Compute (GFX), DMA engine (SDMA), video codec (VCN/JPEG), power management (SMU), and more IP Blocks, each maintained by independent teams.',
+            'The AMD GPU driver stack (amdgpu) is one of the most complex and active subsystems in the Linux kernel. The entire stack is fully open source, from kernel driver to userspace ROCm compute framework, providing unmatched transparency for learning. AMD Markham (Canada) is one of AMD\'s primary GPU driver development centers, with many kernel engineer positions. Mastering the skills on this path will make you a highly competitive candidate. The amdgpu driver comprises approximately 2.5 million lines (measured with cloc on Linux 6.8, drivers/gpu/drm/amd/), one of the largest single subsystems in the Linux kernel. It includes Display Core (DC), Graphics/Compute (GFX), DMA engine (SDMA), video codec (VCN/JPEG), power management (SMU), and more IP Blocks, each maintained by independent teams.',
           diagram: {
             type: 'ascii',
             content: `Why AMD GPU Driver Development?
@@ -36,11 +36,11 @@ export const curriculumEn: Module[] = [
   Linux Kernel Active Subsystems (by lines of code)
   ─────────────────────────────────────────────────
 
-  drivers/gpu/drm/amd/   ████████████████████████  4M+ lines
-  drivers/net/           ███████████████████       3M+ lines
-  drivers/gpu/drm/i915/  ████████████              1.5M lines
-  fs/                    ███████████               1.2M lines
-  sound/                 ██████████                1M+ lines
+  drivers/gpu/drm/amd/   ████████████████████████  ~2.5M lines (cloc, Linux 6.8)
+  drivers/net/           ███████████████████       ~2M lines
+  drivers/gpu/drm/i915/  ████████████              ~1M lines
+  fs/                    ███████████               ~1.2M lines
+  sound/                 ██████████                ~1M lines
 
   amdgpu is the LARGEST single driver in the kernel!
 
@@ -1067,7 +1067,7 @@ corners — colors smoothly interpolated across the surface
     ],
     theory: {
       overview:
-        'amdgpu lives in drivers/gpu/drm/amd/ and is one of the largest drivers in the kernel (over a million lines). You need a good navigation strategy. This module starts with a reading guide, then walks through core components.',
+        'amdgpu lives in drivers/gpu/drm/amd/ and is one of the largest drivers in the kernel (approximately 2.5 million lines, measured with cloc on Linux 6.8). You need a good navigation strategy. This module starts with a reading guide, then walks through core components.',
       sections: [
         {
           title: '5.1 AMDGPU Code Reading Guide',

@@ -115,7 +115,7 @@ export const curriculumZh: Module[] = [
       sections: [
         {
           title: '为什么选择 AMD GPU 驱动开发？',
-          content: 'AMD 的 GPU 驱动栈（amdgpu）是目前 Linux 内核中最复杂、最活跃的子系统之一。整个驱动栈完全开源，从内核驱动到用户态 ROCm 计算框架，这为学习提供了无与伦比的透明度。AMD Markham（加拿大）是 AMD 最重要的 GPU 驱动开发中心之一，拥有大量内核工程师岗位。掌握这条路径上的技能，将使你成为一名极具竞争力的候选人。amdgpu 驱动代码量超过 400 万行（drivers/gpu/drm/amd/ 目录），是 Linux 内核中最大的单个子系统之一。它包含 Display Core（DC）、Graphics/Compute（GFX）、DMA 引擎（SDMA）、视频编解码（VCN/JPEG）、电源管理（SMU）等多个 IP Block，每个都有独立的团队在维护。',
+          content: 'AMD 的 GPU 驱动栈（amdgpu）是目前 Linux 内核中最复杂、最活跃的子系统之一。整个驱动栈完全开源，从内核驱动到用户态 ROCm 计算框架，这为学习提供了无与伦比的透明度。AMD Markham（加拿大）是 AMD 最重要的 GPU 驱动开发中心之一，拥有大量内核工程师岗位。掌握这条路径上的技能，将使你成为一名极具竞争力的候选人。amdgpu 驱动代码量约 250 万行（使用 cloc 对 Linux 6.8 内核 drivers/gpu/drm/amd/ 目录统计），是 Linux 内核中最大的单个子系统之一。它包含 Display Core（DC）、Graphics/Compute（GFX）、DMA 引擎（SDMA）、视频编解码（VCN/JPEG）、电源管理（SMU）等多个 IP Block，每个都有独立的团队在维护。',
           diagram: {
             type: 'ascii',
             content: `Why AMD GPU Driver Development?
@@ -123,11 +123,11 @@ export const curriculumZh: Module[] = [
   Linux Kernel Active Subsystems (by lines of code)
   ─────────────────────────────────────────────────
 
-  drivers/gpu/drm/amd/   ████████████████████████  4M+ lines
-  drivers/net/           ███████████████████       3M+ lines
-  drivers/gpu/drm/i915/  ████████████              1.5M lines
-  fs/                    ███████████               1.2M lines
-  sound/                 ██████████                1M+ lines
+  drivers/gpu/drm/amd/   ████████████████████████  ~2.5M lines (cloc, Linux 6.8)
+  drivers/net/           ███████████████████       ~2M lines
+  drivers/gpu/drm/i915/  ████████████              ~1M lines
+  fs/                    ███████████               ~1.2M lines
+  sound/                 ██████████                ~1M lines
 
   amdgpu is the LARGEST single driver in the kernel!
 
@@ -1597,8 +1597,16 @@ module_exit(amdgpu_exit);`,
           },
         },
         {
-          title: 'GEM 与 TTM 内存管理',
-          content: 'GPU 内存管理是 DRM 中最复杂的部分。GEM（Graphics Execution Manager）是 DRM 提供的高层内存管理框架，它将 GPU 内存抽象为 GEM 对象（gem_object），用户空间通过文件描述符（handle）来引用这些对象。TTM（Translation Table Manager）是 GEM 的底层实现，负责在不同内存区域（VRAM、GTT/系统内存、CPU 可见区域）之间迁移 Buffer Object（BO）。当 VRAM 不足时，TTM 会将不常用的 BO 迁移到系统内存（GTT），需要时再迁回 VRAM，这个过程对上层透明。DMA-BUF 是跨设备共享内存的机制，允许 GPU 和 CPU 零拷贝地共享同一块内存。',
+          title: 'GEM 与 TTM：双层内存管理架构',
+          content: 'amdgpu 采用 "GEM API 前端 + TTM 管理后端" 的双层架构，必须明确区分两者的职责。GEM（Graphics Execution Manager）仅作为用户空间的 API 层——通过 GEM handle 引用 Buffer Object（BO）、通过 mmap 让 CPU 访问、通过引用计数管理生命周期。GEM 最初为 Intel i915（集成 GPU，使用系统内存）设计，假设所有内存是同质的。TTM（Translation Table Manager）在 GEM 之上为离散 GPU 增加了三个关键能力：（1）内存域（Memory Placement）——BO 可以存在于 VRAM（GPU 专用，带宽最高）、GTT（系统内存中 GPU 可通过 GART 访问的部分）或 System（普通系统内存）；（2）对象迁移——当需要将 BO 从 System 移到 VRAM（GPU 即将使用）或从 VRAM 移到 GTT（VRAM 空间不足），TTM 协调 DMA 数据搬运；（3）内存压力处理（Eviction）——当 VRAM 满时，TTM 按 LRU 策略选择 BO 驱逐到 GTT/System，类似虚拟内存的页面置换。用户不需要关心 BO 当前在 VRAM 还是 GTT，这由 TTM 透明管理。DMA-BUF 是跨设备共享内存的机制，允许 GPU 和 CPU 零拷贝地共享同一块内存。',
+        },
+        {
+          title: 'GPUVM 多级页表结构',
+          content: 'AMDGPU 为每个进程维护一个独立的 GPU 虚拟地址空间（GPUVM），其页表结构与 CPU 类似。以 GFX9+ 为例，使用 4 级页表：PDB（Page Directory Base）→ PDE（Page Directory Entry）→ PTE（Page Table Entry）→ Offset。amdgpu_vm_bo_map 函数负责将 Buffer Object 映射到 GPUVM——遍历 BO 对应的物理页面，在 PT 中填写 PTE 建立虚拟到物理的映射。页表本身也存储在 BO 中，当 CPU 修改页表后，需使用 SDMA 引擎将更新拷贝到 VRAM/GTT，并发送 TLB Flush 命令使旧的地址翻译缓存失效。关键源码：amdgpu_vm.c（GPUVM 核心）、amdgpu_vm_bo_map（映射操作）。',
+        },
+        {
+          title: 'dma_fence 同步机制',
+          content: 'dma_fence 是 Linux 内核中用于异步操作（如 GPU 命令）的核心同步原语，理解其生命周期对驱动开发至关重要。完整流程：（1）Job Submission：amdgpu_job 提交到 drm_gpu_scheduler 时，调度器创建 amdgpu_fence 并返回给用户空间（通常通过 drm_syncobj），此时 fence 未触发；（2）Command Execution：GPU 的 CP（Command Processor）执行命令流，驱动在命令流末尾插入一个写 fence 值的 PM4 包；（3）Ring Signal（Interrupt）：GPU 执行到写 fence 值的包时，将特定值写入 VRAM 中的一块内存，触发中断；（4）Interrupt Handler：amdgpu_irq_handler 检测到 fence 中断后调用 dma_fence_signal()，标记 fence 为已触发；（5）Scheduler Wake-up：dma_fence_signal() 唤醒所有等待此 fence 的线程（内核的 wait_on_fence 或用户空间的 epoll）。关键源码：amdgpu_fence.c、sched_main.c。',
         },
       ],
       keyBooks: [
@@ -1732,7 +1740,7 @@ int amdgpu_gem_object_create(struct amdgpu_device *adev,
       { id: 'amdgpu-pm', title: '5.6 电源管理', titleEn: 'Power Management' },
     ],
     theory: {
-      overview: 'amdgpu 驱动位于 drivers/gpu/drm/amd/，是 Linux 内核中代码量最大的驱动之一（超过 100 万行代码）。理解它需要一个好的导航策略。本模块首先提供代码阅读指南，然后逐一解析核心模块。',
+      overview: 'amdgpu 驱动位于 drivers/gpu/drm/amd/，是 Linux 内核中代码量最大的驱动之一（约 250 万行代码，使用 cloc 对 Linux 6.8 统计）。理解它需要一个好的导航策略。本模块首先提供代码阅读指南，然后逐一解析核心模块。',
       sections: [
         {
           title: '5.1 AMDGPU 代码阅读指南',
@@ -1768,6 +1776,18 @@ int amdgpu_gem_object_create(struct amdgpu_device *adev,
         {
           title: 'GPU 调度器（DRM Scheduler）',
           content: 'GPU 调度器（drm_gpu_scheduler）是 amdgpu 中负责管理 GPU 工作负载的核心组件。它实现了一个多队列调度系统：每个 GPU 引擎（GFX、SDMA、Compute 等）有一个对应的调度器；用户进程提交的工作（Job）被放入调度队列；调度器负责将 Job 转换为 GPU 命令并提交到硬件环形缓冲区（Ring）；调度器还处理 GPU Hang 检测和恢复（通过 timeout 机制）。理解调度器对于分析 GPU 性能问题和 Hang 问题至关重要。',
+        },
+        {
+          title: 'IP Discovery 机制（RDNA2+）',
+          content: 'RDNA2 及之后的架构引入了 IP Discovery Table，取代了旧的硬编码方式来发现 GPU 上的硬件 IP Block。在驱动初始化早期，PSP 固件提供一张 IP Discovery Table，驱动通过 amdgpu_discovery_reg_base_init() 解析此表，动态发现 GPU 上存在哪些 IP Block（GC、SDMA、VCN、DCN 等）及其版本号，而无需在驱动代码中为每个新 GPU 硬编码 IP 列表。这是理解现代 amdgpu 驱动初始化流程的关键——amdgpu_device.c 中 amdgpu_discovery_set_ip_blocks() 根据发现的 IP 版本自动注册对应的 IP Block 实现。查看路径：cat /sys/kernel/debug/dri/0/amdgpu_ip_discovery。',
+        },
+        {
+          title: 'Firmware Loading Flow（固件加载流程）',
+          content: '现代 AMD GPU 的初始化高度依赖固件。amdgpu_device_init 函数 orchestrates 整个流程：（1）PCI Probe（amdgpu_pci_probe）：内核发现 PCIe 设备，匹配 amdgpu 驱动；（2）PSP Firmware Loading：首先加载 PSP（Platform Security Processor）固件，PSP 是 GPU 上的独立微控制器，负责安全启动和固件签名验证；（3）SMU Firmware Loading：加载 SMU（System Management Unit）固件，负责动态电源管理（时钟、电压、风扇）；（4）CP Firmware Loading：加载 Command Processor 微代码，包括 PFP（Prefetch Parser）、ME（Micro-Engine）、CE（Constant Engine）、MEC（Micro-Engine Compute），这些是解析和执行命令流的核心组件；（5）RLC Firmware Loading：加载 RLC（RunList Controller）固件，负责硬件队列间的上下文切换；（6）IP Discovery：PSP 固件提供 IP Discovery Table，驱动据此动态发现所有 IP Block；（7）IP Block sw_init/hw_init：遍历 IP 列表，依次完成软件初始化和硬件初始化。',
+        },
+        {
+          title: 'User Queue 机制（GFX11+）',
+          content: 'GFX11（RDNA3）引入了 User Queue 机制，允许用户空间直接管理命令队列，与传统的 Kernel Queue 并行工作。传统模式下，用户空间命令必须通过内核态的 Command Submission（amdgpu_cs_ioctl）提交到 Kernel 管理的 Ring Buffer；User Queue 模式下，MES（Micro Engine Scheduler，位于 GPU 上的微控制器）直接管理用户空间的命令队列，减少了内核态的参与，降低了提交延迟。这与 HSA/ROCm 的 AQL（Architected Queuing Language）队列理念一致——用户空间直接写入队列内存，零拷贝提交。User Queue 是命令提交路径的重要演进，必须在 Ring Buffer 章节理解其与传统 Kernel Queue 的对比。',
         },
         {
           title: '命令环形缓冲区（Ring Buffer）',
@@ -2708,7 +2728,7 @@ int main()
         },
         {
           title: 'VGPR 与 SGPR：GPU 寄存器的独特之处',
-          content: 'AMD GPU 有两类寄存器：VGPR（Vector General Purpose Register）：每个线程有独立的 VGPR，用于存储线程私有数据（如坐标、颜色值）；每个 CU 有 256 个 VGPR，每个 Wavefront 最多使用 256 个 VGPR。SGPR（Scalar General Purpose Register）：整个 Wavefront 共享一组 SGPR，用于存储所有线程相同的数据（如常量、循环计数器、指针）；SGPR 操作比 VGPR 操作更节能。编译器需要智能地决定哪些变量放在 VGPR，哪些放在 SGPR，这直接影响程序的占用率（Occupancy）和性能。',
+          content: 'AMD GPU 有两类寄存器：VGPR（Vector General Purpose Register）：每个线程有独立的 VGPR，用于存储线程私有数据（如坐标、颜色值）；根据 RDNA3 ISA 手册，每个 SIMD32 拥有 1536 个 32-bit VGPR，每个 CU 包含 2 个 SIMD32（即每个 CU 共 3072 个 VGPR），每个 Wavefront（wave32）最多使用 256 个 VGPR。SGPR（Scalar General Purpose Register）：整个 Wavefront 共享一组 SGPR，每个 CU 的 SGPR 存储约 12.5 KiB，用于存储所有线程相同的数据（如常量、循环计数器、指针）；SGPR 操作比 VGPR 操作更节能。编译器需要智能地决定哪些变量放在 VGPR，哪些放在 SGPR，这直接影响程序的占用率（Occupancy）和性能。',
           diagram: {
             type: 'ascii',
             content: `VGPR 与 SGPR 的物理布局（每个 CU）
@@ -2717,16 +2737,17 @@ int main()
 │  Compute Unit (CU)                                           │
 │                                                              │
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │  VGPR File (Vector GPR)                                  │  │
-│  │  256 Registers × 64 lanes (per Wavefront)               │  │
+│  │  VGPR File (Vector GPR) — RDNA3 ISA                     │  │
+│  │  1536 × 32-bit VGPRs per SIMD32 (wave32 mode)         │  │
+│  │  CU = 2 × SIMD32 → 3072 VGPRs total per CU           │  │
 │  │                                                        │  │
-│  │  Wavefront 0: v0[0..63] v1[0..63] ... v255[0..63]    │  │
-│  │  Wavefront 1: v0[0..63] v1[0..63] ... v255[0..63]    │  │
+│  │  Wavefront 0: v0[0..31] v1[0..31] ... v255[0..31]    │  │
+│  │  Wavefront 1: v0[0..31] v1[0..31] ... v255[0..31]    │  │
 │  │  ...                                                   │  │
 │  │                                                        │  │
 │  │  ► Thread-private: coords, colors, threadIdx.x calcs  │  │
-│  │  ► More VGPRs → fewer Wavefronts per CU               │  │
-│  │    (256 VGPR → 1 Wavefront, 128 → 2, 64 → 4...)      │  │
+│  │  ► More VGPRs per wave → fewer Wavefronts per CU      │  │
+│  │    (256 VGPR/wave → 6 waves, 128 → 12, 64 → 16 max)  │  │
 │  └───────────────────────────────────────────────────────┘  │
 │                                                              │
 │  ┌───────────────────────────────────────────────────────┐  │
