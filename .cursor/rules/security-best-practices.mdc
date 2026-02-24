@@ -1,0 +1,73 @@
+---
+description: 安全最佳实践 — 输入校验、XSS、错误处理、安全头（源自 secure-vibe-coding-OS）
+globs: server/**/*.ts, client/**/*.ts, client/**/*.tsx
+alwaysApply: false
+---
+
+# Security Best Practices
+
+源自 [harperaa/secure-vibe-coding-OS](https://github.com/harperaa/secure-vibe-coding-OS)。添加 API、处理用户输入、部署时参考。
+
+## 核心原则：纵深防御
+
+敏感 API 需多层防护：限流 → CSRF → 输入校验 → 认证 → 错误处理。
+
+## 1. 输入校验 — 必须用 Zod
+
+```typescript
+import { z } from "zod";
+
+const schema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1).max(100).transform((v) => v.replace(/[<>"&]/g, "")),
+});
+
+const result = schema.safeParse(body);
+if (!result.success) return res.status(400).json({ errors: result.error.flatten() });
+const data = result.data; // 已校验、已 sanitize
+```
+
+- 禁止直接使用 `body.field` 未校验
+- XSS 防护：移除 `<` `>` `"` `&`
+- 禁止仅客户端校验
+
+## 2. 错误处理 — 防止信息泄露
+
+```typescript
+// 生产环境：通用错误信息，不暴露 stack、路径、内部细节
+if (process.env.NODE_ENV === "production") {
+  return res.status(500).json({ error: "Something went wrong" });
+}
+// 开发环境：可返回详细错误
+```
+
+- 禁止 `res.json({ error: error.message })` 暴露内部
+- 禁止在响应中包含 `error.stack`
+
+## 3. 安全头（Express）
+
+```typescript
+app.use((_req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  next();
+});
+```
+
+## 4. Cookie 安全（若使用）
+
+- `httpOnly: true` — 防 XSS 读取
+- `sameSite: "strict"` — 防 CSRF
+- `secure: true`（生产）
+- 设置 `maxAge`
+
+## 5. 限流（API 时）
+
+- 对可滥用端点（登录、表单、webhook）做限流
+- 按 IP 或 token 限制请求频率
+
+## 6. 依赖安全
+
+- 定期 `pnpm audit`
+- 生产部署前运行 `pnpm audit --production`
