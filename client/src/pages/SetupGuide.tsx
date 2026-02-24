@@ -13,7 +13,8 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import {
   ArrowLeft, Copy, Check, ChevronRight, Sun, Moon,
-  Terminal, Monitor, HardDrive, Cpu, Download, Settings, Languages
+  Terminal, Monitor, HardDrive, Cpu, Download, Settings, Languages,
+  Laptop
 } from "lucide-react";
 
 function CopyBlock({ code, title, lang = "bash" }: { code: string; title?: string; lang?: string }) {
@@ -113,6 +114,7 @@ export default function SetupGuide() {
               { id: "gpu-tools", labelKey: "setup.gpuTools" },
               { id: "verify", labelKey: "setup.verify" },
               { id: "workflow", labelKey: "setup.workflow" },
+              { id: "dual-machine", labelKey: "setup.dualMachine" },
             ].map(item => (
               <a key={item.id} href={`#${item.id}`}
                 className="text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1.5 rounded hover:bg-muted/50">
@@ -475,6 +477,228 @@ git format-patch HEAD~1 -o /tmp/patches/
                 </button>
               </Link>
             </div>
+          </Section>
+
+          {/* 9. Dual-Machine Setup */}
+          <Section icon={Laptop} title={t("setup.dualMachine")} id="dual-machine">
+            <p>
+              Kernel development on the same machine you rely on daily is risky — a bad MMIO write or a broken
+              display driver can hard-lock the system. The safest, most productive workflow uses <strong>two
+              machines</strong>: a dedicated <strong>test machine</strong> (Ubuntu desktop with your AMD GPU) and
+              a separate <strong>dev machine</strong> (laptop / MacBook) for writing code.
+            </p>
+
+            <div className="rounded-xl p-5 border border-border/50 bg-card/50 my-6">
+              <p className="text-sm font-bold text-foreground mb-3">Architecture Overview</p>
+              <div className="grid sm:grid-cols-2 gap-4 text-xs text-muted-foreground/85">
+                <div className="rounded-lg border border-border/50 p-4 bg-background/50">
+                  <p className="font-bold text-foreground mb-2 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center text-primary font-bold text-[10px]">A</span>
+                    Dev Machine (MacBook / Laptop)
+                  </p>
+                  <ul className="space-y-1 list-disc pl-4">
+                    <li>Code editing (VS Code + clangd)</li>
+                    <li>Git operations & patch generation</li>
+                    <li>Documentation & research</li>
+                    <li>SSH into the test machine</li>
+                  </ul>
+                </div>
+                <div className="rounded-lg border border-border/50 p-4 bg-background/50">
+                  <p className="font-bold text-foreground mb-2 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-md bg-red-500/15 flex items-center justify-center text-red-500 font-bold text-[10px]">B</span>
+                    Test Machine (Ubuntu + AMD GPU)
+                  </p>
+                  <ul className="space-y-1 list-disc pl-4">
+                    <li>Kernel compilation (uses all cores)</li>
+                    <li>Module loading & GPU testing</li>
+                    <li>virtme-ng for safe quick tests</li>
+                    <li>Dual-boot: stable kernel + dev kernel</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <p className="font-semibold text-foreground">Step 1: Network setup — SSH access</p>
+            <p>
+              You need reliable SSH access from your dev machine to the test machine.
+              This is your lifeline — even if the GPU driver crashes the display, SSH stays alive.
+            </p>
+
+            <CopyBlock title="Test machine: enable SSH" code={`# Install and start SSH server
+sudo apt install -y openssh-server
+sudo systemctl enable --now ssh
+
+# Find the test machine's IP address
+ip addr show | grep "inet " | grep -v 127.0.0.1
+# Example output: inet 192.168.1.100/24 ...
+
+# Optional: set a static IP so it never changes
+# Edit /etc/netplan/01-network.yaml or use nmcli
+sudo nmcli connection modify "Wired connection 1" \\
+    ipv4.method manual \\
+    ipv4.addresses 192.168.1.100/24 \\
+    ipv4.gateway 192.168.1.1 \\
+    ipv4.dns "8.8.8.8,1.1.1.1"
+sudo nmcli connection up "Wired connection 1"`} />
+
+            <CopyBlock title="Dev machine (MacBook): set up SSH key login" code={`# Generate SSH key (if you don't have one)
+ssh-keygen -t ed25519 -C "dev-machine"
+
+# Copy key to the test machine (replace IP)
+ssh-copy-id user@192.168.1.100
+
+# Add to ~/.ssh/config for convenience
+cat >> ~/.ssh/config << 'EOF'
+Host gpu-dev
+    HostName 192.168.1.100
+    User your-username
+    ForwardAgent yes
+    ServerAliveInterval 30
+    ServerAliveCountMax 5
+EOF
+
+# Now you can just type:
+ssh gpu-dev`} />
+
+            <p className="font-semibold text-foreground">Step 2: Sync code between machines</p>
+            <p>
+              Two approaches — pick one depending on your network:
+            </p>
+
+            <CopyBlock title="Option A: VS Code Remote SSH (recommended — seamless editing)" code={`# On your MacBook, install VS Code "Remote - SSH" extension
+# Then: Cmd+Shift+P → "Remote-SSH: Connect to Host" → gpu-dev
+#
+# This opens VS Code as if you were sitting at the test machine:
+# - clangd autocomplete works on the kernel source
+# - Terminal runs on the test machine
+# - File edits happen on the test machine directly
+# - No sync needed — you edit the actual files`} />
+
+            <CopyBlock title="Option B: Git-based sync (works over slow connections)" code={`# On test machine: set up a bare repo for pushing
+git init --bare ~/kernel-dev.git
+
+# On dev machine: add test machine as a remote
+cd ~/kernel-dev
+git remote add test gpu-dev:kernel-dev.git
+
+# Workflow:
+# 1. Edit & commit on dev machine
+# 2. Push to test machine
+git push test HEAD:dev-branch
+
+# 3. On test machine: checkout and build
+cd ~/kernel-dev && git fetch origin && git checkout dev-branch
+make M=drivers/gpu/drm/amd -j\$(nproc)`} />
+
+            <p className="font-semibold text-foreground">Step 3: Dual-kernel boot for crash recovery</p>
+            <p>
+              Install two kernels on the test machine — a <strong>stable kernel</strong> (your distro's default)
+              and a <strong>dev kernel</strong> (your custom build). If the dev kernel crashes, just reboot and
+              pick the stable one from GRUB.
+            </p>
+
+            <CopyBlock title="Install your custom kernel alongside the stable one" code={`cd ~/kernel-dev
+
+# Tag your dev kernel so it's easy to identify in GRUB
+scripts/config --set-str CONFIG_LOCALVERSION "-amdgpu-dev"
+
+# Build & install
+make -j$(nproc)
+sudo make modules_install
+sudo make install
+
+# Update GRUB to show both kernels at boot
+sudo update-grub
+
+# Verify both kernels are listed
+grep menuentry /boot/grub/grub.cfg | head -10
+# You should see your distro kernel AND the -amdgpu-dev kernel`} />
+
+            <CopyBlock title="Set GRUB to show menu (so you can pick which kernel to boot)" code={`# Edit GRUB config to always show menu
+sudo sed -i 's/GRUB_TIMEOUT_STYLE=hidden/GRUB_TIMEOUT_STYLE=menu/' /etc/default/grub
+sudo sed -i 's/GRUB_TIMEOUT=0/GRUB_TIMEOUT=5/' /etc/default/grub
+sudo update-grub
+
+# Now on reboot:
+#   - Select your stable kernel if dev kernel is broken
+#   - Select -amdgpu-dev kernel for testing
+#   - You can also select kernel via SSH before reboot:
+sudo grub-reboot "Advanced options for Ubuntu>Ubuntu, with Linux x.y.z-amdgpu-dev"`} />
+
+            <div className="rounded-xl p-4 border border-green-500/30 bg-green-500/5">
+              <p className="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">Windows is safe</p>
+              <p className="text-xs text-muted-foreground/80">
+                If your test machine dual-boots Windows, kernel development on the Linux side does <strong>not
+                affect Windows at all</strong>. The Windows partition and bootloader are untouched. Even if you
+                completely break the Linux dev kernel, you can still boot into Windows normally, or boot the stable
+                Linux kernel from GRUB.
+              </p>
+            </div>
+
+            <p className="font-semibold text-foreground mt-6">Step 4: The daily workflow</p>
+
+            <CopyBlock title="Complete dual-machine development cycle" code={`# === On Dev Machine (MacBook) ===
+
+# Connect to test machine
+ssh gpu-dev
+# or: open VS Code Remote SSH → gpu-dev
+
+# === On Test Machine (via SSH) ===
+
+# 1. Edit code (if using VS Code Remote, just edit in the IDE)
+cd ~/kernel-dev
+vim drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
+
+# 2. Quick test with virtme-ng (safe, no reboot)
+make M=drivers/gpu/drm/amd -j$(nproc) && vng --build --run
+
+# 3. For GPU/display testing (requires reboot into dev kernel)
+make -j$(nproc) && sudo make modules_install && sudo make install
+sudo reboot  # select -amdgpu-dev from GRUB
+
+# 4. After reboot, reconnect from MacBook
+ssh gpu-dev
+dmesg | grep amdgpu    # check driver loaded correctly
+sudo umr -O bits -r *.gfx1*.GRBM_STATUS  # verify GPU state
+
+# 5. If the dev kernel crashes / hangs:
+#    → Power cycle the test machine
+#    → Select STABLE kernel from GRUB
+#    → SSH in again and fix the code
+#    → Rebuild and try again`} />
+
+            <div className="rounded-xl p-4 border border-primary/30 bg-primary/5">
+              <p className="text-xs font-semibold text-primary mb-1">Pro tip: tmux for persistence</p>
+              <p className="text-xs text-muted-foreground/80">
+                Run <code>tmux</code> on the test machine so your terminal sessions survive SSH
+                disconnects. If the SSH connection drops (e.g. during a long build), just reconnect
+                and <code>tmux attach</code> — your build is still running.
+              </p>
+            </div>
+
+            <p className="font-semibold text-foreground mt-6">Step 5: Remote GPU debugging over SSH</p>
+
+            <CopyBlock title="Monitor and debug GPU remotely" code={`# Watch GPU status in real-time
+watch -n1 "cat /sys/class/drm/card*/device/gpu_busy_percent && \\
+           cat /sys/class/drm/card*/device/mem_info_vram_used && \\
+           cat /sys/class/drm/card*/device/hwmon/hwmon*/temp1_input"
+
+# Tail kernel messages for amdgpu
+sudo dmesg -wH | grep --line-buffered amdgpu
+
+# Read debug registers remotely
+sudo umr -O bits,named -r *.gfx1*.GRBM_STATUS
+
+# Run IGT tests
+sudo ./igt-gpu-tools/build/tests/amdgpu/amd_basic
+
+# Trace GPU activity with ftrace
+sudo trace-cmd record -e amdgpu -e drm
+sudo trace-cmd report | head -50
+
+# Trigger a manual GPU reset (useful for testing recovery paths)
+sudo cat /sys/kernel/debug/dri/0/amdgpu_gpu_recover`} />
+
           </Section>
 
         </div>
