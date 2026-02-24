@@ -14,7 +14,7 @@ import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import {
   ArrowLeft, ArrowRight, Copy, Check, ChevronRight, Sun, Moon,
   Terminal, Monitor, HardDrive, Cpu, Download, Settings, Languages,
-  Laptop
+  Laptop, Layers, Wrench, Mail
 } from "lucide-react";
 
 function CopyBlock({ code, title, lang = "bash" }: { code: string; title?: string; lang?: string }) {
@@ -150,7 +150,7 @@ export default function SetupGuide() {
         {/* Table of Contents */}
         <nav className="rounded-xl border border-border/50 p-5 mb-12 bg-card/50">
           <h3 className="text-sm font-bold text-foreground mb-3">{t("setup.quickNav")}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {[
               { id: "prereqs", labelKey: "setup.prereqs" },
               { id: "kernel-src", labelKey: "setup.kernelSrc" },
@@ -161,6 +161,9 @@ export default function SetupGuide() {
               { id: "verify", labelKey: "setup.verify" },
               { id: "workflow", labelKey: "setup.workflow" },
               { id: "dual-machine", labelKey: "setup.dualMachine" },
+              { id: "rocm-hip", labelKey: "setup.rocmHip" },
+              { id: "llvm-amdgpu", labelKey: "setup.llvmAmdgpu" },
+              { id: "patch-tools", labelKey: "setup.patchTools" },
             ].map(item => (
               <a key={item.id} href={`#${item.id}`}
                 className="text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1.5 rounded hover:bg-muted/50">
@@ -766,6 +769,301 @@ sudo trace-cmd report | head -50
 # Trigger a manual GPU reset (useful for testing recovery paths)
 sudo cat /sys/kernel/debug/dri/0/amdgpu_gpu_recover`} />
 
+          </Section>
+
+          {/* 10. ROCm / HIP Toolchain */}
+          <Section icon={Layers} title={t("setup.rocmHip")} id="rocm-hip">
+            <p>
+              {locale === 'zh'
+                ? <>ROCm 是 AMD 官方的 GPU 计算平台，包含 HIP 编译器、运行时和性能分析工具。<strong>Module 7（ROCm 内核接口）和 Module 8（ROCm 计算）</strong>需要此环境。以下步骤摘自 <a href="https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ROCm 官方 Quick Start Guide</a>。</>
+                : <>ROCm is AMD's official GPU compute platform, including the HIP compiler, runtime, and profiling tools. Required for <strong>Module 7 (ROCm Kernel Interface) and Module 8 (ROCm Compute)</strong>. Steps below are from the <a href="https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">official ROCm Quick Start Guide</a>.</>}
+            </p>
+
+            <div className="rounded-xl p-4 border border-yellow-500/30 bg-yellow-500/5 my-4">
+              <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mb-1">
+                {locale === 'zh' ? '前置条件' : 'Prerequisites'}
+              </p>
+              <p className="text-xs text-muted-foreground/80">
+                {locale === 'zh'
+                  ? <>安装前请确认：(1) 你的 AMD GPU 在 ROCm 支持列表中（RDNA / CDNA 系列）；(2) 内核版本符合要求。详见 <a href="https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ROCm 系统要求</a>。ROCm 不支持集成显卡——如有 AMD APU，请在 BIOS 中禁用 IGP。</>
+                  : <>Before installing, verify: (1) your AMD GPU is on the ROCm support list (RDNA / CDNA families); (2) your kernel version is compatible. See <a href="https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ROCm System Requirements</a>. ROCm does not support integrated graphics — disable AMD IGP in BIOS if present.</>}
+              </p>
+            </div>
+
+            <CopyBlock title="Ubuntu 24.04" code={`# Official ROCm Quick Start (https://rocm.docs.amd.com)
+wget https://repo.radeon.com/amdgpu-install/7.2/ubuntu/noble/amdgpu-install_7.2.70200-1_all.deb
+sudo apt install ./amdgpu-install_7.2.70200-1_all.deb
+sudo apt update
+sudo apt install python3-setuptools python3-wheel
+sudo usermod -a -G render,video $LOGNAME
+sudo apt install rocm`} />
+
+            <CopyBlock title="Ubuntu 22.04" code={`wget https://repo.radeon.com/amdgpu-install/7.2/ubuntu/jammy/amdgpu-install_7.2.70200-1_all.deb
+sudo apt install ./amdgpu-install_7.2.70200-1_all.deb
+sudo apt update
+sudo apt install python3-setuptools python3-wheel
+sudo usermod -a -G render,video $LOGNAME
+sudo apt install rocm`} />
+
+            <CopyBlock title="RHEL 9.x / Rocky Linux" code={`# Replace 9.6 with your RHEL version (9.4, 9.6, 9.7, etc.)
+sudo dnf install \\
+    https://repo.radeon.com/amdgpu-install/7.2/rhel/9.6/amdgpu-install-7.2.70200-1.el9.noarch.rpm
+sudo dnf clean all
+wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+sudo rpm -ivh epel-release-latest-9.noarch.rpm
+sudo dnf config-manager --enable codeready-builder-for-rhel-9-x86_64-rpms
+sudo dnf install python3-setuptools python3-wheel
+sudo usermod -a -G render,video $LOGNAME
+sudo dnf install rocm`} />
+
+            <CopyBlock title={locale === 'zh' ? 'Arch Linux（社区维护）' : 'Arch Linux (community-maintained)'} code={`# Arch ROCm packages are community-maintained, not official AMD releases
+# https://wiki.archlinux.org/title/GPGPU#ROCm
+sudo pacman -S rocm-hip-sdk rocm-opencl-sdk rocm-smi-lib`} />
+
+            <p className="font-semibold text-foreground mt-6">
+              {locale === 'zh' ? '安装后验证' : 'Post-installation verification'}
+            </p>
+
+            <CopyBlock title={locale === 'zh' ? '验证 ROCm 安装' : 'Verify ROCm installation'} code={`# Reboot first (required after kernel driver installation)
+sudo reboot
+
+# After reboot — verify GPU is detected
+rocminfo | head -30
+# Should list your AMD GPU agent(s)
+
+# Check GPU status
+rocm-smi
+# Should display GPU temperature, utilization, VRAM usage
+
+# Verify HIP compiler
+hipcc --version
+# Should show HIP version and clang compiler info
+
+# Run a quick HIP test
+cat > /tmp/hip_test.cpp << 'HIPEOF'
+#include <hip/hip_runtime.h>
+#include <stdio.h>
+int main() {
+    int count = 0;
+    hipGetDeviceCount(&count);
+    printf("HIP devices found: %d\\n", count);
+    for (int i = 0; i < count; i++) {
+        hipDeviceProp_t props;
+        hipGetDeviceProperties(&props, i);
+        printf("  [%d] %s (gfx%d)\\n", i, props.name, props.gcnArch);
+    }
+    return 0;
+}
+HIPEOF
+hipcc /tmp/hip_test.cpp -o /tmp/hip_test && /tmp/hip_test`} />
+
+            <div className="rounded-xl p-4 border border-primary/30 bg-primary/5">
+              <p className="text-xs font-semibold text-primary mb-1">
+                {locale === 'zh' ? 'ROCm 开发相关工具' : 'ROCm developer tools'}
+              </p>
+              <p className="text-xs text-muted-foreground/80">
+                {locale === 'zh'
+                  ? <>安装 ROCm 后你还可以使用：<code>rocprof</code>（GPU 性能分析）、<code>roctracer</code>（API 追踪）、<code>amdgpu_top</code>（实时 GPU 监控，需额外安装：<code>cargo install amdgpu_top</code>）。版本号会随 ROCm 更新变化，请以 <a href="https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">官方文档</a> 为准。</>
+                  : <>After ROCm is installed, you also get: <code>rocprof</code> (GPU profiling), <code>roctracer</code> (API tracing), <code>amdgpu_top</code> (real-time GPU monitor, install separately: <code>cargo install amdgpu_top</code>). Version numbers change with each ROCm release — always check the <a href="https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">official docs</a> for the latest.</>}
+              </p>
+            </div>
+          </Section>
+
+          {/* 11. LLVM AMDGPU Backend (Build from Source) */}
+          <Section icon={Wrench} title={t("setup.llvmAmdgpu")} id="llvm-amdgpu">
+            <p>
+              {locale === 'zh'
+                ? <><strong>Module 9（LLVM 工具链）</strong>需要从源码编译 LLVM 并启用 AMDGPU 后端，以便使用 <code>llc</code>、<code>llvm-mc</code>、<code>llvm-objdump</code> 等工具分析 AMDGPU ISA。以下步骤摘自 <a href="https://llvm.org/docs/CMake.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">LLVM 官方 CMake 文档</a> 和 <a href="https://llvm.org/docs/GettingStarted.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Getting Started</a> 指南。</>
+                : <>Required for <strong>Module 9 (LLVM Toolchain)</strong> — build LLVM with the AMDGPU backend to use <code>llc</code>, <code>llvm-mc</code>, <code>llvm-objdump</code> and other tools for AMDGPU ISA analysis. Steps below are from the <a href="https://llvm.org/docs/CMake.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">official LLVM CMake documentation</a> and the <a href="https://llvm.org/docs/GettingStarted.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Getting Started</a> guide.</>}
+            </p>
+
+            <CopyBlock title={locale === 'zh' ? '安装编译依赖' : 'Install build dependencies'} code={`# Ubuntu / Debian
+sudo apt install -y cmake ninja-build python3 python3-pip \\
+    gcc g++ zlib1g-dev libncurses-dev
+
+# Fedora
+sudo dnf install -y cmake ninja-build python3 gcc g++ \\
+    zlib-devel ncurses-devel
+
+# Arch
+sudo pacman -S --needed cmake ninja python gcc zlib ncurses`} />
+
+            <CopyBlock title={locale === 'zh' ? '获取 LLVM 源码' : 'Get LLVM source'} code={`# Clone the monorepo (official method since LLVM 15+)
+# https://llvm.org/docs/GettingStarted.html#getting-the-source-code-and-building-llvm
+git clone --depth=1 https://github.com/llvm/llvm-project.git ~/llvm-project
+cd ~/llvm-project`} />
+
+            <CopyBlock title={locale === 'zh' ? '配置与编译（含 AMDGPU 后端）' : 'Configure & build (with AMDGPU backend)'} code={`cd ~/llvm-project
+mkdir build && cd build
+
+# CMake configuration — AMDGPU + X86 targets, with clang and lld
+# https://llvm.org/docs/CMake.html#quick-start
+cmake -G Ninja ../llvm \\
+    -DCMAKE_BUILD_TYPE=Release \\
+    -DLLVM_ENABLE_PROJECTS="clang;lld" \\
+    -DLLVM_TARGETS_TO_BUILD="AMDGPU;X86" \\
+    -DCMAKE_INSTALL_PREFIX=$HOME/llvm-amdgpu \\
+    -DLLVM_PARALLEL_LINK_JOBS=2
+
+# Build (takes 15-40 min depending on CPU cores)
+ninja
+
+# Install to ~/llvm-amdgpu
+ninja install`} />
+
+            <CopyBlock title={locale === 'zh' ? '添加到 PATH 并验证' : 'Add to PATH and verify'} code={`# Add to your shell RC file (~/.bashrc or ~/.zshrc)
+echo 'export PATH="$HOME/llvm-amdgpu/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+
+# Verify AMDGPU backend is enabled
+llc --version | grep AMDGPU
+# Should output: AMDGPU  - AMD GCN GPUs
+
+# List all supported AMDGPU processors
+llc -march=amdgcn -mcpu=help 2>&1 | head -20
+# Should list gfx900, gfx1010, gfx1100, etc.
+
+# Test: compile a simple IR to AMDGPU assembly
+echo 'define amdgpu_kernel void @hello() { ret void }' > /tmp/test.ll
+llc -march=amdgcn -mcpu=gfx1100 /tmp/test.ll -o -
+# Should output GFX11 assembly instructions`} />
+
+            <div className="rounded-xl p-4 border border-primary/30 bg-primary/5">
+              <p className="text-xs font-semibold text-primary mb-1">
+                {locale === 'zh' ? '关于 LLVM_TARGETS_TO_BUILD' : 'About LLVM_TARGETS_TO_BUILD'}
+              </p>
+              <p className="text-xs text-muted-foreground/80">
+                {locale === 'zh'
+                  ? <>只编译 <code>AMDGPU;X86</code> 两个 target 可以大幅缩短编译时间和减小二进制体积。如果你需要所有 target，可改为 <code>-DLLVM_TARGETS_TO_BUILD=all</code>（但编译会慢很多）。<code>LLVM_PARALLEL_LINK_JOBS=2</code> 限制并行链接数，防止内存不足——每个链接器进程可能消耗 10GB+ RAM。</>
+                  : <>Building only <code>AMDGPU;X86</code> targets significantly reduces build time and binary size. Use <code>-DLLVM_TARGETS_TO_BUILD=all</code> if you need every target (much slower). <code>LLVM_PARALLEL_LINK_JOBS=2</code> limits parallel link jobs to prevent OOM — each linker process can use 10GB+ RAM.</>}
+              </p>
+            </div>
+          </Section>
+
+          {/* 12. Patch Submission Tools (b4 & git send-email) */}
+          <Section icon={Mail} title={t("setup.patchTools")} id="patch-tools">
+            <p>
+              {locale === 'zh'
+                ? <>Linux 内核开发使用邮件列表提交补丁，而非 GitHub Pull Request。<strong>Module 11（Career Path）</strong>和日常工作流都需要 <code>b4</code> 和 <code>git send-email</code>。</>
+                : <>Linux kernel development uses mailing lists for patch submission, not GitHub Pull Requests. Required for <strong>Module 11 (Career Path)</strong> and the daily kernel development workflow.</>}
+            </p>
+
+            <p className="font-semibold text-foreground mt-6">
+              {locale === 'zh' ? '安装 b4' : 'Install b4'}
+            </p>
+            <p>
+              {locale === 'zh'
+                ? <><code>b4</code> 是内核社区官方推荐的补丁管理工具，用于准备、跟踪和发送补丁系列。以下步骤摘自 <a href="https://b4.docs.kernel.org/en/latest/installing.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">b4 官方安装文档</a>。</>
+                : <><code>b4</code> is the official kernel community tool for preparing, tracking, and sending patch series. Steps below are from the <a href="https://b4.docs.kernel.org/en/latest/installing.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">official b4 installation docs</a>.</>}
+            </p>
+
+            <CopyBlock title={locale === 'zh' ? 'b4 — 通过包管理器安装' : 'b4 — Install via package manager'} code={`# Ubuntu / Debian
+sudo apt install b4
+
+# Fedora
+sudo dnf install b4
+
+# Arch
+sudo pacman -S b4`} />
+
+            <CopyBlock title={locale === 'zh' ? 'b4 — 通过 pip 安装（获取最新版本）' : 'b4 — Install via pip (latest version)'} code={`# Recommended if your distro's b4 package is outdated
+# https://b4.docs.kernel.org/en/latest/installing.html
+python3 -m pip install --user b4
+
+# Verify
+b4 --version
+
+# Upgrade later with:
+python3 -m pip install --user --upgrade b4`} />
+
+            <p className="font-semibold text-foreground mt-6">
+              {locale === 'zh' ? '安装 git send-email' : 'Install git send-email'}
+            </p>
+            <p>
+              {locale === 'zh'
+                ? <><code>git send-email</code> 是 Git 官方子命令，用于通过 SMTP 发送补丁邮件。大多数发行版需要单独安装。参考 <a href="https://git-scm.com/docs/git-send-email" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">git-send-email 官方文档</a>。</>
+                : <><code>git send-email</code> is an official Git subcommand for sending patches via SMTP. Most distros require a separate package. See <a href="https://git-scm.com/docs/git-send-email" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">official git-send-email docs</a>.</>}
+            </p>
+
+            <CopyBlock title={locale === 'zh' ? '安装 git-email 包' : 'Install git-email package'} code={`# Ubuntu / Debian
+sudo apt install git-email
+
+# Fedora
+sudo dnf install git-email
+
+# Arch (included in the git package)
+# Already available if git is installed`} />
+
+            <CopyBlock title={locale === 'zh' ? '配置 SMTP（以 Gmail 为例）' : 'Configure SMTP (Gmail example)'} code={`# Configure git send-email SMTP settings
+# https://git-scm.com/docs/git-send-email#_use_gmail_as_the_smtp_server
+git config --global sendemail.smtpserver smtp.gmail.com
+git config --global sendemail.smtpserverport 587
+git config --global sendemail.smtpencryption tls
+git config --global sendemail.smtpuser your-email@gmail.com
+git config --global sendemail.from "Your Name <your-email@gmail.com>"
+
+# For Gmail: generate an App Password
+# 1. Go to https://myaccount.google.com/security
+# 2. Enable 2-Step Verification (if not already)
+# 3. Go to App passwords → select "Mail" → Generate
+# 4. Use the 16-character password when git send-email prompts
+
+# For other providers, adjust smtpserver / port / encryption accordingly`} />
+
+            <p className="font-semibold text-foreground mt-6">
+              {locale === 'zh' ? '典型的补丁提交流程' : 'Typical patch submission workflow'}
+            </p>
+
+            <CopyBlock title={locale === 'zh' ? '使用 b4 准备和发送补丁' : 'Prepare and send patches with b4'} code={`cd ~/kernel-dev
+
+# 1. Start a new patch series
+# https://b4.docs.kernel.org/en/latest/contributor/send.html
+b4 prep -n fix/amdgpu-my-description -f v6.x
+
+# 2. Edit the cover letter
+b4 prep --edit-cover
+
+# 3. Make your changes and commit (with Signed-off-by)
+git commit -s
+
+# 4. Check code style before sending
+scripts/checkpatch.pl --strict -g HEAD
+
+# 5. Send to the mailing list
+b4 send
+# b4 will use git send-email under the hood
+
+# Alternative: use git send-email directly
+git format-patch HEAD~1 -o /tmp/patches/
+git send-email \\
+    --to=amd-gfx@lists.freedesktop.org \\
+    --cc=linux-kernel@vger.kernel.org \\
+    /tmp/patches/0001-*.patch`} />
+
+            <CopyBlock title={locale === 'zh' ? '验证工具安装' : 'Verify tool installation'} code={`echo "=== Patch Submission Tools ==="
+
+echo -n "b4: "
+command -v b4 &>/dev/null && echo "OK ($(b4 --version 2>&1 | head -1))" || echo "MISSING"
+
+echo -n "git send-email: "
+git send-email --help &>/dev/null && echo "OK" || echo "MISSING (install git-email)"
+
+echo -n "checkpatch.pl: "
+test -f ~/kernel-dev/scripts/checkpatch.pl && echo "OK" || echo "MISSING (need kernel source)"
+
+echo -n "perl (for checkpatch): "
+command -v perl &>/dev/null && echo "OK ($(perl -v | grep version | head -1))" || echo "MISSING"`} />
+
+            <div className="rounded-xl p-4 border border-primary/30 bg-primary/5">
+              <p className="text-xs font-semibold text-primary mb-1">
+                {locale === 'zh' ? '发送前的最佳实践' : 'Best practices before sending'}
+              </p>
+              <p className="text-xs text-muted-foreground/80">
+                {locale === 'zh'
+                  ? <>(1) 始终运行 <code>scripts/checkpatch.pl</code> 检查代码风格；(2) 提交信息必须包含 <code>Signed-off-by</code>（使用 <code>git commit -s</code>）；(3) 先发送到自己的邮箱做测试：<code>git send-email --to=yourself@example.com</code>；(4) 对于 amdgpu 补丁，抄送 <code>amd-gfx@lists.freedesktop.org</code> 和 <code>scripts/get_maintainer.pl</code> 输出的维护者。</>
+                  : <>(1) Always run <code>scripts/checkpatch.pl</code> to check code style; (2) Commits must include <code>Signed-off-by</code> (use <code>git commit -s</code>); (3) Test by sending to yourself first: <code>git send-email --to=yourself@example.com</code>; (4) For amdgpu patches, CC <code>amd-gfx@lists.freedesktop.org</code> and the maintainers listed by <code>scripts/get_maintainer.pl</code>.</>}
+              </p>
+            </div>
           </Section>
 
         </div>
