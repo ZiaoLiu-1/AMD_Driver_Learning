@@ -31,7 +31,7 @@ export default function LabDetailPage() {
       const firstIncomplete = lab.steps.findIndex((_, i) => !completedSteps.has(i));
       if (firstIncomplete !== -1) setCurrentStep(firstIncomplete);
     }
-  }, [isStarted, lab?.id, labProgress.completedSteps, lab?.steps.length]);
+  }, [isStarted, lab?.id, completedSteps.size, lab?.steps.length]);
 
   if (!lab) {
     return (
@@ -216,13 +216,13 @@ export default function LabDetailPage() {
                     key={i}
                     onClick={() => setCurrentStep(i)}
                     className={`relative text-left text-sm py-2.5 px-3 rounded-lg flex items-center gap-3 transition-all ${isActive ? 'bg-orange-500/10 text-foreground font-medium shadow-sm'
-                        : isDone ? 'text-muted-foreground hover:bg-muted/50'
-                          : 'text-muted-foreground hover:bg-muted/30'
+                      : isDone ? 'text-muted-foreground hover:bg-muted/50'
+                        : 'text-muted-foreground hover:bg-muted/30'
                       }`}
                   >
                     <div className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center border z-10 bg-background transition-colors ${isActive ? 'border-orange-500 text-orange-500'
-                        : isDone ? 'border-green-500 bg-green-500/10 text-green-500'
-                          : 'border-border/60 text-muted-foreground/50'
+                      : isDone ? 'border-green-500 bg-green-500/10 text-green-500'
+                        : 'border-border/60 text-muted-foreground/50'
                       }`}>
                       {isDone ? <CheckCircle2 className="w-4 h-4" /> : <span className="text-[10px] font-mono">{i + 1}</span>}
                     </div>
@@ -324,8 +324,8 @@ export default function LabDetailPage() {
                       <button
                         onClick={handleToggleStep}
                         className={`text-sm px-5 py-2.5 rounded-lg border font-medium transition-colors ${completedSteps.has(currentStep)
-                            ? 'border-green-500 bg-green-500/10 text-green-600'
-                            : 'border-border hover:bg-muted text-foreground'
+                          ? 'border-green-500 bg-green-500/10 text-green-600'
+                          : 'border-border hover:bg-muted text-foreground'
                           }`}
                       >
                         {completedSteps.has(currentStep) ? '✓ Completed' : 'Mark as Complete'}
