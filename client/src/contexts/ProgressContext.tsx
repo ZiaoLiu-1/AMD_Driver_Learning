@@ -2,7 +2,8 @@
    AMD Driver Learning Platform - Progress Tracking Context
    Stores learning progress in localStorage
    ============================================================ */
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import { engineeringPhases } from '@/data/engineering_phases';
 
 export type ModuleStatus = 'not-started' | 'in-progress' | 'completed';
 
@@ -10,10 +11,19 @@ interface ProgressState {
   [moduleId: string]: {
     status: ModuleStatus;
     completedTabs: string[];
-    completedLessons: string[];   // lesson IDs
+    completedLessons: string[];
     lastVisited: string;
     notes: string;
   };
+}
+
+export type PhaseStatus = 'not-started' | 'in-progress' | 'completed';
+
+interface PhaseProgress {
+  status: PhaseStatus;
+  completedModules: number;
+  totalModules: number;
+  percentage: number;
 }
 
 interface ProgressContextType {
@@ -30,6 +40,8 @@ interface ProgressContextType {
   isLessonComplete: (moduleId: string, lessonId: string) => boolean;
   getCompletedLessons: (moduleId: string) => string[];
   resetProgress: () => void;
+  getPhaseProgress: (phaseId: string) => PhaseProgress;
+  getOverallPhaseProgress: () => { completed: number; total: number; percentage: number };
 }
 
 const ProgressContext = createContext<ProgressContextType | null>(null);
@@ -125,6 +137,29 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(STORAGE_KEY);
   };
 
+  const getPhaseProgress = useMemo(() => (phaseId: string): PhaseProgress => {
+    const phase = engineeringPhases.find((p) => p.id === phaseId);
+    if (!phase) return { status: 'not-started', completedModules: 0, totalModules: 0, percentage: 0 };
+    const total = phase.moduleIds.length;
+    const completed = phase.moduleIds.filter((mid) => getModuleStatus(mid) === 'completed').length;
+    const inProg = phase.moduleIds.some((mid) => {
+      const s = getModuleStatus(mid);
+      return s === 'in-progress' || s === 'completed';
+    });
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    const status: PhaseStatus = completed === total ? 'completed' : inProg ? 'in-progress' : 'not-started';
+    return { status, completedModules: completed, totalModules: total, percentage: pct };
+  }, [progress]);
+
+  const getOverallPhaseProgress = useMemo(() => (): { completed: number; total: number; percentage: number } => {
+    const total = engineeringPhases.length;
+    const completed = engineeringPhases.filter((p) => {
+      const pp = getPhaseProgress(p.id);
+      return pp.status === 'completed';
+    }).length;
+    return { completed, total, percentage: total > 0 ? Math.round((completed / total) * 100) : 0 };
+  }, [progress]);
+
   return (
     <ProgressContext.Provider value={{
       progress,
@@ -140,6 +175,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       isLessonComplete,
       getCompletedLessons,
       resetProgress,
+      getPhaseProgress,
+      getOverallPhaseProgress,
     }}>
       {children}
     </ProgressContext.Provider>
