@@ -72,7 +72,7 @@ export function buildSearchIndex(locale: Locale = "zh"): SearchResult[] {
           subtitle: `${currModule?.title ?? moduleId} › ${group.title ?? group.groupTitle ?? ""} · ${lesson.number}`,
           body: [lesson.title, lesson.titleEn ?? "", summary, keyPoints, explanation].join(" ").toLowerCase(),
           href: `/module/${moduleId}/lesson/${lesson.id}`,
-          icon: group.icon ?? currModule?.icon ?? "📖",
+          icon: group.icon ?? currModule?.icon ?? "BookOpen",
           moduleId,
           locale,
         });

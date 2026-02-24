@@ -16,7 +16,7 @@ export const module8MicroLessons: MicroLessonModule = {
       number: '8.1',
       title: 'HIP 编程模型',
       titleEn: 'HIP Programming Model',
-      icon: '🚀',
+      icon: 'Rocket',
       description: '学习 HIP 编程的核心概念：Grid/Block/Thread 层次结构、内核函数的编写与启动、设备内存管理，以及 GPU 内存层次与高效分配策略。',
       lessons: [
         // ── Lesson 8.1.1 ──────────────────────────────────────
@@ -437,7 +437,7 @@ hipStreamSynchronize(stream);
       number: '8.2',
       title: '性能优化',
       titleEn: 'Performance Optimization',
-      icon: '⚡',
+      icon: 'Zap',
       description: '深入理解 AMD GPU 的 Wavefront 执行模型、内存合并访问规则和 LDS 优化技术，并掌握 rocprof 性能分析工具。',
       lessons: [
         // ── Lesson 8.2.1 ──────────────────────────────────────

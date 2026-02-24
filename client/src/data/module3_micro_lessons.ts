@@ -16,7 +16,7 @@ export const module3MicroLessons: MicroLessonModule = {
       number: '3.1',
       title: '内核模块开发',
       titleEn: 'Kernel Module Development',
-      icon: '🧩',
+      icon: 'Puzzle',
       description: '从零编写内核模块，理解模块生命周期、PCI 驱动框架和内核特有的错误处理模式——这些是阅读和贡献 amdgpu 代码的基础技能。',
       lessons: [
         // ── Lesson 3.1.1 ──────────────────────────────────────

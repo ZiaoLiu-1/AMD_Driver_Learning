@@ -15,7 +15,7 @@ import type { MicroLessonModule } from "@/data/micro_lesson_types";
 import {
   ArrowLeft, Sun, Moon, ChevronRight, ChevronLeft,
   Lightbulb, CheckCircle2, XCircle, RotateCcw, Filter, Languages,
-  BookOpen, Target, Shuffle
+  BookOpen, Target, Shuffle, PartyPopper
 } from "lucide-react";
 
 interface PracticeQuestion {
@@ -201,9 +201,8 @@ export default function PracticePage() {
           {(["all", "easy", "medium", "hard"] as const).map(d => (
             <button key={d}
               onClick={() => { setFilterDiff(d); applyFilter(); }}
-              className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all border ${
-                filterDiff === d ? "border-primary/50 bg-primary/10 text-primary" : "border-border/40 text-muted-foreground/60 hover:border-border"
-              }`}>
+              className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-all border ${filterDiff === d ? "border-primary/50 bg-primary/10 text-primary" : "border-border/40 text-muted-foreground/60 hover:border-border"
+                }`}>
               {d === "all" ? t("practice.allDiff") : t(`module.${d}`)}
             </button>
           ))}
@@ -237,7 +236,7 @@ export default function PracticePage() {
         {/* Card */}
         {finished ? (
           <div className="rounded-2xl border border-border/50 p-8 text-center bg-card/50">
-            <div className="text-4xl mb-4">🎉</div>
+            <PartyPopper className="w-12 h-12 mx-auto mb-4 text-primary opacity-80" />
             <h2 className="text-xl font-bold text-foreground mb-2">{t("practice.finished")}</h2>
             <p className="text-sm text-muted-foreground/70 mb-2">
               {t("practice.finishedStats", { total, correct, skipped })}
@@ -286,7 +285,7 @@ export default function PracticePage() {
                 {showHint && (
                   <div className="rounded-xl p-4 text-sm text-muted-foreground/80 border border-border/40 leading-relaxed"
                     style={{ background: "var(--muted)" }}>
-                    💡 {current.hint}
+                    {current.hint}
                   </div>
                 )}
               </div>
