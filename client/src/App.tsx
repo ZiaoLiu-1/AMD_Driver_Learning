@@ -13,6 +13,7 @@ import MicroLessonPage from "./pages/MicroLessonPage";
 import SetupGuide from "./pages/SetupGuide";
 import GlossaryPage from "./pages/GlossaryPage";
 import PracticePage from "./pages/PracticePage";
+import AssessmentPage from "./pages/AssessmentPage";
 import { SearchModal, useSearchShortcut } from "./components/SearchModal";
 import LocaleRedirect from "./components/LocaleRedirect";
 import { useTranslation } from "react-i18next";
@@ -26,6 +27,7 @@ function InnerRoutes() {
       <Route path="/setup" component={SetupGuide} />
       <Route path="/glossary" component={GlossaryPage} />
       <Route path="/practice" component={PracticePage} />
+      <Route path="/assessment" component={AssessmentPage} />
       <Route path="/module/:moduleId" component={ModulePage} />
       <Route path="/module/:moduleId/lesson/:lessonId" component={MicroLessonPage} />
       <Route path="/404" component={NotFound} />
