@@ -12,7 +12,7 @@ import { useSearchHighlight } from "@/lib/highlight";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import {
-  ArrowLeft, Copy, Check, ChevronRight, Sun, Moon,
+  ArrowLeft, ArrowRight, Copy, Check, ChevronRight, Sun, Moon,
   Terminal, Monitor, HardDrive, Cpu, Download, Settings, Languages,
   Laptop
 } from "lucide-react";
@@ -99,6 +99,50 @@ export default function SetupGuide() {
             <span className="px-2 py-1 rounded-full bg-muted text-muted-foreground">Fedora 39+</span>
             <span className="px-2 py-1 rounded-full bg-muted text-muted-foreground">Arch Linux</span>
           </div>
+        </div>
+
+        {/* Workflow Choice */}
+        <div className="grid sm:grid-cols-2 gap-4 mb-10">
+          <a href="#prereqs" className="group rounded-xl border border-border/50 p-5 bg-card/50 hover:bg-muted/50 transition-colors block">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Laptop className="w-4 h-4 text-blue-500" />
+                </div>
+                <h3 className="font-semibold text-foreground group-hover:text-blue-500 transition-colors">
+                  {locale === 'zh' ? '单机开发环境 (基础)' : 'Single-Machine Setup (Basic)'}
+                </h3>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-blue-500 group-hover:-rotate-45 transition-all" />
+            </div>
+            <p className="text-xs text-muted-foreground/85 leading-relaxed">
+              {locale === 'zh'
+                ? '在同一台电脑上编写代码、编译内核并使用 virtme-ng 测试。适合初学者或仅进行非显示层修改时使用。'
+                : 'Write code, build the kernel, and test with virtme-ng on the same PC. Good for beginners or non-display changes.'}
+            </p>
+          </a>
+
+          <a href="#dual-machine" className="group rounded-xl border border-border/50 p-5 bg-card/50 hover:bg-muted/50 hover:border-primary/50 transition-colors block relative overflow-hidden">
+            <div className="absolute top-0 right-0 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase rounded-bl-lg">
+              {locale === 'zh' ? '推荐' : 'Recommended'}
+            </div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Monitor className="w-4 h-4 text-primary" />
+                </div>
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                  {locale === 'zh' ? '双机开发流程 (进阶)' : 'Dual-Machine Setup (Advanced)'}
+                </h3>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:-rotate-45 transition-all" />
+            </div>
+            <p className="text-xs text-muted-foreground/85 leading-relaxed">
+              {locale === 'zh'
+                ? '使用一台机器（如 MacBook）编写代码，通过 SSH 远端连接到带 AMD GPU 的测试机进行编译和真实硬件测试。安全且高效。'
+                : 'Write code on a laptop (e.g. MacBook), SSH into a dedicated AMD GPU test machine to build and test. Safe and highly productive.'}
+            </p>
+          </a>
         </div>
 
         {/* Table of Contents */}
@@ -344,9 +388,9 @@ vng --build --run -- "drm.debug=0x1f amdgpu.dpm=0"`} />
             <div className="rounded-xl p-4 border border-red-500/30 bg-red-500/5">
               <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">DANGER: MMIO writes</p>
               <p className="text-xs text-muted-foreground/80">
-                Writing to the wrong GPU register via WREG32/RREG32 can <strong>instantly hard-lock your entire system</strong> — 
-                no Ctrl+C, no SSH, only a power cycle recovers. This is not a compiler error or a kernel oops — it's 
-                a hardware-level hang. <strong>Never write to MMIO registers without consulting the hardware spec</strong> (which 
+                Writing to the wrong GPU register via WREG32/RREG32 can <strong>instantly hard-lock your entire system</strong> —
+                no Ctrl+C, no SSH, only a power cycle recovers. This is not a compiler error or a kernel oops — it's
+                a hardware-level hang. <strong>Never write to MMIO registers without consulting the hardware spec</strong> (which
                 AMD provides under NDA to employees, and partially via GPUOpen documentation for ISA).
                 Always test MMIO changes in a VM or spare machine first.
               </p>
@@ -484,7 +528,7 @@ git format-patch HEAD~1 -o /tmp/patches/
             <p>
               Kernel development on the same machine you rely on daily is risky — a bad MMIO write or a broken
               display driver can hard-lock the system. The safest, most productive workflow uses <strong>two
-              machines</strong>: a dedicated <strong>test machine</strong> (Ubuntu desktop with your AMD GPU) and
+                machines</strong>: a dedicated <strong>test machine</strong> (Ubuntu desktop with your AMD GPU) and
               a separate <strong>dev machine</strong> (laptop / MacBook) for writing code.
             </p>
 
@@ -629,7 +673,7 @@ sudo grub-reboot "Advanced options for Ubuntu>Ubuntu, with Linux x.y.z-amdgpu-de
               <p className="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">Windows is safe</p>
               <p className="text-xs text-muted-foreground/80">
                 If your test machine dual-boots Windows, kernel development on the Linux side does <strong>not
-                affect Windows at all</strong>. The Windows partition and bootloader are untouched. Even if you
+                  affect Windows at all</strong>. The Windows partition and bootloader are untouched. Even if you
                 completely break the Linux dev kernel, you can still boot into Windows normally, or boot the stable
                 Linux kernel from GRUB.
               </p>
