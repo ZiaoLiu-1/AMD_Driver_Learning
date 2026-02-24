@@ -15,6 +15,7 @@ import GlossaryPage from "./pages/GlossaryPage";
 import PracticePage from "./pages/PracticePage";
 import LabsListPage from "./pages/LabsListPage";
 import LabDetailPage from "./pages/LabDetailPage";
+import AssessmentPage from "./pages/AssessmentPage";
 import { SearchModal, useSearchShortcut } from "./components/SearchModal";
 import LocaleRedirect from "./components/LocaleRedirect";
 import { useTranslation } from "react-i18next";
@@ -30,6 +31,7 @@ function InnerRoutes() {
       <Route path="/practice" component={PracticePage} />
       <Route path="/labs" component={LabsListPage} />
       <Route path="/labs/:labId" component={LabDetailPage} />
+      <Route path="/assessment" component={AssessmentPage} />
       <Route path="/module/:moduleId" component={ModulePage} />
       <Route path="/module/:moduleId/lesson/:lessonId" component={MicroLessonPage} />
       <Route path="/404" component={NotFound} />
