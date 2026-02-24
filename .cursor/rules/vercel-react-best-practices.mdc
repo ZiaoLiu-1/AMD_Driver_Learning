@@ -1,0 +1,50 @@
+---
+description: React/Vite 性能优化指南 — 源自 Vercel Engineering，适用于 React 组件、数据获取、bundle 优化
+globs: client/**/*.tsx, client/**/*.ts
+alwaysApply: false
+---
+
+# Vercel React Best Practices
+
+源自 [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills)。编写、审查或重构 React 代码时参考。
+
+## 1. 消除瀑布流 (CRITICAL)
+
+- `async-parallel` — 独立操作用 `Promise.all()`
+- `async-defer-await` — 将 await 移到实际使用的分支
+- 在 API/数据层尽早启动 promise，晚 await
+
+## 2. Bundle 优化 (CRITICAL)
+
+- `bundle-barrel-imports` — 直接 import，避免 barrel 文件
+- `bundle-dynamic-imports` — 重组件用 `React.lazy()` + `Suspense`
+- `bundle-defer-third-party` — 分析/日志在 hydration 后加载
+- `bundle-conditional` — 按需加载模块
+
+## 3. 客户端数据获取 (MEDIUM-HIGH)
+
+- 使用 SWR 或类似库做请求去重
+- 全局事件监听去重
+- 滚动用 passive listeners
+
+## 4. Re-render 优化 (MEDIUM)
+
+- `rerender-memo` — 昂贵计算提取到 memo 组件
+- `rerender-derived-state-no-effect` — 在 render 中派生状态，不用 effect
+- `rerender-functional-setstate` — 用函数式 setState 保持回调稳定
+- `rerender-lazy-state-init` — 昂贵初始值用 `useState(() => ...)`
+- `rerender-transitions` — 非紧急更新用 `startTransition`
+- `rerender-move-effect-to-event` — 交互逻辑放事件处理，少用 effect
+
+## 5. 渲染性能 (MEDIUM)
+
+- `rendering-content-visibility` — 长列表用 `content-visibility: auto`
+- `rendering-hoist-jsx` — 静态 JSX 提到组件外
+- `rendering-conditional-render` — 用三元，不用 `&&` 做条件渲染
+
+## 6. JavaScript 性能 (LOW-MEDIUM)
+
+- `js-set-map-lookups` — 用 Set/Map 做 O(1) 查找
+- `js-hoist-regexp` — RegExp 提到循环外
+- `js-combine-iterations` — 合并多次 filter/map 为单次循环
+- `js-early-exit` — 函数内尽早 return

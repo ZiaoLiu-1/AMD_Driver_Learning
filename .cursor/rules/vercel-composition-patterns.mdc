@@ -1,0 +1,60 @@
+---
+description: React 组合模式 — 避免 boolean prop 泛滥，构建可扩展组件库
+globs: client/**/*.tsx
+alwaysApply: false
+---
+
+# React Composition Patterns
+
+源自 [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills)。重构多 boolean props 的组件、设计可复用 API 时参考。
+
+## 核心原则
+
+- **避免 boolean props** — 用组合替代 `variant="primary"`、`isLoading` 等
+- **复合组件** — 用共享 context 组织复杂组件结构
+- **显式变体** — 创建显式 variant 组件，而非 boolean 模式
+
+## 架构规则
+
+### architecture-avoid-boolean-props
+
+```tsx
+// ❌ BAD
+<Button primary loading disabled size="lg" />
+
+// ✅ GOOD — 用 composition
+<Button.Root>
+  <Button.Loading />
+  <Button.Label>Submit</Button.Label>
+</Button.Root>
+```
+
+### architecture-compound-components
+
+```tsx
+// ❌ BAD — 多个 boolean 控制
+<Tabs variant="underline" animated showIcon />
+
+// ✅ GOOD — 复合组件 + context
+<Tabs.Root>
+  <Tabs.List>
+    <Tabs.Trigger value="a">Tab A</Tabs.Trigger>
+  </Tabs.List>
+  <Tabs.Content value="a">...</Tabs.Content>
+</Tabs.Root>
+```
+
+## 状态管理
+
+- `state-lift-state` — 状态提升到 provider，供兄弟组件访问
+- `state-decouple-implementation` — Provider 是唯一知道 state 实现的地方
+- `state-context-interface` — 定义通用接口 { state, actions, meta }
+
+## 实现模式
+
+- `patterns-children-over-render-props` — 优先用 children 组合，少用 renderX props
+- `patterns-explicit-variants` — 用 `<Button.Primary />` 而非 `<Button primary />`
+
+## React 19
+
+- `react19-no-forwardref` — 不再用 `forwardRef`; 用 `use()` 替代 `useContext()`（需 React 19+）
