@@ -18,24 +18,20 @@ import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { useTranslation } from "react-i18next";
 import { ArrowRight, Clock, BookOpen, Code2, Target, ChevronRight, Cpu, Zap, CheckCircle2, Circle, Loader2, BarChart3, Terminal, Sun, Moon, GraduationCap, BookMarked, Languages, FileCode } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
-
-const STAGE_KEYS = ['stage1', 'stage2', 'stage3', 'stage4', 'stage5'] as const;
-const STAGE_MODULES = [
-  ['intro', 'ecosystem', 'prerequisites', 'graphics-apis'],
-  ['hardware', 'kernel'],
-  ['drm', 'amdgpu'],
-  ['debugging', 'rocm-kernel', 'rocm-compute'],
-  ['llvm', 'testing', 'career'],
-];
+import { getPhases } from "@/data/engineering_phases";
+import { PhaseRoadmap } from "@/components/home/PhaseRoadmap";
+import { PhaseCardGrid } from "@/components/home/PhaseCardGrid";
+import { PhaseProgressOverview } from "@/components/home/PhaseProgressOverview";
 
 export default function Home() {
   const { locale, basePath } = useLocale();
   const { switchLocale } = useSwitchLocale();
   const { t } = useTranslation();
-  const { getModuleStatus, getTotalCompleted } = useProgress();
+  const { getModuleStatus, getTotalCompleted, getPhaseProgress, getOverallPhaseProgress } = useProgress();
   const { theme, toggleTheme } = useTheme();
 
   const curriculum = getCurriculum(locale);
+  const phases = getPhases(locale as any);
   const totalHours = getTotalHours(locale);
   const difficultyLabels = getDifficultyLabels(locale);
   const microLessonsByModule = getMicroLessonsByModule(locale);
@@ -151,51 +147,12 @@ export default function Home() {
 
       {/* Progress Overview (shown when user has started) */}
       {totalCompleted > 0 && (
-        <section className="border-y border-border/50 py-6" style={{ background: 'var(--sidebar)' }}>
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex items-center gap-4 mb-4">
-              <BarChart3 className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
-              <h3 className="text-sm font-semibold text-foreground">{t("home.yourProgress")}</h3>
-              <span className="text-xs text-muted-foreground/60 ml-auto">
-                {t("home.completedModules", { count: totalCompleted, total: curriculum.length })}
-              </span>
-            </div>
-            <div className="flex gap-1.5">
-              {curriculum.map((module) => {
-                const status = getModuleStatus(module.id);
-                return (
-                  <Link key={module.id} href={`/module/${module.id}`}>
-                    <div
-                      title={`${module.title} - ${status === 'completed' ? t("home.completed") : status === 'in-progress' ? t("home.inProgress") : t("home.notStarted")}`}
-                      className="h-2 rounded-full flex-1 cursor-pointer transition-all hover:opacity-80"
-                      style={{
-                        minWidth: '20px',
-                        background: status === 'completed'
-                          ? 'oklch(0.65 0.18 145)'
-                          : status === 'in-progress'
-                            ? 'oklch(0.75 0.18 35)'
-                            : 'oklch(0.18 0.015 255)',
-                      }}
-                    />
-                  </Link>
-                );
-              })}
-            </div>
-            <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground/50">
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ background: 'oklch(0.65 0.18 145)' }} />
-                {t("home.completed")}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ background: 'oklch(0.75 0.18 35)' }} />
-                {t("home.inProgress")}
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ background: 'oklch(0.18 0.015 255)' }} />
-                {t("home.notStarted")}
-              </div>
-            </div>
-          </div>
+        <section className="border-y border-border/50 py-2 sm:py-3" style={{ background: 'var(--sidebar)' }}>
+          <PhaseProgressOverview
+            phases={phases}
+            getPhaseProgress={getPhaseProgress}
+            overall={getOverallPhaseProgress()}
+          />
         </section>
       )}
 
@@ -224,112 +181,28 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Staged Learning Path */}
+      {/* Phase Roadmap and Modules Grid */}
       <section className="max-w-7xl mx-auto px-6 py-16">
-        <div className="mb-10">
-          <h2 className="text-2xl font-bold text-foreground mb-2">{t("home.pathTitle")}</h2>
-          <p className="text-muted-foreground text-sm">{t("home.pathSubtitle")}</p>
+        <div className="mb-6 flex flex-col items-center text-center">
+          <h2 className="text-3xl font-bold text-foreground mb-3">{t("home.pathTitle")}</h2>
+          <p className="text-muted-foreground text-sm max-w-2xl">{t("home.pathSubtitle")}</p>
         </div>
 
-        <div className="space-y-6">
-          {STAGE_MODULES.map((mods, stageIdx) => {
-            const stageModules = mods.map(id => curriculum.find(m => m.id === id)).filter(Boolean) as typeof curriculum;
-            const stageLabel = t(`home.${STAGE_KEYS[stageIdx]}`);
-            const stageStyle = [
-              { color: 'oklch(0.70 0.18 145)', bg: 'oklch(0.55 0.18 145 / 0.1)', border: 'oklch(0.55 0.18 145 / 0.3)' },
-              { color: 'oklch(0.70 0.18 200)', bg: 'oklch(0.55 0.18 200 / 0.1)', border: 'oklch(0.55 0.18 200 / 0.3)' },
-              { color: 'oklch(0.75 0.18 35)', bg: 'oklch(0.62 0.22 35 / 0.1)', border: 'oklch(0.62 0.22 35 / 0.3)' },
-              { color: 'oklch(0.70 0.18 280)', bg: 'oklch(0.55 0.18 280 / 0.1)', border: 'oklch(0.55 0.18 280 / 0.3)' },
-              { color: 'oklch(0.70 0.20 50)', bg: 'oklch(0.55 0.20 50 / 0.1)', border: 'oklch(0.55 0.20 50 / 0.3)' },
-            ][stageIdx];
-            const stageCompleted = stageModules.filter(m => getModuleStatus(m.id) === 'completed').length;
-            const stageTotal = stageModules.length;
+        {/* 1. Phase Roadmap Visualization */}
+        <PhaseRoadmap
+          phases={phases}
+          getPhaseProgress={getPhaseProgress}
+          getModuleStatus={getModuleStatus}
+          locale={locale}
+        />
 
-            return (
-              <div key={stageIdx} className="rounded-2xl border overflow-hidden glass-panel hover-lift transition-all"
-                style={{ background: stageStyle.bg, borderColor: stageStyle.border }}>
-                {/* Stage Header */}
-                <div className="px-5 py-3 flex items-center justify-between border-b"
-                  style={{ borderColor: stageStyle.border, background: 'var(--muted)' }}>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-mono px-2 py-0.5 rounded"
-                      style={{ background: `${stageStyle.color.replace(')', ' / 0.15)')}`, color: stageStyle.color }}>
-                      Stage {stageIdx + 1}
-                    </span>
-                    <span className="text-sm font-semibold text-foreground">{stageLabel}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs" style={{ color: stageStyle.color }}>
-                    {stageCompleted === stageTotal && stageTotal > 0 ? (
-                      <CheckCircle2 className="w-4 h-4" />
-                    ) : stageCompleted > 0 ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Circle className="w-4 h-4 opacity-40" />
-                    )}
-                    <span>{stageCompleted}/{stageTotal}</span>
-                  </div>
-                </div>
-
-                {/* Stage Modules */}
-                <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {stageModules.map((module, modIdx) => {
-                    const status = getModuleStatus(module.id);
-                    return (
-                      <Link key={module.id} href={`/module/${module.id}`}>
-                        <div className="flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all hover:border-opacity-100 hover:scale-[1.02] hover:shadow-lg group"
-                          style={{
-                            background: status === 'completed' ? 'var(--card)' : 'transparent',
-                            borderColor: status === 'completed' ? 'oklch(0.55 0.18 145 / 0.4)' : 'oklch(0.20 0.015 255 / 0.5)',
-                            backdropFilter: 'blur(8px)',
-                            boxShadow: status === 'completed' ? '0 4px 20px oklch(0.55 0.18 145 / 0.05)' : 'none'
-                          }}>
-                          {/* Status Icon */}
-                          <div className="flex-shrink-0">
-                            {status === 'completed' ? (
-                              <CheckCircle2 className="w-5 h-5" style={{ color: 'oklch(0.65 0.18 145)' }} />
-                            ) : status === 'in-progress' ? (
-                              <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
-                                style={{ borderColor: 'oklch(0.75 0.18 35)' }}>
-                                <div className="w-2 h-2 rounded-full" style={{ background: 'oklch(0.75 0.18 35)' }} />
-                              </div>
-                            ) : (
-                              <div className="w-5 h-5 rounded-full border-2 border-border/40" />
-                            )}
-                          </div>
-
-                          {/* Module Info */}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 mb-1.5">
-                              <DynamicIcon name={module.icon} className="w-4 h-4 text-foreground/70" />
-                              <span className="text-xs font-medium text-foreground/85 truncate group-hover:text-foreground transition-colors">
-                                {module.title}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground/50">
-                              <span className={difficultyColors[module.difficulty]}>{difficultyLabels[module.difficulty]}</span>
-                              <span>·</span>
-                              <span>{module.estimatedHours}h</span>
-                              {microLessonsByModule[module.id] && (
-                                <>
-                                  <span>·</span>
-                                  <span className="text-primary/60">
-                                    {microLessonsByModule[module.id].groups?.reduce((s, g) => s + g.lessons.length, 0) ?? 0} {t("home.lessons")}
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-
-                          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 flex-shrink-0 group-hover:text-muted-foreground/60 transition-colors" />
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {/* 2. Phase Card Grid */}
+        <PhaseCardGrid
+          phases={phases}
+          getPhaseProgress={getPhaseProgress}
+          getModuleStatus={getModuleStatus}
+          locale={locale}
+        />
       </section>
 
       {/* Bootcamp Format Explanation */}
