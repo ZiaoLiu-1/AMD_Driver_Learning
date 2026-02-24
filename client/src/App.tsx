@@ -78,17 +78,21 @@ function MainRouter() {
   );
 }
 
+const routerBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light" switchable={true}>
-        <ProgressProvider>
-          <TooltipProvider>
-            <Toaster />
-            <MainRouter />
-          </TooltipProvider>
-        </ProgressProvider>
-      </ThemeProvider>
+      <Router base={routerBase}>
+        <ThemeProvider defaultTheme="light" switchable={true}>
+          <ProgressProvider>
+            <TooltipProvider>
+              <Toaster />
+              <MainRouter />
+            </TooltipProvider>
+          </ProgressProvider>
+        </ThemeProvider>
+      </Router>
     </ErrorBoundary>
   );
 }

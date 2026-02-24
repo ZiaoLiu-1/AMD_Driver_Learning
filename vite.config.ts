@@ -3,7 +3,8 @@ import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { defineConfig } from "vite";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === "build" ? "/amd/" : "/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -21,4 +22,4 @@ export default defineConfig({
     port: 3000,
     host: true,
   },
-});
+}));
