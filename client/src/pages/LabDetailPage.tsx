@@ -37,7 +37,7 @@ export default function LabDetailPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-lg mb-4">Lab not found</p>
+          <p className="text-lg mb-4">{t('module.notFound') || 'Lab not found'}</p>
           <Link href="/labs">
             <span className="text-orange-500 cursor-pointer">{t('labs.backToLabs') || 'Back to Labs'}</span>
           </Link>
@@ -174,7 +174,7 @@ export default function LabDetailPage() {
 
             <div className="grid gap-6">
               <div className="p-6 rounded-2xl border bg-card shadow-sm">
-                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Expected Output</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">{t('labs.expectedOutput') || 'Expected Output'}</h3>
                 <p className="text-foreground leading-relaxed">{lab.expectedOutput}</p>
               </div>
 

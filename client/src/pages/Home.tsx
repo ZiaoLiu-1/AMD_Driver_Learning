@@ -45,38 +45,50 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       {/* Top Nav */}
       <header className="sticky top-0 z-50 border-b border-border/50 backdrop-blur-md bg-background/80">
-        <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E8441A, #FF6B35)' }}>
-              <Cpu className="w-4 h-4 text-white" />
+        <div className="max-w-[1400px] mx-auto px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 mr-4">
+              <div className="w-7 h-7 rounded flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #E8441A, #FF6B35)' }}>
+                <Cpu className="w-4 h-4 text-white" />
+              </div>
+              <span className="font-semibold text-sm tracking-wide text-foreground/90 hidden sm:block">AMD Driver Learning</span>
             </div>
-            <span className="font-semibold text-sm tracking-wide text-foreground/90">AMD Driver Learning Platform</span>
+
+            <div className="hidden xl:flex items-center gap-4 text-sm text-muted-foreground">
+              <Link href="/labs"><span className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><FlaskConical className="w-3.5 h-3.5" />{t("nav.labs") || 'Labs'}</span></Link>
+              <Link href="/assessment"><span className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><ClipboardCheck className="w-3.5 h-3.5" />{t("nav.assessment") || 'Assessment'}</span></Link>
+              <Link href="/source-guide"><span className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><FileCode className="w-3.5 h-3.5" />{t("nav.sourceGuide") || 'Source Code'}</span></Link>
+              <Link href="/practice"><span className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5" />{t("nav.practice")}</span></Link>
+              <Link href="/glossary"><span className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><BookMarked className="w-3.5 h-3.5" />{t("nav.glossary")}</span></Link>
+              <Link href="/setup"><span className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><Terminal className="w-3.5 h-3.5" />{t("nav.setup")}</span></Link>
+            </div>
           </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Link href="/labs"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><FlaskConical className="w-3.5 h-3.5" />{t("nav.labs") || 'Labs'}</span></Link>
-            <Link href="/assessment"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><ClipboardCheck className="w-3.5 h-3.5" />{t("nav.assessment") || 'Assessment'}</span></Link>
-            <Link href="/source-guide"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><FileCode className="w-3.5 h-3.5" />{t("nav.sourceGuide") || 'Source Code'}</span></Link>
-            <Link href="/practice"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5" />{t("nav.practice")}</span></Link>
-            <Link href="/glossary"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><BookMarked className="w-3.5 h-3.5" />{t("nav.glossary")}</span></Link>
-            <Link href="/setup"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><Terminal className="w-3.5 h-3.5" />{t("nav.setup")}</span></Link>
-            <a href="https://docs.kernel.org/gpu/amdgpu/index.html" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors hidden lg:block">{t("nav.kernelDocs")}</a>
-            <button onClick={switchLocale} className="flex items-center justify-center gap-1 w-14 py-1 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
-              <Languages className="w-3.5 h-3.5" />
-              <span>{locale === "zh" ? "En" : "中"}</span>
-            </button>
-            <button onClick={toggleTheme} className="p-1.5 rounded-lg hover:text-foreground hover:bg-muted/50 transition-colors">
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <a href="https://github.com/torvalds/linux/tree/master/drivers/gpu/drm/amd" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors hidden md:block">{t("nav.sourceCode")}</a>
-            <a href="https://lists.freedesktop.org/mailman/listinfo/amd-gfx" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors hidden md:block">{t("nav.mailingList")}</a>
+
+          <div className="flex items-center gap-4 text-sm text-muted-foreground shrink-0">
+            <div className="hidden lg:flex items-center gap-4 mr-2">
+              <a href="https://docs.kernel.org/gpu/amdgpu/index.html" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">{t("nav.kernelDocs")}</a>
+              <a href="https://github.com/torvalds/linux/tree/master/drivers/gpu/drm/amd" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">{t("nav.sourceCode")}</a>
+              <a href="https://lists.freedesktop.org/mailman/listinfo/amd-gfx" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">{t("nav.mailingList")}</a>
+            </div>
+
+            <div className="w-px h-4 bg-border/50 hidden lg:block" />
+
             {totalCompleted > 0 && (
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-2 text-xs mr-2">
                 <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--muted)' }}>
                   <div className="h-full rounded-full" style={{ width: `${progressPct}%`, background: 'linear-gradient(90deg, #E8441A, #FF6B35)' }} />
                 </div>
-                <span style={{ color: 'oklch(0.75 0.18 35)' }}>{progressPct}%</span>
+                <span className="font-mono text-[10px]" style={{ color: 'var(--foreground)' }}>{progressPct}%</span>
               </div>
             )}
+
+            <button onClick={switchLocale} className="flex items-center justify-center gap-1 w-14 py-1.5 rounded border border-border/50 hover:bg-muted/50 transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
+              <Languages className="w-3.5 h-3.5" />
+              <span className="text-xs font-medium">{locale === "zh" ? "En" : "中"}</span>
+            </button>
+            <button onClick={toggleTheme} className="p-1.5 rounded border border-border/50 hover:bg-muted/50 transition-colors">
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
           </div>
         </div>
       </header>

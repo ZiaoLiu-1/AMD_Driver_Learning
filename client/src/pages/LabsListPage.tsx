@@ -49,12 +49,12 @@ export default function LabsListPage() {
           <div className="flex items-center gap-6 text-sm font-medium">
             <div className="flex items-center gap-2">
               <span className="text-3xl tracking-tighter">{labs.length}</span>
-              <span className="text-muted-foreground uppercase text-[10px] tracking-wider leading-none">Total<br />Labs</span>
+              <span className="text-muted-foreground uppercase text-[10px] tracking-wider leading-none" dangerouslySetInnerHTML={{ __html: t('labs.totalLabsHtml') || 'Total<br />Labs' }} />
             </div>
             <div className="w-px h-8 bg-border/50" />
             <div className="flex items-center gap-2">
               <span className="text-3xl tracking-tighter">{Math.round(totalTime / 60)}h</span>
-              <span className="text-muted-foreground uppercase text-[10px] tracking-wider leading-none">Estimated<br />Time</span>
+              <span className="text-muted-foreground uppercase text-[10px] tracking-wider leading-none" dangerouslySetInnerHTML={{ __html: t('labs.estTimeHtml') || 'Estimated<br />Time' }} />
             </div>
           </div>
         </div>

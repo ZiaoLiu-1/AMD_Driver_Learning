@@ -77,7 +77,7 @@ export default function AssessmentPage() {
           </div>
 
           <section>
-            <h2 className="text-xl font-semibold mb-6">Capabilities Checklist</h2>
+            <h2 className="text-xl font-semibold mb-6">{t('assessment.checklist') || 'Capabilities Checklist'}</h2>
             <div className="grid gap-6 sm:grid-cols-2">
               {checklists.map((cl) => (
                 <div key={cl.phaseId} className="border border-border/50 bg-card rounded-2xl p-6 shadow-sm">
@@ -139,7 +139,7 @@ export default function AssessmentPage() {
             <button onClick={() => setState('intro')} className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors hover:text-foreground">
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <span className="text-sm font-semibold truncate">Mastery Assessment</span>
+            <span className="text-sm font-semibold truncate">{t('assessment.pageTitle') || 'Mastery Assessment'}</span>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs font-mono text-muted-foreground hidden sm:block">
