@@ -31,7 +31,7 @@ export default function LabDetailPage() {
       const firstIncomplete = lab.steps.findIndex((_, i) => !completedSteps.has(i));
       if (firstIncomplete !== -1) setCurrentStep(firstIncomplete);
     }
-  }, [isStarted, lab?.id]);
+  }, [isStarted, lab?.id, labProgress.completedSteps, lab?.steps.length]);
 
   if (!lab) {
     return (
