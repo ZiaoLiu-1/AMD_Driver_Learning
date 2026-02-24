@@ -16,7 +16,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, Clock, BookOpen, Code2, Target, ChevronRight, Cpu, Zap, CheckCircle2, Circle, Loader2, BarChart3, Terminal, Sun, Moon, GraduationCap, BookMarked, Languages } from "lucide-react";
+import { ArrowRight, Clock, BookOpen, Code2, Target, ChevronRight, Cpu, Zap, CheckCircle2, Circle, Loader2, BarChart3, Terminal, Sun, Moon, GraduationCap, BookMarked, Languages, FileCode } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
 
 const STAGE_KEYS = ['stage1', 'stage2', 'stage3', 'stage4', 'stage5'] as const;
@@ -57,6 +57,7 @@ export default function Home() {
             <span className="font-semibold text-sm tracking-wide text-foreground/90">AMD Driver Learning Platform</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <Link href="/source-guide"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><FileCode className="w-3.5 h-3.5" />{t("nav.sourceGuide") || 'Source Code'}</span></Link>
             <Link href="/practice"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5" />{t("nav.practice")}</span></Link>
             <Link href="/glossary"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><BookMarked className="w-3.5 h-3.5" />{t("nav.glossary")}</span></Link>
             <Link href="/setup"><span className="hover:text-foreground transition-colors cursor-pointer hidden md:flex items-center gap-1.5"><Terminal className="w-3.5 h-3.5" />{t("nav.setup")}</span></Link>
