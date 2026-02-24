@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { SourceFile } from '../data/source_roadmap';
 
 export interface SourceProgressState {
     completedFiles: string[]; // file paths that have been marked as read
@@ -40,7 +41,7 @@ export function useSourceProgress() {
         return progress.completedFiles.includes(filePath);
     };
 
-    const getStageProgress = (stageFiles: any[]) => {
+    const getStageProgress = (stageFiles: SourceFile[]) => {
         if (!stageFiles.length) return { completed: 0, total: 0, percentage: 0 };
         const completed = stageFiles.filter(f => isFileCompleted(f.path)).length;
         return {
