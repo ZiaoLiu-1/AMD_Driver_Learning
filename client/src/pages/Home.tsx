@@ -21,11 +21,11 @@ import { DynamicIcon } from "@/components/DynamicIcon";
 
 const STAGE_KEYS = ['stage1', 'stage2', 'stage3', 'stage4', 'stage5'] as const;
 const STAGE_MODULES = [
-  ['intro', 'ecosystem', 'prerequisites', 'graphics-apis'],
-  ['hardware', 'kernel'],
-  ['drm', 'amdgpu'],
-  ['debugging', 'rocm-kernel', 'rocm-compute'],
-  ['llvm', 'testing', 'career'],
+  ['intro', 'ecosystem', 'prerequisites', 'kernel', 'drm', 'amdgpu'],
+  ['hardware', 'drm'],
+  ['amdgpu', 'drm'],
+  ['debugging'],
+  ['llvm', 'rocm-compute', 'rocm-kernel'],
 ];
 
 export default function Home() {
