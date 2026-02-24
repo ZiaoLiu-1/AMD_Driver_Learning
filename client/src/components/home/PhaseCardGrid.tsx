@@ -38,11 +38,8 @@ export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, local
                     <motion.div
                         key={phase.id}
                         layoutId={`phase-card-${phase.id}`}
-                        className="rounded-2xl border overflow-hidden glass-panel hover-lift transition-shadow"
-                        style={{
-                            background: phaseProgress.status === 'completed' ? 'var(--card)' : 'oklch(0.55 0.18 145 / 0.02)',
-                            borderColor: phaseProgress.status === 'completed' ? 'oklch(0.55 0.18 145 / 0.3)' : 'border-border/40'
-                        }}
+                        className={`rounded-2xl border overflow-hidden glass-panel hover-lift transition-shadow ${phaseProgress.status === 'completed' ? 'bg-card border-green-500/30' : 'bg-orange-500/5 border-border/40'
+                            }`}
                     >
                         {/* Phase Card Header */}
                         <div
@@ -51,8 +48,7 @@ export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, local
                         >
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs font-mono px-2 py-0.5 rounded font-bold"
-                                        style={{ background: 'rgba(232, 68, 26, 0.1)', color: '#FF6B35' }}>
+                                    <span className="text-xs font-mono px-2 py-0.5 rounded font-bold bg-orange-500/10 text-orange-600">
                                         Phase {phase.number}
                                     </span>
                                     <span className="text-base font-semibold text-foreground">{phase.title}</span>
@@ -60,8 +56,8 @@ export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, local
 
                                 <div className="flex flex-row items-center gap-4 sm:ml-auto">
                                     <div className="hidden sm:flex shrink-0 w-32 items-center gap-2 text-xs text-muted-foreground mr-4">
-                                        <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--muted)' }}>
-                                            <div className="h-full bg-orange-500 rounded-full" style={{ width: `${phaseProgress.percentage}%` }} />
+                                        <div className="w-full h-1.5 rounded-full overflow-hidden bg-muted">
+                                            <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${phaseProgress.percentage}%` }} />
                                         </div>
                                         <span>{phaseProgress.percentage}%</span>
                                     </div>
