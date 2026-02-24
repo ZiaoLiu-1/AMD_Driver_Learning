@@ -279,8 +279,8 @@ function LessonSidebar({
                         key={l.id}
                         onClick={() => { navigate(`/module/${moduleId}/lesson/${l.id}`); onClose?.(); }}
                         className={`w-full text-left px-4 py-2 transition-all flex items-start gap-2 ${isActive
-                            ? "text-foreground"
-                            : "text-muted-foreground/55 hover:text-muted-foreground/85 hover:bg-white/[0.02]"
+                          ? "text-foreground"
+                          : "text-muted-foreground/55 hover:text-muted-foreground/85 hover:bg-white/[0.02]"
                           }`}
                         style={isActive ? { background: "oklch(0.62 0.22 35 / 0.08)", borderRight: "2px solid oklch(0.75 0.18 35)" } : {}}>
                         <div className="flex-shrink-0 mt-0.5">
@@ -428,7 +428,7 @@ export default function MicroLessonPage() {
                   title="搜索 (⌘K)">
                   <Search className="w-4 h-4" />
                 </button>
-                <button onClick={switchLocale} className="flex items-center gap-1 px-2 py-1 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
+                <button onClick={switchLocale} className="flex items-center justify-center gap-1 w-14 py-1.5 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
                   <Languages className="w-3.5 h-3.5" />
                   {locale === "zh" ? "En" : "中"}
                 </button>

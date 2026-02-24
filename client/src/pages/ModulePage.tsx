@@ -9,6 +9,7 @@ import { useState, useEffect, useRef } from "react";
 import { useProgress } from "@/contexts/ProgressContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useLocation } from "wouter";
 import { difficultyColors, type Module, type GlossaryTerm } from "@/data/curriculum";
@@ -18,7 +19,7 @@ import {
   BookOpen, Code2, Cpu, Target, ChevronLeft, ChevronRight,
   Clock, ExternalLink, Copy, Check, ChevronDown, ChevronUp,
   Lightbulb, Wrench, FlaskConical, ArrowLeft, Menu, X, Sun, Moon,
-  Search, PenLine
+  Search, PenLine, Languages
 } from "lucide-react";
 import { SearchModal, useSearchShortcut } from "@/components/SearchModal";
 import { useSearchHighlight } from "@/lib/highlight";
@@ -510,6 +511,7 @@ export default function ModulePage() {
   const params = useParams<{ moduleId: string }>();
   const [, navigate] = useLocation();
   const { locale } = useLocale();
+  const { switchLocale } = useSwitchLocale();
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'theory' | 'code' | 'project' | 'interview'>('theory');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -614,6 +616,10 @@ export default function ModulePage() {
                   </button>
                   <button onClick={() => setNotesOpen(o => !o)} className={`p-1.5 rounded-lg transition-colors ${notesOpen ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`} title={t("module.notesTitle")}>
                     <PenLine className="w-4 h-4" />
+                  </button>
+                  <button onClick={switchLocale} className="flex items-center justify-center gap-1 w-14 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground border border-transparent hover:border-border/50 hover:bg-muted/50 transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
+                    <Languages className="w-3.5 h-3.5" />
+                    {locale === "zh" ? "En" : "中"}
                   </button>
                   <button onClick={toggleTheme} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title={t("module.themeTitle")}>
                     {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}

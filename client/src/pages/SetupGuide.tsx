@@ -76,13 +76,15 @@ export default function SetupGuide() {
             <ChevronRight className="w-3 h-3" />
             <span className="text-foreground/80 font-medium">{t("setup.title")}</span>
           </div>
-          <button onClick={switchLocale} className="flex items-center gap-1 px-2 py-1 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
-            <Languages className="w-3.5 h-3.5" />
-            {locale === "zh" ? "En" : "中"}
-          </button>
-          <button onClick={toggleTheme} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title="Toggle theme">
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={switchLocale} className="flex items-center justify-center gap-1 w-14 py-1.5 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
+              <Languages className="w-3.5 h-3.5" />
+              {locale === "zh" ? "En" : "中"}
+            </button>
+            <button onClick={toggleTheme} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title="Toggle theme">
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -525,50 +527,72 @@ git format-patch HEAD~1 -o /tmp/patches/
 
           {/* 9. Dual-Machine Setup */}
           <Section icon={Laptop} title={t("setup.dualMachine")} id="dual-machine">
-            <p>
-              Kernel development on the same machine you rely on daily is risky — a bad MMIO write or a broken
-              display driver can hard-lock the system. The safest, most productive workflow uses <strong>two
-                machines</strong>: a dedicated <strong>test machine</strong> (Ubuntu desktop with your AMD GPU) and
-              a separate <strong>dev machine</strong> (laptop / MacBook) for writing code.
+            <p className="text-sm text-muted-foreground/90 leading-relaxed mb-6">
+              {locale === 'zh'
+                ? <>在主力机上进行内核开发风险极高——错误的 MMIO 写入或崩溃的显示驱动会直接导致系统死机。最安全、最高效的工作流是使用<strong>双机环境</strong>：一台专用的<strong>测试机</strong>（带 AMD GPU 的 Ubuntu 桌面）用于运行内核，以及一台独立的<strong>开发机</strong>（笔记本 / MacBook）用于编写代码。</>
+                : <>Kernel development on the same machine you rely on daily is risky — a bad MMIO write or a broken display driver can hard-lock the system. The safest, most productive workflow uses <strong>two machines</strong>: a dedicated <strong>test machine</strong> (Ubuntu desktop with your AMD GPU) and a separate <strong>dev machine</strong> (laptop / MacBook) for writing code.</>}
             </p>
 
             <div className="rounded-xl p-5 border border-border/50 bg-card/50 my-6">
-              <p className="text-sm font-bold text-foreground mb-3">Architecture Overview</p>
+              <p className="text-sm font-bold text-foreground mb-3">{locale === 'zh' ? '架构总览' : 'Architecture Overview'}</p>
               <div className="grid sm:grid-cols-2 gap-4 text-xs text-muted-foreground/85">
                 <div className="rounded-lg border border-border/50 p-4 bg-background/50">
                   <p className="font-bold text-foreground mb-2 flex items-center gap-2">
                     <span className="w-6 h-6 rounded-md bg-primary/15 flex items-center justify-center text-primary font-bold text-[10px]">A</span>
-                    Dev Machine (MacBook / Laptop)
+                    {locale === 'zh' ? '开发机 (MacBook / 笔记本)' : 'Dev Machine (MacBook / Laptop)'}
                   </p>
                   <ul className="space-y-1 list-disc pl-4">
-                    <li>Code editing (VS Code + clangd)</li>
-                    <li>Git operations & patch generation</li>
-                    <li>Documentation & research</li>
-                    <li>SSH into the test machine</li>
+                    {locale === 'zh' ? (
+                      <>
+                        <li>编写代码 (VS Code + clangd)</li>
+                        <li>Git 操作与补丁生成</li>
+                        <li>阅读文档与查阅资料</li>
+                        <li>通过 SSH 连接测试机</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>Code editing (VS Code + clangd)</li>
+                        <li>Git operations & patch generation</li>
+                        <li>Documentation & research</li>
+                        <li>SSH into the test machine</li>
+                      </>
+                    )}
                   </ul>
                 </div>
                 <div className="rounded-lg border border-border/50 p-4 bg-background/50">
                   <p className="font-bold text-foreground mb-2 flex items-center gap-2">
                     <span className="w-6 h-6 rounded-md bg-red-500/15 flex items-center justify-center text-red-500 font-bold text-[10px]">B</span>
-                    Test Machine (Ubuntu + AMD GPU)
+                    {locale === 'zh' ? '测试机 (Ubuntu + AMD GPU)' : 'Test Machine (Ubuntu + AMD GPU)'}
                   </p>
                   <ul className="space-y-1 list-disc pl-4">
-                    <li>Kernel compilation (uses all cores)</li>
-                    <li>Module loading & GPU testing</li>
-                    <li>virtme-ng for safe quick tests</li>
-                    <li>Dual-boot: stable kernel + dev kernel</li>
+                    {locale === 'zh' ? (
+                      <>
+                        <li>编译内核 (利用多核优势)</li>
+                        <li>加载模块与测试 GPU</li>
+                        <li>使用 virtme-ng 进行安全自测</li>
+                        <li>双系统/双内核：稳定版内核 + 开发版内核</li>
+                      </>
+                    ) : (
+                      <>
+                        <li>Kernel compilation (uses all cores)</li>
+                        <li>Module loading & GPU testing</li>
+                        <li>virtme-ng for safe quick tests</li>
+                        <li>Dual-boot: stable kernel + dev kernel</li>
+                      </>
+                    )}
                   </ul>
                 </div>
               </div>
             </div>
 
-            <p className="font-semibold text-foreground">Step 1: Network setup — SSH access</p>
-            <p>
-              You need reliable SSH access from your dev machine to the test machine.
-              This is your lifeline — even if the GPU driver crashes the display, SSH stays alive.
+            <p className="font-semibold text-foreground mt-8">{locale === 'zh' ? '第 1 步：网络配置 — SSH 访问' : 'Step 1: Network setup — SSH access'}</p>
+            <p className="mb-4">
+              {locale === 'zh'
+                ? '你需要确保从开发机能稳定地通过 SSH 访问测试机。这是你的救命稻草——即使 GPU 驱动让显示器黑屏，SSH 通常依然存活。'
+                : 'You need reliable SSH access from your dev machine to the test machine. This is your lifeline — even if the GPU driver crashes the display, SSH stays alive.'}
             </p>
 
-            <CopyBlock title="Test machine: enable SSH" code={`# Install and start SSH server
+            <CopyBlock title={locale === 'zh' ? '测试机：启用 SSH' : 'Test machine: enable SSH'} code={`# Install and start SSH server
 sudo apt install -y openssh-server
 sudo systemctl enable --now ssh
 
@@ -585,7 +609,7 @@ sudo nmcli connection modify "Wired connection 1" \\
     ipv4.dns "8.8.8.8,1.1.1.1"
 sudo nmcli connection up "Wired connection 1"`} />
 
-            <CopyBlock title="Dev machine (MacBook): set up SSH key login" code={`# Generate SSH key (if you don't have one)
+            <CopyBlock title={locale === 'zh' ? '开发机 (MacBook)：配置 SSH 密钥登录' : 'Dev machine (MacBook): set up SSH key login'} code={`# Generate SSH key (if you don't have one)
 ssh-keygen -t ed25519 -C "dev-machine"
 
 # Copy key to the test machine (replace IP)
@@ -604,12 +628,12 @@ EOF
 # Now you can just type:
 ssh gpu-dev`} />
 
-            <p className="font-semibold text-foreground">Step 2: Sync code between machines</p>
-            <p>
-              Two approaches — pick one depending on your network:
+            <p className="font-semibold text-foreground mt-8">{locale === 'zh' ? '第 2 步：在两台机器间同步代码' : 'Step 2: Sync code between machines'}</p>
+            <p className="mb-4">
+              {locale === 'zh' ? '两种方案——根据你的网络情况选择一种：' : 'Two approaches — pick one depending on your network:'}
             </p>
 
-            <CopyBlock title="Option A: VS Code Remote SSH (recommended — seamless editing)" code={`# On your MacBook, install VS Code "Remote - SSH" extension
+            <CopyBlock title={locale === 'zh' ? '选项 A：VS Code Remote SSH (推荐——无缝编辑)' : 'Option A: VS Code Remote SSH (recommended — seamless editing)'} code={`# On your MacBook, install VS Code "Remote - SSH" extension
 # Then: Cmd+Shift+P → "Remote-SSH: Connect to Host" → gpu-dev
 #
 # This opens VS Code as if you were sitting at the test machine:
@@ -618,7 +642,7 @@ ssh gpu-dev`} />
 # - File edits happen on the test machine directly
 # - No sync needed — you edit the actual files`} />
 
-            <CopyBlock title="Option B: Git-based sync (works over slow connections)" code={`# On test machine: set up a bare repo for pushing
+            <CopyBlock title={locale === 'zh' ? '选项 B：基于 Git 的同步 (适合弱网环境)' : 'Option B: Git-based sync (works over slow connections)'} code={`# On test machine: set up a bare repo for pushing
 git init --bare ~/kernel-dev.git
 
 # On dev machine: add test machine as a remote
@@ -634,14 +658,14 @@ git push test HEAD:dev-branch
 cd ~/kernel-dev && git fetch origin && git checkout dev-branch
 make M=drivers/gpu/drm/amd -j\$(nproc)`} />
 
-            <p className="font-semibold text-foreground">Step 3: Dual-kernel boot for crash recovery</p>
-            <p>
-              Install two kernels on the test machine — a <strong>stable kernel</strong> (your distro's default)
-              and a <strong>dev kernel</strong> (your custom build). If the dev kernel crashes, just reboot and
-              pick the stable one from GRUB.
+            <p className="font-semibold text-foreground mt-8">{locale === 'zh' ? '第 3 步：双内核启动以应对崩溃恢复' : 'Step 3: Dual-kernel boot for crash recovery'}</p>
+            <p className="mb-4">
+              {locale === 'zh'
+                ? <>在测试机上准备两个内核——一个<strong>稳定版内核</strong>（系统自带）和一个<strong>开发版内核</strong>（你编译的）。如果开发版内核崩溃了，只需重启并在 GRUB 中选择稳定版即可恢复控制。</>
+                : <>Install two kernels on the test machine — a <strong>stable kernel</strong> (your distro's default) and a <strong>dev kernel</strong> (your custom build). If the dev kernel crashes, just reboot and pick the stable one from GRUB.</>}
             </p>
 
-            <CopyBlock title="Install your custom kernel alongside the stable one" code={`cd ~/kernel-dev
+            <CopyBlock title={locale === 'zh' ? '将你编译的自定义内核与稳定版内核一并安装' : 'Install your custom kernel alongside the stable one'} code={`cd ~/kernel-dev
 
 # Tag your dev kernel so it's easy to identify in GRUB
 scripts/config --set-str CONFIG_LOCALVERSION "-amdgpu-dev"
@@ -658,7 +682,7 @@ sudo update-grub
 grep menuentry /boot/grub/grub.cfg | head -10
 # You should see your distro kernel AND the -amdgpu-dev kernel`} />
 
-            <CopyBlock title="Set GRUB to show menu (so you can pick which kernel to boot)" code={`# Edit GRUB config to always show menu
+            <CopyBlock title={locale === 'zh' ? '设置 GRUB 显示菜单（以便选择启动的内核）' : 'Set GRUB to show menu (so you can pick which kernel to boot)'} code={`# Edit GRUB config to always show menu
 sudo sed -i 's/GRUB_TIMEOUT_STYLE=hidden/GRUB_TIMEOUT_STYLE=menu/' /etc/default/grub
 sudo sed -i 's/GRUB_TIMEOUT=0/GRUB_TIMEOUT=5/' /etc/default/grub
 sudo update-grub
@@ -669,19 +693,18 @@ sudo update-grub
 #   - You can also select kernel via SSH before reboot:
 sudo grub-reboot "Advanced options for Ubuntu>Ubuntu, with Linux x.y.z-amdgpu-dev"`} />
 
-            <div className="rounded-xl p-4 border border-green-500/30 bg-green-500/5">
-              <p className="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">Windows is safe</p>
-              <p className="text-xs text-muted-foreground/80">
-                If your test machine dual-boots Windows, kernel development on the Linux side does <strong>not
-                  affect Windows at all</strong>. The Windows partition and bootloader are untouched. Even if you
-                completely break the Linux dev kernel, you can still boot into Windows normally, or boot the stable
-                Linux kernel from GRUB.
+            <div className="rounded-xl p-4 border border-green-500/30 bg-green-500/5 my-6">
+              <p className="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">{locale === 'zh' ? '✅ Windows 系统完全安全' : '✅ Windows is safe'}</p>
+              <p className="text-sm text-muted-foreground/80 leading-relaxed">
+                {locale === 'zh'
+                  ? <>如果你的测试机是双系统，Linux 侧的内核开发<strong>完全不会影响 Windows</strong>。Windows 的分区和引导程序不会被触碰。即使 Linux 开发版内核彻底挂掉，你依然能直接重启进入 Windows，或通过 GRUB 启动稳定版 Linux 内核。</>
+                  : <>If your test machine dual-boots Windows, kernel development on the Linux side does <strong>not affect Windows at all</strong>. The Windows partition and bootloader are untouched. Even if you completely break the Linux dev kernel, you can still boot into Windows normally, or boot the stable Linux kernel from GRUB.</>}
               </p>
             </div>
 
-            <p className="font-semibold text-foreground mt-6">Step 4: The daily workflow</p>
+            <p className="font-semibold text-foreground mt-8">{locale === 'zh' ? '第 4 步：日常开发工作流' : 'Step 4: The daily workflow'}</p>
 
-            <CopyBlock title="Complete dual-machine development cycle" code={`# === On Dev Machine (MacBook) ===
+            <CopyBlock title={locale === 'zh' ? '完整的双机开发循环' : 'Complete dual-machine development cycle'} code={`# === On Dev Machine (MacBook) ===
 
 # Connect to test machine
 ssh gpu-dev
@@ -711,18 +734,18 @@ sudo umr -O bits -r *.gfx1*.GRBM_STATUS  # verify GPU state
 #    → SSH in again and fix the code
 #    → Rebuild and try again`} />
 
-            <div className="rounded-xl p-4 border border-primary/30 bg-primary/5">
-              <p className="text-xs font-semibold text-primary mb-1">Pro tip: tmux for persistence</p>
-              <p className="text-xs text-muted-foreground/80">
-                Run <code>tmux</code> on the test machine so your terminal sessions survive SSH
-                disconnects. If the SSH connection drops (e.g. during a long build), just reconnect
-                and <code>tmux attach</code> — your build is still running.
+            <div className="rounded-xl p-4 border border-primary/30 bg-primary/5 my-6">
+              <p className="text-xs font-semibold text-primary mb-1">{locale === 'zh' ? '💡 进阶技巧：使用 tmux 保持后台运行' : 'Pro tip: tmux for persistence'}</p>
+              <p className="text-sm text-muted-foreground/80 leading-relaxed">
+                {locale === 'zh'
+                  ? <>在测试机上运行 <code>tmux</code>，可以让你的终端会话在 SSH 断开后依然存活。如果网络断开（比如在漫长的编译过程中），只需重连并输入 <code>tmux attach</code> ——你的编译任务仍在后台稳稳运行。</>
+                  : <>Run <code>tmux</code> on the test machine so your terminal sessions survive SSH disconnects. If the SSH connection drops (e.g. during a long build), just reconnect and <code>tmux attach</code> — your build is still running.</>}
               </p>
             </div>
 
-            <p className="font-semibold text-foreground mt-6">Step 5: Remote GPU debugging over SSH</p>
+            <p className="font-semibold text-foreground mt-8">{locale === 'zh' ? '第 5 步：通过 SSH 进行远程 GPU 调试' : 'Step 5: Remote GPU debugging over SSH'}</p>
 
-            <CopyBlock title="Monitor and debug GPU remotely" code={`# Watch GPU status in real-time
+            <CopyBlock title={locale === 'zh' ? '实时监控与远程调试 GPU' : 'Monitor and debug GPU remotely'} code={`# Watch GPU status in real-time
 watch -n1 "cat /sys/class/drm/card*/device/gpu_busy_percent && \\
            cat /sys/class/drm/card*/device/mem_info_vram_used && \\
            cat /sys/class/drm/card*/device/hwmon/hwmon*/temp1_input"

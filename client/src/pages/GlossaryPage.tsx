@@ -130,13 +130,15 @@ export default function GlossaryPage() {
             <ChevronRight className="w-3 h-3" />
             <span className="text-foreground/80 font-medium">{t("glossary.title")}</span>
           </div>
-          <button onClick={switchLocale} className="flex items-center gap-1 px-2 py-1 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
-            <Languages className="w-3.5 h-3.5" />
-            {locale === "zh" ? "En" : "中"}
-          </button>
-          <button onClick={toggleTheme} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={switchLocale} className="flex items-center justify-center gap-1 w-14 py-1.5 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
+              <Languages className="w-3.5 h-3.5" />
+              {locale === "zh" ? "En" : "中"}
+            </button>
+            <button onClick={toggleTheme} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
       </div>
 
