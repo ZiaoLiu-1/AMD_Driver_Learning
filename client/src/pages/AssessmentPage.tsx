@@ -129,7 +129,7 @@ export default function AssessmentPage() {
   }
 
   // Active Component
-  const progressPct = ((currentIdx) / questions.length) * 100;
+  const progressPct = ((currentIdx + 1) / questions.length) * 100;
 
   return (
     <div className="min-h-screen bg-background">
