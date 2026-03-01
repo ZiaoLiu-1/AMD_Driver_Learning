@@ -282,8 +282,11 @@ git fetch amd amd-staging-drm-next`} />
 # Start from your running kernel's config (knows your hardware)
 cp /boot/config-$(uname -r) .config 2>/dev/null || make defconfig
 
-# Enable amdgpu with all features
-scripts/config --enable CONFIG_DRM_AMDGPU
+# Enable amdgpu as a MODULE (=m), NOT built-in (=y)
+# This is critical for development: with =m you can rmmod/insmod your
+# modified driver without rebooting. With =y (Ubuntu's default when
+# copying /boot/config) every code change requires a full reboot.
+scripts/config --module CONFIG_DRM_AMDGPU
 scripts/config --enable CONFIG_DRM_AMDGPU_SI      # GCN 1.0 support
 scripts/config --enable CONFIG_DRM_AMDGPU_CIK     # GCN 2.0 support
 scripts/config --enable CONFIG_HSA_AMD             # KFD / ROCm support
@@ -339,6 +342,32 @@ make olddefconfig`} />
                 paths — no cert issues, faster builds, but you must load all needed modules first.
                 See comparison below.
               </p>
+            </div>
+
+            <div className="rounded-xl p-4 border border-orange-500/40 bg-orange-500/5 my-4">
+              <p className="text-xs font-semibold text-orange-500 dark:text-orange-400 mb-2">
+                ⚠️ Pitfall 3 — amdgpu built-in (=y) vs module (=m)
+              </p>
+              <p className="text-xs text-muted-foreground/80 mb-2">
+                When you copy Ubuntu's <code>/boot/config</code>, <code>CONFIG_DRM_AMDGPU</code> is often
+                set to <code>=y</code> (built into vmlinux). This means:
+              </p>
+              <ul className="text-xs text-muted-foreground/80 list-disc list-inside space-y-1 mb-2">
+                <li>No <code>amdgpu.ko</code> file is generated — <code>find . -name amdgpu.ko</code> returns nothing</li>
+                <li>Every code change requires a full reboot to take effect</li>
+                <li>You cannot use <code>rmmod amdgpu && insmod amdgpu.ko</code> for fast iteration</li>
+              </ul>
+              <p className="text-xs text-muted-foreground/80">
+                The config block above uses <code>scripts/config --module</code> to force <code>=m</code>.
+                If you already built with <code>=y</code>, re-run the config step and rebuild:
+              </p>
+              <CopyBlock code={`# Check current value
+grep CONFIG_DRM_AMDGPU= .config
+# If it shows =y, fix it:
+scripts/config --module CONFIG_DRM_AMDGPU
+make olddefconfig
+make -j$(nproc)
+# Now amdgpu.ko will appear at drivers/gpu/drm/amd/amdgpu/amdgpu.ko`} />
             </div>
 
             <CopyBlock title="Build (first time: full kernel)" code={`# Full build — uses all CPU cores

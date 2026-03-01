@@ -142,6 +142,7 @@ export const labs: Lab[] = [
       '⚠️ Ubuntu/Debian 必须修复两个坑再编译：① scripts/config --set-str SYSTEM_TRUSTED_KEYS "" 清除 Canonical 证书路径；② sudo apt install gawk（CONFIG_BUILTIN_MODULE_RANGES 需要它）',
       '编译并行输出可能掩盖真正的错误。若 make -j$(nproc) 失败，改用 LC_ALL=C make -j1 获取完整英文错误信息',
       '替代方案：make localmodconfig 比复制 Ubuntu 配置更快、更干净，且不存在证书问题',
+      '⚠️ 确保 CONFIG_DRM_AMDGPU=m（模块）而非 =y（内置）。Ubuntu 的默认配置可能是 =y，导致编译后没有 amdgpu.ko 文件，且每次代码修改都需要完整重启才能生效。用 scripts/config --module CONFIG_DRM_AMDGPU 强制设为模块',
     ],
     tipsEn: [
       'Use ccache to significantly speed up repeated compilations',
@@ -150,6 +151,7 @@ export const labs: Lab[] = [
       '⚠️ Ubuntu/Debian users must fix two pitfalls before building: ① scripts/config --set-str SYSTEM_TRUSTED_KEYS "" clears Canonical cert path; ② sudo apt install gawk (needed by CONFIG_BUILTIN_MODULE_RANGES)',
       'Parallel build output can hide the real error. If make -j$(nproc) fails, use LC_ALL=C make -j1 for full English error output',
       'Alternative: make localmodconfig is faster and cleaner than copying Ubuntu\'s config, and has no cert issues',
+      '⚠️ Ensure CONFIG_DRM_AMDGPU=m (module), not =y (built-in). Ubuntu\'s default config may set it to =y, which means no amdgpu.ko is produced and every code change requires a full reboot. Use scripts/config --module CONFIG_DRM_AMDGPU to force module mode',
     ],
     tags: ['kernel', 'build', 'virtme-ng', 'amdgpu'],
   },
