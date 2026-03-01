@@ -183,14 +183,17 @@ export default function SetupGuide() {
 sudo apt update && sudo apt install -y \\
     build-essential gcc clang llvm lld \\
     flex bison bc libelf-dev libssl-dev libncurses-dev \\
+    libdw-dev \\
     git cscope universal-ctags \\
-    python3 python3-pip \\
+    python3 python3-pip pipx \\
     dwarves zstd \\
-    sparse coccinelle
+    sparse coccinelle \\
+    gawk  # required for CONFIG_BUILTIN_MODULE_RANGES (enabled in Ubuntu's config)
 
 # amdgpu-specific development deps
+# Note: libprocps-dev was renamed to libproc2-dev in Ubuntu 24.04
 sudo apt install -y \\
-    libdrm-dev libkmod-dev libprocps-dev \\
+    libdrm-dev libkmod-dev libproc2-dev \\
     libudev-dev libcairo2-dev libpixman-1-dev \\
     libjson-c-dev meson ninja-build cmake
 
@@ -200,7 +203,9 @@ sudo apt install -y \\
     linux-tools-common linux-tools-$(uname -r)
 
 # virtme-ng for fast kernel testing (no reboot needed)
-pip3 install --user virtme-ng`} />
+# pipx is required on Ubuntu 22.04+ (PEP 668 blocks pip3 --user)
+pipx install virtme-ng
+pipx ensurepath  # adds ~/.local/bin to PATH; open a new shell after this`} />
 
             <CopyBlock title="Fedora" code={`sudo dnf groupinstall -y "Development Tools" "C Development Tools and Libraries"
 sudo dnf install -y \\
@@ -297,6 +302,45 @@ scripts/config --enable CONFIG_DEBUG_KMEMLEAK       # memory leak detector
 # Accept all defaults for new options
 make olddefconfig`} />
 
+            <div className="rounded-xl p-4 border border-orange-500/40 bg-orange-500/5 my-4">
+              <p className="text-xs font-semibold text-orange-500 dark:text-orange-400 mb-2">
+                ⚠️ Ubuntu/Debian 用户必读：两个常见坑 (Two Common Pitfalls)
+              </p>
+              <p className="text-xs text-muted-foreground/80 mb-3">
+                When you copy <code>/boot/config-$(uname -r)</code> on Ubuntu/Debian, you inherit two issues
+                from Canonical's build environment that will cause hard failures:
+              </p>
+              <p className="text-xs font-semibold text-foreground/70 mb-1">Pitfall 1 — Missing Canonical signing certificates</p>
+              <p className="text-xs text-muted-foreground/80 mb-2">
+                Ubuntu's config sets <code>CONFIG_SYSTEM_TRUSTED_KEYS="debian/canonical-certs.pem"</code>,
+                a file that only exists inside Canonical's private build infra. You'll see:<br />
+                <code className="text-red-400 text-[11px]">No rule to make target 'debian/canonical-certs.pem'</code>
+              </p>
+              <p className="text-xs font-semibold text-foreground/70 mb-1">Pitfall 2 — Missing <code>gawk</code></p>
+              <p className="text-xs text-muted-foreground/80 mb-3">
+                Ubuntu's config enables <code>CONFIG_BUILTIN_MODULE_RANGES</code>, which requires GNU AWK
+                (gawk). It is listed as optional in the kernel docs but becomes mandatory with Ubuntu's config.
+                You'll see: <code className="text-red-400 text-[11px]">gawk: not found</code>
+              </p>
+              <p className="text-xs font-semibold text-foreground/70 mb-1">Fix both issues after copying the config:</p>
+              <CopyBlock code={`# Fix Pitfall 1: clear Canonical's private cert paths
+scripts/config --set-str SYSTEM_TRUSTED_KEYS ""
+scripts/config --set-str SYSTEM_REVOCATION_KEYS ""
+scripts/config --set-str MODULE_SIG_KEY ""
+
+# Fix Pitfall 2: install gawk if not already done
+sudo apt install -y gawk
+
+# Then regenerate the final config
+make olddefconfig`} />
+              <p className="text-xs text-muted-foreground/60 mt-2">
+                <strong>Alternative (cleanest approach):</strong> use <code>make localmodconfig</code> instead of copying
+                the distro config. It generates a minimal config from currently-loaded modules with no distro-specific
+                paths — no cert issues, faster builds, but you must load all needed modules first.
+                See comparison below.
+              </p>
+            </div>
+
             <CopyBlock title="Build (first time: full kernel)" code={`# Full build — uses all CPU cores
 make -j$(nproc)
 
@@ -316,6 +360,68 @@ ls -lh drivers/gpu/drm/amd/amdgpu/amdgpu.ko
                 Install <code>ccache</code> to cache compilation results. Rebuilds after <code>git pull</code> drop
                 from 10 min to ~2 min: <code>sudo apt install ccache && export CC="ccache gcc"</code>
               </p>
+            </div>
+
+            {/* Approach comparison */}
+            <div className="rounded-xl border border-border/50 overflow-hidden mt-6">
+              <div className="px-4 py-2 bg-muted/50 border-b border-border/50">
+                <p className="text-xs font-semibold text-foreground/80">
+                  Config strategy comparison — our approach vs. official kernel.org recommendation
+                </p>
+              </div>
+              <div className="divide-y divide-border/30">
+                <div className="grid grid-cols-3 gap-0 text-xs">
+                  <div className="px-4 py-2 font-semibold text-muted-foreground/60 bg-muted/20">Strategy</div>
+                  <div className="px-4 py-2 font-semibold text-green-600 dark:text-green-400 bg-muted/20">Pros</div>
+                  <div className="px-4 py-2 font-semibold text-red-500 bg-muted/20">Cons</div>
+                </div>
+                <div className="grid grid-cols-3 gap-0 text-xs">
+                  <div className="px-4 py-3 text-foreground/80 font-medium">
+                    <code>cp /boot/config-$(uname -r)</code><br />
+                    <span className="text-muted-foreground/50 font-normal">(our guide's approach)</span>
+                  </div>
+                  <div className="px-4 py-3 text-muted-foreground/80">
+                    Guaranteed hardware compatibility; all your hardware works out of the box
+                  </div>
+                  <div className="px-4 py-3 text-muted-foreground/80">
+                    Inherits distro-specific cert paths (Pitfall 1) and optional tools like gawk (Pitfall 2).
+                    Long compile times. Requires manual cert fixes.
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-0 text-xs">
+                  <div className="px-4 py-3 text-foreground/80 font-medium">
+                    <code>make localmodconfig</code><br />
+                    <span className="text-muted-foreground/50 font-normal">(official recommendation)</span>
+                  </div>
+                  <div className="px-4 py-3 text-muted-foreground/80">
+                    Clean config, no cert issues, minimal modules = much faster builds (~5–10 min vs 30 min)
+                  </div>
+                  <div className="px-4 py-3 text-muted-foreground/80">
+                    Only includes currently-loaded modules. You must <code>modprobe</code> everything you need
+                    before running, or you'll miss modules.
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-0 text-xs">
+                  <div className="px-4 py-3 text-foreground/80 font-medium">
+                    <code>make defconfig</code><br />
+                    <span className="text-muted-foreground/50 font-normal">(generic defaults)</span>
+                  </div>
+                  <div className="px-4 py-3 text-muted-foreground/80">
+                    Clean, portable, no cert issues. Good for CI or cross-compiling.
+                  </div>
+                  <div className="px-4 py-3 text-muted-foreground/80">
+                    May miss hardware-specific drivers. amdgpu may not be enabled by default.
+                    Requires manual <code>scripts/config --enable</code> calls.
+                  </div>
+                </div>
+              </div>
+              <div className="px-4 py-2 bg-muted/20 border-t border-border/30">
+                <p className="text-xs text-muted-foreground/60">
+                  <strong>Verdict:</strong> For AMD driver development, our guide's approach (copy distro config + fix certs)
+                  gives best hardware coverage. For faster iteration, switch to <code>make localmodconfig</code>
+                  once you have a working baseline.
+                </p>
+              </div>
             </div>
           </Section>
 
@@ -463,7 +569,7 @@ echo -n "5. amdgpu driver loaded: "
 lsmod | grep -q amdgpu && echo "OK" || echo "NOT LOADED"
 
 echo -n "6. virtme-ng installed: "
-command -v vng &>/dev/null && echo "OK" || echo "MISSING (pip3 install virtme-ng)"
+command -v vng &>/dev/null && echo "OK" || echo "MISSING (pipx install virtme-ng)"
 
 echo -n "7. umr installed: "
 command -v umr &>/dev/null && echo "OK" || echo "MISSING (build from source)"
@@ -966,15 +1072,16 @@ sudo dnf install b4
 # Arch
 sudo pacman -S b4`} />
 
-            <CopyBlock title={locale === 'zh' ? 'b4 — 通过 pip 安装（获取最新版本）' : 'b4 — Install via pip (latest version)'} code={`# Recommended if your distro's b4 package is outdated
+            <CopyBlock title={locale === 'zh' ? 'b4 — 通过 pipx 安装（获取最新版本）' : 'b4 — Install via pipx (latest version)'} code={`# Recommended if your distro's b4 package is outdated
 # https://b4.docs.kernel.org/en/latest/installing.html
-python3 -m pip install --user b4
+# Note: pip3 --user is blocked on Ubuntu 22.04+ (PEP 668); use pipx instead
+pipx install b4
 
 # Verify
 b4 --version
 
 # Upgrade later with:
-python3 -m pip install --user --upgrade b4`} />
+pipx upgrade b4`} />
 
             <p className="font-semibold text-foreground mt-6">
               {locale === 'zh' ? '安装 git send-email' : 'Install git send-email'}

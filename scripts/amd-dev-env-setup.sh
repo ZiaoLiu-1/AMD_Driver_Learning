@@ -34,19 +34,30 @@ if [[ "$VERIFY_ONLY" == false ]]; then
     build-essential git bc bison flex \
     dwarves \
     libelf-dev libssl-dev libncurses-dev \
+    libdw-dev \
     clang llvm lld \
     sparse coccinelle \
     cscope universal-ctags \
-    python3 python3-pip zstd
+    python3 python3-pip zstd \
+    gawk  # required for CONFIG_BUILTIN_MODULE_RANGES (enabled in Ubuntu's default config)
+
+  # libdw-dev is required for scripts/gendwarfksyms, introduced in kernel 6.12+.
+  # Without it, make fails with: fatal error: dwarf.h: No such file or directory
+  #
+  # gawk: Ubuntu's config enables CONFIG_BUILTIN_MODULE_RANGES which calls gawk to
+  # generate modules.builtin.ranges during the build. Without it you get:
+  #   /bin/sh: 1: gawk: not found
+  #   make: *** [modules.builtin.ranges] Error 127
 
   # NOTE: pahole ships inside the 'dwarves' package on Ubuntu.
   # Listing it separately is harmless but redundant — apt resolves it.
 
   header "2/5  AMD GPU / DRM userspace libs"
+  # libprocps-dev was renamed to libproc2-dev in Ubuntu 24.04
   sudo apt install -y \
     libdrm-dev libdrm-tests \
     libkmod-dev libudev-dev \
-    libprocps-dev libjson-c-dev \
+    libproc2-dev libjson-c-dev \
     libcairo2-dev libpixman-1-dev \
     meson ninja-build cmake \
     mesa-utils vulkan-tools radeontop \
@@ -76,13 +87,16 @@ if [[ "$VERIFY_ONLY" == false ]]; then
   # Essential when amdgpu panics your test machine.
 
   header "4/5  virtme-ng (test kernel without reboot)"
-  pip3 install --user --quiet virtme-ng
+  # pip3 --user is blocked on Ubuntu 22.04+ by PEP 668 (externally-managed-environment).
+  # pipx is the correct tool for installing Python CLI apps on modern Ubuntu.
+  sudo apt install -y pipx
+  pipx install virtme-ng
+  pipx ensurepath
 
   # NOTE: virtme-ng >= 1.0 ships as the 'vng' command, NOT 'virtme-run'.
-  # GPT's example used 'virtme-run' — that is the OLD virtme syntax.
   # Correct usage after this install:
   #   vng --run --kdir /path/to/linux/source
-  # NOT: virtme-run --kdir ...
+  # If 'vng' is not found, open a new shell or: export PATH=$HOME/.local/bin:$PATH
 
   header "5/5  drm-tip kernel source (AMD's active dev branch)"
   if [[ ! -d "$HOME/src/drm-tip/.git" ]]; then
