@@ -14,7 +14,7 @@ import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import {
   ArrowLeft, ArrowRight, Copy, Check, ChevronRight, Sun, Moon,
   Terminal, Monitor, HardDrive, Cpu, Download, Settings, Languages,
-  Laptop, Layers, Wrench, Mail
+  Laptop, Layers, Wrench, Mail, BookOpen, AlertTriangle, XCircle, CheckCircle2, Lightbulb
 } from "lucide-react";
 
 function CopyBlock({ code, title, lang = "bash" }: { code: string; title?: string; lang?: string }) {
@@ -164,6 +164,7 @@ export default function SetupGuide() {
               { id: "rocm-hip", labelKey: "setup.rocmHip" },
               { id: "llvm-amdgpu", labelKey: "setup.llvmAmdgpu" },
               { id: "patch-tools", labelKey: "setup.patchTools" },
+              { id: "field-notes", labelKey: "setup.fieldNotes" },
             ].map(item => (
               <a key={item.id} href={`#${item.id}`}
                 className="text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1.5 rounded hover:bg-muted/50">
@@ -1200,6 +1201,371 @@ command -v perl &>/dev/null && echo "OK ($(perl -v | grep version | head -1))" |
                   : <>(1) Always run <code>scripts/checkpatch.pl</code> to check code style; (2) Commits must include <code>Signed-off-by</code> (use <code>git commit -s</code>); (3) Test by sending to yourself first: <code>git send-email --to=yourself@example.com</code>; (4) For amdgpu patches, CC <code>amd-gfx@lists.freedesktop.org</code> and the maintainers listed by <code>scripts/get_maintainer.pl</code>.</>}
               </p>
             </div>
+          </Section>
+
+          {/* 13. Field Notes */}
+          <Section icon={BookOpen} title={t("setup.fieldNotes")} id="field-notes">
+
+            {/* Personal intro */}
+            <div className="rounded-xl border border-border/50 bg-card/50 p-5 mb-6">
+              <p className="text-sm text-foreground/85 leading-relaxed mb-3">
+                {locale === 'zh'
+                  ? '下面是我亲手跑这套流程时踩的所有坑——按遇到的先后顺序记录。每个问题都附上了原始的"坏"代码、报错信息、修复方法，以及为什么会这样。如果你是第一次从头配 AMD 驱动开发环境，建议先快速过一遍这个章节，可以少走很多弯路。'
+                  : "Below is a first-person account of every issue I hit while going through this setup end-to-end — in the exact order they showed up. Each one has the original broken code, the error it produced, the fix, and a quick explanation of why it happens. If you're doing this for the first time, skim through this section first. It'll save you a solid couple of hours."}
+              </p>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="px-2.5 py-1 rounded-full bg-red-500/10 text-red-500 font-medium border border-red-500/20">
+                  {locale === 'zh' ? '3 个坑' : '3 pitfalls'}
+                </span>
+                <span className="px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-500 font-medium border border-amber-500/20">
+                  {locale === 'zh' ? '1 个隐患' : '1 hidden trap'}
+                </span>
+                <span className="px-2.5 py-1 rounded-full bg-green-500/10 text-green-500 font-medium border border-green-500/20">
+                  {locale === 'zh' ? '全部已修复并更新到文档' : 'All fixed & reflected in the guide above'}
+                </span>
+              </div>
+            </div>
+
+            {/* TL;DR / Background summary */}
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <Lightbulb className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground">
+                  {locale === 'zh' ? '先了解背景：我们在做什么' : 'Background: What We\'re Actually Doing Here'}
+                </h3>
+              </div>
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-5 text-sm text-foreground/80 leading-relaxed space-y-3">
+                <p>
+                  {locale === 'zh'
+                    ? '整个流程的目标是：在 Ubuntu 上把 Linux 内核的 amdgpu 显卡驱动模块编译出来，然后能快速加载/卸载它，而不需要每次重启机器。听起来简单，但有几个非常容易绊倒人的细节。'
+                    : "The goal of this whole setup is: build the amdgpu GPU driver as a loadable kernel module on Ubuntu, so you can load/unload it without rebooting every time you make a change. Sounds simple — but there are a few details that will trip you up if you don't know about them."}
+                </p>
+                <ul className="space-y-2 pl-4">
+                  {[
+                    locale === 'zh'
+                      ? ['内核配置从哪来：', '我们用 cp /boot/config-$(uname -r) .config 复制当前系统的配置，再用 make olddefconfig 补全新选项。这比从零配快很多，但 Ubuntu 的 .config 里藏了几个"定时炸弹"。']
+                      : ['Where the kernel config comes from:', 'We copy the currently running system\'s config with cp /boot/config-$(uname -r) .config, then fill in new options with make olddefconfig. Way faster than starting from scratch — but Ubuntu\'s .config has a few landmines buried in it.'],
+                    locale === 'zh'
+                      ? ['为什么用 =m 而不是 =y：', '把 amdgpu 编译为模块（=m）意味着会生成 amdgpu.ko 文件。修改代码后，你只需要 rmmod amdgpu && insmod amdgpu.ko，而不用重启系统。内置（=y）则没有这个文件，每次改代码都要重启。']
+                      : ['Why =m and not =y:', 'Building amdgpu as a module (=m) means a file amdgpu.ko gets produced. After a code change you just rmmod amdgpu && insmod amdgpu.ko — no reboot. Built-in (=y) produces no .ko, so every change requires a full reboot.'],
+                    locale === 'zh'
+                      ? ['并行编译的问题：', 'make -j$(nproc) 会同时跑很多编译任务，输出混在一起。真正的报错信息可能淹没在大量 CC 和 LD 行里。出错时改用 LC_ALL=C make -j1 看干净的串行输出。']
+                      : ['The parallel build problem:', 'make -j$(nproc) fires off many compile jobs at once and their output gets interleaved. The real error message can get buried under hundreds of CC and LD lines. When things break, switch to LC_ALL=C make -j1 to get clean sequential output.'],
+                  ].map(([label, text], i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="text-primary mt-0.5">→</span>
+                      <span><strong className="text-foreground/90">{label}</strong> {text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Pitfall 1 */}
+            <div className="mb-8">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-red-500/15 flex items-center justify-center mt-0.5">
+                  <XCircle className="w-4 h-4 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    {locale === 'zh' ? '坑 1：找不到 Canonical 签名证书' : 'Pitfall 1: Missing Canonical Signing Certificates'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {locale === 'zh' ? '直接触发编译失败，无法绕过' : 'Hard build failure, no workaround'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pl-10">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {locale === 'zh' ? '遇到了什么' : 'What happened'}
+                  </p>
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    {locale === 'zh'
+                      ? '我照着指南复制了 /boot/config 然后跑 make，过了几分钟冒出这个错误，编译直接停掉了。乍一看完全摸不着头脑，.config 里也没有 debian/ 这个目录。'
+                      : "I copied /boot/config as instructed and ran make. A few minutes in, the build stopped dead with this error. Took me a second to even understand what it was looking for — there's no debian/ directory in the kernel tree."}
+                  </p>
+                  <CopyBlock lang="text" code={`make[2]: *** No rule to make target 'debian/canonical-certs.pem',
+         needed by 'certs/x509_certificate_list'.  Stop.
+make[1]: *** [Makefile:248] error 2
+make: *** [Makefile:2010] error 2`} title={locale === 'zh' ? '报错信息' : 'Error output'} />
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {locale === 'zh' ? '原始（有问题的）配置' : 'Original broken config'}
+                  </p>
+                  <p className="text-sm text-foreground/80 leading-relaxed mb-2">
+                    {locale === 'zh'
+                      ? 'Ubuntu 的 .config 里有这三行，指向 Canonical 内部私有的证书文件。这些文件在 Ubuntu 官方构建服务器上存在，但在你自己的机器上根本没有。'
+                      : "Ubuntu's .config had these three lines pointing to Canonical's internal signing certificates. These files exist on their build servers — not on your dev machine."}
+                  </p>
+                  <CopyBlock lang="bash" code={`# These three lines are the problem — in your .config after copying from /boot:
+CONFIG_SYSTEM_TRUSTED_KEYS="debian/canonical-certs.pem"
+CONFIG_SYSTEM_REVOCATION_KEYS="debian/canonical-revoked-certs.pem"
+CONFIG_MODULE_SIG_KEY="certs/signing_key.pem"`} title={locale === 'zh' ? '问题根源（.config 里的内容）' : 'Root cause (inside your .config)'} />
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {locale === 'zh' ? '修复方法' : 'The fix'}
+                  </p>
+                  <p className="text-sm text-foreground/80 leading-relaxed mb-2">
+                    {locale === 'zh'
+                      ? '在 make olddefconfig 之后，运行这三条命令清空证书路径。空字符串告诉构建系统"不需要外部证书"。'
+                      : "After make olddefconfig, run these three commands to clear the certificate paths. An empty string tells the build system \"no external certs needed\"."}
+                  </p>
+                  <CopyBlock lang="bash" code={`scripts/config --set-str SYSTEM_TRUSTED_KEYS ""
+scripts/config --set-str SYSTEM_REVOCATION_KEYS ""
+scripts/config --set-str MODULE_SIG_KEY ""`} title={locale === 'zh' ? '修复（跑完 olddefconfig 之后）' : 'Fix (run after make olddefconfig)'} />
+                </div>
+
+                <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-3 flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-foreground/75 leading-relaxed">
+                    {locale === 'zh'
+                      ? '这个修复现在已经加到上方"Build the Kernel"小节的配置步骤里了，不会再漏掉了。'
+                      : 'This fix is now baked into the "Build the Kernel" section above — the config commands include it by default so you won\'t miss it.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pitfall 2 */}
+            <div className="mb-8">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-red-500/15 flex items-center justify-center mt-0.5">
+                  <XCircle className="w-4 h-4 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    {locale === 'zh' ? '坑 2：gawk 没装' : 'Pitfall 2: gawk Not Installed'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {locale === 'zh' ? '修了坑 1 之后紧接着踩的，直接再次失败' : 'Hit this immediately after fixing Pitfall 1'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pl-10">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {locale === 'zh' ? '遇到了什么' : 'What happened'}
+                  </p>
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    {locale === 'zh'
+                      ? '修完证书问题重新跑 make，过了一段时间编译又停了。这次是 gawk 找不到。问题出在 Ubuntu 默认开启了 CONFIG_BUILTIN_MODULE_RANGES，这个选项在生成内核映射时需要用 gawk 处理数据——而 Ubuntu Desktop 默认不装 gawk。'
+                      : "Fixed the cert issue, restarted make. A while later, dead again. This time gawk was missing. Ubuntu's default config enables CONFIG_BUILTIN_MODULE_RANGES, which needs gawk to generate kernel module address range data — and Ubuntu Desktop doesn't ship gawk by default."}
+                  </p>
+                  <CopyBlock lang="text" code={`/bin/sh: 1: gawk: not found
+make[2]: *** [Makefile:1234] error 127`} title={locale === 'zh' ? '报错信息' : 'Error output'} />
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {locale === 'zh' ? '原始（不完整的）依赖安装命令' : 'Original (incomplete) dependency install'}
+                  </p>
+                  <CopyBlock lang="bash" code={`# What the original guide said — missing gawk:
+sudo apt install -y build-essential libncurses-dev bison flex libssl-dev \\
+  libelf-dev bc dwarves zstd pahole`} title={locale === 'zh' ? '原始命令（缺少 gawk）' : 'Original command (missing gawk)'} />
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {locale === 'zh' ? '修复方法' : 'The fix'}
+                  </p>
+                  <CopyBlock lang="bash" code={`# Just add gawk — one package, fixes the issue entirely:
+sudo apt install -y build-essential libncurses-dev bison flex libssl-dev \\
+  libelf-dev bc dwarves zstd pahole gawk`} title={locale === 'zh' ? '修复后的命令' : 'Fixed command'} />
+                </div>
+
+                <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-3 flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-foreground/75 leading-relaxed">
+                    {locale === 'zh'
+                      ? 'gawk 现在已加到上方"Prerequisites"章节的 apt install 命令里了。'
+                      : 'gawk is now included in the apt install command in the Prerequisites section above.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pitfall 3 */}
+            <div className="mb-8">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center mt-0.5">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    {locale === 'zh' ? '坑 3：amdgpu 被编译进内核（=y）而不是模块（=m）' : 'Pitfall 3: amdgpu Built Into the Kernel (=y) Instead of a Module (=m)'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {locale === 'zh' ? '编译成功，但开发效率被完全拖垮' : 'Build succeeds, but your dev workflow is basically broken'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pl-10">
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {locale === 'zh' ? '遇到了什么' : 'What happened'}
+                  </p>
+                  <p className="text-sm text-foreground/80 leading-relaxed">
+                    {locale === 'zh'
+                      ? '编译终于成功了，但发现 drivers/gpu/drm/amd/amdgpu/ 目录下没有 amdgpu.ko 这个文件。搜了一下才意识到：Ubuntu 的默认配置把 CONFIG_DRM_AMDGPU 设成了 =y（直接内置进 vmlinuz），而不是 =m（生成独立的 .ko 模块文件）。这意味着每次改一行代码都要完整重编译内核并重启机器——对于驱动开发来说完全不可接受。'
+                      : "Build finally succeeded, but there was no amdgpu.ko file anywhere under drivers/gpu/drm/amd/amdgpu/. After some digging I realized: Ubuntu's default config sets CONFIG_DRM_AMDGPU=y (baked into vmlinuz as built-in) rather than =m (produces a standalone amdgpu.ko). This means every single code change requires a full kernel recompile and reboot — completely unworkable for driver development."}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {locale === 'zh' ? '原始（有问题的）配置命令' : 'Original broken config command'}
+                  </p>
+                  <CopyBlock lang="bash" code={`# Original — this enables amdgpu but leaves it as built-in (=y):
+scripts/config --enable CONFIG_DRM_AMDGPU
+
+# After make olddefconfig, .config contains:
+# CONFIG_DRM_AMDGPU=y  ← NO .ko file will be generated`} title={locale === 'zh' ? '原始命令（结果是 =y）' : 'Original command (results in =y)'} />
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {locale === 'zh' ? '修复方法' : 'The fix'}
+                  </p>
+                  <CopyBlock lang="bash" code={`# Fixed — use --module instead of --enable:
+scripts/config --module CONFIG_DRM_AMDGPU
+
+# After make olddefconfig, .config contains:
+# CONFIG_DRM_AMDGPU=m  ← amdgpu.ko gets generated
+
+# Verify after build:
+find . -name "amdgpu.ko"
+# Should print: ./drivers/gpu/drm/amd/amdgpu/amdgpu.ko`} title={locale === 'zh' ? '修复后的命令' : 'Fixed command'} />
+                </div>
+
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4 text-xs text-foreground/80 leading-relaxed">
+                  <p className="font-semibold text-amber-600 dark:text-amber-400 mb-1">
+                    {locale === 'zh' ? '为什么 =m 对驱动开发这么重要？' : 'Why does =m matter so much for driver development?'}
+                  </p>
+                  <p>
+                    {locale === 'zh'
+                      ? '用 =m 的工作流是：改代码 → make -C /lib/modules/$(uname -r)/build M=$(pwd)/drivers/gpu/drm/amd/amdgpu → sudo rmmod amdgpu → sudo insmod amdgpu.ko。整个循环可能只要几分钟。用 =y 的话每次都要重编整个内核（20-40 分钟）再重启系统，开发效率直接崩掉。'
+                      : "With =m, the iteration loop is: change code → rebuild just the module → rmmod amdgpu → insmod amdgpu.ko. Total cycle time: a few minutes. With =y, every change means a full kernel rebuild (20-40 min) plus a reboot. That's the difference between a workable dev workflow and a completely broken one."}
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-green-500/20 bg-green-500/5 p-3 flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-foreground/75 leading-relaxed">
+                    {locale === 'zh'
+                      ? '上方 Build 章节里的配置步骤已改为用 --module 而不是 --enable。'
+                      : 'The config commands in the Build section above now use --module instead of --enable.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Hidden Trap: Parallel builds masking errors */}
+            <div className="mb-8">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-purple-500/15 flex items-center justify-center mt-0.5">
+                  <AlertTriangle className="w-4 h-4 text-purple-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    {locale === 'zh' ? '隐患：并行编译会把真正的报错淹没掉' : 'Hidden Trap: Parallel Builds Hide the Real Error'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {locale === 'zh' ? '这不是一个能被修好的"坑"，但每次出错都要注意' : 'Not a fixable bug, but something you\'ll hit every time a build breaks'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4 pl-10">
+                <p className="text-sm text-foreground/80 leading-relaxed">
+                  {locale === 'zh'
+                    ? '标准的 make -j$(nproc) 同时开几十个编译进程，它们的 stdout/stderr 输出全部混在一起。当某个文件编译失败时，真正的报错信息可能出现在屏幕中间某一行，随后被大量其他编译任务的输出覆盖。最终你只会看到 "make: *** [Makefile:2010] 错误 2"，根本不知道是什么文件出了什么问题。'
+                    : "Standard make -j$(nproc) fires off dozens of concurrent compile jobs. Their stdout/stderr all get interleaved. When one file fails, the actual error message appears somewhere in the middle of the output, then gets immediately buried under output from all the other jobs still running. You end up with just \"make: *** Error 2\" at the bottom — no idea what failed or why."}
+                </p>
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
+                    {locale === 'zh' ? '出错后的调试命令' : 'Debug command when build fails'}
+                  </p>
+                  <CopyBlock lang="bash" code={`# When make -j$(nproc) fails with a mysterious "Error 2":
+LC_ALL=C make -j1 2>&1 | tee /tmp/build.log
+
+# LC_ALL=C  → forces English output (no garbled Chinese locale errors)
+# -j1       → serial build, errors appear in-order and are easy to find
+# tee       → saves full output to a file you can grep through`} title={locale === 'zh' ? '串行调试构建' : 'Serial debug build'} />
+                </div>
+              </div>
+            </div>
+
+            {/* Final summary: current state */}
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground">
+                  {locale === 'zh' ? '现在的状态：这些都修好了' : 'Current State: All of This Is Fixed'}
+                </h3>
+              </div>
+              <p className="text-sm text-foreground/80 leading-relaxed mb-4">
+                {locale === 'zh'
+                  ? '以上所有问题都已经反映到这份文档里了。如果你按照上面章节一步步来，这些坑都会自动绕开。下面是一个快速对照表，总结了"原来怎么样 → 现在怎么样"。'
+                  : "All of the above is now reflected in the guide. If you follow the sections above step by step, you'll sidestep all of these automatically. Here's a quick before/after summary table."}
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="text-left py-2 pr-4 font-semibold text-foreground/70 w-1/3">
+                        {locale === 'zh' ? '问题' : 'Issue'}
+                      </th>
+                      <th className="text-left py-2 pr-4 font-semibold text-red-500/70 w-1/3">
+                        {locale === 'zh' ? '原来（有问题）' : 'Before (broken)'}
+                      </th>
+                      <th className="text-left py-2 font-semibold text-green-500/70 w-1/3">
+                        {locale === 'zh' ? '现在（已修复）' : 'After (fixed)'}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/30">
+                    {[
+                      {
+                        issue: locale === 'zh' ? 'Canonical 证书' : 'Canonical certs',
+                        before: locale === 'zh' ? '直接用 .config，含 debian/canonical-certs.pem 路径' : 'Raw .config with debian/canonical-certs.pem path',
+                        after: locale === 'zh' ? '3 条 scripts/config --set-str 清空路径' : '3× scripts/config --set-str clears the paths',
+                      },
+                      {
+                        issue: locale === 'zh' ? '缺少 gawk' : 'Missing gawk',
+                        before: locale === 'zh' ? 'apt install 命令里没有 gawk' : 'apt install without gawk',
+                        after: locale === 'zh' ? 'gawk 已加入依赖安装命令' : 'gawk added to install command',
+                      },
+                      {
+                        issue: locale === 'zh' ? 'amdgpu =y vs =m' : 'amdgpu =y vs =m',
+                        before: locale === 'zh' ? 'scripts/config --enable → 内置，无 .ko 文件' : 'scripts/config --enable → built-in, no .ko',
+                        after: locale === 'zh' ? 'scripts/config --module → 生成 amdgpu.ko' : 'scripts/config --module → amdgpu.ko produced',
+                      },
+                      {
+                        issue: locale === 'zh' ? '并行输出掩盖报错' : 'Parallel output masks errors',
+                        before: locale === 'zh' ? 'make -j$(nproc) 失败时只看到 Error 2' : 'make -j$(nproc) failure shows only Error 2',
+                        after: locale === 'zh' ? 'LC_ALL=C make -j1 给出干净的串行输出' : 'LC_ALL=C make -j1 gives clean serial output',
+                      },
+                    ].map((row, i) => (
+                      <tr key={i}>
+                        <td className="py-2.5 pr-4 font-medium text-foreground/80">{row.issue}</td>
+                        <td className="py-2.5 pr-4 text-red-500/75 font-mono">{row.before}</td>
+                        <td className="py-2.5 text-green-500/80 font-mono">{row.after}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
           </Section>
 
         </div>
