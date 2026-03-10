@@ -1,7 +1,5 @@
 /* ============================================================
    Micro-lessons index — resolves micro-lessons by locale
-   For now, English uses the same content (many modules have titleEn).
-   Full English micro-lessons can be added to data/en/ later.
    ============================================================ */
 
 import type { MicroLessonModule } from "./micro_lesson_types";
@@ -19,6 +17,21 @@ import { module9MicroLessons } from "./module9_micro_lessons";
 import { module10MicroLessons } from "./module10_micro_lessons";
 import { module11MicroLessons } from "./module11_micro_lessons";
 
+// English micro-lesson imports
+import { module0MicroLessonsEn } from "./module0_micro_lessons_en";
+import { module05MicroLessonsEn } from "./module05_micro_lessons_en";
+import { module1MicroLessonsEn } from "./module1_micro_lessons_en";
+import { module2MicroLessonsEn } from "./module2_micro_lessons_en";
+import { module3MicroLessonsEn } from "./module3_micro_lessons_en";
+import { module4MicroLessonsEn } from "./module4_micro_lessons_en";
+import { module5MicroLessonsEn } from "./module5_micro_lessons_en";
+import { module6MicroLessonsEn } from "./module6_micro_lessons_en";
+import { module7MicroLessonsEn } from "./module7_micro_lessons_en";
+import { module8MicroLessonsEn } from "./module8_micro_lessons_en";
+import { module9MicroLessonsEn } from "./module9_micro_lessons_en";
+import { module10MicroLessonsEn } from "./module10_micro_lessons_en";
+import { module11MicroLessonsEn } from "./module11_micro_lessons_en";
+
 const microLessonsZh: Record<string, MicroLessonModule> = {
   intro: module0MicroLessons,
   ecosystem: module05MicroLessons,
@@ -35,18 +48,31 @@ const microLessonsZh: Record<string, MicroLessonModule> = {
   career: module11MicroLessons,
 };
 
+const microLessonsEn: Record<string, MicroLessonModule> = {
+  intro: module0MicroLessonsEn,
+  ecosystem: module05MicroLessonsEn,
+  prerequisites: module1MicroLessonsEn,
+  hardware: module2MicroLessonsEn,
+  kernel: module3MicroLessonsEn,
+  drm: module4MicroLessonsEn,
+  amdgpu: module5MicroLessonsEn,
+  debugging: module6MicroLessonsEn,
+  "rocm-kernel": module7MicroLessonsEn,
+  "rocm-compute": module8MicroLessonsEn,
+  llvm: module9MicroLessonsEn,
+  testing: module10MicroLessonsEn,
+  career: module11MicroLessonsEn,
+};
+
 export type Locale = "zh" | "en";
 
 /**
  * Returns micro-lessons for the given locale.
- * English locale currently uses the same Chinese content — callers should
- * display a locale-mismatch notice when `locale === "en"`.
- * Full English micro-lesson content can be added to data/en/ when ready.
  */
 export function getMicroLessonsByModule(locale: Locale): Record<string, MicroLessonModule> {
-  return microLessonsZh;
+  return locale === "en" ? microLessonsEn : microLessonsZh;
 }
 
 export function isMicroLessonLocalized(locale: Locale): boolean {
-  return locale === "zh";
+  return true;
 }

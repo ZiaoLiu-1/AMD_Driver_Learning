@@ -679,18 +679,20 @@ export default function MicroLessonPage() {
               {isLessonComplete(moduleId, lesson.id) ? (
                 <button
                   onClick={() => unmarkLessonComplete(moduleId, lesson.id)}
-                  className="flex items-center gap-2 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors py-2 px-4 rounded-lg border border-border/30">
-                  <CheckCircle2 className="w-4 h-4" style={{ color: "oklch(0.65 0.18 145)" }} />
+                  className="flex items-center gap-2 text-xs text-success/80 hover:text-success transition-colors py-2 px-4 rounded-lg border border-success/30 bg-success/10"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
                   {t("microLesson.completedClickCancel")}
                 </button>
               ) : (
-                <button
+                <Button
                   onClick={() => markLessonComplete(moduleId, lesson.id)}
-                  className="flex items-center gap-2 text-sm font-semibold text-white px-6 py-2.5 rounded-xl transition-[filter] hover:brightness-110"
-                  style={{ background: "linear-gradient(135deg, oklch(0.55 0.18 145), oklch(0.65 0.18 145))" }}>
+                  variant="brand"
+                  className="h-auto rounded-xl px-6 py-2.5 text-sm font-semibold flex items-center gap-2"
+                >
                   <Check className="w-4 h-4" />
                   {t("microLesson.markComplete")}
-                </button>
+                </Button>
               )}
             </div>
 
