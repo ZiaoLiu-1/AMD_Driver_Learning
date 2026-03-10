@@ -5,6 +5,8 @@
    Supports three data formats across Module 1 and Module 2
    ============================================================ */
 import { useState, useEffect, useRef } from "react";
+import confetti from "canvas-confetti";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -675,25 +677,66 @@ export default function MicroLessonPage() {
             </div>
 
             {/* Mark as Done button */}
-            <div className="flex justify-center pt-2">
-              {isLessonComplete(moduleId, lesson.id) ? (
-                <button
-                  onClick={() => unmarkLessonComplete(moduleId, lesson.id)}
-                  className="flex items-center gap-2 text-xs text-success/80 hover:text-success transition-colors py-2 px-4 rounded-lg border border-success/30 bg-success/10"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  {t("microLesson.completedClickCancel")}
-                </button>
-              ) : (
-                <Button
-                  onClick={() => markLessonComplete(moduleId, lesson.id)}
-                  variant="brand"
-                  className="h-auto rounded-xl px-6 py-2.5 text-sm font-semibold flex items-center gap-2"
-                >
-                  <Check className="w-4 h-4" />
-                  {t("microLesson.markComplete")}
-                </Button>
-              )}
+            <div className="flex justify-center pt-2 h-[60px]">
+              <AnimatePresence mode="wait">
+                {isLessonComplete(moduleId, lesson.id) ? (
+                  <motion.div
+                    key="completed"
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 600, damping: 20 }}
+                  >
+                    <Button
+                      onClick={() => unmarkLessonComplete(moduleId, lesson.id)}
+                      variant="outline"
+                      className="h-auto rounded-xl px-6 py-3 text-sm font-semibold flex items-center justify-center gap-2 border-[oklch(0.65_0.18_35)]/30 text-[oklch(0.75_0.18_35)] hover:bg-[oklch(0.65_0.18_35)]/10 min-w-[240px] transition-all"
+                    >
+                      <motion.div
+                        initial={{ scale: 0, rotate: -45 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: "spring", stiffness: 600, damping: 12, delay: 0.05 }}
+                      >
+                        <CheckCircle2 className="w-5 h-5" />
+                      </motion.div>
+                      {t("microLesson.completedClickCancel")}
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="incomplete"
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.9, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 600, damping: 20 }}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const x = (rect.left + rect.width / 2) / window.innerWidth;
+                        const y = (rect.top + rect.height / 2) / window.innerHeight;
+
+                        confetti({
+                          particleCount: 80,
+                          spread: 60,
+                          origin: { x, y },
+                          colors: ['#ea580c', '#f97316', '#fb923c', '#ffffff'],
+                          disableForReducedMotion: true,
+                          zIndex: 100
+                        });
+                        markLessonComplete(moduleId, lesson.id);
+                      }}
+                      variant="brand"
+                      className="h-auto rounded-xl px-6 py-3 text-sm font-semibold flex items-center justify-center gap-2 min-w-[240px] transition-all"
+                    >
+                      <Check className="w-4 h-4" />
+                      {t("microLesson.markComplete")}
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Completion Checklist */}
