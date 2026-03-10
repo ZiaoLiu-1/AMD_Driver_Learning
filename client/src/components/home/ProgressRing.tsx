@@ -26,7 +26,7 @@ export function ProgressRing({ percentage, status, size = 48, strokeWidth = 4 }:
                     cy={size / 2}
                     r={radius}
                     strokeWidth={strokeWidth}
-                    stroke={isInProgress ? 'url(#amd-gradient)' : isCompleted ? 'var(--color-success, #22c55e)' : 'transparent'}
+                    stroke={isInProgress ? 'url(#amd-gradient)' : isCompleted ? 'var(--success)' : 'transparent'}
                     fill="none"
                     strokeLinecap="round"
                     strokeDasharray={circumference}
@@ -36,8 +36,8 @@ export function ProgressRing({ percentage, status, size = 48, strokeWidth = 4 }:
                 />
                 <defs>
                     <linearGradient id="amd-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#E8441A" />
-                        <stop offset="100%" stopColor="#FF6B35" />
+                        <stop offset="0%" stopColor="var(--primary)" />
+                        <stop offset="100%" stopColor="var(--brand-end)" />
                     </linearGradient>
                 </defs>
             </svg>

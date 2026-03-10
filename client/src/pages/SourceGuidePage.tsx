@@ -20,33 +20,33 @@ export default function SourceGuidePage() {
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-50 border-b border-border/50 backdrop-blur-md bg-background/80">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <Link href="/">
-            <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center gap-1">
-              <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="min-h-[44px] flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
+              <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
               {t('nav.home') || 'Home'}
             </span>
           </Link>
           <div className="flex items-center gap-3">
             <span className="text-xs text-muted-foreground hidden sm:block">
-              {totalCompleted} of {totalFiles} files read
+              {t('sourceGuide.filesProgress', { completed: totalCompleted, total: totalFiles }) || `${totalCompleted} of ${totalFiles} files read`}
             </span>
-            <div className="w-24 sm:w-32 h-1.5 bg-muted rounded-full overflow-hidden">
+            <div className="w-20 sm:w-32 h-1.5 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-orange-500 transition-all duration-500"
+                className="h-full bg-primary transition-[width] duration-500"
                 style={{ width: `${overallProgress}%` }}
               />
             </div>
-            <div className="text-xs font-mono font-medium text-orange-500 w-8">{overallProgress}%</div>
+            <div className="text-xs font-mono font-medium text-primary w-8">{overallProgress}%</div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-12">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="mb-16 text-center max-w-3xl mx-auto">
           <div className="flex justify-center mb-6">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-orange-500/10 border border-orange-500/20">
-              <FileCode className="w-8 h-8 text-orange-500" />
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-primary/10 border border-primary/20">
+              <FileCode className="w-8 h-8 text-primary" />
             </div>
           </div>
           <h1 className="text-4xl font-bold tracking-tight mb-4">{t('sourceGuide.pageTitle') || 'Source Code Navigator'}</h1>
@@ -68,7 +68,7 @@ export default function SourceGuidePage() {
                 <div className="flex flex-col md:flex-row gap-6 md:gap-12 relative z-10">
                   {/* Stage Number & hierarchy node */}
                   <div className="md:w-32 shrink-0 flex md:flex-col items-center gap-4 md:gap-2 pt-2 md:pl-2">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center border-4 text-base font-bold bg-background transition-colors shadow-sm ${isStageComplete ? 'border-green-500 text-green-500 bg-green-500/5' : 'border-orange-500 text-orange-500'
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center border-4 text-base font-bold bg-background transition-colors shadow-sm ${isStageComplete ? 'border-success text-success bg-success/5' : 'border-primary text-primary'
                       }`}>
                       {stage.number}
                     </div>
@@ -85,7 +85,7 @@ export default function SourceGuidePage() {
                           {stage.description}
                         </p>
                         <div className="shrink-0 text-xs font-mono font-medium px-3 py-1 rounded bg-muted/60 text-muted-foreground">
-                          {stageProgress.completed}/{stageProgress.total} Files
+                          {stageProgress.completed}/{stageProgress.total} {t('sourceGuide.filesLabel') || 'Files'}
                         </div>
                       </div>
                     </div>
@@ -100,11 +100,14 @@ export default function SourceGuidePage() {
                             <div className="flex gap-4">
                               <div className="mt-1">
                                 <button
+                                  role="checkbox"
+                                  aria-checked={isDone}
+                                  aria-label={`${isDone ? 'Mark as unread' : 'Mark as read'}: ${file.path}`}
                                   onClick={() => toggleFile(file.path)}
-                                  className={`w-6 h-6 rounded flex items-center justify-center border transition-all ${isDone ? 'bg-green-500 text-white border-green-500' : 'bg-background border-border hover:border-orange-500 text-muted-foreground'
+                                  className={`w-6 h-6 rounded flex items-center justify-center border transition-colors ${isDone ? 'bg-success text-white border-success' : 'bg-background border-border hover:border-primary text-muted-foreground'
                                     }`}
                                 >
-                                  {isDone && <CheckCircle2 className="w-4 h-4" />}
+                                  {isDone && <CheckCircle2 className="w-4 h-4" aria-hidden="true" />}
                                 </button>
                               </div>
 
@@ -112,7 +115,7 @@ export default function SourceGuidePage() {
                                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-4">
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-2 mb-1.5">
-                                      <GitBranch className="w-4 h-4 text-orange-500 shrink-0 hidden sm:block" />
+                                      <GitBranch className="w-4 h-4 text-primary shrink-0 hidden sm:block" />
                                       <code className="text-sm md:text-base font-mono font-semibold text-foreground/90 truncate break-all">
                                         {file.path}
                                       </code>
@@ -137,7 +140,7 @@ export default function SourceGuidePage() {
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                       {file.keyFunctions.map((fn) => (
-                                        <code key={fn} className="text-[11px] px-2 py-1 rounded-md bg-orange-500/10 text-orange-600 font-mono border border-orange-500/10">
+                                        <code key={fn} className="text-[11px] px-2 py-1 rounded-md bg-primary/10 text-primary font-mono border border-primary/10">
                                           {fn}()
                                         </code>
                                       ))}
@@ -155,7 +158,7 @@ export default function SourceGuidePage() {
 
                                   {file.relatedConcepts.length > 0 && (
                                     <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-xs text-muted-foreground font-medium mr-1">Concepts:</span>
+                                      <span className="text-xs text-muted-foreground font-medium mr-1">{t('sourceGuide.relatedConcepts') || 'Concepts'}:</span>
                                       {file.relatedConcepts.map((c) => (
                                         <span key={c} className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground/80 font-medium">
                                           {c}

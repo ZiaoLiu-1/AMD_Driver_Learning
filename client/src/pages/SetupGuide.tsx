@@ -4,41 +4,32 @@
    amdgpu kernel dev environment in ~30 minutes.
    ============================================================ */
 
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "wouter";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useSearchHighlight } from "@/lib/highlight";
 import { useLocale } from "@/contexts/LocaleContext";
-import { useSwitchLocale } from "@/lib/useSwitchLocale";
+import { PageShell } from "@/components/layout/PageShell";
+import { CopyCodeBlock } from "@/components/shared/CopyCodeBlock";
+import { Button } from "@/components/ui/button";
 import {
-  ArrowLeft, ArrowRight, Copy, Check, ChevronRight, Sun, Moon,
-  Terminal, Monitor, HardDrive, Cpu, Download, Settings, Languages,
+  ArrowRight, Check,
+  Terminal, Monitor, HardDrive, Cpu, Download, Settings,
   Laptop, Layers, Wrench, Mail, BookOpen, AlertTriangle, XCircle, CheckCircle2, Lightbulb
 } from "lucide-react";
 
 function CopyBlock({ code, title, lang = "bash" }: { code: string; title?: string; lang?: string }) {
-  const [copied, setCopied] = useState(false);
   const { t } = useTranslation();
+
   return (
-    <div className="rounded-xl overflow-hidden border border-border/50 my-4">
-      {title && (
-        <div className="flex items-center justify-between px-4 py-2 border-b border-border/50 bg-muted/50">
-          <span className="text-xs font-semibold text-foreground/70">{title}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-muted-foreground/50">{lang}</span>
-            <button onClick={() => { navigator.clipboard.writeText(code); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
-              className="flex items-center gap-1 text-xs text-muted-foreground/50 hover:text-foreground transition-colors">
-              {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-              {copied ? t("setup.copied") : t("setup.copy")}
-            </button>
-          </div>
-        </div>
-      )}
-      <pre className="p-4 overflow-x-auto text-sm leading-relaxed bg-card">
-        <code className="text-foreground/85 whitespace-pre">{code}</code>
-      </pre>
-    </div>
+    <CopyCodeBlock
+      code={code}
+      title={title}
+      language={lang}
+      copyLabel={t("setup.copy")}
+      copiedLabel={t("setup.copied")}
+      className="my-4"
+    />
   );
 }
 
@@ -59,39 +50,23 @@ function Section({ icon: Icon, title, children, id }: { icon: typeof Terminal; t
 }
 
 export default function SetupGuide() {
-  const { theme, toggleTheme } = useTheme();
   const { locale } = useLocale();
-  const { switchLocale } = useSwitchLocale();
-  const contentRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLElement>(null);
   useSearchHighlight(contentRef);
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Bar */}
-      <div className="sticky top-0 z-30 border-b border-border/50 backdrop-blur-md bg-background/95">
-        <div className="max-w-4xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
-            <Link href="/"><span className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> {t("setup.home")}</span></Link>
-            <ChevronRight className="w-3 h-3" />
-            <span className="text-foreground/80 font-medium">{t("setup.title")}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={switchLocale} className="flex items-center justify-center gap-1 w-14 py-1.5 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
-              <Languages className="w-3.5 h-3.5" />
-              {locale === "zh" ? "En" : "中"}
-            </button>
-            <button onClick={toggleTheme} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title="Toggle theme">
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div ref={contentRef} className="max-w-4xl mx-auto px-4 md:px-8 py-10">
+    <PageShell
+      backHref="/"
+      backLabel={t("setup.home")}
+      currentLabel={t("setup.title")}
+      contentRef={contentRef}
+      containerWidthClassName="max-w-4xl"
+      mainClassName="py-8 sm:py-10"
+    >
         {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-3xl font-bold text-foreground mb-3">{t("setup.pageTitle")}</h1>
+        <div className="mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-3">{t("setup.pageTitle")}</h1>
           <p className="text-muted-foreground/80 max-w-2xl leading-relaxed">
             {t("setup.pageSubtitle")}
           </p>
@@ -105,17 +80,17 @@ export default function SetupGuide() {
 
         {/* Workflow Choice */}
         <div className="grid sm:grid-cols-2 gap-4 mb-10">
-          <a href="#prereqs" className="group rounded-xl border border-border/50 p-5 bg-card/50 hover:bg-muted/50 transition-colors block">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <Laptop className="w-4 h-4 text-blue-500" />
+          <a href="#prereqs" className="group rounded-xl border border-border/50 p-4 sm:p-5 bg-card/50 hover:bg-muted/50 transition-colors block">
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex items-start gap-2">
+                <div className="w-8 h-8 rounded-lg bg-info/10 flex items-center justify-center flex-shrink-0">
+                  <Laptop className="w-4 h-4 text-info" />
                 </div>
-                <h3 className="font-semibold text-foreground group-hover:text-blue-500 transition-colors">
+                <h3 className="font-semibold text-foreground group-hover:text-info transition-colors text-sm sm:text-base pt-1">
                   {locale === 'zh' ? '单机开发环境 (基础)' : 'Single-Machine Setup (Basic)'}
                 </h3>
               </div>
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-blue-500 group-hover:-rotate-45 transition-all" />
+              <ArrowRight className="w-4 h-4 flex-shrink-0 mt-2 text-muted-foreground group-hover:text-info group-hover:-rotate-45 transition-[color,transform]" />
             </div>
             <p className="text-xs text-muted-foreground/85 leading-relaxed">
               {locale === 'zh'
@@ -124,20 +99,20 @@ export default function SetupGuide() {
             </p>
           </a>
 
-          <a href="#dual-machine" className="group rounded-xl border border-border/50 p-5 bg-card/50 hover:bg-muted/50 hover:border-primary/50 transition-colors block relative overflow-hidden">
+          <a href="#dual-machine" className="group rounded-xl border border-border/50 p-4 sm:p-5 bg-card/50 hover:bg-muted/50 hover:border-primary/50 transition-colors block relative overflow-hidden">
             <div className="absolute top-0 right-0 px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-bold uppercase rounded-bl-lg">
               {locale === 'zh' ? '推荐' : 'Recommended'}
             </div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div className="flex items-start justify-between gap-2 mb-3">
+              <div className="flex items-start gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <Monitor className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors text-sm sm:text-base pt-1">
                   {locale === 'zh' ? '双机开发流程 (进阶)' : 'Dual-Machine Setup (Advanced)'}
                 </h3>
               </div>
-              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:-rotate-45 transition-all" />
+              <ArrowRight className="w-4 h-4 flex-shrink-0 mt-2 text-muted-foreground group-hover:text-primary group-hover:-rotate-45 transition-[color,transform]" />
             </div>
             <p className="text-xs text-muted-foreground/85 leading-relaxed">
               {locale === 'zh'
@@ -167,7 +142,7 @@ export default function SetupGuide() {
               { id: "field-notes", labelKey: "setup.fieldNotes" },
             ].map(item => (
               <a key={item.id} href={`#${item.id}`}
-                className="text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-1.5 rounded hover:bg-muted/50">
+                className="text-xs text-muted-foreground hover:text-primary transition-colors px-2 py-2.5 min-h-[44px] flex items-center rounded hover:bg-muted/50">
                 {t(item.labelKey)}
               </a>
             ))}
@@ -227,8 +202,8 @@ pip3 install --user virtme-ng`} />
 
 pip install --user virtme-ng`} />
 
-            <div className="rounded-xl p-4 border border-yellow-500/30 bg-yellow-500/5">
-              <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mb-1">Important: GPU firmware</p>
+            <div className="rounded-xl p-4 border border-warning/30 bg-warning/5">
+              <p className="text-xs font-semibold text-warning mb-1">Important: GPU firmware</p>
               <p className="text-xs text-muted-foreground/80">
                 If you're running a very new GPU (RDNA4 / gfx12), you may need the latest firmware.
                 Install <code className="text-primary">linux-firmware</code> from git if your distro's package is old:
@@ -526,8 +501,8 @@ vng --build --run -- "drm.debug=0x1f amdgpu.dpm=0"`} />
 #    sudo rmmod amdgpu && sudo insmod ./drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 #    # WARNING: this will kill your display momentarily`} />
 
-            <div className="rounded-xl p-4 border border-red-500/30 bg-red-500/5">
-              <p className="text-xs font-semibold text-red-600 dark:text-red-400 mb-1">DANGER: MMIO writes</p>
+            <div className="rounded-xl p-4 border border-destructive/30 bg-destructive/5">
+              <p className="text-xs font-semibold text-destructive mb-1">DANGER: MMIO writes</p>
               <p className="text-xs text-muted-foreground/80">
                 Writing to the wrong GPU register via WREG32/RREG32 can <strong>instantly hard-lock your entire system</strong> —
                 no Ctrl+C, no SSH, only a power cycle recovers. This is not a compiler error or a kernel oops — it's
@@ -655,12 +630,9 @@ git format-patch HEAD~1 -o /tmp/patches/
                 landscape, then follow the learning path. Each module has hands-on labs that use the environment
                 you just set up.
               </p>
-              <Link href="/module/intro">
-                <button className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-all hover:brightness-110"
-                  style={{ background: 'linear-gradient(135deg, #E8441A, #FF6B35)' }}>
-                  Start Module 0: Introduction →
-                </button>
-              </Link>
+              <Button asChild variant="brand" className="inline-flex rounded-lg px-4 py-2 text-sm font-medium">
+                <Link href="/module/intro">Start Module 0: Introduction →</Link>
+              </Button>
             </div>
           </Section>
 
@@ -700,7 +672,7 @@ git format-patch HEAD~1 -o /tmp/patches/
                 </div>
                 <div className="rounded-lg border border-border/50 p-4 bg-background/50">
                   <p className="font-bold text-foreground mb-2 flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-md bg-red-500/15 flex items-center justify-center text-red-500 font-bold text-[10px]">B</span>
+                    <span className="w-6 h-6 rounded-md bg-destructive/15 flex items-center justify-center text-destructive font-bold text-[10px]">B</span>
                     {locale === 'zh' ? '测试机 (Ubuntu + AMD GPU)' : 'Test Machine (Ubuntu + AMD GPU)'}
                   </p>
                   <ul className="space-y-1 list-disc pl-4">
@@ -832,8 +804,8 @@ sudo update-grub
 #   - You can also select kernel via SSH before reboot:
 sudo grub-reboot "Advanced options for Ubuntu>Ubuntu, with Linux x.y.z-amdgpu-dev"`} />
 
-            <div className="rounded-xl p-4 border border-green-500/30 bg-green-500/5 my-6">
-              <p className="text-xs font-semibold text-green-600 dark:text-green-400 mb-1">{locale === 'zh' ? '✅ Windows 系统完全安全' : '✅ Windows is safe'}</p>
+            <div className="rounded-xl p-4 border border-success/30 bg-success/5 my-6">
+              <p className="text-xs font-semibold text-success mb-1">{locale === 'zh' ? '✅ Windows 系统完全安全' : '✅ Windows is safe'}</p>
               <p className="text-sm text-muted-foreground/80 leading-relaxed">
                 {locale === 'zh'
                   ? <>如果你的测试机是双系统，Linux 侧的内核开发<strong>完全不会影响 Windows</strong>。Windows 的分区和引导程序不会被触碰。即使 Linux 开发版内核彻底挂掉，你依然能直接重启进入 Windows，或通过 GRUB 启动稳定版 Linux 内核。</>
@@ -915,8 +887,8 @@ sudo cat /sys/kernel/debug/dri/0/amdgpu_gpu_recover`} />
                 : <>ROCm is AMD's official GPU compute platform, including the HIP compiler, runtime, and profiling tools. Required for <strong>Module 7 (ROCm Kernel Interface) and Module 8 (ROCm Compute)</strong>. Steps below are from the <a href="https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">official ROCm Quick Start Guide</a>.</>}
             </p>
 
-            <div className="rounded-xl p-4 border border-yellow-500/30 bg-yellow-500/5 my-4">
-              <p className="text-xs font-semibold text-yellow-600 dark:text-yellow-400 mb-1">
+            <div className="rounded-xl p-4 border border-warning/30 bg-warning/5 my-4">
+              <p className="text-xs font-semibold text-warning mb-1">
                 {locale === 'zh' ? '前置条件' : 'Prerequisites'}
               </p>
               <p className="text-xs text-muted-foreground/80">
@@ -1569,7 +1541,6 @@ LC_ALL=C make -j1 2>&1 | tee /tmp/build.log
           </Section>
 
         </div>
-      </div>
-    </div>
+    </PageShell>
   );
 }

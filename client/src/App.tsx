@@ -52,8 +52,9 @@ function SearchButton() {
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
       <button
         onClick={() => setSearchOpen(true)}
-        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-3 py-2 rounded-full border border-border/60 bg-background shadow-lg text-xs text-muted-foreground/60 hover:text-foreground hover:border-border transition-all sm:hidden">
-        <Search className="w-3.5 h-3.5" />
+        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-3 py-2 rounded-full border border-border/60 bg-background shadow-lg text-xs text-muted-foreground/60 hover:text-foreground hover:border-border transition-colors sm:hidden"
+        aria-label={t("search.button") || "Search"}>
+        <Search className="w-3.5 h-3.5" aria-hidden="true" />
         {t("search.button")}
       </button>
     </>

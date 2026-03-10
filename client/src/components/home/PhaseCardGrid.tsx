@@ -12,9 +12,10 @@ interface PhaseCardGridProps {
     getPhaseProgress: (id: string) => any;
     getModuleStatus: (id: string) => any;
     locale: string;
+    microLessonsByModule: Record<string, any>;
 }
 
-export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, locale }: PhaseCardGridProps) {
+export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, locale, microLessonsByModule }: PhaseCardGridProps) {
     const curriculum = getCurriculum(locale as Locale);
     const difficultyLabels = getDifficultyLabels(locale as Locale);
 
@@ -28,7 +29,15 @@ export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, local
     const [expandedPhaseId, setExpandedPhaseId] = useState<string | null>(defaultExpandedId);
 
     return (
-        <div className="flex flex-col gap-6 w-full">
+        <motion.div
+            className="flex flex-col gap-6 w-full"
+            initial="hidden"
+            animate="visible"
+            variants={{
+                visible: { transition: { staggerChildren: 0.1 } },
+                hidden: {}
+            }}
+        >
             {phases.map((phase) => {
                 const isExpanded = expandedPhaseId === phase.id;
                 const phaseProgress = getPhaseProgress(phase.id);
@@ -38,7 +47,11 @@ export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, local
                     <motion.div
                         key={phase.id}
                         layoutId={`phase-card-${phase.id}`}
-                        className={`rounded-2xl border overflow-hidden glass-panel hover-lift transition-shadow ${phaseProgress.status === 'completed' ? 'bg-card border-green-500/30' : 'bg-orange-500/5 border-border/40'
+                        variants={{
+                            hidden: { opacity: 0, y: 20 },
+                            visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+                        }}
+                        className={`rounded-xl border overflow-hidden transition-colors ${phaseProgress.status === 'completed' ? 'bg-card border-success/30' : 'bg-background border-border/50'
                             }`}
                     >
                         {/* Phase Card Header */}
@@ -48,7 +61,7 @@ export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, local
                         >
                             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 w-full">
                                 <div className="flex items-center gap-3">
-                                    <span className="text-xs font-mono px-2 py-0.5 rounded font-bold bg-orange-500/10 text-orange-600">
+                                    <span className="text-xs font-mono px-2 py-0.5 rounded font-bold bg-primary/10 text-primary">
                                         Phase {phase.number}
                                     </span>
                                     <span className="text-base font-semibold text-foreground">{phase.title}</span>
@@ -57,7 +70,7 @@ export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, local
                                 <div className="flex flex-row items-center gap-4 sm:ml-auto">
                                     <div className="hidden sm:flex shrink-0 w-32 items-center gap-2 text-xs text-muted-foreground mr-4">
                                         <div className="w-full h-1.5 rounded-full overflow-hidden bg-muted">
-                                            <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${phaseProgress.percentage}%` }} />
+                                            <div className="h-full bg-primary rounded-full transition-[width] duration-500" style={{ width: `${phaseProgress.percentage}%` }} />
                                         </div>
                                         <span>{phaseProgress.percentage}%</span>
                                     </div>
@@ -71,15 +84,13 @@ export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, local
                             </div>
                         </div>
 
-                        {/* Expanded Modules */}
-                        <AnimatePresence>
-                            {isExpanded && (
-                                <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: "auto", opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="px-6 py-4 border-t border-border/40 overflow-hidden"
-                                >
+                        {/* Expanded Modules CSS Grid Transition */}
+                        <div
+                            className="grid transition-[grid-template-rows] duration-500 ease-out"
+                            style={{ gridTemplateRows: isExpanded ? '1fr' : '0fr' }}
+                        >
+                            <div className="overflow-hidden">
+                                <div className="px-6 py-4 border-t border-border/40">
                                     <div className="mb-4">
                                         <div className="flex flex-wrap gap-2 text-[11px]">
                                             {phase.coreConcepts.map((concept, i) => (
@@ -88,49 +99,58 @@ export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, local
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {stageModules.map((module) => {
+                                    <div className="flex flex-col gap-0 border-t border-border/30 mt-2">
+                                        {stageModules.map((module, index) => {
                                             const status = getModuleStatus(module.id);
                                             return (
                                                 <Link key={module.id} href={`/module/${module.id}`}>
-                                                    <div className="flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all hover:border-opacity-100 hover:scale-[1.02] bg-card/50 hover:bg-card">
+                                                    <div className={`group flex items-center gap-3 py-3 px-2 sm:px-4 cursor-pointer hover:bg-muted/40 transition-colors ${index !== stageModules.length - 1 ? 'border-b border-border/20' : ''}`}>
                                                         <div className="flex-shrink-0">
                                                             {status === 'completed' ? (
-                                                                <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                                                <CheckCircle2 className="w-4 h-4 text-success" />
                                                             ) : status === 'in-progress' ? (
-                                                                <div className="w-5 h-5 rounded-full border-2 border-orange-500 flex items-center justify-center">
-                                                                    <div className="w-2 h-2 rounded-full bg-orange-500" />
+                                                                <div className="w-4 h-4 rounded-full border border-primary flex items-center justify-center">
+                                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                                                                 </div>
                                                             ) : (
-                                                                <div className="w-5 h-5 rounded-full border-2 border-border/40" />
+                                                                <div className="w-4 h-4 rounded-full border border-border/60" />
                                                             )}
                                                         </div>
 
-                                                        <div className="min-w-0 flex-1">
-                                                            <div className="flex items-center gap-1.5 mb-1.5">
-                                                                <DynamicIcon name={module.icon} className="w-4 h-4 text-foreground/70" />
+                                                        <div className="min-w-0 flex-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <DynamicIcon name={module.icon} className="w-3.5 h-3.5 text-muted-foreground" />
                                                                 <span className="text-sm font-medium text-foreground/90 truncate">
                                                                     {module.title}
                                                                 </span>
                                                             </div>
-                                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground/60 focus:outline-none">
+                                                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground/60 sm:ml-auto focus:outline-none">
                                                                 <span className={difficultyColors[module.difficulty]}>{difficultyLabels[module.difficulty]}</span>
-                                                                <span>· {module.estimatedHours}h</span>
+                                                                <span className="hidden sm:inline">·</span>
+                                                                <span>{module.estimatedHours}h</span>
+                                                                {microLessonsByModule[module.id] && (
+                                                                    <>
+                                                                        <span className="hidden sm:inline">·</span>
+                                                                        <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 px-1.5 py-0.5 rounded-sm bg-muted/60 text-muted-foreground">
+                                                                            {microLessonsByModule[module.id].groups?.reduce((acc: number, g: any) => acc + (g.lessons?.length || 0), 0) || 0} topics
+                                                                        </span>
+                                                                    </>
+                                                                )}
                                                             </div>
                                                         </div>
 
-                                                        <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-muted-foreground transition-colors" />
+                                                        <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors ml-2 flex-shrink-0 group-hover:translate-x-0.5 duration-300" />
                                                     </div>
                                                 </Link>
                                             );
                                         })}
                                     </div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                                </div>
+                            </div>
+                        </div>
                     </motion.div>
                 );
             })}
-        </div>
+        </motion.div>
     );
 }

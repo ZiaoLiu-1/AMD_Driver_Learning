@@ -15,9 +15,11 @@ import { Link, useParams, useLocation } from "wouter";
 import { difficultyColors, type Module, type GlossaryTerm } from "@/data/curriculum";
 import { getCurriculum, getDifficultyLabels, getGlossaryByModule } from "@/data/curriculum_index";
 import { getMicroLessonsByModule } from "@/data/micro_lessons_index";
+import { CopyCodeBlock } from "@/components/shared/CopyCodeBlock";
+import { Button } from "@/components/ui/button";
 import {
   BookOpen, Code2, Cpu, Target, ChevronLeft, ChevronRight,
-  Clock, ExternalLink, Copy, Check, ChevronDown, ChevronUp,
+  Clock, ExternalLink, Check, ChevronDown, ChevronUp,
   Lightbulb, Wrench, FlaskConical, ArrowLeft, Menu, X, Sun, Moon,
   Search, PenLine, Languages
 } from "lucide-react";
@@ -41,7 +43,7 @@ function Sidebar({ currentId, onClose, curriculum, difficultyLabels, t }: {
         <Link href="/" onClick={onClose}>
           <div className="flex items-center gap-2 cursor-pointer">
             <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg, #E8441A, #FF6B35)' }}>
+              style={{ background: 'linear-gradient(135deg, var(--primary), var(--brand-end))' }}>
               <Cpu className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -51,8 +53,8 @@ function Sidebar({ currentId, onClose, curriculum, difficultyLabels, t }: {
           </div>
         </Link>
         {onClose && (
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={t("module.closeSidebar") || "Close sidebar"}>
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -64,8 +66,8 @@ function Sidebar({ currentId, onClose, curriculum, difficultyLabels, t }: {
           <span className="text-[10px] font-mono" style={{ color: 'oklch(0.75 0.18 35)' }}>{totalCompleted}/{curriculum.length}</span>
         </div>
         <div className="h-1 rounded-full overflow-hidden" style={{ background: 'var(--muted)' }}>
-          <div className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${(totalCompleted / curriculum.length) * 100}%`, background: 'linear-gradient(90deg, #E8441A, #FF6B35)' }} />
+          <div className="h-full rounded-full transition-[width] duration-500"
+            style={{ width: `${(totalCompleted / curriculum.length) * 100}%`, background: 'linear-gradient(90deg, var(--primary), var(--brand-end))' }} />
         </div>
       </div>
 
@@ -122,45 +124,16 @@ function Sidebar({ currentId, onClose, curriculum, difficultyLabels, t }: {
 
 // ─── Code Block with Copy ────────────────────────────────────
 function CodeBlock({ code, language, annotations, t }: { code: string; language: string; annotations?: string[]; t: (k: string, opts?: Record<string, unknown>) => string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
-    <div className="rounded-xl overflow-hidden border border-border/50">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border/50"
-        style={{ background: 'var(--muted)' }}>
-        <span className="text-xs font-mono text-muted-foreground/60">{language}</span>
-        <button onClick={handleCopy}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors">
-          {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-          {copied ? t("module.copied") : t("module.copy")}
-        </button>
-      </div>
-      {/* Code */}
-      <div className="code-block p-4 text-xs leading-relaxed overflow-x-auto"
-        style={{ background: 'var(--card)' }}>
-        <pre className="text-foreground/85 whitespace-pre">{code}</pre>
-      </div>
-      {/* Annotations */}
-      {annotations && annotations.length > 0 && (
-        <div className="px-4 py-3 border-t border-border/50 space-y-2"
-          style={{ background: 'var(--muted)' }}>
-          <div className="text-xs text-muted-foreground/50 font-medium mb-2">{t("module.annotations")}</div>
-          {annotations.map((note, i) => (
-            <div key={i} className="flex items-start gap-2 text-xs">
-              <span className="annotation-badge flex-shrink-0 mt-0.5">{i + 1}</span>
-              <span className="text-muted-foreground/80 leading-relaxed">{note}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    <CopyCodeBlock
+      code={code}
+      language={language}
+      annotations={annotations}
+      annotationsLabel={t("module.annotations")}
+      copyLabel={t("module.copy")}
+      copiedLabel={t("module.copied")}
+      codeClassName="code-block text-xs"
+    />
   );
 }
 
@@ -169,7 +142,7 @@ function InterviewCard({ q, index, t }: { q: Module['interviewQuestions'][0]; in
   const [showHint, setShowHint] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
 
-  const diffColor = q.difficulty === 'hard' ? 'text-red-400' : q.difficulty === 'medium' ? 'text-yellow-400' : 'text-green-400';
+  const diffColor = q.difficulty === 'hard' ? 'text-destructive' : q.difficulty === 'medium' ? 'text-warning' : 'text-success';
   const diffLabel = q.difficulty === 'hard' ? t("module.hard") : q.difficulty === 'medium' ? t("module.medium") : t("module.easy");
 
   return (
@@ -222,23 +195,23 @@ function TheoryTab({ module, glossaryByModule, t }: { module: Module; glossaryBy
     <div className="space-y-8">
       {/* Overview */}
       <div className="rounded-xl p-6 border border-border/50" style={{ background: 'var(--card)' }}>
-        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+        <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
           <BookOpen className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
           {t("module.overview")}
-        </h3>
+        </h2>
         <p className="text-sm text-muted-foreground/90 leading-relaxed">{module.theory.overview}</p>
       </div>
 
       {/* Sections */}
       {module.theory.sections.map((section, i) => (
         <div key={i} className="space-y-4">
-          <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+          <h2 className="text-base font-semibold text-foreground flex items-center gap-2">
             <span className="text-xs font-mono px-2 py-0.5 rounded"
               style={{ background: 'oklch(0.62 0.22 35 / 0.15)', color: 'oklch(0.75 0.18 35)' }}>
               {String(i + 1).padStart(2, '0')}
             </span>
             {section.title}
-          </h3>
+          </h2>
           <p className="text-sm text-muted-foreground/85 leading-relaxed">{section.content}</p>
           {section.diagram && (
             <div className="space-y-2">
@@ -252,10 +225,10 @@ function TheoryTab({ module, glossaryByModule, t }: { module: Module; glossaryBy
       {/* Books */}
       {module.theory.keyBooks.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
             <BookOpen className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
             {t("module.books")}
-          </h3>
+          </h2>
           <div className="grid gap-3">
             {module.theory.keyBooks.map((book, i) => (
               <div key={i} className="rounded-xl p-4 border border-border/50" style={{ background: 'var(--card)' }}>
@@ -282,14 +255,14 @@ function TheoryTab({ module, glossaryByModule, t }: { module: Module; glossaryBy
       {/* Online Resources */}
       {module.theory.onlineResources.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
             <ExternalLink className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
             {t("module.resources")}
-          </h3>
+          </h2>
           <div className="grid gap-2">
             {module.theory.onlineResources.map((res, i) => (
               <a key={i} href={res.url} target="_blank" rel="noopener noreferrer">
-                <div className="flex items-start gap-3 p-3 rounded-lg border border-border/40 hover:border-border/70 transition-all"
+                <div className="flex items-start gap-3 p-3 rounded-lg border border-border/40 hover:border-border/70 transition-[border-color]"
                   style={{ background: 'var(--card)' }}>
                   <span className="text-xs px-1.5 py-0.5 rounded font-mono flex-shrink-0 mt-0.5"
                     style={{ background: 'oklch(0.55 0.18 200 / 0.15)', color: 'oklch(0.70 0.15 200)' }}>
@@ -344,7 +317,7 @@ function GlossarySection({ moduleId, glossaryByModule, t }: { moduleId: string; 
           <BookOpen className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
         </div>
         <div>
-          <h3 className="text-base font-bold text-foreground">{t("module.glossaryTitle")}</h3>
+          <h2 className="text-base font-bold text-foreground">{t("module.glossaryTitle")}</h2>
           <p className="text-xs text-muted-foreground/60 mt-0.5">{t("module.glossarySubtitle")}</p>
         </div>
         <span className="ml-auto text-xs font-mono px-2 py-0.5 rounded-full"
@@ -369,7 +342,7 @@ function GlossarySection({ moduleId, glossaryByModule, t }: { moduleId: string; 
               <div className="grid gap-2">
                 {catTerms.map((term, i) => (
                   <div key={i}
-                    className="flex items-start gap-4 p-3 rounded-lg border border-border/30 hover:border-border/60 transition-all"
+                    className="flex items-start gap-4 p-3 rounded-lg border border-border/30 hover:border-border/60 transition-[border-color]"
                     style={{ background: 'var(--muted)' }}>
                     {/* Abbr Badge */}
                     <div className="flex-shrink-0 min-w-[3.5rem] text-center">
@@ -405,7 +378,7 @@ function CodeTab({ module, t }: { module: Module; t: (k: string, opts?: Record<s
       {module.codeReading.map((code, i) => (
         <div key={i} className="space-y-3">
           <div>
-            <h3 className="text-base font-semibold text-foreground">{code.title}</h3>
+            <h2 className="text-base font-semibold text-foreground">{code.title}</h2>
             <p className="text-sm text-muted-foreground/75 mt-1 leading-relaxed">{code.description}</p>
           </div>
           <CodeBlock code={code.code} language={code.language} annotations={code.annotations} t={t} />
@@ -431,7 +404,7 @@ function ProjectTab({ module, t }: { module: Module; t: (k: string, opts?: Recor
         <div className="flex items-start gap-3 mb-3">
           <Wrench className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: 'oklch(0.75 0.18 35)' }} />
           <div>
-            <h3 className="font-bold text-foreground">{p.title}</h3>
+            <h2 className="font-bold text-foreground">{p.title}</h2>
             <p className="text-sm text-muted-foreground/80 mt-1 leading-relaxed">{p.description}</p>
           </div>
         </div>
@@ -439,10 +412,10 @@ function ProjectTab({ module, t }: { module: Module; t: (k: string, opts?: Recor
 
       {/* Objectives */}
       <div>
-        <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
           <Target className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
           {t("module.objectives")}
-        </h4>
+        </h3>
         <div className="space-y-2">
           {p.objectives.map((obj, i) => (
             <div key={i} className="flex items-start gap-3 text-sm text-muted-foreground/85">
@@ -458,10 +431,10 @@ function ProjectTab({ module, t }: { module: Module; t: (k: string, opts?: Recor
 
       {/* Steps */}
       <div>
-        <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
           <FlaskConical className="w-4 h-4" style={{ color: 'oklch(0.75 0.18 35)' }} />
           {t("module.steps")}
-        </h4>
+        </h3>
         <div className="space-y-3">
           {p.steps.map((step, i) => (
             <div key={i} className="flex items-start gap-3 p-3 rounded-lg border border-border/40"
@@ -479,7 +452,7 @@ function ProjectTab({ module, t }: { module: Module; t: (k: string, opts?: Recor
       {/* Expected Output */}
       <div className="rounded-xl p-4 border border-border/50"
         style={{ background: 'oklch(0.55 0.18 200 / 0.05)', borderColor: 'oklch(0.55 0.18 200 / 0.2)' }}>
-        <h4 className="text-xs font-semibold mb-2" style={{ color: 'oklch(0.70 0.15 200)' }}>{t("module.expectedOutput")}</h4>
+        <h3 className="text-xs font-semibold mb-2" style={{ color: 'oklch(0.70 0.15 200)' }}>{t("module.expectedOutput")}</h3>
         <p className="text-sm text-muted-foreground/80 leading-relaxed">{p.expectedOutput}</p>
       </div>
     </div>
@@ -551,7 +524,7 @@ export default function ModulePage() {
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
           <p className="text-muted-foreground mb-4">{t("module.notFound")}</p>
-          <Link href="/"><button className="text-sm text-primary hover:underline">{t("module.backHome")}</button></Link>
+          <Link href="/" className="text-sm text-primary hover:underline">{t("module.backHome")}</Link>
         </div>
       </div>
     );
@@ -599,47 +572,51 @@ export default function ModulePage() {
           <div className="sticky top-0 z-30 border-b border-border/50 backdrop-blur-md bg-background/95">
             <div className="max-w-4xl mx-auto px-4 md:px-8">
               {/* Breadcrumb */}
-              <div className="flex items-center justify-between py-3">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
-                  <button onClick={() => setSidebarOpen(true)} className="lg:hidden mr-1 text-muted-foreground hover:text-foreground transition-colors">
-                    <Menu className="w-4 h-4" />
+              <div className="flex items-center justify-between py-1">
+                <div className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground/60">
+                  <button onClick={() => setSidebarOpen(true)} className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center -ml-2 text-muted-foreground hover:text-foreground transition-colors" aria-label={t("module.openNav") || "Open module navigation"}>
+                    <Menu className="w-5 h-5" aria-hidden="true" />
                   </button>
-                  <Link href="/"><span className="hover:text-muted-foreground transition-colors cursor-pointer">{t("nav.home")}</span></Link>
-                  <ChevronRight className="w-3 h-3" />
+                  <Link href="/" className="hidden sm:inline"><span className="hover:text-muted-foreground transition-colors cursor-pointer">{t("nav.home")}</span></Link>
+                  <ChevronRight className="w-3 h-3 hidden sm:block" />
                   <span className="text-foreground/70">Module {module.number}</span>
                   <ChevronRight className="w-3 h-3" />
-                  <span className="text-foreground/90 font-medium truncate">{module.title}</span>
+                  <span className="text-foreground/90 font-medium truncate max-w-[100px] sm:max-w-none">{module.title}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => setSearchOpen(true)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title={t("module.searchTitle")}>
-                    <Search className="w-4 h-4" />
+                <div className="flex items-center gap-0.5 sm:gap-1">
+                  <button onClick={() => setSearchOpen(true)} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" aria-label={t("module.searchTitle") || "Search"}>
+                    <Search className="w-4 h-4" aria-hidden="true" />
                   </button>
-                  <button onClick={() => setNotesOpen(o => !o)} className={`p-1.5 rounded-lg transition-colors ${notesOpen ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`} title={t("module.notesTitle")}>
-                    <PenLine className="w-4 h-4" />
+                  <button onClick={() => setNotesOpen(o => !o)} className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors ${notesOpen ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`} aria-label={t("module.notesTitle") || "Notes"}>
+                    <PenLine className="w-4 h-4" aria-hidden="true" />
                   </button>
-                  <button onClick={switchLocale} className="flex items-center justify-center gap-1 w-14 py-1.5 rounded text-xs text-muted-foreground hover:text-foreground border border-transparent hover:border-border/50 hover:bg-muted/50 transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
+                  <button onClick={switchLocale} className="hidden sm:flex items-center justify-center gap-1 min-h-[44px] px-3 rounded text-xs text-muted-foreground hover:text-foreground border border-transparent hover:border-border/50 hover:bg-muted/50 transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
                     <Languages className="w-3.5 h-3.5" />
                     {locale === "zh" ? "En" : "中"}
                   </button>
-                  <button onClick={toggleTheme} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" title={t("module.themeTitle")}>
-                    {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  <button onClick={toggleTheme} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors" aria-label={theme === 'dark' ? "Switch to light theme" : "Switch to dark theme"}>
+                    {theme === 'dark' ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
                   </button>
                 </div>
               </div>
               {/* Tabs */}
-              <div className="flex gap-0 overflow-x-auto">
-                {tabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => handleTabChange(tab.id)}
-                    className={`content-tab flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium whitespace-nowrap transition-all ${activeTab === tab.id ? 'active text-foreground' : 'text-muted-foreground/60 hover:text-muted-foreground'}`}>
-                    <tab.icon className="w-3.5 h-3.5" />
-                    {tab.label}
-                    {completedTabs.includes(tab.id) && (
-                      <Check className="w-3 h-3 text-green-400 ml-0.5" />
-                    )}
-                  </button>
-                ))}
+              <div className="flex gap-0 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-none">
+                {tabs.map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  const isComplete = completedTabs.includes(tab.id);
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabChange(tab.id)}
+                      className={`content-tab flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-medium whitespace-nowrap transition-colors min-h-[44px] ${isActive ? 'active text-foreground' : 'text-muted-foreground/50 hover:text-muted-foreground'}`}>
+                      {isActive && <tab.icon className="w-3.5 h-3.5" />}
+                      {tab.label}
+                      {isComplete && !isActive && (
+                        <Check className="w-3 h-3 text-success/50 ml-0.5" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -693,21 +670,20 @@ export default function ModulePage() {
             {/* Deep Dive button for modules with micro-lessons */}
             {microLessonsByModule[module.id] && (
               <div className="mt-12 pt-8 border-t border-border/50">
-                <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
+                <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-primary" />
                   {t("module.deepDive")}
-                </h3>
+                </h2>
                 <div className="rounded-xl p-6 border border-border/50 bg-card/50">
                   <p className="text-sm text-muted-foreground/80 mb-4">
                     {t("module.deepDiveDesc", { count: microLessonsByModule[module.id].groups?.reduce((sum, g) => sum + g.lessons.length, 0) || 0 })}
                   </p>
-                  <Link href={`/module/${module.id}/lesson/${microLessonsByModule[module.id].groups?.[0]?.lessons?.[0]?.id || ''}`}>
-                    <button className="w-full py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 hover:brightness-110 shadow-lg shadow-primary/20"
-                      style={{ background: 'linear-gradient(135deg, #E8441A, #FF6B35)', color: 'white' }}>
-                      <BookOpen className="w-4 h-4" />
+                  <Button asChild variant="brand" className="h-auto w-full rounded-xl py-3 text-sm font-semibold">
+                    <Link href={`/module/${module.id}/lesson/${microLessonsByModule[module.id].groups?.[0]?.lessons?.[0]?.id || ''}`}>
+                      <BookOpen className="w-4 h-4" aria-hidden="true" />
                       {t("module.enterDeepDive")}
-                    </button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               </div>
             )}
@@ -715,33 +691,30 @@ export default function ModulePage() {
             {/* Navigation */}
             <div className="flex items-center justify-between mt-12 pt-8 border-t border-border/50">
               {prevModule ? (
-                <Link href={`/module/${prevModule.id}`}>
-                  <button className="flex items-center gap-2 text-sm text-muted-foreground/70 hover:text-foreground transition-colors">
-                    <ChevronLeft className="w-4 h-4" />
-                    <div className="text-left">
-                      <div className="text-xs text-muted-foreground/40">{t("module.prevChapter")}</div>
-                      <div>{prevModule.title}</div>
-                    </div>
-                  </button>
+                <Link href={`/module/${prevModule.id}`}
+                  className="flex items-center gap-2 text-sm text-muted-foreground/70 hover:text-foreground transition-colors">
+                  <ChevronLeft className="w-4 h-4" aria-hidden="true" />
+                  <div className="text-left">
+                    <div className="text-xs text-muted-foreground/40">{t("module.prevChapter")}</div>
+                    <div>{prevModule.title}</div>
+                  </div>
                 </Link>
               ) : (
-                <Link href="/">
-                  <button className="flex items-center gap-2 text-sm text-muted-foreground/70 hover:text-foreground transition-colors">
-                    <ArrowLeft className="w-4 h-4" />
-                    {t("module.backHome")}
-                  </button>
+                <Link href="/"
+                  className="flex items-center gap-2 text-sm text-muted-foreground/70 hover:text-foreground transition-colors">
+                  <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+                  {t("module.backHome")}
                 </Link>
               )}
 
               {nextModule && (
-                <Link href={`/module/${nextModule.id}`}>
-                  <button className="flex items-center gap-2 text-sm text-muted-foreground/70 hover:text-foreground transition-colors">
-                    <div className="text-right">
-                      <div className="text-xs text-muted-foreground/40">{t("module.nextChapter")}</div>
-                      <div>{nextModule.title}</div>
-                    </div>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
+                <Link href={`/module/${nextModule.id}`}
+                  className="flex items-center gap-2 text-sm text-muted-foreground/70 hover:text-foreground transition-colors">
+                  <div className="text-right">
+                    <div className="text-xs text-muted-foreground/40">{t("module.nextChapter")}</div>
+                    <div>{nextModule.title}</div>
+                  </div>
+                  <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </Link>
               )}
             </div>
@@ -760,8 +733,8 @@ export default function ModulePage() {
                 <span className="text-sm font-semibold text-foreground">{t("module.notesTitle")}</span>
                 <span className="text-[10px] text-muted-foreground/50 ml-1">{module?.title}</span>
               </div>
-              <button onClick={() => setNotesOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
-                <X className="w-4 h-4" />
+              <button onClick={() => setNotesOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={t("module.closeNotes") || "Close notes"}>
+                <X className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
             <div className="flex-1 p-4">

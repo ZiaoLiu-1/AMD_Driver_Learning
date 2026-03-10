@@ -8,6 +8,7 @@ import { QuestionCard } from '@/components/assessment/QuestionCard';
 import { AssessmentResult } from '@/components/assessment/AssessmentResult';
 import type { Locale } from '@/data/curriculum_index';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 export default function AssessmentPage() {
   const { locale } = useLocale();
@@ -47,8 +48,8 @@ export default function AssessmentPage() {
         <header className="sticky top-0 z-50 border-b border-border/50 backdrop-blur-md bg-background/80">
           <div className="max-w-5xl mx-auto px-6 h-14 flex items-center gap-3">
             <Link href="/">
-              <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center gap-1">
-                <ArrowLeft className="w-3.5 h-3.5" />
+              <span className="min-h-[44px] text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center gap-1">
+                <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
                 {t('nav.home') || 'Home'}
               </span>
             </Link>
@@ -58,8 +59,8 @@ export default function AssessmentPage() {
         <main className="max-w-4xl mx-auto px-6 py-12 pb-24">
           <div className="mb-12">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-orange-500/10 border border-orange-500/20">
-                <ClipboardCheck className="w-6 h-6 text-orange-500" />
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20">
+                <ClipboardCheck className="w-6 h-6 text-primary" />
               </div>
               <h1 className="text-3xl font-bold tracking-tight">{t('assessment.pageTitle') || 'Mastery Assessment'}</h1>
             </div>
@@ -67,13 +68,14 @@ export default function AssessmentPage() {
               {t('assessment.pageSubtitle') || 'Test your knowledge of the AMD linux driver stack with these interview-style questions.'}
             </p>
 
-            <button
+            <Button
               onClick={startAssessment}
-              className="w-full sm:w-auto px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 shadow-lg shadow-orange-500/20"
+              variant="brand"
+              className="h-auto w-full rounded-xl px-8 py-4 font-semibold sm:w-auto"
             >
-              <Play className="w-5 h-5 fill-current" />
-              Start Assessment
-            </button>
+              <Play className="w-5 h-5 fill-current" aria-hidden="true" />
+              {t('assessment.startButton') || 'Start Assessment'}
+            </Button>
           </div>
 
           <section>
@@ -81,13 +83,13 @@ export default function AssessmentPage() {
             <div className="grid gap-6 sm:grid-cols-2">
               {checklists.map((cl) => (
                 <div key={cl.phaseId} className="border border-border/50 bg-card rounded-2xl p-6 shadow-sm">
-                  <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-orange-500/10 text-orange-600 mb-4">
+                  <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/10 text-primary mb-4">
                     Phase {cl.phaseId.replace('phase-', '')}
                   </div>
                   <div className="space-y-3">
                     {cl.items.map((item) => (
                       <div key={item.id} className="flex items-start gap-3 text-sm">
-                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500/50 mt-1.5 shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary/50 mt-1.5 shrink-0" />
                         <span className="text-muted-foreground">
                           {item.description}
                         </span>
@@ -136,8 +138,8 @@ export default function AssessmentPage() {
       <header className="sticky top-0 z-50 border-b border-border/50 backdrop-blur-md bg-background/80">
         <div className="max-w-3xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button onClick={() => setState('intro')} className="p-1.5 rounded hover:bg-muted text-muted-foreground transition-colors hover:text-foreground">
-              <ArrowLeft className="w-4 h-4" />
+            <button onClick={() => setState('intro')} className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded hover:bg-muted text-muted-foreground transition-colors hover:text-foreground" aria-label={t('assessment.backToIntro') || 'Back to introduction'}>
+              <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             </button>
             <span className="text-sm font-semibold truncate">{t('assessment.pageTitle') || 'Mastery Assessment'}</span>
           </div>
@@ -147,7 +149,7 @@ export default function AssessmentPage() {
             </span>
             <div className="w-32 h-1.5 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-orange-500 transition-all duration-500"
+                className="h-full bg-primary transition-[width] duration-500"
                 style={{ width: `${progressPct}%` }}
               />
             </div>

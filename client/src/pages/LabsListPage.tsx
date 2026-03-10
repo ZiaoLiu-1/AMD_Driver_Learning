@@ -5,13 +5,7 @@ import { getLabs } from '@/data/labs';
 import { ArrowLeft, Clock, FlaskConical, CheckCircle2 } from 'lucide-react';
 import { useLabProgress } from '@/hooks/useLabProgress';
 import type { Locale } from '@/data/curriculum_index';
-
-const difficultyColors = {
-  beginner: 'text-green-600 bg-green-500/10 border-green-500/20',
-  intermediate: 'text-yellow-600 bg-yellow-500/10 border-yellow-500/20',
-  advanced: 'text-red-600 bg-red-500/10 border-red-500/20',
-  expert: 'text-purple-600 bg-purple-500/10 border-purple-500/20',
-};
+import { DifficultyBadge, moduleDifficultyTones } from '@/components/ui/difficulty-badge';
 
 export default function LabsListPage() {
   const { locale } = useLocale();
@@ -26,8 +20,8 @@ export default function LabsListPage() {
       <header className="sticky top-0 z-50 border-b border-border/50 backdrop-blur-md bg-background/80">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center gap-3">
           <Link href="/">
-            <span className="text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center gap-1">
-              <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="min-h-[44px] text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center gap-1">
+              <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
               {t('nav.home') || 'Home'}
             </span>
           </Link>
@@ -38,8 +32,8 @@ export default function LabsListPage() {
         {/* Hero Section */}
         <div className="mb-12 border-b border-border/50 pb-8">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-orange-500/10 border border-orange-500/20">
-              <FlaskConical className="w-6 h-6 text-orange-500" />
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-primary/10 border border-primary/20">
+              <FlaskConical className="w-6 h-6 text-primary" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight">{t('labs.pageTitle') || 'Engineering Labs'}</h1>
           </div>
@@ -68,25 +62,25 @@ export default function LabsListPage() {
             return (
               <Link key={lab.id} href={`/labs/${lab.id}`}>
                 <div
-                  className={`relative flex flex-col h-full rounded-2xl p-6 border transition-all cursor-pointer group hover:-translate-y-1 ${isCompleted
-                    ? 'bg-card border-green-500/30'
-                    : 'bg-card/40 border-border/50 hover:border-orange-500/50 hover:bg-card/80'
+                  className={`relative flex flex-col h-full rounded-2xl p-6 border transition-[transform,border-color,background-color] cursor-pointer group hover:-translate-y-1 ${isCompleted
+                    ? 'bg-card border-success/30'
+                    : 'bg-card/40 border-border/50 hover:border-primary/50 hover:bg-card/80'
                     }`}
                 >
                   {isCompleted && (
                     <div className="absolute top-4 right-4">
-                      <CheckCircle2 className="w-6 h-6 text-green-500" />
+                      <CheckCircle2 className="w-6 h-6 text-success" />
                     </div>
                   )}
 
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       {lab.phaseId && (
-                        <div className="mb-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-orange-500/10 text-orange-600 group-hover:bg-orange-500 group-hover:text-white transition-colors">
+                        <div className="mb-2 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                           Phase {lab.phaseId.replace('phase-', '')}
                         </div>
                       )}
-                      <h2 className="text-lg font-semibold group-hover:text-orange-500 transition-colors pr-8 leading-tight">
+                      <h2 className="text-lg font-semibold group-hover:text-primary transition-colors pr-8 leading-tight">
                         {lab.title}
                       </h2>
                     </div>
@@ -98,9 +92,9 @@ export default function LabsListPage() {
 
                   <div className="mt-auto pt-4 border-t border-border/50 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className={`px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider ${difficultyColors[lab.difficulty]}`}>
+                      <DifficultyBadge tone={moduleDifficultyTones[lab.difficulty]} uppercase>
                         {lab.difficulty}
-                      </span>
+                      </DifficultyBadge>
                       <span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded">
                         <Clock className="w-3 h-3" />
                         {lab.estimatedMinutes}m

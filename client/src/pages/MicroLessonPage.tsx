@@ -13,13 +13,21 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { SearchModal } from "@/components/SearchModal";
 import { DynamicIcon } from "@/components/DynamicIcon";
+import { Button } from "@/components/ui/button";
+import { CopyCodeBlock } from "@/components/shared/CopyCodeBlock";
+import {
+  DifficultyBadge as DifficultyPill,
+  type DifficultyTone,
+  interviewDifficultyTones,
+  lessonDifficultyTones,
+} from "@/components/ui/difficulty-badge";
 import { useSearchHighlight } from "@/lib/highlight";
 import { getCurriculum } from "@/data/curriculum_index";
-import { getMicroLessonsByModule } from "@/data/micro_lessons_index";
+import { getMicroLessonsByModule, isMicroLessonLocalized } from "@/data/micro_lessons_index";
 import type { MicroLesson, MicroLessonGroup, MicroLessonModule } from "@/data/micro_lesson_types";
 import {
   BookOpen, Code2, Cpu, Target, ChevronLeft, ChevronRight,
-  Clock, Copy, Check, Lightbulb, Wrench, FlaskConical,
+  Clock, Check, Lightbulb, Wrench, FlaskConical,
   ArrowLeft, Bug, MessageSquare, X, Menu, CheckCircle2, Circle, ChevronDown,
   Sun, Moon, Search, Languages
 } from "lucide-react";
@@ -75,30 +83,16 @@ function getDurationDisplay(lesson: MicroLesson): string {
 
 // ─── Code Block ─────────────────────────────────────────────
 function CodeBlock({ code, language = "c" }: { code: string; language?: string }) {
-  const [copied, setCopied] = useState(false);
   const { t } = useTranslation();
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
   return (
-    <div className="relative group rounded-xl overflow-hidden border border-border/40"
-      style={{ background: "var(--card)" }}>
-      <div className="flex items-center justify-between px-4 py-2 border-b border-border/30"
-        style={{ background: "var(--muted)" }}>
-        <span className="text-xs font-mono text-muted-foreground/50">{language}</span>
-        <button onClick={handleCopy}
-          className="flex items-center gap-1.5 text-xs text-muted-foreground/40 hover:text-muted-foreground transition-colors">
-          {copied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
-          {copied ? t("microLesson.copied") : t("microLesson.copy")}
-        </button>
-      </div>
-      <pre className="p-4 overflow-x-auto text-sm leading-relaxed"
-        style={{ fontFamily: "'JetBrains Mono', 'Fira Code', monospace", color: "oklch(0.82 0.04 255)" }}>
-        <code>{code}</code>
-      </pre>
-    </div>
+    <CopyCodeBlock
+      code={code}
+      language={language}
+      copyLabel={t("microLesson.copy")}
+      copiedLabel={t("microLesson.copied")}
+      className="border-border/40"
+      codeClassName="text-sm"
+    />
   );
 }
 
@@ -138,25 +132,21 @@ const sectionLabelKeys = {
   debugExercise: "microLesson.sectionDebug",
   interviewQ: "microLesson.sectionInterview",
 };
-const sectionStyles: Record<keyof typeof sectionLabelKeys, { icon: typeof BookOpen; color: string; bg: string }> = {
-  concept: { icon: BookOpen, color: "oklch(0.70 0.15 200)", bg: "oklch(0.55 0.18 200 / 0.12)" },
-  diagram: { icon: Cpu, color: "oklch(0.72 0.18 290)", bg: "oklch(0.55 0.18 290 / 0.12)" },
-  codeWalk: { icon: Code2, color: "oklch(0.75 0.18 35)", bg: "oklch(0.62 0.22 35 / 0.12)" },
-  miniLab: { icon: FlaskConical, color: "oklch(0.70 0.18 145)", bg: "oklch(0.55 0.18 145 / 0.12)" },
-  debugExercise: { icon: Bug, color: "oklch(0.70 0.15 60)", bg: "oklch(0.55 0.15 60 / 0.12)" },
-  interviewQ: { icon: MessageSquare, color: "oklch(0.65 0.01 240)", bg: "oklch(0.55 0.01 240 / 0.12)" },
+const sectionIcons: Record<keyof typeof sectionLabelKeys, typeof BookOpen> = {
+  concept: BookOpen,
+  diagram: Cpu,
+  codeWalk: Code2,
+  miniLab: FlaskConical,
+  debugExercise: Bug,
+  interviewQ: MessageSquare,
 };
 function SectionHeader({ type }: { type: keyof typeof sectionLabelKeys }) {
   const { t } = useTranslation();
-  const cfg = { ...sectionStyles[type], label: t(sectionLabelKeys[type]) };
-  const Icon = cfg.icon as typeof BookOpen;
+  const Icon = sectionIcons[type];
   return (
-    <div className="flex items-center gap-3 pb-3 border-b border-border/30">
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-        style={{ background: cfg.bg }}>
-        <Icon className="w-4 h-4" style={{ color: cfg.color }} />
-      </div>
-      <span className="text-sm font-bold tracking-wide" style={{ color: cfg.color }}>{cfg.label}</span>
+    <div className="flex items-center gap-2.5 pb-3 border-b border-border/30">
+      <Icon className="w-4 h-4 text-muted-foreground/60 flex-shrink-0" />
+      <span className="text-sm font-bold text-foreground tracking-wide">{t(sectionLabelKeys[type])}</span>
     </div>
   );
 }
@@ -165,20 +155,23 @@ function SectionHeader({ type }: { type: keyof typeof sectionLabelKeys }) {
 function DifficultyBadge({ difficulty }: { difficulty?: string }) {
   const { t } = useTranslation();
   if (!difficulty) return null;
-  const colorMap: Record<string, { bg: string; color: string; labelKey: string }> = {
-    easy: { bg: "oklch(0.55 0.18 145 / 0.12)", color: "oklch(0.70 0.18 145)", labelKey: "module.easy" },
-    beginner: { bg: "oklch(0.55 0.18 145 / 0.12)", color: "oklch(0.70 0.18 145)", labelKey: "common.beginner" },
-    medium: { bg: "oklch(0.62 0.22 35 / 0.12)", color: "oklch(0.75 0.18 35)", labelKey: "module.medium" },
-    intermediate: { bg: "oklch(0.55 0.18 200 / 0.12)", color: "oklch(0.70 0.15 200)", labelKey: "common.intermediate" },
-    hard: { bg: "oklch(0.55 0.18 0 / 0.12)", color: "oklch(0.70 0.18 0)", labelKey: "module.hard" },
-    advanced: { bg: "oklch(0.55 0.18 0 / 0.12)", color: "oklch(0.70 0.18 0)", labelKey: "common.advanced" },
+  const tone =
+    (interviewDifficultyTones as Record<string, DifficultyTone>)[difficulty] ??
+    (lessonDifficultyTones as Record<string, DifficultyTone>)[difficulty] ??
+    lessonDifficultyTones.beginner;
+  const labelMap: Record<string, string> = {
+    easy: t("module.easy"),
+    beginner: t("common.beginner"),
+    medium: t("module.medium"),
+    intermediate: t("common.intermediate"),
+    hard: t("module.hard"),
+    advanced: t("common.advanced"),
+    expert: t("common.expert"),
   };
-  const cfg = colorMap[difficulty] || colorMap.medium;
   return (
-    <span className="text-[10px] px-2 py-0.5 rounded font-mono"
-      style={{ background: cfg.bg, color: cfg.color }}>
-      {t(cfg.labelKey)}
-    </span>
+    <DifficultyPill tone={tone}>
+      {labelMap[difficulty] ?? difficulty}
+    </DifficultyPill>
   );
 }
 
@@ -219,7 +212,7 @@ function LessonSidebar({
         <Link href={`/module/${moduleId}`} onClick={onClose}>
           <div className="flex items-center gap-2 cursor-pointer">
             <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0"
-              style={{ background: "linear-gradient(135deg, #E8441A, #FF6B35)" }}>
+              style={{ background: "linear-gradient(135deg, var(--primary), var(--brand-end))" }}>
               <Cpu className="w-4 h-4 text-white" />
             </div>
             <div>
@@ -231,8 +224,8 @@ function LessonSidebar({
           </div>
         </Link>
         {onClose && (
-          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors" aria-label={t("microLesson.closeSidebar") || "Close sidebar"}>
+            <X className="w-4 h-4" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -244,8 +237,8 @@ function LessonSidebar({
           </span>
         </div>
         <div className="h-1 rounded-full bg-muted overflow-hidden">
-          <div className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0}%`, background: "linear-gradient(90deg, #E8441A, #FF6B35)" }} />
+          <div className="h-full rounded-full transition-[width] duration-500"
+            style={{ width: `${totalLessons > 0 ? (completedCount / totalLessons) * 100 : 0}%`, background: "linear-gradient(90deg, var(--primary), var(--brand-end))" }} />
         </div>
       </div>
       <div className="flex-1 overflow-y-auto py-2">
@@ -258,7 +251,7 @@ function LessonSidebar({
             <div key={groupId} className="mb-1">
               <button
                 onClick={() => toggleGroup(groupId)}
-                className={`w-full text-left px-4 py-2.5 flex items-center gap-2 transition-all ${hasActive ? "text-foreground/90" : "text-muted-foreground/60 hover:text-muted-foreground/80"
+                className={`w-full text-left px-4 py-2.5 flex items-center gap-2 transition-[color,background-color,border-color] ${hasActive ? "text-foreground/90" : "text-muted-foreground/60 hover:text-muted-foreground/80"
                   }`}
                 style={hasActive ? { background: "oklch(0.62 0.22 35 / 0.05)" } : {}}>
                 {group.icon && <DynamicIcon name={group.icon} className="w-4 h-4 text-foreground/70" />}
@@ -278,7 +271,7 @@ function LessonSidebar({
                       <button
                         key={l.id}
                         onClick={() => { navigate(`/module/${moduleId}/lesson/${l.id}`); onClose?.(); }}
-                        className={`w-full text-left px-4 py-2 transition-all flex items-start gap-2 ${isActive
+                        className={`w-full text-left px-4 py-2 transition-[color,background-color,border-color] flex items-start gap-2 ${isActive
                           ? "text-foreground"
                           : "text-muted-foreground/55 hover:text-muted-foreground/85 hover:bg-white/[0.02]"
                           }`}
@@ -357,7 +350,7 @@ export default function MicroLessonPage() {
         <div className="text-center space-y-4">
           <div className="text-4xl"></div>
           <h2 className="text-xl font-bold text-foreground">{t("microLesson.moduleNotFound")}</h2>
-          <Link href="/"><button className="text-sm text-muted-foreground/70 hover:text-foreground transition-colors flex items-center gap-2 mx-auto"><ArrowLeft className="w-4 h-4" /> {t("microLesson.backHome")}</button></Link>
+          <Link href="/" className="text-sm text-muted-foreground/70 hover:text-foreground transition-colors flex items-center gap-2 mx-auto"><ArrowLeft className="w-4 h-4" aria-hidden="true" /> {t("microLesson.backHome")}</Link>
         </div>
       </div>
     );
@@ -373,7 +366,7 @@ export default function MicroLessonPage() {
         <div className="text-center space-y-4">
           <div className="text-4xl"></div>
           <h2 className="text-xl font-bold text-foreground">{t("microLesson.lessonNotFound")}</h2>
-          <Link href={`/module/${moduleId}`}><button className="text-sm text-muted-foreground/70 hover:text-foreground transition-colors flex items-center gap-2 mx-auto"><ArrowLeft className="w-4 h-4" /> {t("microLesson.backToModule")}</button></Link>
+          <Link href={`/module/${moduleId}`} className="text-sm text-muted-foreground/70 hover:text-foreground transition-colors flex items-center gap-2 mx-auto"><ArrowLeft className="w-4 h-4" aria-hidden="true" /> {t("microLesson.backToModule")}</Link>
         </div>
       </div>
     );
@@ -392,12 +385,12 @@ export default function MicroLessonPage() {
       <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
       <div className="min-h-screen flex bg-background">
         {/* Desktop Sidebar */}
-        <aside className="hidden md:flex flex-col w-64 flex-shrink-0 border-r border-border/50 h-screen sticky top-0 overflow-hidden">
+        <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 border-r border-border/50 h-screen sticky top-0 overflow-hidden">
           <LessonSidebar moduleId={moduleId} mod={mod} curriculum={curriculum} currentLessonId={lesson.id} />
         </aside>
         {/* Mobile Sidebar Overlay */}
         {sidebarOpen && (
-          <div className="fixed inset-0 z-50 md:hidden">
+          <div className="fixed inset-0 z-50 lg:hidden">
             <div className="absolute inset-0 bg-black/60" onClick={() => setSidebarOpen(false)} />
             <div className="absolute left-0 top-0 bottom-0 w-72">
               <LessonSidebar moduleId={moduleId} mod={mod} curriculum={curriculum} currentLessonId={lesson.id} onClose={() => setSidebarOpen(false)} />
@@ -408,53 +401,70 @@ export default function MicroLessonPage() {
         <main className="flex-1 min-w-0 flex flex-col">
           {/* Top Bar */}
           <div className="sticky top-0 z-30 border-b border-border/50 flex-shrink-0 backdrop-blur-md bg-background/95">
-            <div className="px-4 md:px-8 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-muted-foreground/50 min-w-0">
-                <button onClick={() => setSidebarOpen(true)} className="md:hidden text-muted-foreground/60 hover:text-foreground mr-1">
-                  <Menu className="w-4 h-4" />
+            <div className="px-3 lg:px-8 py-2 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 text-xs text-muted-foreground/50 min-w-0">
+                <button onClick={() => setSidebarOpen(true)} className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center -ml-1 text-muted-foreground/60 hover:text-foreground" aria-label={t("microLesson.openNav") || "Open lesson navigation"}>
+                  <Menu className="w-5 h-5" aria-hidden="true" />
                 </button>
-                <Link href="/"><span className="hover:text-muted-foreground transition-colors cursor-pointer">首页</span></Link>
-                <ChevronRight className="w-3 h-3 flex-shrink-0" />
-                <Link href={`/module/${moduleId}`}><span className="hover:text-muted-foreground transition-colors cursor-pointer truncate max-w-[80px]">{curriculumModule?.title}</span></Link>
+                <Link href="/" className="hidden sm:inline"><span className="hover:text-muted-foreground transition-colors cursor-pointer">{t("nav.home") || "Home"}</span></Link>
+                <ChevronRight className="w-3 h-3 flex-shrink-0 hidden sm:block" />
+                <Link href={`/module/${moduleId}`}><span className="hover:text-muted-foreground transition-colors cursor-pointer truncate max-w-[100px] sm:max-w-[140px]">{curriculumModule?.title}</span></Link>
                 <ChevronRight className="w-3 h-3 flex-shrink-0" />
                 {lesson.number && (
-                  <span className="text-foreground/70 font-mono truncate max-w-[120px]">{lesson.number}</span>
+                  <span className="text-foreground/70 font-mono truncate max-w-[60px] sm:max-w-[120px]">{lesson.number}</span>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                  title="搜索 (⌘K)">
-                  <Search className="w-4 h-4" />
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  aria-label={t("microLesson.search") || "Search (⌘K)"}>
+                  <Search className="w-4 h-4" aria-hidden="true" />
                 </button>
-                <button onClick={switchLocale} className="flex items-center justify-center gap-1 w-14 py-1.5 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
+                <button onClick={switchLocale} className="hidden sm:flex items-center justify-center gap-1 min-h-[44px] px-3 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
                   <Languages className="w-3.5 h-3.5" />
                   {locale === "zh" ? "En" : "中"}
                 </button>
                 <button
                   onClick={toggleTheme}
-                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                  title="切换主题"
+                  className="hidden sm:flex min-w-[44px] min-h-[44px] items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  aria-label={theme === 'dark' ? (t("nav.switchToLight") || "Switch to light theme") : (t("nav.switchToDark") || "Switch to dark theme")}
                 >
-                  {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+                  {theme === 'dark' ? <Sun className="w-4 h-4" aria-hidden="true" /> : <Moon className="w-4 h-4" aria-hidden="true" />}
                 </button>
-                <div className="w-px h-4 bg-border mx-1" />
+                <div className="w-px h-4 bg-border mx-0.5 hidden sm:block" />
                 <button onClick={() => prevLesson && navigate(`/module/${moduleId}/lesson/${prevLesson.id}`)} disabled={!prevLesson}
-                  className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-foreground disabled:opacity-20 transition-colors">
-                  <ChevronLeft className="w-4 h-4" />
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-muted-foreground/50 hover:text-foreground disabled:opacity-30 transition-colors"
+                  aria-label={t("microLesson.prevLesson") || "Previous lesson"}>
+                  <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                 </button>
-                <span className="text-xs font-mono text-muted-foreground/40 px-2">{currentIndex + 1} / {allLessons.length}</span>
+                <span className="text-xs font-mono text-muted-foreground/40 hidden sm:block">{currentIndex + 1}/{allLessons.length}</span>
                 <button onClick={() => nextLesson && navigate(`/module/${moduleId}/lesson/${nextLesson.id}`)} disabled={!nextLesson}
-                  className="p-1.5 rounded-lg text-muted-foreground/50 hover:text-foreground disabled:opacity-20 transition-colors">
-                  <ChevronRight className="w-4 h-4" />
+                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-muted-foreground/50 hover:text-foreground disabled:opacity-30 transition-colors"
+                  aria-label={t("microLesson.nextLesson") || "Next lesson"}>
+                  <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </button>
               </div>
             </div>
           </div>
 
           {/* Lesson Content */}
-          <div ref={contentRef} className="max-w-3xl mx-auto w-full px-4 md:px-8 py-8 space-y-10">
+          <div ref={contentRef} className="max-w-3xl mx-auto w-full px-4 lg:px-8 py-6 sm:py-8 space-y-8 sm:space-y-10">
+            {/* Locale mismatch notice */}
+            {!isMicroLessonLocalized(locale as "zh" | "en") && (
+              <div className="rounded-xl p-4 border border-warning/30 bg-warning/5 flex items-start gap-3" role="alert">
+                <Languages className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" aria-hidden="true" />
+                <div>
+                  <p className="text-xs font-semibold text-warning mb-0.5">
+                    {t("microLesson.localeMismatchTitle") || "Content available in Chinese only"}
+                  </p>
+                  <p className="text-xs text-muted-foreground/70">
+                    {t("microLesson.localeMismatchDesc") || "This micro-lesson has not been translated to English yet. The content below is displayed in Chinese."}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Lesson Header */}
             <div className="space-y-3">
               <div className="flex items-center gap-3 flex-wrap">
@@ -465,7 +475,7 @@ export default function MicroLessonPage() {
                   </span>
                 )}
                 <span className="text-xs text-muted-foreground/40 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />{getDurationDisplay(lesson)} 分钟
+                  <Clock className="w-3 h-3" />{getDurationDisplay(lesson)} {t("microLesson.minutes") || "min"}
                 </span>
                 {lesson.difficulty && <DifficultyBadge difficulty={lesson.difficulty} />}
               </div>
@@ -508,7 +518,7 @@ export default function MicroLessonPage() {
             <section className="space-y-4">
               <SectionHeader type="diagram" />
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground/80">{lesson.diagram.title}</h3>
+                <h2 className="text-sm font-semibold text-foreground/80">{lesson.diagram.title}</h2>
                 <pre className="ascii-diagram">{lesson.diagram.content}</pre>
                 {lesson.diagram.caption && (
                   <p className="text-xs text-muted-foreground/55 italic pl-1">{lesson.diagram.caption}</p>
@@ -521,7 +531,7 @@ export default function MicroLessonPage() {
               <SectionHeader type="codeWalk" />
               <div className="space-y-3">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-sm font-semibold text-foreground/80">{lesson.codeWalk.title}</h3>
+                  <h2 className="text-sm font-semibold text-foreground/80">{lesson.codeWalk.title}</h2>
                   {lesson.codeWalk.file && (
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded border border-border/30 text-muted-foreground/40"
                       style={{ background: "var(--card)" }}>{lesson.codeWalk.file}</span>
@@ -645,22 +655,22 @@ export default function MicroLessonPage() {
             )}
 
             {/* Navigation Footer */}
-            <div className="flex items-center justify-between pt-6 border-t border-border/30">
+            <div className="flex items-center justify-between gap-3 pt-6 border-t border-border/30">
               <button
                 onClick={() => prevLesson && navigate(`/module/${moduleId}/lesson/${prevLesson.id}`)}
                 disabled={!prevLesson}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/40 text-sm text-muted-foreground/70 hover:text-foreground hover:border-border/70 disabled:opacity-30 transition-all"
+                className="flex items-center gap-2 min-h-[44px] px-3 sm:px-4 py-2.5 rounded-xl border border-border/40 text-sm text-muted-foreground/70 hover:text-foreground hover:border-border/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-0"
                 style={{ background: "var(--card)" }}>
-                <ChevronLeft className="w-4 h-4" />
-                {prevLesson ? <span className="max-w-[120px] truncate">{prevLesson.title}</span> : t("microLesson.prevLesson")}
+                <ChevronLeft className="w-4 h-4 flex-shrink-0" />
+                {prevLesson ? <span className="max-w-[80px] sm:max-w-[140px] truncate">{prevLesson.title}</span> : t("microLesson.prevLesson")}
               </button>
               <button
                 onClick={() => nextLesson && navigate(`/module/${moduleId}/lesson/${nextLesson.id}`)}
                 disabled={!nextLesson}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border/40 text-sm text-muted-foreground/70 hover:text-foreground hover:border-border/70 disabled:opacity-30 transition-all"
+                className="flex items-center gap-2 min-h-[44px] px-3 sm:px-4 py-2.5 rounded-xl border border-border/40 text-sm text-muted-foreground/70 hover:text-foreground hover:border-border/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-w-0"
                 style={{ background: "var(--card)" }}>
-                {nextLesson ? <span className="max-w-[120px] truncate">{nextLesson.title}</span> : t("microLesson.nextLesson")}
-                <ChevronRight className="w-4 h-4" />
+                {nextLesson ? <span className="max-w-[80px] sm:max-w-[140px] truncate">{nextLesson.title}</span> : t("microLesson.nextLesson")}
+                <ChevronRight className="w-4 h-4 flex-shrink-0" />
               </button>
             </div>
 
@@ -676,7 +686,7 @@ export default function MicroLessonPage() {
               ) : (
                 <button
                   onClick={() => markLessonComplete(moduleId, lesson.id)}
-                  className="flex items-center gap-2 text-sm font-semibold text-white px-6 py-2.5 rounded-xl transition-all hover:brightness-110"
+                  className="flex items-center gap-2 text-sm font-semibold text-white px-6 py-2.5 rounded-xl transition-[filter] hover:brightness-110"
                   style={{ background: "linear-gradient(135deg, oklch(0.55 0.18 145), oklch(0.65 0.18 145))" }}>
                   <Check className="w-4 h-4" />
                   {t("microLesson.markComplete")}
@@ -690,7 +700,7 @@ export default function MicroLessonPage() {
                 style={{ background: "oklch(0.55 0.18 145 / 0.05)", borderColor: "oklch(0.55 0.18 145 / 0.25)" }}>
                 <div className="flex items-center gap-2">
                   <Wrench className="w-5 h-5" style={{ color: "oklch(0.70 0.18 145)" }} />
-                  <h3 className="text-sm font-bold" style={{ color: "oklch(0.70 0.18 145)" }}>{t("microLesson.checklistTitle")}</h3>
+                  <h2 className="text-sm font-bold" style={{ color: "oklch(0.70 0.18 145)" }}>{t("microLesson.checklistTitle")}</h2>
                 </div>
                 <p className="text-xs text-muted-foreground/60">{t("microLesson.checklistDesc")}</p>
                 <div className="space-y-2">
@@ -701,12 +711,9 @@ export default function MicroLessonPage() {
                     </div>
                   ))}
                 </div>
-                <Link href={`/module/${moduleId}`}>
-                  <button className="mt-2 w-full py-2.5 rounded-xl text-sm font-semibold transition-all"
-                    style={{ background: "linear-gradient(135deg, #E8441A, #FF6B35)", color: "white" }}>
-                    {t("microLesson.finishModule")}
-                  </button>
-                </Link>
+                <Button asChild variant="brand" className="mt-2 h-auto w-full rounded-xl py-2.5 text-sm font-semibold">
+                  <Link href={`/module/${moduleId}`}>{t("microLesson.finishModule")}</Link>
+                </Button>
               </div>
             )}
           </div>

@@ -39,9 +39,14 @@ export type Locale = "zh" | "en";
 
 /**
  * Returns micro-lessons for the given locale.
- * English uses the same content for now (lessons have titleEn for display).
+ * English locale currently uses the same Chinese content — callers should
+ * display a locale-mismatch notice when `locale === "en"`.
  * Full English micro-lesson content can be added to data/en/ when ready.
  */
 export function getMicroLessonsByModule(locale: Locale): Record<string, MicroLessonModule> {
   return microLessonsZh;
+}
+
+export function isMicroLessonLocalized(locale: Locale): boolean {
+  return locale === "zh";
 }

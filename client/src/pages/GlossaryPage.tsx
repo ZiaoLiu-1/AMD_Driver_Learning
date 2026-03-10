@@ -3,15 +3,13 @@
 // ============================================================
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useSearch } from "wouter";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useSearch } from "wouter";
 import { useLocale } from "@/contexts/LocaleContext";
-import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { getCurriculum, getGlossaryByModule } from "@/data/curriculum_index";
 import type { GlossaryTerm } from "@/data/curriculum";
 import { useSearchHighlight } from "@/lib/highlight";
-import { ArrowLeft, Search, Sun, Moon, ChevronRight, X, Languages } from "lucide-react";
-import { DynamicIcon } from "@/components/DynamicIcon";
+import { Search, X } from "lucide-react";
+import { PageShell } from "@/components/layout/PageShell";
 
 type Category = GlossaryTerm["category"];
 const categoryKeys: Record<Category, string> = {
@@ -33,25 +31,17 @@ const categoryColors: Record<Category, { color: string; bg: string }> = {
 
 interface FlatTerm extends GlossaryTerm {
   moduleId: string;
-  moduleTitle: string;
-  moduleIcon: string;
 }
 
 // Flatten all glossary terms across modules
 function buildTermList(
   glossaryByModule: Record<string, GlossaryTerm[]>,
-  curriculum: { id: string; title: string; icon?: string }[]
+  _curriculum: { id: string; title: string; icon?: string }[]
 ): FlatTerm[] {
   const terms: FlatTerm[] = [];
   for (const [moduleId, list] of Object.entries(glossaryByModule)) {
-    const mod = curriculum.find(m => m.id === moduleId);
     for (const t of list) {
-      terms.push({
-        ...t,
-        moduleId,
-        moduleTitle: mod?.title ?? moduleId,
-        moduleIcon: mod?.icon ?? "BookOpen",
-      });
+      terms.push({ ...t, moduleId });
     }
   }
   const seen = new Set<string>();
@@ -63,9 +53,7 @@ function buildTermList(
 }
 
 export default function GlossaryPage() {
-  const { theme, toggleTheme } = useTheme();
   const { locale } = useLocale();
-  const { switchLocale } = useSwitchLocale();
   const { t } = useTranslation();
   const searchString = useSearch();
 
@@ -80,7 +68,7 @@ export default function GlossaryPage() {
 
   const [query, setQuery] = useState(initialQ);
   const [activeCategory, setActiveCategory] = useState<Category | "all">("all");
-  const contentRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLElement>(null);
   useSearchHighlight(contentRef);
 
   const categoryConfig = useMemo(() => ({
@@ -121,28 +109,14 @@ export default function GlossaryPage() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Bar */}
-      <div className="sticky top-0 z-30 border-b border-border/50 backdrop-blur-md bg-background/95">
-        <div className="max-w-5xl mx-auto px-4 md:px-8 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
-            <Link href="/"><span className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1"><ArrowLeft className="w-3 h-3" /> {t("nav.home")}</span></Link>
-            <ChevronRight className="w-3 h-3" />
-            <span className="text-foreground/80 font-medium">{t("glossary.title")}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button onClick={switchLocale} className="flex items-center justify-center gap-1 w-14 py-1.5 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
-              <Languages className="w-3.5 h-3.5" />
-              {locale === "zh" ? "En" : "中"}
-            </button>
-            <button onClick={toggleTheme} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
-              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div ref={contentRef} className="max-w-5xl mx-auto px-4 md:px-8 py-10">
+    <PageShell
+      backHref="/"
+      backLabel={t("nav.home")}
+      currentLabel={t("glossary.title")}
+      contentRef={contentRef}
+      containerWidthClassName="max-w-5xl"
+      mainClassName="py-10"
+    >
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">{t("glossary.pageTitle")}</h1>
@@ -161,11 +135,11 @@ export default function GlossaryPage() {
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 placeholder={t("glossary.searchPlaceholder")}
-                className="w-full pl-9 pr-9 py-2.5 text-sm rounded-xl border border-border/60 bg-card text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all"
+                className="w-full pl-9 pr-12 py-2.5 text-sm rounded-xl border border-border/60 bg-card text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-[border-color,box-shadow]"
               />
               {query && (
-                <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-muted-foreground">
-                  <X className="w-3.5 h-3.5" />
+                <button onClick={() => setQuery("")} className="absolute right-1 top-1/2 -translate-y-1/2 min-w-[44px] min-h-[44px] flex items-center justify-center text-muted-foreground/40 hover:text-muted-foreground" aria-label={t("glossary.clearSearch") || "Clear search"}>
+                  <X className="w-4 h-4" aria-hidden="true" />
                 </button>
               )}
             </div>
@@ -173,7 +147,7 @@ export default function GlossaryPage() {
             <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 flex-shrink-0">
               <button
                 onClick={() => setActiveCategory("all")}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all border ${activeCategory === "all" ? "border-primary/50 bg-primary/10 text-primary" : "border-border/50 text-muted-foreground/60 hover:border-border"
+                className={`text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors border ${activeCategory === "all" ? "border-primary/50 bg-primary/10 text-primary" : "border-border/50 text-muted-foreground/60 hover:border-border"
                   }`}>
                 {t("glossary.all")} ({allTerms.length})
               </button>
@@ -181,7 +155,7 @@ export default function GlossaryPage() {
                 <button
                   key={cat}
                   onClick={() => setActiveCategory(cat)}
-                  className={`text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-all border ${activeCategory === cat ? "border-current" : "border-border/50 hover:border-border"
+                  className={`text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors border ${activeCategory === cat ? "border-current" : "border-border/50 hover:border-border"
                     }`}
                   style={activeCategory === cat ? { color: cfg.color, background: cfg.bg, borderColor: cfg.color } : { color: "var(--muted-foreground)" }}>
                   {cfg.label} ({categoryCounts[cat] ?? 0})
@@ -198,19 +172,52 @@ export default function GlossaryPage() {
 
         {/* Terms grid */}
         {filtered.length === 0 ? (
-          <div className="py-20 text-center text-muted-foreground/40">
-            <p className="text-sm">{t("glossary.noResults", { query })}</p>
+          <div className="rounded-2xl border border-border/50 bg-card/50 px-6 py-10 sm:px-8 sm:py-12">
+            <div className="mx-auto flex max-w-xl flex-col items-center text-center">
+              <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+                <Search className="h-6 w-6" aria-hidden="true" />
+              </div>
+              <h2 className="mb-2 text-xl font-semibold text-foreground">
+                {t("glossary.emptyTitle")}
+              </h2>
+              <p className="mb-2 text-sm leading-relaxed text-muted-foreground/80">
+                {t("glossary.noResults", { query })}
+              </p>
+              <p className="mb-6 text-xs leading-relaxed text-muted-foreground/60 sm:text-sm">
+                {t("glossary.emptyDesc")}
+              </p>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  onClick={() => {
+                    setQuery("");
+                    setActiveCategory("all");
+                  }}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                >
+                  {t("glossary.emptyReset")}
+                </button>
+                <button
+                  onClick={() => {
+                    setQuery("");
+                    setActiveCategory("kernel");
+                  }}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-border/50 px-5 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted/50"
+                >
+                  {t("glossary.emptyBrowseKernel")}
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="grid gap-2.5">
+          <div className="grid gap-2">
             {filtered.map((term) => {
               const cfg = categoryConfig[term.category];
               return (
                 <div
                   key={term.abbr}
                   id={`term-${term.abbr}`}
-                  className="flex items-start gap-4 p-4 rounded-xl border border-border/40 hover:border-border/70 transition-all bg-card/50 hover:bg-card group">
-                  {/* Abbr badge */}
+                  className="flex items-start gap-4 p-3.5 rounded-xl border border-border/40 hover:border-border/70 transition-colors bg-card/50 hover:bg-card">
                   <div className="flex-shrink-0 w-16 text-center mt-0.5">
                     <span className="inline-block font-bold font-mono text-sm px-2 py-1 rounded-lg"
                       style={{ background: cfg.bg, color: cfg.color }}>
@@ -218,35 +225,19 @@ export default function GlossaryPage() {
                     </span>
                   </div>
 
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 flex-wrap mb-1">
+                    <div className="flex items-baseline gap-2 flex-wrap mb-0.5">
                       <span className="font-semibold text-sm text-foreground/90">{term.fullEn}</span>
                       <span className="text-xs text-muted-foreground/50">·</span>
                       <span className="text-sm font-medium" style={{ color: cfg.color }}>{term.zhName}</span>
                     </div>
                     <p className="text-xs text-muted-foreground/70 leading-relaxed">{term.description}</p>
                   </div>
-
-                  {/* Meta */}
-                  <div className="flex-shrink-0 text-right hidden sm:block">
-                    <Link href={`/module/${term.moduleId}`}>
-                      <div className="text-[10px] text-muted-foreground/40 hover:text-primary transition-colors cursor-pointer flex items-center gap-1 justify-end">
-                        <DynamicIcon name={term.moduleIcon} className="w-3 h-3" />
-                        <span className="max-w-[80px] truncate">{term.moduleTitle}</span>
-                      </div>
-                    </Link>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded font-medium mt-1 inline-block"
-                      style={{ background: cfg.bg, color: cfg.color }}>
-                      {cfg.label}
-                    </span>
-                  </div>
                 </div>
               );
             })}
           </div>
         )}
-      </div>
-    </div>
+    </PageShell>
   );
 }

@@ -28,15 +28,15 @@ export function PhaseProgressOverview({ phases, getPhaseProgress, overall }: Pha
                                 <circle cx={12} cy={12} r={10} strokeWidth={3} className="stroke-muted" fill="none" />
                                 <circle
                                     cx={12} cy={12} r={10} strokeWidth={3} fill="none" strokeLinecap="round"
-                                    stroke={isCompleted ? '#22c55e' : isActive ? 'url(#phaseLine)' : 'transparent'}
+                                    stroke={isCompleted ? 'var(--success)' : isActive ? 'url(#phaseLine)' : 'transparent'}
                                     strokeDasharray={20 * Math.PI}
                                     strokeDashoffset={(20 * Math.PI) - (prog.percentage / 100) * (20 * Math.PI)}
-                                    className="transition-all duration-700"
+                                    className="transition-[stroke,stroke-dashoffset] duration-700"
                                 />
                                 <defs>
                                     <linearGradient id="phaseLine" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="#E8441A" />
-                                        <stop offset="100%" stopColor="#FF6B35" />
+                                        <stop offset="0%" stopColor="var(--primary)" />
+                                        <stop offset="100%" stopColor="var(--brand-end)" />
                                     </linearGradient>
                                 </defs>
                             </svg>

@@ -11,7 +11,7 @@ interface CheckpointProps {
 export function Checkpoint({ text, verified, onToggle }: CheckpointProps) {
     return (
         <div
-            className={`rounded-xl p-5 border transition-all cursor-pointer flex gap-4 items-start ${verified ? 'bg-green-500/10 border-green-500/30' : 'bg-green-500/5 border-green-500/10 hover:bg-green-500/10'
+            className={`rounded-xl p-5 border transition-[background-color,border-color] cursor-pointer flex gap-4 items-start ${verified ? 'bg-success/10 border-success/30' : 'bg-success/5 border-success/10 hover:bg-success/10'
                 }`}
             onClick={onToggle}
         >
@@ -19,7 +19,7 @@ export function Checkpoint({ text, verified, onToggle }: CheckpointProps) {
                 <Checkbox.Root
                     checked={verified}
                     onCheckedChange={onToggle}
-                    className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${verified ? 'bg-green-500 border-green-500 text-white' : 'border-green-500/50 hover:bg-green-500/20'
+                    className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${verified ? 'bg-success border-success text-white' : 'border-success/50 hover:bg-success/20'
                         }`}
                 >
                     <Checkbox.Indicator>
@@ -28,7 +28,7 @@ export function Checkpoint({ text, verified, onToggle }: CheckpointProps) {
                 </Checkbox.Root>
             </div>
             <div className="flex-1">
-                <div className="text-sm font-semibold text-green-600 dark:text-green-500 mb-1 flex items-center gap-1.5">
+                <div className="text-sm font-semibold text-success mb-1 flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4" />
                     Checkpoint
                 </div>
