@@ -590,7 +590,7 @@ export default function ModulePage() {
                   <button onClick={() => setNotesOpen(o => !o)} className={`min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg transition-colors ${notesOpen ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground hover:bg-muted/50"}`} aria-label={t("module.notesTitle") || "Notes"}>
                     <PenLine className="w-4 h-4" aria-hidden="true" />
                   </button>
-                  <button onClick={switchLocale} className="hidden sm:flex items-center justify-center gap-1 min-h-[44px] px-3 rounded text-xs text-muted-foreground hover:text-foreground border border-transparent hover:border-border/50 hover:bg-muted/50 transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
+                  <button onClick={switchLocale} className="hidden sm:flex w-[52px] items-center justify-center gap-1 min-h-[44px] rounded text-xs text-muted-foreground hover:text-foreground border border-transparent hover:border-border/50 hover:bg-muted/50 transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
                     <Languages className="w-3.5 h-3.5" />
                     {locale === "zh" ? "En" : "中"}
                   </button>

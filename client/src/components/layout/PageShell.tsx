@@ -58,7 +58,7 @@ export function PageShell({
 
             <button
               onClick={switchLocale}
-              className="flex min-h-[44px] items-center justify-center gap-1 rounded border border-border/50 px-3 text-xs transition-colors hover:border-border"
+              className="flex w-[52px] min-h-[44px] items-center justify-center gap-1 rounded border border-border/50 text-xs transition-colors hover:border-border"
               title={locale === "zh" ? "Switch to English" : "切换到中文"}
             >
               <Languages className="h-3.5 w-3.5" aria-hidden="true" />

@@ -421,7 +421,7 @@ export default function MicroLessonPage() {
                   aria-label={t("microLesson.search") || "Search (⌘K)"}>
                   <Search className="w-4 h-4" aria-hidden="true" />
                 </button>
-                <button onClick={switchLocale} className="hidden sm:flex items-center justify-center gap-1 min-h-[44px] px-3 rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
+                <button onClick={switchLocale} className="hidden sm:flex w-[52px] items-center justify-center gap-1 min-h-[44px] rounded text-xs border border-border/50 hover:border-border transition-colors" title={locale === "zh" ? "Switch to English" : "切换到中文"}>
                   <Languages className="w-3.5 h-3.5" />
                   {locale === "zh" ? "En" : "中"}
                 </button>
