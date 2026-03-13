@@ -33,13 +33,13 @@ export const module0MicroLessonsEn: MicroLessonModule = {
             explanation: [
               'Imagine you\'re playing a game. When the game engine calls OpenGL\'s glDrawArrays() to render a triangle, that call must pass through multiple software layers before the GPU\'s shader cores can begin working. The GPU driver is the most critical link in this chain — it is the only software that truly communicates with the GPU hardware.',
               'At the lowest level, what a GPU driver does is quite raw: it writes specific values to GPU registers through MMIO (Memory-Mapped I/O). A GPU has tens of thousands of registers, each controlling a specific hardware behavior. For example, writing to the CP_RB_WPTR (Command Processor Ring Buffer Write Pointer) register notifies the GPU that "new commands are waiting to be executed." The driver must know the address, format, and semantics of each register.',
-              'But a driver does far more than just write registers. A modern GPU driver (like amdgpu) must also: manage GPU memory (VRAM allocation and reclamation), schedule GPU tasks (multiple applications sharing a single GPU), handle interrupts (GPU notifying the CPU after completing tasks), manage power (adjusting GPU frequency and voltage to balance performance and power consumption), and control display output (setting resolution, refresh rate). This is why the amdgpu driver has over 4 million lines of code.',
+              'But a driver does far more than just write registers. A modern GPU driver (like amdgpu) must also: manage GPU memory (VRAM allocation and reclamation), schedule GPU tasks (multiple applications sharing a single GPU), handle interrupts (GPU notifying the CPU after completing tasks), manage power (adjusting GPU frequency and voltage to balance performance and power consumption), and control display output (setting resolution, refresh rate). This is why the amdgpu codebase spans millions of lines across the kernel driver stack.',
               'An important point to understand: a GPU driver isn\'t just about "making the GPU work" — it\'s a complex system software that must simultaneously handle performance, security, stability, and power consumption across multiple dimensions. This is also why GPU driver engineers are in high demand — this field requires simultaneous understanding of operating system kernels, hardware architecture, and graphics.',
             ],
             keyPoints: [
               'GPU driver is the translation layer between OS and GPU hardware, communicating with hardware via MMIO register writes',
               'Core driver responsibilities: memory management, task scheduling, interrupt handling, power management, display control',
-              'amdgpu driver is located at drivers/gpu/drm/amd/, with over 4 million lines of code',
+              'amdgpu driver code lives under drivers/gpu/drm/amd/ and spans a multi-million-line codebase',
               'Driver runs in kernel space (Ring 0); errors can crash the entire system',
               'GPU has tens of thousands of registers, each controlling a hardware behavior — the driver must operate them precisely',
             ],
@@ -388,21 +388,21 @@ Error message D:
           difficulty: 'beginner',
           tags: ['AMD', 'open-source', 'career', 'NVIDIA', 'Intel'],
           concept: {
-            summary: 'AMD\'s GPU driver stack (amdgpu + Mesa + ROCm) is fully open source — unique in the GPU industry. This not only makes learning possible, but means you can directly prove your abilities by submitting patches — the most powerful resume material for getting into AMD.',
+            summary: 'AMD\'s GPU software stack is unusually open compared with the broader GPU industry. The kernel driver, Mesa components, and much of ROCm are open source, which makes direct source-level learning and public contribution possible.',
             explanation: [
-              'In the GPU driver space, AMD, NVIDIA, and Intel have vastly different strategies. AMD\'s amdgpu driver is fully open source and merged into the Linux kernel mainline, user-space drivers Mesa radeonsi/radv are also fully open source, and even the ROCm compute framework is open source. This means you can read every line of code, understand every design decision, and even contribute code directly.',
+              'In the GPU driver space, AMD, NVIDIA, and Intel have different openness models. AMD\'s amdgpu kernel driver is open source and merged into the Linux kernel mainline, Mesa radeonsi/radv are open source, and large parts of the ROCm compute stack are open source. That gives learners and contributors much more visibility into the software stack than closed-source alternatives, even though some firmware components remain proprietary.',
               'NVIDIA\'s situation is completely different. Until 2022, NVIDIA\'s Linux driver was entirely closed source. NVIDIA has now open-sourced the nvidia-open kernel module, but the core GPU firmware and user-space drivers remain closed source. This means you can\'t read most of NVIDIA\'s driver code, and it\'s nearly impossible to contribute patches. The community-maintained nouveau driver has limited functionality due to lack of hardware documentation.',
               'Intel\'s GPU drivers (i915/xe) are also fully open source, but Intel has a small market share in discrete GPUs (Arc series) and almost no presence in high-performance computing. Intel driver engineering positions are also relatively fewer than AMD\'s.',
-              'For your career development, AMD\'s open-source strategy means: (1) You can build a public contribution record by submitting accepted kernel patches — more convincing than any interview technique; (2) You can read real driver code during your learning process, rather than relying on second-hand documentation; (3) AMD\'s Markham (Canada) and Shanghai offices continuously hire GPU driver engineers, especially candidates with actual kernel contribution experience.',
-              'The amd-gfx mailing list (amd-gfx@lists.freedesktop.org) has 30-50 patch submissions daily, where you can see what problems AMD engineers encounter in their actual work and how they solve them. Subscribing to this mailing list is like having a free AMD internal training resource.',
+              'For career development, AMD\'s open-source strategy means: (1) you can build a public contribution record by submitting accepted kernel patches; (2) you can read real driver code during the learning process instead of relying only on secondary documentation; (3) public mailing lists and repositories let you observe current development discussions and patch review practices.',
+              'The amd-gfx mailing list (amd-gfx@lists.freedesktop.org) is a practical place to watch current review traffic, understand maintainer expectations, and study how real driver issues are discussed in public.',
             ],
             keyPoints: [
               'AMD: Fully open source (amdgpu + Mesa + ROCm), code in Linux mainline',
               'NVIDIA: Core is closed source, nvidia-open is only partial, learning and contribution are limited',
               'Intel: Open source (i915/xe), but small discrete GPU market share, relatively fewer positions',
-              'Accepted kernel patches are the strongest proof for AMD job applications',
-              'amd-gfx mailing list is a free "internal training" resource, 30-50 patches daily',
-              'AMD Markham / Shanghai continuously hiring GPU driver engineers',
+              'Accepted kernel patches are strong public evidence of relevant driver-development experience',
+              'amd-gfx mailing list is a useful public learning resource for patch review and development workflow',
+              'Public contribution history is more persuasive than purely theoretical study',
             ],
           },
           diagram: {
@@ -437,8 +437,8 @@ Learning        Best choice          Nearly impossible      Feasible but fewer j
 
 █ = Open Source    ░ = Closed Source
 
-Conclusion: AMD is the only practical choice for learning GPU driver development
-  ✓ All code readable  ✓ All patches submittable  ✓ Active public discussion`,
+Conclusion: AMD is one of the most accessible paths for learning open GPU driver development
+  ✓ Large public codebase  ✓ Public patch workflow  ✓ Active public discussion`,
             caption: 'Open source strategy comparison of the three major GPU vendors. AMD has the highest degree of openness across all dimensions, making independent learning and contribution possible.',
           },
           codeWalk: {
@@ -497,10 +497,10 @@ diff --git a/drivers/gpu/drm/amd/display/dc/core/dc.c
               'View recent amdgpu commits: cd linux && git log --oneline --since="1 week ago" -- drivers/gpu/drm/amd/ | head -20',
             ],
             expectedOutput: `$ find linux/drivers/gpu/drm/amd/ -name "*.c" -o -name "*.h" | xargs wc -l | tail -1
- 4200000+ total   ← Over 4 million lines of code!
+ multi-million total   ← Exact counts vary by kernel revision and counting method
 
 $ find linux/drivers/gpu/drm/amd/ -name "*.c" -o -name "*.h" | wc -l
- 3500+            ← Over 3500 source files
+ 3500+            ← File count varies by kernel revision
 
 $ git log --oneline --since="1 week ago" -- drivers/gpu/drm/amd/ | wc -l
  50+              ← ~50+ commits per week (very active)`,
@@ -736,7 +736,7 @@ static const struct pci_device_id pciidlist[] = {
               'amdgpu uses DRM_INFO/WARN/ERROR/DEBUG_DRIVER macros for log output',
               'dmesg | grep -i amdgpu is the first step in diagnosing GPU issues',
               'During GPU hangs, dmesg will contain register dumps (GRBM_STATUS, CP_RB_RPTR/WPTR)',
-              'Dynamic debugging: echo "module amdgpu +p" > /sys/kernel/debug/dynamic_debug/control',
+              'Dynamic debugging: echo "module amdgpu +p" > /proc/dynamic_debug/control',
             ],
           },
           diagram: {
@@ -852,7 +852,7 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
             question: 'When a user reports that the GPU driver won\'t load, how would you begin debugging? Describe your first 5 steps.',
             difficulty: 'medium',
             hint: 'A systematic debugging flow from information gathering (dmesg, system info) to problem classification (firmware, hardware, configuration).',
-            answer: 'First 5 debugging steps: (1) Collect dmesg: dmesg | grep -i "amdgpu\\\\|drm\\\\|error\\\\|fail" > /tmp/gpu_debug.log. First look for obvious error messages (e.g., firmware load failed, probe failed). (2) Confirm hardware is detected: lspci -nn | grep AMD. If lspci doesn\'t show the GPU, the problem is at the PCI layer (BIOS settings, physical connection, PCIe slot). (3) Confirm driver is loaded: lsmod | grep amdgpu. If not, check if the kernel was compiled with amdgpu (zgrep AMDGPU /proc/config.gz or modinfo amdgpu). (4) Check firmware: ls /lib/firmware/amdgpu/ | wc -l. Missing firmware is the most common cause of load failure, especially with new hardware or self-compiled kernels. (5) Check kernel version: uname -r. New GPUs often require a newer kernel and linux-firmware combination for support (refer to your distro\'s support matrix for recommended versions). If the first 5 steps don\'t locate the problem, enable dynamic debugging (echo "module amdgpu +p" > dynamic_debug/control) for more detailed logs.',
+            answer: 'First 5 debugging steps: (1) Collect dmesg: dmesg | grep -i "amdgpu\\\\|drm\\\\|error\\\\|fail" > /tmp/gpu_debug.log. First look for obvious error messages (e.g., firmware load failed, probe failed). (2) Confirm hardware is detected: lspci -nn | grep AMD. If lspci doesn\'t show the GPU, the problem is at the PCI layer (BIOS settings, physical connection, PCIe slot). (3) Confirm driver is loaded: lsmod | grep amdgpu. If not, check if the kernel was compiled with amdgpu (zgrep AMDGPU /proc/config.gz or modinfo amdgpu). (4) Check firmware: ls /lib/firmware/amdgpu/ | wc -l. Missing firmware is the most common cause of load failure, especially with new hardware or self-compiled kernels. (5) Check kernel version: uname -r. New GPUs often require a newer kernel and linux-firmware combination for support (refer to your distro\'s support matrix for recommended versions). If the first 5 steps don\'t locate the problem, enable dynamic debugging (echo "module amdgpu +p" > /proc/dynamic_debug/control) for more detailed logs.',
             amdContext: 'This kind of systematic debugging approach is highly valued in AMD interviews. Interviewers want to see not "I\'ll Google the error message," but a structured diagnostic process.',
           },
         },
