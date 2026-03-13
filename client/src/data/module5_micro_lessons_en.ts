@@ -1,6 +1,6 @@
 // ============================================================
 // AMD Linux Driver Learning Platform - Module 5 Micro-Lessons (English)
-// Module 5: AMDGPU Deep Dive (AMDGPU 深度parse)
+// Module 5: AMDGPU Deep Dive
 // 9 lessons in 4 groups, ~15-20 min each, total ~160 min
 // ============================================================
 import type { MicroLessonModule } from './micro_lesson_types';
@@ -14,158 +14,158 @@ export const module5MicroLessonsEn: MicroLessonModule = {
     {
       id: '5-1',
       number: '5.1',
-      title: 'code导航andarchitecture',
+      title: 'Code navigation and architecture',
       titleEn: 'Code Navigation & Architecture',
       icon: '🗺️',
-      description: '学willinexceed 400 万行 amdgpu drivercodein高效导航, understand IP Block module化architecture — 这isreadandcontribution amdgpu codebasics. ',
+      description: 'Learn to efficiently navigate over 4 million lines of amdgpu driver code and understand the IP Block modular architecture - the foundation for reading and contributing to amdgpu code.',
       lessons: [
         // ── Lesson 5.1.1 ──────────────────────────────────────
         {
           id: '5-1-1',
           number: '5.1.1',
-          title: 'AMDGPU code导航指南',
+          title: 'AMDGPU Code Navigation Guide',
           titleEn: 'Navigating the AMDGPU Source Tree',
           duration: 20,
           difficulty: 'expert',
           tags: ['amdgpu', 'source-tree', 'cscope', 'ctags', 'code-navigation'],
           concept: {
-            summary: 'amdgpu driver位于 drivers/gpu/drm/amd/ below, contain 3500+ 个源fileand 400 万+ 行code. masterdirectorystructure, 命名specificationandcode导航tool(cscope/ctags/clangd)is高效readsource codebefore提 — otherwise你willincode海洋in迷失. ',
+            summary: 'The amdgpu driver is located under drivers/gpu/drm/amd/ and contains 3500+ source files and 4 million+ lines of code. Mastering the directory structure, naming conventions and code navigation tools (cscope/ctags/clangd) is a prerequisite for efficient source code reading - otherwise you will get lost in the ocean of code.',
             explanation: [
-              'drivers/gpu/drm/amd/ is amdgpu driver顶layerdirectory, below面按function划分multiple子directory. 最coreis amdgpu/(GPU devicemanagement, command submission, memory management等), display/dc/(Display Core displayengine, 约占entiredrivercode量 40%), amdkfd/(KFD, Kernel Fusion Driver, ROCm computekernelinterface)and pm/(power management, contain SMU and powerplay). understandeachdirectory职责is导航第一步. ',
-              'amdgpu driverhas严格file命名specification. 以 IP Block versionasafter缀file(如 gfx_v11_0.c, sdma_v6_0.c, vcn_v4_0.c)ishardware代世代specificimplementation — v11_0 corresponding RDNA3  GFX engine, v6_0 corresponding RDNA3  SDMA engine. 以 amdgpu_ asbefore缀file(如 amdgpu_device.c, amdgpu_cs.c, amdgpu_vm.c)is跨代generallogic. thisspecificationlet你can快速判断afileisgeneralcodestillisspecifichardwareimplementation. ',
-              'amdgpu_device.c isentiredrivercore枢纽 — 它contain amdgpu_device_init()(device initializationentry point), amdgpu_device_ip_init()(IP Block initialization循环)and GPU 复位logic. amdgpu_drv.c is PCI driverentry point, contain module_init, pciidlist and probe function. understand这twofilecallrelationshipisunderstandentiredriverstartupprocessbasics. ',
-              'forcode导航, cscope and ctags iskerneldevelopment经典tool. inkernelsource code根directoryrun make cscope tags i.e.cangenerate索引data库. cscope coreabilityis"lookupallcall某functionlocation"(:cs find c function_name)and"lookupfunctiondefine"(:cs find g function_name), 这intracingcall链时极其高效. for现代 IDE user, clangd 配合 compile_commands.json canprovide更好体验 — run scripts/clang-tools/gen_compile_commands.py generatedata库after, VS Code  clangd 扩展canprovide精确跳转and补全. ',
+              'drivers/gpu/drm/amd/ is the top-level directory of the amdgpu driver. It is divided into multiple subdirectories according to functions. The core ones are amdgpu/ (GPU device management, command submission, memory management, etc.), display/dc/ (Display Core display engine, accounting for about 40% of the entire driver code), amdkfd/ (KFD, Kernel Fusion Driver, kernel interface for ROCm calculation) and pm/ (power management, including SMU and powerplay). Understanding the responsibilities of each directory is the first step in navigation.',
+              'The amdgpu driver has strict file naming conventions. Files suffixed with the IP Block version (such as gfx_v11_0.c, sdma_v6_0.c, vcn_v4_0.c) are the specific implementation of the hardware generation - v11_0 corresponds to the GFX engine of RDNA3, and v6_0 corresponds to the SDMA engine of RDNA3. Files prefixed with amdgpu_ (such as amdgpu_device.c, amdgpu_cs.c, amdgpu_vm.c) are common logic across generations. This specification allows you to quickly determine whether a file is general code or a hardware-specific implementation.',
+              'amdgpu_device.c is the core hub of the entire driver - it contains amdgpu_device_init() (device initialization entry), amdgpu_device_ip_init() (IP Block initialization loop) and GPU reset logic. amdgpu_drv.c is the PCI driver entry, including module_init, pciidlist and probe functions. Understanding the calling relationship between these two files is the basis for understanding the entire driver startup process.',
+              'For code navigation, cscope and ctags are classic tools for kernel development. Run make cscope tags in the kernel source code root directory to generate an index database. The core capabilities of cscope are "finding all locations where a function is called" (:cs find c function_name) and "finding function definition" (:cs find g function_name), which are extremely efficient when tracing the call chain. For modern IDE users, clangd can provide a better experience with compile_commands.json - after running scripts/clang-tools/gen_compile_commands.py to generate the database, VS Code\'s clangd extension can provide precise jumps and completions.',
               'CRITICAL SAFETY WARNING: Writing to incorrect MMIO register offsets will instantly hard-lock your entire system — no Ctrl+C, no SSH, only a power cycle recovers. This is not a software crash that the kernel can catch; it\'s a hardware-level hang caused by the GPU entering an unrecoverable state. In AMD\'s offices, engineers are told on day one: never touch MMIO registers without the hardware specification (which AMD provides under NDA). When learning, always use umr (read-only by default) to inspect registers, and test any register writes in a VM or spare machine. The amdgpu driver\'s WREG32/RREG32 macros are safe because they write to registers that AMD engineers have validated, but adding new register accesses requires hardware spec verification.',
             ],
             keyPoints: [
-              'amdgpu/ — GPU core: devicemanagement, command submission(CS), virtual memory(VM), Buffer object(BO)',
-              'display/dc/ — displayengine: 约 40% code量, hardware无关layer + DCN hardwarelayer',
-              'amdkfd/ — computekernelinterface: ROCm/HIP kernel端, KFD doorbell, queuemanagement',
-              'pm/ — power management: SMU firmware通信, DVFS, 功耗limit, 风扇control',
-              '命名specification: *_v11_0 = RDNA3 GFX, *_v6_0 = RDNA3 SDMA, dcn32 = RDNA3 display',
-              'amdgpu_device.c isdrivercore枢纽, amdgpu_drv.c is PCI entry point点',
+              'amdgpu/ — GPU core: device management, command submission (CS), virtual memory (VM), Buffer object (BO)',
+              'display/dc/ — display engine: about 40% code volume, hardware-independent layer + DCN hardware layer',
+              'amdkfd/ — Computing kernel interface: kernel side of ROCm/HIP, KFD doorbell, queue management',
+              'pm/ — Power management: SMU firmware communication, DVFS, power limiting, fan control',
+              'Naming convention: *_v11_0 = RDNA3 GFX, *_v6_0 = RDNA3 SDMA, dcn32 = RDNA3 Display',
+              'amdgpu_device.c is the driver core hub, amdgpu_drv.c is the PCI entry point',
             ],
           },
           diagram: {
-            title: 'amdgpu driversource codedirectorystructure',
-            content: `drivers/gpu/drm/amd/ — amdgpu driversource code顶layerstructure
-├── amdgpu/                     ← GPU coresubsystem(~1.2M 行)
-│   ├── amdgpu_drv.c            ← PCI driverentry point, module_init, pciidlist
-│   ├── amdgpu_device.c         ← ★ core枢纽: device_init, ip_init, GPU 复位
-│   ├── amdgpu_cs.c             ← command submission: amdgpu_cs_ioctl
-│   ├── amdgpu_vm.c             ← GPU virtualmemory management
-│   ├── amdgpu_object.c         ← Buffer Object (BO) management
-│   ├── amdgpu_ring.c           ← Ring Buffer abstractionlayer
-│   ├── amdgpu_fence.c          ← Fence synchronizationmechanism
-│   ├── amdgpu_irq.c            ← interrupt handlingframework
-│   ├── amdgpu_gmc.c            ← GPU Memory Controller generallayer
+            title: 'amdgpu driver source code directory structure',
+            content: `drivers/gpu/drm/amd/ — amdgpu driver source code top-level structure
+├── amdgpu/                     ←GPU core subsystem (~1.2M lines)
+│   ├── amdgpu_drv.c            ←PCI driver entry, module_init, pciidlist
+│   ├── amdgpu_device.c         ←★ Core hub: device_init, ip_init, GPU reset
+│   ├── amdgpu_cs.c             ←Command submission: amdgpu_cs_ioctl
+│   ├── amdgpu_vm.c             ←GPU virtual memory management
+│   ├── amdgpu_object.c         ←Buffer Object (BO) management
+│   ├── amdgpu_ring.c           ←Ring Buffer abstraction layer
+│   ├── amdgpu_fence.c          ←Fence synchronization mechanism
+│   ├── amdgpu_irq.c            ←Interrupt handling framework
+│   ├── amdgpu_gmc.c            ←GPU Memory Controller Common Layer
 │   │
-│   ├── gfx_v11_0.c             ← GFX IP: RDNA3 graphics/computeengine
+│   ├── gfx_v11_0.c             ←GFX IP: RDNA3 graphics/computing engine
 │   ├── gfx_v10_0.c             ← GFX IP: RDNA2
 │   ├── gfx_v9_0.c              ← GFX IP: GCN5 (Vega)
-│   ├── sdma_v6_0.c             ← SDMA IP: RDNA3 DMA engine
-│   ├── vcn_v4_0.c              ← VCN IP: RDNA3 视频编解码
-│   ├── psp_v13_0.c             ← PSP IP: securityhandle器
-│   └── nbio_v7_7.c             ← NBIO: 北桥 I/O
+│   ├── sdma_v6_0.c             ←SDMA IP: RDNA3 DMA engine
+│   ├── vcn_v4_0.c              ←VCN IP: RDNA3 video codec
+│   ├── psp_v13_0.c             ←PSP IP: Security Processor
+│   └── nbio_v7_7.c             ←NBIO: Northbridge I/O
 │
-├── display/dc/                  ← Display Core(~1.6M 行, 最大subsystem)
-│   ├── core/dc.c               ← DC core: dc_commit_state 等
-│   ├── dc_stream.h             ← display流abstraction
-│   ├── dcn32/                  ← RDNA3 DCN 3.2 hardwarelayer
-│   ├── dcn321/                 ← RDNA3 DCN 3.2.1 变体
-│   ├── dml/                    ← Display Mode Library(bandwidthcompute)
-│   └── link/                   ← DP/HDMI 链路layer
+├── display/dc/                  ←Display Core (~1.6M lines, largest subsystem)
+│   ├── core/dc.c               ←DC core: dc_commit_state, etc.
+│   ├── dc_stream.h             ←display flow abstraction
+│   ├── dcn32/                  ←RDNA3 DCN 3.2 hardware layer
+│   ├── dcn321/                 ←RDNA3 DCN 3.2.1 variant
+│   ├── dml/                    ←Display Mode Library (bandwidth calculation)
+│   └── link/                   ←DP/HDMI link layer
 │
-├── amdkfd/                      ← Kernel Fusion Driver(~100K 行)
-│   ├── kfd_device.c            ← KFD devicemanagement
-│   ├── kfd_process.c           ← processqueuemanagement
-│   ├── kfd_doorbell.c          ← Doorbell mapping(user-spacedirectlycommit)
-│   └── kfd_chardev.c           ← /dev/kfd character device
+├── amdkfd/                      ←Kernel Fusion Driver (~100K lines)
+│   ├── kfd_device.c            ←KFD device management
+│   ├── kfd_process.c           ←Process queue management
+│   ├── kfd_doorbell.c          ←Doorbell mapping (direct submission from user mode)
+│   └── kfd_chardev.c           ←/dev/kfd character device
 │
-├── pm/                          ← power management(~300K 行)
-│   ├── swsmu/                  ← Software SMU interface
-│   │   ├── smu13/              ← SMU v13(RDNA3)
-│   │   └── amdgpu_smu.c       ← SMU generalabstractionlayer
-│   └── powerplay/              ← 旧版power management(GCN 时代)
+├── pm/                          ←Power management (~300K lines)
+│   ├── swsmu/                  ←Software SMU interface
+│   │   ├── smu13/              ← SMU v13（RDNA3）
+│   │   └── amdgpu_smu.c       ←SMU common abstraction layer
+│   └── powerplay/              ←Legacy power management (GCN era)
 │
-└── include/                     ← sharedheader file
-    ├── amdgpu_ring.h           ← Ring Buffer data structure
-    ├── amdgpu_vm.h             ← VM data structure
-    └── asic_reg/               ← GPU registerdefine(automaticgenerate)
-        └── gc/gc_11_0_0_offset.h  ← RDNA3 GFX registeraddress`,
-            caption: 'amdgpu drivercompletedirectorystructure. display/dc/ is最大subsystem(约 40% code量), amdgpu/ iscoresubsystem. file名inversion号(v11_0, v6_0)directlycorresponding GPU hardware代次. ',
+└── include/                     ←Shared header files
+    ├── amdgpu_ring.h           ←Ring Buffer data structure
+    ├── amdgpu_vm.h             ←VM data structure
+    └── asic_reg/               ←GPU register definitions (automatically generated)
+        └── gc/gc_11_0_0_offset.h  ←RDNA3 GFX register address`,
+            caption: 'Complete directory structure of amdgpu driver. display/dc/ is the largest subsystem (about 40% of the code), and amdgpu/ is the core subsystem. The version numbers (v11_0, v6_0) in the file name directly correspond to the GPU hardware generation.',
           },
           codeWalk: {
-            title: 'amdgpu_device_init — driverinitializationcorecall链',
+            title: 'amdgpu_device_init — core call chain for driver initialization',
             file: 'drivers/gpu/drm/amd/amdgpu/amdgpu_device.c',
             language: 'c',
-            code: `/* amdgpu_device_init() — from PCI probe call, initializationentire GPU device
- * 这is amdgpu driverin最corefunction之一, understand它call链
- * canunderstandentiredriverstartupprocess. 
+            code: `/*amdgpu_device_init() — Called from the PCI probe to initialize the entire GPU device
+ *This is one of the core functions in the amdgpu driver. Understand its call chain.
+ *You can understand the entire driver startup process.
  */
 int amdgpu_device_init(struct amdgpu_device *adev,
                         uint32_t flags)
 {
-    /* stage 1: basicsset */
+    /*Phase 1: Basic setup */
     adev->flags = flags;
     adev->asic_type = flags & AMD_ASIC_MASK;
 
-    /* mapping GPU register空between(BAR 2)tokernelvirtual address */
+    /*Map GPU register space (BAR 2) to kernel virtual address */
     adev->rmmio_size = pci_resource_len(adev->pdev, 2);
     adev->rmmio = ioremap(pci_resource_start(adev->pdev, 2),
                            adev->rmmio_size);
-    /* 此aftercanuse WREG32/RREG32 access GPU register */
+    /*The GPU registers can then be accessed using WREG32/RREG32 */
 
-    /* stage 2: IP find — 确定this GPU haswhich IP Block */
+    /*Phase 2: IP Discovery — Determine what IP Blocks this GPU has */
     r = amdgpu_discovery_set_ip_blocks(adev);
-    /* according to GPU  IP Discovery 表, registrationall IP Block: 
+    /*Register all IP Blocks according to the GPU's IP Discovery table:
      *   gfx_v11_0_ip_block (RDNA3 GFX)
      *   sdma_v6_0_ip_block (RDNA3 SDMA)
      *   psp_v13_0_ip_block (PSP)
      *   smu_v13_0_ip_block (SMU)
      *   dcn32_ip_block     (Display)
-     *   ... 等等
+     *... etc
      */
 
-    /* stage 3: firmware loading */
+    /*Stage 3: Firmware loading */
     r = amdgpu_device_fw_loading(adev);
 
-    /* stage 4: initializationall IP Block */
+    /*Phase 4: Initialize all IP Blocks */
     r = amdgpu_device_ip_init(adev);
-    /* traverseallregistration IP Block, 依次call: 
-     *   ip_block->funcs->early_init(adev)  — 早期initialization
-     *   ip_block->funcs->sw_init(adev)     — 软件layerinitialization
-     *   ip_block->funcs->hw_init(adev)     — hardwareinitialization
+    /*Traverse all registered IP Blocks and call them in sequence:
+     *ip_block->funcs->early_init(adev) — early initialization
+     *ip_block->funcs->sw_init(adev) — software layer initialization
+     *ip_block->funcs->hw_init(adev) — Hardware initialization
      */
 
-    /* stage 5: registration DRM device */
+    /*Stage 5: Register DRM device */
     r = amdgpu_device_register(adev);
-    /* GPU 现incan接受user spacerequest */
+    /*The GPU can now accept userspace requests */
 
     return 0;
 }`,
             annotations: [
-              'adev (struct amdgpu_device) isentiredriver最coredata structure, containall GPU state',
-              'ioremap() will PCI BAR physical addressmappingtokernelvirtual address, afteronly thencan用 WREG32/RREG32',
-              'amdgpu_discovery_set_ip_blocks() is RDNA2+ 引入dynamic IP findmechanism, 替代硬编码',
-              'amdgpu_device_ip_init() 按dependencyorderinitializationall IP Block(PSP → GMC → GFX → ...)',
-              'early_init → sw_init → hw_init 三stageinitialization保证dependencyrelationshipcorrecthandle',
-              '任何stagereturn非零值allwillcause probe failure, corresponding dmesg in "hw_init of IP block <xxx> failed"',
+              'adev (struct amdgpu_device) is the core data structure of the entire driver, including all GPU status',
+              'ioremap() maps the physical address of the PCI BAR to the kernel virtual address before using WREG32/RREG32',
+              'amdgpu_discovery_set_ip_blocks() is a dynamic IP discovery mechanism introduced by RDNA2+, replacing hard coding',
+              'amdgpu_device_ip_init() initializes all IP Blocks in dependency order (PSP → GMC → GFX → ...)',
+              'early_init → sw_init → hw_init The three-phase initialization ensures the correct handling of dependencies',
+              'Returning a non-zero value at any stage will cause the probe to fail, corresponding to "hw_init of IP block <xxx> failed" in dmesg',
             ],
-            explanation: 'thisfunctionisunderstandentire amdgpu driver"地图". when你in dmesg in看todriverloadingfailure时, 几乎allcan追溯tothisfunction某个stage. 用 cscope tracing amdgpu_device_init call链(:cs find c amdgpu_device_init)islearndriverarchitecture最好起点. ',
+            explanation: 'This function is the "map" for understanding the entire amdgpu driver. When you see driver loading failure in dmesg, it can almost always be traced back to some stage of this function. Using cscope to trace the call chain of amdgpu_device_init (:cs find c amdgpu_device_init) is the best starting point for learning the driver architecture.',
           },
           miniLab: {
-            title: 'use cscope lookup amdgpu_bo_create allcall者',
-            objective: 'inkernelsource codeinuse cscope tracing amdgpu_bo_create call链, understand Buffer Object inwhichscenariobelowbycreate. ',
+            title: 'Use cscope to find all callers of amdgpu_bo_create',
+            objective: 'Use cscope in the kernel source code to trace the call chain of amdgpu_bo_create and understand the scenarios in which Buffer Objects are created.',
             setup: `cd ~/kernel-src
-make cscope tags  # ifstill没generate索引`,
+make cscope tags  #If the index has not been generated yet`,
             steps: [
-              'use cscope lookup amdgpu_bo_create define: cscope -d -L -1 amdgpu_bo_create',
-              'lookupallcall amdgpu_bo_create location: cscope -d -L -3 amdgpu_bo_create',
-              'willresultsavetofile: cscope -d -L -3 amdgpu_bo_create > /tmp/bo_create_callers.txt',
-              'statisticscall者count: wc -l /tmp/bo_create_callers.txt',
-              'view最commoncallscenario: cat /tmp/bo_create_callers.txt | awk -F: \'{print $1}\' | sort | uniq -c | sort -rn',
-              'selectacall者(如 amdgpu_gem_create_ioctl), tracing它onlayercall: cscope -d -L -3 amdgpu_gem_create_ioctl',
+              'Use cscope to find the definition of amdgpu_bo_create: cscope -d -L -1 amdgpu_bo_create',
+              'Find all calls to amdgpu_bo_create: cscope -d -L -3 amdgpu_bo_create',
+              'Save the results to a file: cscope -d -L -3 amdgpu_bo_create > /tmp/bo_create_callers.txt',
+              'Count the number of callers: wc -l /tmp/bo_create_callers.txt',
+              'Check out the most common calling scenarios: cat /tmp/bo_create_callers.txt | awk -F: \'{print $1}\' | sort | uniq -c | sort -rn',
+              'Select a caller (such as amdgpu_gem_create_ioctl) and trace its upper-level calls: cscope -d -L -3 amdgpu_gem_create_ioctl',
             ],
             expectedOutput: `$ cscope -d -L -3 amdgpu_bo_create | head -5
 drivers/gpu/drm/amd/amdgpu/amdgpu_gem.c 120 amdgpu_gem_create_ioctl ...
@@ -174,31 +174,31 @@ drivers/gpu/drm/amd/amdgpu/amdgpu_ttm.c 200 ...
 drivers/gpu/drm/amd/amdgpu/amdgpu_amdkfd_gpuvm.c 340 ...
 
 $ wc -l /tmp/bo_create_callers.txt
-25     ← amdgpu_bo_create in约 25 个locationbycall`,
-            hint: 'cscope  -L parameterrepresent line mode(非interaction), -1 lookupdefine, -3 lookupcall者, -0 lookup符号. if cscope data库过期, re-run make cscope update. ',
+25     ←amdgpu_bo_create is called at about 25 places`,
+            hint: 'The -L parameter of cscope indicates line mode (non-interactive), -1 searches for definitions, -3 searches for callers, and -0 searches for symbols. If the cscope database is out of date, rerun make cscope to update.',
           },
           debugExercise: {
-            title: 'in陌生codein快速locateissue',
+            title: 'Quickly locate problems in unfamiliar code',
             language: 'c',
-            description: '你in dmesg in看tobelowerrorinformation. usecode导航技巧locateissue源fileandfunction. ',
-            question: 'howthrough这条 dmesg errorinformationlocatetospecificsource codelocation? describeyour搜索step. ',
+            description: 'You see the following error message in dmesg. Use code navigation skills to locate problem source files and functions.',
+            question: 'How to locate the specific source code location through this dmesg error message? Describe your search steps.',
             buggyCode: `[drm:amdgpu_device_ip_init [amdgpu]] *ERROR*
   hw_init of IP block <gfx_v11_0> failed -22
 
-/* 你needanswer: 
- * 1. 哪个filecontain gfx_v11_0  hw_init implementation? 
- * 2. error code -22 代表what? 
- * 3. how用 cscope/grep find确切failure点? 
+/*You need to answer:
+ *1. Which file contains the hw_init implementation for gfx_v11_0?
+ *2. What does error code -22 mean?
+ *3. How to find the exact failure point using cscope/grep?
  */`,
-            hint: 'errorinformationin "gfx_v11_0" directlycorrespondingfile名命名specification. -22 isstandard Linux error code. ',
-            answer: 'locatestep: (1)file名directlyfrom IP Block 名推导: gfx_v11_0 → gfx_v11_0.c, completepath drivers/gpu/drm/amd/amdgpu/gfx_v11_0.c. (2)error code -22 = -EINVAL(Invalid argument), lookupapproach: grep -r "define EINVAL" include/uapi/asm-generic/errno-base.h. (3)用 cscope 找 hw_init implementation: 先搜索 gfx_v11_0_hw_init(命名specificationis IP名_operate名), cscope -d -L -1 gfx_v11_0_hw_init willdirectlylocatetodefine. (4)in该functionin搜索 return -EINVAL or return r(where r mayisfrom子function传播error code). (5)更精确method: enabledynamicdebugging(echo "file gfx_v11_0.c +p" > /sys/kernel/debug/dynamic_debug/control)then重现issue, dmesg willdisplayfunction内detailedexecutepath. 这种from dmesg 反向locatesource codeabilityis GPU driverdebuggingcoreskill. ',
+            hint: '"gfx_v11_0" in the error message directly corresponds to the file name naming convention. -22 is a standard Linux error code.',
+            answer: 'Positioning steps: (1) The file name is directly derived from the IP Block name: gfx_v11_0 → gfx_v11_0.c, the full path is drivers/gpu/drm/amd/amdgpu/gfx_v11_0.c. (2) Error code -22 = -EINVAL (Invalid argument), search method: grep -r "define EINVAL" include/uapi/asm-generic/errno-base.h. (3) Use cscope to find hw_init implementation: first search for gfx_v11_0_hw_init (the naming specification is IP name_operation name), cscope -d -L -1 gfx_v11_0_hw_init will directly locate the definition. (4) Search the function for return -EINVAL or return r (where r may be an error code propagated from a sub-function). (5) A more precise method: enable dynamic debugging (echo "file gfx_v11_0.c +p" > /sys/kernel/debug/dynamic_debug/control) and then reproduce the problem, dmesg will display the detailed execution path within the function. This ability to reversely locate source code from dmesg is a core skill for GPU driver debugging.',
           },
           interviewQ: {
-            question: 'describe amdgpu driversource codedirectorystructure. iflet你fixa RDNA3 GPU display闪烁issue, 你willfromwhichfilestart看? ',
+            question: 'Describe the source code directory structure of the amdgpu driver. If you were asked to fix a display flickering problem on an RDNA3 GPU, which files would you start with?',
             difficulty: 'medium',
-            hint: '先describe顶layerdirectory(amdgpu/, display/dc/, pm/, amdkfd/), then针对displayissuelocateto display/dc/ and dcn32/. ',
-            answer: 'amdgpu driver顶layerdirectory drivers/gpu/drm/amd/ contain四个core子directory: (1)amdgpu/ — GPU coresubsystem: devicemanagement(amdgpu_device.c), command submission(amdgpu_cs.c), virtual memory(amdgpu_vm.c), interrupt(amdgpu_irq.c), 各 IP Block hardwareimplementation(gfx_v11_0.c 等); (2)display/dc/ — Display Core: 约占 40% code量, containhardware无关corelayer(core/dc.c)andhardwarerelatedlayer(dcn32/ 等); (3)amdkfd/ — ROCm computekernelinterface; (4)pm/ — power management(SMU 通信, DVFS). for RDNA3 display闪烁issue, 我willfromthesefilestart: (a)display/dc/dcn32/ — RDNA3  DCN 3.2 hardwarelayer, check时序(timing)and水印(watermark)compute; (b)display/dc/core/dc.c — dc_commit_state() functioncheckstatecommitlogic; (c)display/dc/dml/ — Display Mode Library bandwidthcomputewhethercorrect; (d)dmesg in搜索 "dc_commit" and "underflow" key词locatespecificstage. meanwhile用 git log -- display/dc/dcn32/ view最近modifywhether引入回归. ',
-            amdContext: 'thisissue考察你对code库熟悉程度anddebugging思路. AMD interviewerwill评估你can否fromissuedescribe快速缩小搜索rangetospecificfile. ',
+            hint: 'First describe the top-level directories (amdgpu/, display/dc/, pm/, amdkfd/), and then locate display/dc/ and dcn32/ for display problems.',
+            answer: 'The amdgpu driver top-level directory drivers/gpu/drm/amd/ contains four core subdirectories: (1) amdgpu/ — GPU core subsystem: device management (amdgpu_device.c), command submission (amdgpu_cs.c), virtual memory (amdgpu_vm.c), interrupt (amdgpu_irq.c), each IP Block hardware implementation (gfx_v11_0.c etc.); (2) display/dc/ — Display Core: accounts for about 40% of the code, including hardware-independent core layer (core/dc.c) and hardware-related layers (dcn32/, etc.); (3) amdkfd/ — ROCm computing kernel interface; (4) pm/ — power management (SMU communication, DVFS). For RDNA3 display flickering issues, I would start with these files: (a) display/dc/dcn32/ — DCN 3.2 hardware layer of RDNA3, checking timing and watermark calculations; (b) display/dc/core/dc.c — dc_commit_state() function checking state commit logic; (c) display/dc/dml/ — Display Mode Library Whether the bandwidth calculation is correct; (d) Search "dc_commit" and "underflow" keywords in dmesg to locate the specific stage. At the same time, use git log -- display/dc/dcn32/ to check whether recent modifications have introduced regressions.',
+            amdContext: 'This question tests your familiarity with the code base and debugging ideas. AMD interviewers will assess your ability to quickly narrow your search from problem description to specific documents.',
           },
         },
 
@@ -206,41 +206,41 @@ $ wc -l /tmp/bo_create_callers.txt
         {
           id: '5-1-2',
           number: '5.1.2',
-          title: 'IP Block architecture: GPU functionmodule化design',
+          title: 'IP Block Architecture: GPU Function Modular Design',
           titleEn: 'IP Block Architecture: Modular GPU Design',
           duration: 20,
           difficulty: 'expert',
           tags: ['IP-block', 'amdgpu_ip_block', 'modular', 'hw_init', 'callbacks'],
           concept: {
-            summary: 'amdgpu driverwill GPU eachhardwarefunction单元(GFX, SDMA, DC, VCN, PSP, SMU 等)abstractionas IP Block, each IP Block implementation统一callbackinterface(early_init/sw_init/hw_init/suspend/resume 等). 这种module化design使得drivercan用同一套frameworksupportfrom GCN to RDNA4 all AMD GPU. ',
+            summary: 'The amdgpu driver abstracts each hardware functional unit of the GPU (GFX, SDMA, DC, VCN, PSP, SMU, etc.) into an IP Block, and each IP Block implements a unified callback interface (early_init/sw_init/hw_init/suspend/resume, etc.). This modular design allows the driver to support all AMD GPUs from GCN to RDNA4 using the same framework.',
             explanation: [
-              'IP Block(Intellectual Property Block)is AMD GPU hardwaremodule化design理念软件mapping. inhardwarelayer面, a GPU 芯片由multipleindependentfunction单元组成: GFX(graphics/computeengine), SDMA(System DMA engine), VCN(Video Core Next 视频编解码), DCN(Display Controller Next display control器), PSP(Platform Security Processor securityhandle器), SMU(System Management Unit power management)等. eachfunction单元in软件incorrespondinga IP Block. ',
-              'struct amdgpu_ip_block_version definea IP Block 元data(type, version号), struct amd_ip_funcs define统一callbackinterface. each IP Block mustimplementationbelowcorecallback: name(IP Block 名称), early_init(早期initialization, checkhardwareability), sw_init(软件resourceallocation, 如memory/queue), hw_init(hardwareinitialization, 写register/loadingfirmware), hw_fini(hardware反initialization), sw_fini(release软件resource), suspend/resume(power management). 这套interface使得 amdgpu_device_ip_init() can用a统一循环initializationall IP Block, 而notneedknoweach IP specificimplementation. ',
-              '以 RDNA3  GFX engineas例, gfx_v11_0.c implementation gfx_v11_0_ip_funcs structure体, 其 hw_init callback(gfx_v11_0_hw_init)will: loading GFX firmwareto GPU, configurationshaderengine(Shader Engine)count, initialization Ring Buffer(GFX Ring, Compute Ring), startup Command Processor(CP). if AMD publish新一代 GPU(如 RDNA4), 只need新增a gfx_v12_0.c fileimplementation同样interface, coreframeworkcode无需modify. ',
-              'IP Block initializationorder很important — existdependencyrelationship. PSP must先initialization(becauseother IP Block firmwareneed PSP verify签名), GMC(Graphics Memory Controller)mustin GFX beforeinitialization(because GFX need GPU virtual memorysupport), SMU mustin GFX beforeinitialization(because GFX need时钟and电压). thisorder由 amdgpu_discovery_set_ip_blocks() inregistrationorder决定. ',
+              'IP Block (Intellectual Property Block) is a software mapping of the modular design concept of AMD GPU hardware. At the hardware level, a GPU chip is composed of multiple independent functional units: GFX (graphics/computing engine), SDMA (System DMA engine), VCN (Video Core Next video codec), DCN (Display Controller Next), PSP (Platform Security Processor), SMU (System Management Unit power management), etc. Each functional unit corresponds to an IP Block in the software.',
+              'struct amdgpu_ip_block_version defines the metadata (type, version number) of an IP Block, and struct amd_ip_funcs defines a unified callback interface. Each IP Block must implement the following core callbacks: name (IP Block name), early_init (early initialization, check hardware capabilities), sw_init (software resource allocation, such as memory/queue), hw_init (hardware initialization, write registers/load firmware), hw_fini (hardware de-initialization), sw_fini (release software resources), suspend/resume (power management). This set of interfaces allows amdgpu_device_ip_init() to initialize all IP Blocks in a unified loop without knowing the specific implementation of each IP.',
+              'Taking the GFX engine of RDNA3 as an example, gfx_v11_0.c implements the gfx_v11_0_ip_funcs structure, and its hw_init callback (gfx_v11_0_hw_init) will: load the GFX firmware to the GPU, configure the number of shader engines (Shader Engine), initialize the Ring Buffer (GFX Ring, Compute Ring), and start the Command Processor (CP). If AMD releases a new generation of GPUs (such as RDNA4), it only needs to add a new gfx_v12_0.c file to implement the same interface, and the core framework code does not need to be modified.',
+              'The order in which IP Blocks are initialized is important - there are dependencies. PSP must be initialized first (because the firmware of other IP Blocks requires PSP to verify the signature), GMC (Graphics Memory Controller) must be initialized before GFX (because GFX requires GPU virtual memory support), and SMU must be initialized before GFX (because GFX requires clock and voltage). This order is determined by the registration order in amdgpu_discovery_set_ip_blocks().',
             ],
             keyPoints: [
-              'IP Block = GPU hardwarefunction单元软件abstraction(GFX, SDMA, VCN, DCN, PSP, SMU)',
-              'struct amd_ip_funcs define统一callbackinterface: early_init/sw_init/hw_init/suspend/resume 等',
-              'amdgpu_device_ip_init() 用统一循环initializationall IP Block, not关心specificimplementation',
-              'initializationorderhasdependency: PSP → GMC → SMU → GFX → SDMA → VCN → DC',
-              '命名specification: gfx_v11_0 (RDNA3), gfx_v10_0 (RDNA2), gfx_v9_0 (Vega/GCN5)',
-              'IP Discovery 表(RDNA2+)let GPU 自describe其 IP Block 组成, 替代硬编码list',
+              'IP Block = software abstraction of GPU hardware functional units (GFX, SDMA, VCN, DCN, PSP, SMU)',
+              'struct amd_ip_funcs defines unified callback interface: early_init/sw_init/hw_init/suspend/resume, etc.',
+              'amdgpu_device_ip_init() uses a unified loop to initialize all IP Blocks and does not care about the specific implementation.',
+              'The initialization sequence depends on: PSP → GMC → SMU → GFX → SDMA → VCN → DC',
+              'Naming convention: gfx_v11_0 (RDNA3), gfx_v10_0 (RDNA2), gfx_v9_0 (Vega/GCN5)',
+              'The IP Discovery table (RDNA2+) allows the GPU to self-describe its IP Block composition, replacing the hard-coded list',
             ],
           },
           diagram: {
-            title: 'IP Block architectureandinitializationprocess',
-            content: `amdgpu IP Block architecture
+            title: 'IP Block Architecture and Initialization Process',
+            content: `amdgpu IP Block Architecture
 
 ┌─────────────────────────────────────────────────────────────────┐
-│  struct amd_ip_funcs (统一callbackinterface)                            │
+│ struct amd_ip_funcs (unified callback interface) │
 │  ┌──────────┬──────────┬──────────┬──────────┬──────────┐      │
 │  │early_init│ sw_init  │ hw_init  │ suspend  │ resume   │      │
-│  │checkability  │allocationresource  │写register  │savestate  │recoverstate  │      │
-│  │          │(memory/queue)│loadingfirmware  │断电准备  │re-initialization│      │
+│ │Check capabilities │Allocate resources │Write registers │Save state │Restore state │ │
+│ │ │(Memory/Queue)│Loading firmware │Preparing for power failure │Reinitialization│ │
 │  └──────────┴──────────┴──────────┴──────────┴──────────┘      │
 └──────────────────────────┬──────────────────────────────────────┘
-                           │ each IP Block implementation这套interface
+│ Each IP Block implements this set of interfaces
     ┌──────────────────────┼──────────────────────────────┐
     ▼                      ▼                              ▼
 ┌──────────┐     ┌──────────────┐     ┌──────────────────────┐
@@ -248,10 +248,10 @@ $ wc -l /tmp/bo_create_callers.txt
 │ v13_0    │     │ v11_0 (RDNA3)│     │ DCN 3.2 (RDNA3)     │
 │          │     │              │     │                      │
 │ hw_init: │     │ hw_init:     │     │ hw_init:             │
-│ ·loading PSP│     │ ·loading GFX FW │     │ ·initializationdisplaypipeline      │
-│  firmware    │     │ ·configuration SE/CU  │     │ ·detect连接display器    │
-│ ·verifysecurity│     │ ·initialization Ring │     │ ·setdefault分辨率      │
-│  签名    │     │ ·startup CP     │     │                      │
+│ ·Load PSP │ │ ·Load GFX FW │ │ ·Initialize display pipeline │
+│ Firmware │ │ ·Configuring SE/CU │ │ ·Detecting connected monitors │
+│ ·Verify security│ │ ·Initialize Ring │ │ ·Set default resolution │
+│ Signature │ │ ·Start CP │ │ │
 └────┬─────┘     └──────┬───────┘     └──────────┬───────────┘
      │                  │                         │
      ▼                  ▼                         ▼
@@ -260,28 +260,28 @@ $ wc -l /tmp/bo_create_callers.txt
 │ v13_0    │     │ v6_0 (RDNA3) │     │ v4_0 (RDNA3)        │
 │          │     │              │     │                      │
 │ hw_init: │     │ hw_init:     │     │ hw_init:             │
-│ ·initialization  │     │ ·loading SDMA FW│     │ ·loading VCN firmware       │
-│  SMU通信 │     │ ·initialization SDMA │     │ ·initialization编解码engine    │
-│ ·setdefault│     │  Ring Buffer │     │ ·configuration DPG pattern       │
-│  功耗limit│     │              │     │                      │
+│ ·Initialization │ │ ·Load SDMA FW│ │ ·Load VCN firmware │
+│ SMU communication │ │ ·Initialize SDMA │ │ ·Initialize codec engine │
+│ ·Set Default │ │ Ring Buffer │ │ ·Configure DPG Mode │
+│Power consumption limit│ │ │ │ │
 └──────────┘     └──────────────┘     └──────────────────────┘
 
-initializationorder(amdgpu_device_ip_init intraverseorder): 
+Initialization sequence (traversal sequence in amdgpu_device_ip_init):
 
   PSP ──→ GMC ──→ IH ──→ SMU ──→ GFX ──→ SDMA ──→ VCN ──→ DC
-  security     memory    interrupt    电源    graphics     DMA     视频    display
+Security Memory Interrupt Power Graphics DMA Video Display
   │                                │
-  └── GFX firmware签名need PSP        └── GFX need GMC(virtual memory)
-                                      and SMU(时钟/电压)`,
-            caption: 'IP Block architecturecore思想: eachhardwarefunction单元implementation统一callbackinterface, driverframeworkthrough循环callinitializationall IP Block. initializationorder由dependencyrelationship决定. ',
+└── GFX firmware signing requires PSP └── GFX requires GMC (virtual memory)
+and SMU (clock/voltage)`,
+            caption: 'The core idea of ​​the IP Block architecture: Each hardware functional unit implements a unified callback interface, and the driver framework initializes all IP Blocks through cyclic calls. The initialization order is determined by dependencies.',
           },
           codeWalk: {
-            title: 'gfx_v11_0_ip_block — RDNA3 GFX IP Block define',
+            title: 'gfx_v11_0_ip_block — RDNA3 GFX IP Block definition',
             file: 'drivers/gpu/drm/amd/amdgpu/gfx_v11_0.c',
             language: 'c',
-            code: `/* gfx_v11_0.c — RDNA3 GFX IP Block callbackimplementation */
+            code: `/*gfx_v11_0.c — callback implementation of RDNA3 GFX IP Block */
 
-/* callback function表: eachfunctionhandlealifecyclestage */
+/*Callback function table: each function handles a life cycle stage */
 static const struct amd_ip_funcs gfx_v11_0_ip_funcs = {
     .name = "gfx_v11_0",
     .early_init = gfx_v11_0_early_init,
@@ -297,7 +297,7 @@ static const struct amd_ip_funcs gfx_v11_0_ip_funcs = {
     .set_powergating_state = gfx_v11_0_set_powergating_state,
 };
 
-/* IP Block versioninformation */
+/*IP Block version information */
 const struct amdgpu_ip_block_version gfx_v11_0_ip_block = {
     .type = AMD_IP_BLOCK_TYPE_GFX,
     .major = 11,
@@ -306,23 +306,23 @@ const struct amdgpu_ip_block_version gfx_v11_0_ip_block = {
     .funcs = &gfx_v11_0_ip_funcs,
 };
 
-/* hw_init example(大幅简化)*/
+/*hw_init example (significantly simplified)*/
 static int gfx_v11_0_hw_init(void *handle)
 {
     struct amdgpu_device *adev = (struct amdgpu_device *)handle;
     int r;
 
-    /* 1. loading GFX engine微码to GPU */
+    /*1. Load GFX engine microcode to GPU */
     r = gfx_v11_0_cp_resume(adev);
     if (r)
         return r;
 
-    /* 2. initialization GFX Ring Buffer */
+    /*2. Initialize GFX Ring Buffer */
     r = amdgpu_ring_test_helper(&adev->gfx.gfx_ring[0]);
     if (r)
         return r;
 
-    /* 3. initialization Compute Ring Buffers */
+    /*3. Initialize Compute Ring Buffers */
     for (i = 0; i < adev->gfx.num_compute_rings; i++) {
         r = amdgpu_ring_test_helper(
             &adev->gfx.compute_ring[i]);
@@ -332,7 +332,7 @@ static int gfx_v11_0_hw_init(void *handle)
     return 0;
 }
 
-/* amdgpu_device_ip_init in统一initialization循环(简化)*/
+/*Unified initialization loop in amdgpu_device_ip_init (simplified) */
 int amdgpu_device_ip_init(struct amdgpu_device *adev)
 {
     for (i = 0; i < adev->num_ip_blocks; i++) {
@@ -347,26 +347,26 @@ int amdgpu_device_ip_init(struct amdgpu_device *adev)
     return 0;
 }`,
             annotations: [
-              'gfx_v11_0_ip_funcs 表willallcallback聚合asastructure体, 由frameworkthroughfunction pointercall',
-              'AMD_IP_BLOCK_TYPE_GFX is枚举值, 区分 GFX/SDMA/VCN/DC 等differenttype IP',
-              'major=11, minor=0 corresponding IP version 11.0, in IP Discovery 表inmatch',
-              'hw_init in cp_resume loading Command Processor 微码 — CP is GPU commandexecuteentry point',
-              'amdgpu_ring_test_helper 向 Ring Buffer writetestingcommand并verify GPU response',
-              'amdgpu_device_ip_init 循环demonstrateframeworkhow统一handleall IP Block initialization',
+              'The gfx_v11_0_ip_funcs table aggregates all callbacks into a structure that is called by the framework through a function pointer',
+              'AMD_IP_BLOCK_TYPE_GFX is an enumeration value that distinguishes different types of IP such as GFX/SDMA/VCN/DC',
+              'major=11, minor=0 corresponds to IP version 11.0 and matches in the IP Discovery table',
+              'cp_resume in hw_init loads the Command Processor microcode - CP is the entry point for GPU command execution',
+              'amdgpu_ring_test_helper writes test commands to the Ring Buffer and verifies GPU response',
+              'The loop of amdgpu_device_ip_init shows how the framework handles the initialization of all IP Blocks uniformly',
             ],
-            explanation: 'thiscodedemonstrate IP Block pattern精髓: gfx_v11_0.c 只needimplementation amd_ip_funcs interface, frameworkcode amdgpu_device_ip_init() canautomaticinitialization它. when RDNA4 publish时, 只需新增 gfx_v12_0.c implementation同样interface, notneedmodifyframeworkcode. 这种design使得 amdgpu can用adriversupportall AMD GPU 代次. ',
+            explanation: 'This code shows the essence of IP Block mode: gfx_v11_0.c only needs to implement the amd_ip_funcs interface, and the framework code amdgpu_device_ip_init() can automatically initialize it. When RDNA4 is released, you only need to add gfx_v12_0.c to implement the same interface, and there is no need to modify the framework code. This design allows amdgpu to support all AMD GPU generations with a single driver.',
           },
           miniLab: {
-            title: '列出your GPU all IP Block 及其version',
-            objective: 'through debugfs view你手头 AMD GPU(example以 RX 7600 XT / gfx1102 as参考)onactualrunall IP Block, verifycodein IP Block registration. ',
-            setup: '# ensure debugfs already挂载\nsudo mount -t debugfs none /sys/kernel/debug 2>/dev/null',
+            title: 'List all IP Blocks and their versions for your GPU',
+            objective: 'Use debugfs to view all IP Blocks actually running on your AMD GPU (the example uses RX 7600 XT / gfx1102 as a reference) and verify the IP Block registration in the code.',
+            setup: '# Make sure debugfs is mounted\nsudo mount -t debugfs none /sys/kernel/debug 2>/dev/null',
             steps: [
-              'view IP Block information: sudo cat /sys/kernel/debug/dri/0/amdgpu_firmware_info',
-              'view IP find表: sudo cat /sys/kernel/debug/dri/0/amdgpu_ip_discovery 2>/dev/null || echo "need较新kernelversion"',
-              'from dmesg extract IP Block initializationorder: dmesg | grep -i "ip block\\|hw_init\\|sw_init"',
-              'view GFX IP version: dmesg | grep -i "gfx.*v[0-9]"',
-              'insource codeinverify: grep -rn "gfx_v11_0_ip_block" drivers/gpu/drm/amd/amdgpu/',
-              'compareother IP Block version: dmesg | grep -iE "(sdma|vcn|psp|smu|dcn).*v[0-9]"',
+              'View IP Block information: sudo cat /sys/kernel/debug/dri/0/amdgpu_firmware_info',
+              'View the IP discovery table: sudo cat /sys/kernel/debug/dri/0/amdgpu_ip_discovery 2>/dev/null || echo "Newer kernel version required"',
+              'Extract IP Block initialization sequence from dmesg: dmesg | grep -i "ip block\\|hw_init\\|sw_init"',
+              'Check GFX IP version: dmesg | grep -i "gfx.*v[0-9]"',
+              'Verify in the source code: grep -rn "gfx_v11_0_ip_block" drivers/gpu/drm/amd/amdgpu/',
+              'Compare other IP Block versions: dmesg | grep -iE "(sdma|vcn|psp|smu|dcn).*v[0-9]"',
             ],
             expectedOutput: `$ sudo cat /sys/kernel/debug/dri/0/amdgpu_firmware_info
 GFX ME feature version: 86, firmware version: 0x...
@@ -375,39 +375,39 @@ SDMA0 feature version: 60, firmware version: 0x...
 VCN feature version: 0, firmware version: 0x...
 ...
 
-Navi33 (RDNA3)  IP Block 组成: 
+The IP Block composition of Navi33 (RDNA3):
   GFX 11.0, SDMA 6.0, VCN 4.0, DCN 3.2, PSP 13.0, SMU 13.0`,
-            hint: 'if debugfs pathnotexistorpermissionnot够, 用 dmesg information代替. debugfs pathmayis /sys/kernel/debug/dri/0/ or /sys/kernel/debug/dri/1/, 取决于your GPU is card0 stillis card1. ',
+            hint: 'If the debugfs path does not exist or has insufficient permissions, use dmesg information instead. The debugfs path may be /sys/kernel/debug/dri/0/ or /sys/kernel/debug/dri/1/, depending on whether your GPU is card0 or card1.',
           },
           debugExercise: {
-            title: 'IP Block initializationorderdependencyfailure',
+            title: 'IP Block initialization sequence dependency failed',
             language: 'c',
-            description: 'belowcodetryin GFX IP Block beforeregistration并initialization DC(Display Core), 但causestartupfailure. ',
-            question: 'why调换 DC and GFX initializationorderwillcausefailure? errorinformationiswhat? ',
-            buggyCode: `/* error IP Block registrationorder */
+            description: 'The following code attempts to register and initialize the DC (Display Core) before the GFX IP Block, but causes startup failure.',
+            question: 'Why does switching the initialization order of DC and GFX cause failure? What is the error message?',
+            buggyCode: `/*Wrong IP Block registration sequence */
 int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
 {
-    /* ... PSP, GMC, SMU 正常registration ... */
+    /*... PSP, GMC, SMU normal registration ... */
 
-    /* BUG: DC in GFX beforeregistration */
+    /*BUG: DC is registered before GFX */
     amdgpu_device_ip_block_add(adev, &dcn32_ip_block);
     amdgpu_device_ip_block_add(adev, &gfx_v11_0_ip_block);
 
-    /* 原本correctordershouldis: 
+    /*The original correct order should be:
      * amdgpu_device_ip_block_add(adev, &gfx_v11_0_ip_block);
      * amdgpu_device_ip_block_add(adev, &dcn32_ip_block);
      */
     return 0;
 }`,
-            hint: 'DC initializationdependency GFX Ring Buffer senddisplayrelated GPU command(如 cursor update). ',
-            answer: 'DC(Display Core)initializationdependency GFX enginealreadyready, causehas: (1)DC needthrough GFX Ring Buffer commitcertaindisplayoperate GPU command(如hardware光标update, 3D LUT loading); (2)DC initializationprocessinneedallocation GPU canaccessmemory(如 framebuffer), 这to求 GMC and GFX virtual addressmappingalreadywork; (3)DC in hw_init inwilltry做 mode setting 并点亮display器, 这need向 GPU commitcommand. if GFX still没initialization, Ring Buffer notexist, DC command submissionwillfailure, dmesg inwill看tosimilar "[drm:dc_commit_state_no_check] *ERROR* dc_commit_state_no_check failed" ordirectly "hw_init of IP block <dm> failed -22". correctorderis PSP → GMC → IH → SMU → GFX → SDMA → VCN → DC/DM, DC 始终in GFX after. ',
+            hint: 'DC initialization relies on the GFX Ring Buffer to send display-related GPU commands (such as cursor updates).',
+            answer: 'The initialization of DC (Display Core) relies on the GFX engine being ready for the following reasons: (1) DC needs to submit GPU commands for certain display operations (such as hardware cursor update, 3D LUT loading) through the GFX Ring Buffer; (2) GPU-accessible memory (such as framebuffer) needs to be allocated during the DC initialization process, which requires that the virtual address mapping of GMC and GFX has worked; (3) DC will try to do mode setting in hw_init and lights up the display, which requires submitting commands to the GPU. If GFX has not been initialized and the Ring Buffer does not exist, the DC command submission will fail, and you will see something like "[drm:dc_commit_state_no_check] *ERROR* dc_commit_state_no_check failed" or "hw_init of IP block <dm> failed -22" in dmesg. The correct order is PSP → GMC → IH → SMU → GFX → SDMA → VCN → DC/DM, DC is always after GFX.',
           },
           interviewQ: {
-            question: 'explain amdgpu driver IP Block architecture. 这种designpatternhaswhat优缺点? ',
+            question: 'Explain the IP Block architecture of amdgpu driver. What are the pros and cons of this design pattern?',
             difficulty: 'hard',
-            hint: 'from软件designpattern(strategypattern/interfaceabstraction), can维护性(support多代 GPU), and潜inissue(IP betweendependency, error传播)角度analyze. ',
-            answer: 'IP Block architectureis amdgpu drivercoredesignpattern, 本质onisstrategypattern(Strategy Pattern)inkerneldriverinapplication. each IP Block through struct amd_ip_funcs define统一interface, frameworkcodethroughfunction pointercallspecificimplementation. 优点: (1)support多代 GPU — 新 GPU 只需新增 IP implementationfile, frameworknot变; (2)canindependentdevelopmentandtesting — DC teamand GFX teamcanindependentwork; (3)清晰lifecyclemanagement — init/fini/suspend/resume entire统一; (4)便于error隔离 — 某个 IP Block initializationfailurecan精确locate. 缺点: (1)IP Block betweenimplicitdependency — initializationorder由registrationorder决定, dependencyrelationshipnotintypesystemin体现; (2)过度abstraction — certain IP Block has独特需求, by迫适配统一interfacewillcause workaround; (3)error传播not够细粒度 — hw_init failure只returnaerror code, 丢失context; (4)code膨胀 — each IP versionallhasselffile, 很多codeindifferentversionbetween重复. AMD 正inthrough IP Discovery mechanismand公共codeextract缓解theseissue. ',
-            amdContext: 'thisissue考察你对driverarchitecture深layerunderstand. AMD interviewerwill特别note你can否客观analyze优缺点, 而not只is赞美thisdesign. 提to IP betweendependencyissueandcode重复is加分项. ',
+            hint: 'Analysis from the perspective of software design patterns (strategy pattern/interface abstraction), maintainability (support for multiple generations of GPUs), and potential problems (inter-IP dependencies, error propagation).',
+            answer: 'The IP Block architecture is the core design pattern of the amdgpu driver. It is essentially the application of the Strategy Pattern in the kernel driver. Each IP Block defines a unified interface through struct amd_ip_funcs, and the framework code is implemented specifically through function pointer calls. Advantages: (1) Supports multiple generations of GPUs - new GPUs only need to add IP implementation files, and the framework remains unchanged; (2) Independent development and testing - DC team and GFX team can work independently; (3) Clear life cycle management - init/fini/suspend/resume are all unified; (4) Convenient error isolation - failure to initialize a certain IP Block can be accurately located. Disadvantages: (1) Implicit dependencies between IP Blocks - the initialization order is determined by the registration order, and dependencies are not reflected in the type system; (2) Over-abstraction - some IP Blocks have unique requirements, and being forced to adapt to a unified interface will lead to workaround; (3) Error propagation is not fine-grained enough - hw_init fails and only returns an error code, losing context; (4) Code bloat - each IP version has its own file, and a lot of code is repeated between different versions. AMD is mitigating these issues through IP Discovery mechanisms and common code extraction.',
+            amdContext: 'This question tests your deep understanding of driver architecture. AMD interviewers will pay special attention to whether you can objectively analyze the advantages and disadvantages, rather than just praise the design. Mentioning inter-IP dependency issues and code duplication is a plus.',
           },
         },
       ],
@@ -419,10 +419,10 @@ int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
     {
       id: '5-2',
       number: '5.2',
-      title: 'command submissionandsynchronization',
+      title: 'Command submission and synchronization',
       titleEn: 'Command Submission & Synchronization',
       icon: 'Radio',
-      description: '深入 GPU command submissioncompletepath — fromuser space ioctl to Ring Buffer againto GPU execute, and Fence synchronizationmechanismhow协调 CPU and GPU. ',
+      description: 'Dive into the complete path of GPU command submission - from userspace ioctl to Ring Buffer to GPU execution, and how the Fence synchronization mechanism coordinates the CPU and GPU.',
       lessons: [
         // ── Lesson 5.2.1 ──────────────────────────────────────
         {
@@ -434,91 +434,91 @@ int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
           difficulty: 'expert',
           tags: ['command-submission', 'ioctl', 'ring-buffer', 'PM4', 'IB', 'doorbell'],
           concept: {
-            summary: 'GPU command submissionisdriver最coredata通路: user spacethrough DRM_IOCTL_AMDGPU_CS commitcommand, driververify并parsecommand packet(IB), will其write Ring Buffer, finallywrite Doorbell registernotify GPU  Command Processor(CP)startexecute. understand这条pathisunderstand GPU workprinciplekey. ',
+            summary: 'GPU command submission is the core data path of the driver: the user space submits the command through DRM_IOCTL_AMDGPU_CS, the driver verifies and parses the command package (IB), writes it to the Ring Buffer, and finally writes it to the Doorbell register to notify the GPU\'s Command Processor (CP) to start execution. Understanding this path is key to understanding how GPUs work.',
             explanation: [
-              'command submission(Command Submission, CS)is GPU execute任何work起点. regardless ofisrendering一帧游戏stillisruna AI 推理任务, allneedwill GPU commandfrom CPU committo GPU. in amdgpu in, 这条pathfromuser space ioctl(fd, DRM_IOCTL_AMDGPU_CS, &cs) start, to GPU  Command Processor read Ring Buffer incommandend. ',
-              'GPU command以 PM4(Packet Manager 4)format编码 — 这is AMD GPU 自 R600 以usecommand packetformat. each PM4 包由头部(type, opcode, count)anddata体组成. user space Mesa driver(radeonsi/radv)responsible forwill OpenGL/Vulkan API callcompilationas PM4 command packet序列, storagein IB(Indirect Buffer)in. IB is一block GPU canaccessmemory, contain一组contiguous PM4 command. ',
-              'amdgpu_cs_ioctl() iskernelinhandlecommand submissionentry pointfunction. 它workprocess: (1)amdgpu_cs_parser_init() parse ioctl parameter, verifyuser传入 IB addressandsize; (2)amdgpu_cs_parser_bos() verifyandmappingcommand引用all Buffer Object(ensure GPU canaccessthey); (3)amdgpu_cs_submit() will IB 引用write Ring Buffer — Ring Buffer notdirectlycontaincompletecommand, but rathercontain指向 IB pointer(INDIRECT_BUFFER PM4 包), GPU  CP will跟随thispointer IB inreadactualcommand. ',
-              'Ring Buffer is CPU and GPU 之betweencore通信mechanism. 它is一blockringmemoryregion, CPU through WPTR(Write Pointer)write新command, GPU  CP through RPTR(Read Pointer)readcommand. when CPU write新commandafter, update WPTR 并write Doorbell register — this MMIO writewillgenerateahardwareinterrupt, notify CP "has新command". CP compare RPTR and WPTR, if WPTR > RPTR indicatehas新command待handle. 每种 IP Block hasself Ring: GFX Ring(graphics/computecommand), SDMA Ring(DMA transfercommand), VCN Ring(视频编解码command). ',
+              'Command Submission (CS) is the starting point for any work performed by the GPU. Whether rendering a frame of a game or running an AI inference task, GPU commands need to be submitted from the CPU to the GPU. In amdgpu, this path starts from ioctl(fd, DRM_IOCTL_AMDGPU_CS, &cs) in user space and ends with the GPU\'s Command Processor reading the command in the Ring Buffer.',
+              'GPU commands are encoded in PM4 (Packet Manager 4) format - the command packet format used by AMD GPUs since R600. Each PM4 packet consists of a header (type, opcode, count) and a data body. The user-space Mesa driver (radeonsi/radv) is responsible for compiling OpenGL/Vulkan API calls into PM4 command packet sequences, which are stored in IB (Indirect Buffer). The IB is a block of GPU-accessible memory that contains a contiguous set of PM4 commands.',
+              'amdgpu_cs_ioctl() is the entry function in the kernel that handles command submission. Its workflow: (1) amdgpu_cs_parser_init() parses the ioctl parameters and verifies the IB address and size passed in by the user; (2) amdgpu_cs_parser_bos() verifies and maps all Buffer Objects referenced by the command (ensuring that the GPU can access them); (3) amdgpu_cs_submit() writes the IB reference to the Ring Buffer - Ring Buffer It does not directly contain the complete command, but contains a pointer to the IB (INDIRECT_BUFFER PM4 package). The GPU\'s CP will follow this pointer to read the actual command in the IB.',
+              'Ring Buffer is the core communication mechanism between CPU and GPU. It is a ring-shaped memory area. The CPU writes new commands through WPTR (Write Pointer), and the GPU\'s CP reads commands through RPTR (Read Pointer). When the CPU writes a new command, it updates WPTR and writes to the Doorbell register - this MMIO write generates a hardware interrupt, notifying the CP that "there is a new command." CP compares RPTR and WPTR. If WPTR > RPTR, there is a new command pending. Each IP Block has its own Ring: GFX Ring (graphics/computing command), SDMA Ring (DMA transfer command), VCN Ring (video codec command).',
             ],
             keyPoints: [
-              'CS path: ioctl → amdgpu_cs_ioctl → parser → verify BO → write Ring Buffer → Doorbell',
-              'PM4 command packet: AMD GPU standardcommandformat, 由 Mesa(user-space)build',
-              'IB(Indirect Buffer): GPU canaccessmemory, 存放actual PM4 command序列',
-              'Ring Buffer is CPU-GPU 通信ring FIFO, WPTR(CPU 写)/ RPTR(GPU 读)',
-              'Doorbell is MMIO registerwrite, notify GPU Command Processor has新command',
-              'each IP Block hasindependent Ring: GFX Ring, SDMA Ring, VCN Enc/Dec Ring',
+              'CS path: ioctl → amdgpu_cs_ioctl → parser → Verify BO → Write Ring Buffer → Doorbell',
+              'PM4 command package: standard command format for AMD GPUs, built by Mesa (user mode)',
+              'IB (Indirect Buffer): GPU-accessible memory, which stores the actual PM4 command sequence',
+              'Ring Buffer is a ring FIFO for CPU-GPU communication, WPTR (CPU write) / RPTR (GPU read)',
+              'Doorbell is a MMIO register write that notifies the GPU Command Processor of new commands.',
+              'Each IP Block has an independent Ring: GFX Ring, SDMA Ring, VCN Enc/Dec Ring',
             ],
           },
           diagram: {
-            title: 'command submissioncompletepath',
-            content: `GPU command submissioncompletedata通路
+            title: 'Command submission full path',
+            content: `Complete data path submitted by GPU commands
 
-user space(Mesa radeonsi/radv)
+User space (Mesa radeonsi/radv)
 ┌─────────────────────────────────────────────────────────────┐
-│  1. Mesa build PM4 command packet, write IB(Indirect Buffer)        │
+│ 1. Mesa builds PM4 command package and writes to IB (Indirect Buffer) │
 │                                                              │
-│  IB (GPU canaccessmemory):                                       │
+│IB (GPU accessible memory): │
 │  ┌────────────────────────────────────────────────────┐     │
-│  │ [PKT3_SET_SH_REG: setshaderregister]                 │     │
-│  │ [PKT3_SET_CONTEXT_REG: setpipelinestate]                │     │
-│  │ [PKT3_DRAW_INDEX_AUTO: execute绘制, count=36]          │     │
-│  │ [PKT3_EVENT_WRITE: flushcache]                        │     │
+│ │ [PKT3_SET_SH_REG: Set shader register] │ │
+│ │ [PKT3_SET_CONTEXT_REG: Set pipeline status] │ │
+│ │ [PKT3_DRAW_INDEX_AUTO: Execute drawing, count=36] │ │
+│ │ [PKT3_EVENT_WRITE: Refresh cache] │ │
 │  └────────────────────────────────────────────────────┘     │
 │                                                              │
-│  2. libdrm call ioctl(fd, DRM_IOCTL_AMDGPU_CS, &cs)       │
+│ 2. libdrm calls ioctl(fd, DRM_IOCTL_AMDGPU_CS, &cs) │
 └───────────────────────────────┬─────────────────────────────┘
-                                │ ioctl system call
+│ ioctl system call
 ═══════════════════════════════════════════════════════════════
                                 │
-kernel space(amdgpu driver)         ▼
+Kernel space (amdgpu driver) ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  3. amdgpu_cs_ioctl()                                       │
-│     ├─ amdgpu_cs_parser_init()   → parse ioctl parameter         │
-│     ├─ amdgpu_cs_parser_bos()    → verify/mappingall BO         │
-│     ├─ amdgpu_cs_dependencies()  → handle fence dependency         │
-│     └─ amdgpu_cs_submit()        → committoscheduler             │
+│ ├─ amdgpu_cs_parser_init() → Parse ioctl parameters │
+│ ├─ amdgpu_cs_parser_bos() → Verify/map all BOs │
+│ ├─ amdgpu_cs_dependencies() → handle fence dependencies │
+│ └─ amdgpu_cs_submit() → Submit to scheduler │
 │                                                              │
 │  4. GPU Scheduler (drm_sched)                               │
-│     └─ amdgpu_job_run()          → will IB write Ring          │
+│ └─ amdgpu_job_run() → Write IB to Ring │
 │                                                              │
-│  5. write Ring Buffer:                                       │
+│ 5. Write to Ring Buffer: │
 │     ┌──────────────────────────────────────────────────┐    │
 │     │ Ring Buffer (GFX Ring):                          │    │
 │     │                                                   │    │
-│     │  RPTR ──→ [alreadyexecutecommand...]                       │    │
-│     │            [alreadyexecutecommand...]                       │    │
+│ │ RPTR ──→ [Executed command...] │ │
+│ │ [Executed command...] │ │
 │     │            [PKT3_INDIRECT_BUFFER: addr=IB, sz=64] │ ← WPTR
-│     │            [空...]                                │    │
-│     │            [空...]                                │    │
+│ │ [empty...] │ │
+│ │ [empty...] │ │
 │     └──────────────────────────────────────────────────┘    │
 │                                                              │
 │  6. writel(wptr, adev->wb.wb[ring->wptr_offs])              │
 │     writel(wptr, ring->doorbell_ptr)                        │
-│     ↑ Doorbell writenotify GPU Command Processor                │
+│ ↑ Doorbell Write Notification GPU Command Processor │
 └───────────────────────────────┬─────────────────────────────┘
                                 │
-GPU hardware                        ▼
+GPU Hardware ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  7. Command Processor (CP) detectto WPTR > RPTR               │
-│     ├─ from Ring read PKT3_INDIRECT_BUFFER                    │
-│     ├─ 跟随pointerto IB address                                    │
-│     ├─ parse IB in PM4 command                                 │
-│     └─ driver Shader Engine execute                               │
+│ 7. Command Processor (CP) detects WPTR > RPTR │
+│ ├─ Read PKT3_INDIRECT_BUFFER from Ring │
+│ ├─ Follow pointer to IB address │
+│ ├─ Parsing PM4 commands in IB │
+│ └─ Drive Shader Engine execution │
 │                                                              │
-│  8. executecompleteafter:                                              │
-│     ├─ update RPTR                                             │
-│     ├─ write fence 值tomemory(notify CPU complete)                  │
-│     └─ triggerinterrupt(can选)                                      │
+│ 8. After execution: │
+│ ├─ Update RPTR │
+│ ├─ Write fence value to memory (notify CPU of completion) │
+│ └─ Trigger interrupt (optional) │
 └─────────────────────────────────────────────────────────────┘`,
-            caption: 'GPU command submissioncompletedata通路. keyis Ring Buffer notdirectlycontainentirecommand — 它through INDIRECT_BUFFER 包指向 IB, CP 跟随pointerreadactualcommand. 这种between接approachallowcommit任意sizecommand序列. ',
+            caption: 'Complete datapath submitted by GPU commands. The key is that the Ring Buffer does not directly contain the entire command - it is pointed to the IB via the INDIRECT_BUFFER packet, and the CP follows the pointer to read the actual command. This indirection allows submission of command sequences of arbitrary sizes.',
           },
           codeWalk: {
-            title: 'amdgpu_cs_ioctl — command submissionentry point(简化)',
+            title: 'amdgpu_cs_ioctl — command submission entry (simplified)',
             file: 'drivers/gpu/drm/amd/amdgpu/amdgpu_cs.c',
             language: 'c',
-            code: `/* amdgpu_cs_ioctl() — handle DRM_IOCTL_AMDGPU_CS corefunction
- * 这is GPU execute任何work起点
+            code: `/*amdgpu_cs_ioctl() — Core function for handling DRM_IOCTL_AMDGPU_CS
+ *This is the starting point for any work performed by the GPU
  */
 int amdgpu_cs_ioctl(struct drm_device *dev, void *data,
                      struct drm_file *filp)
@@ -528,74 +528,74 @@ int amdgpu_cs_ioctl(struct drm_device *dev, void *data,
     struct amdgpu_cs_parser parser = {};
     int r;
 
-    /* stage 1: parseuser传入command submissionrequest */
+    /*Stage 1: Parse the command submission request passed in by the user */
     r = amdgpu_cs_parser_init(&parser, adev, filp, cs);
-    /* verify IB count, Ring type, priority等parameter
-     * parse chunk 数组: IB chunk, dependency chunk, 
-     *                   syncobj chunk 等 */
+    /*Verify parameters such as IB quantity, Ring type, priority, etc.
+     *Parse chunk array: IB chunk, dependency chunk,
+     *syncobj chunk etc. */
 
-    /* stage 2: handle Buffer Object list */
+    /*Phase 2: Processing Buffer Object list */
     r = amdgpu_cs_parser_bos(&parser, data);
-    /* forcommand引用each BO: 
-     *   - verifyuserhas权access该 BO
-     *   - ensure BO in GPU canaccesslocation(VRAM/GTT)
-     *   - 必to时migration BO(如from GTT 移to VRAM)
-     *   - update GPU page tablemapping */
+    /*For each BO referenced by the command:
+     *- Verify that the user has access to the BO
+     *- Make sure the BO is in a location accessible to the GPU (VRAM/GTT)
+     *- Migrate BO if necessary (e.g. from GTT to VRAM)
+     *- Update GPU page table mapping */
 
-    /* stage 3: handle fence dependency */
+    /*Phase 3: Dealing with fence dependencies */
     r = amdgpu_cs_dependencies(adev, &parser);
-    /* if此commanddependencybeforecommandcomplete, 
-     * willdependency fence addtoschedulerdependencylist */
+    /*If this command relies on a previous command to complete,
+     *Add the dependent fence to the scheduler dependency list */
 
-    /* stage 4: committo GPU scheduler */
+    /*Stage 4: Submit to GPU scheduler */
     r = amdgpu_cs_submit(&parser, cs);
-    /* create amdgpu_job, committo drm_gpu_scheduler
-     * schedulerfinalcall amdgpu_job_run(): 
-     *   - will INDIRECT_BUFFER PM4 包write Ring
-     *   - write Doorbell notify GPU */
+    /*Create amdgpu_job and submit to drm_gpu_scheduler
+     *The scheduler finally calls amdgpu_job_run():
+     *- Write INDIRECT_BUFFER PM4 packet to Ring
+     *- Write Doorbell notification GPU */
 
     return r;
 }
 
-/* Ring Buffer writecoreoperate(简化)*/
+/*Core operation of Ring Buffer writing (simplified)*/
 void amdgpu_ring_commit(struct amdgpu_ring *ring)
 {
-    /* update WPTR(写pointer)*/
+    /*Update WPTR (write pointer) */
     uint64_t wptr = ring->wptr;
 
-    /* write Doorbell register — 这一步trigger GPU startexecute */
+    /*Write to the Doorbell register - this step triggers the GPU to start executing */
     if (ring->use_doorbell) {
         atomic64_set((atomic64_t *)ring->doorbell_ptr, wptr);
         WDOORBELL64(ring->doorbell_index, wptr);
     } else {
-        /* 老 GPU use MMIO 写 WPTR register */
+        /*Old GPU uses MMIO to write WPTR register */
         WREG32(ring->wptr_reg, lower_32_bits(wptr));
     }
 }`,
             annotations: [
-              'amdgpu_cs_parser_init willuser space ioctl parameterparseaskernelcanhandlestructure体',
-              'amdgpu_cs_parser_bos is最耗时stage — 涉及 BO verifyandmaymemorymigration',
-              'fence dependencyensure GPU 按correctorderexecutecommand(如先completedataon传againstartrendering)',
-              'drm_gpu_scheduler is DRM general GPU scheduler, handle多process公平scheduling',
-              'Doorbell is RDNA seriesmain CP notifymechanism, 比传统 MMIO 写 WPTR 更高效',
-              'atomic64_set + WDOORBELL64 ensure 64 位 WPTR atomicwrite',
+              'amdgpu_cs_parser_init parses user space ioctl parameters into structures that can be processed by the kernel',
+              'amdgpu_cs_parser_bos is the most time-consuming stage - involves BO verification and possible memory migration',
+              'The fence dependency ensures that the GPU executes commands in the correct order (such as completing data upload before starting rendering)',
+              'drm_gpu_scheduler is DRM\'s general GPU scheduler, which handles fair scheduling of multiple processes.',
+              'Doorbell is the main CP notification mechanism of the RDNA series and is more efficient than traditional MMIO for writing WPTR.',
+              'atomic64_set + WDOORBELL64 ensures atomic writes to 64-bit WPTR',
             ],
-            explanation: '这is amdgpu driverin最频繁executecodepath — 每秒mayexecute数百to数千次. understandthispathisunderstand GPU howexecuteworkbasics. eachstageperformanceall很key: parser stage BO verify开销isuser-spacedriver(Mesa)尽量batchcommitcommandcause. ',
+            explanation: 'This is the most frequently executed code path in the amdgpu driver - potentially hundreds to thousands of times per second. Understanding this path is fundamental to understanding how the GPU performs its work. The performance of each stage is critical: the BO verification overhead in the parser stage is the reason why the user mode driver (Mesa) tries to submit commands in batches.',
           },
           miniLab: {
-            title: 'use ftrace tracingcommand submissionpath',
-            objective: 'use ftrace tracing amdgpu_cs_ioctl execute, observerealcommand submission耗时andcall链. ',
-            setup: `# ensure ftrace available
+            title: 'Use ftrace to trace the command submission path',
+            objective: 'Use ftrace to track the execution of amdgpu_cs_ioctl and observe the actual command submission time and call chain.',
+            setup: `#Make sure ftrace is available
 sudo mount -t tracefs nodev /sys/kernel/tracing 2>/dev/null
-# 准备a GPU work负载
+#Prepare a GPU workload
 sudo apt install -y mesa-utils`,
             steps: [
-              'set ftrace tracing amdgpu_cs_ioctl: echo amdgpu_cs_ioctl > /sys/kernel/tracing/set_ftrace_filter',
-              'enablefunction图tracing: echo function_graph > /sys/kernel/tracing/current_tracer',
-              'starttracing: echo 1 > /sys/kernel/tracing/tracing_on',
-              'run GPU 负载: glxgears & sleep 2 && kill %1',
-              'stoptracing: echo 0 > /sys/kernel/tracing/tracing_on',
-              'viewresult: head -100 /sys/kernel/tracing/trace',
+              'Set ftrace tracing amdgpu_cs_ioctl: echo amdgpu_cs_ioctl > /sys/kernel/tracing/set_ftrace_filter',
+              'Enable function graph tracing: echo function_graph > /sys/kernel/tracing/current_tracer',
+              'Start tracing: echo 1 > /sys/kernel/tracing/tracing_on',
+              'Running GPU load: glxgears & sleep 2 && kill %1',
+              'Stop tracing: echo 0 > /sys/kernel/tracing/tracing_on',
+              'View the results: head -100 /sys/kernel/tracing/trace',
             ],
             expectedOutput: `$ head -50 /sys/kernel/tracing/trace
 # tracer: function_graph
@@ -613,37 +613,37 @@ sudo apt install -y mesa-utils`,
    0.890 us    |      amdgpu_ring_commit();
                |    }
                |  }`,
-            hint: 'need root permissionoperate ftrace. if set_ftrace_filter writefailure, checkkernelwhethercompilation CONFIG_FUNCTION_TRACER. tracing完记得关闭 ftrace 以avoidperformanceimpact. ',
+            hint: 'Root privileges are required to operate ftrace. If the set_ftrace_filter write fails, check if the kernel is compiled with CONFIG_FUNCTION_TRACER. Remember to turn off ftrace after tracing to avoid performance impact.',
           },
           debugExercise: {
             title: 'Ring Buffer overflow',
             language: 'c',
-            description: 'belowscenarioin, GPU command submissionstartreturn -ENOMEM error, 但 VRAM stillhas大量idle空between. ',
-            question: 'why VRAM has空between但command submissionstillfailure? howdiagnoseandresolve? ',
-            buggyCode: `/* userreporterrorinformation */
+            description: 'In the following scenario, GPU command submissions start returning -ENOMEM errors, but there is still a lot of free space in VRAM.',
+            question: 'Why does command submission still fail despite VRAM having space? How to diagnose and resolve?',
+            buggyCode: `/*Error messages reported by users */
 dmesg:
 [drm:amdgpu_ring_alloc [amdgpu]] *ERROR*
   ring gfx_0.0.0 is full (wptr=0x1FFF0, rptr=0x00010)
 amdgpu_cs_ioctl returned -12   /* -ENOMEM */
 
-/* GPU state */
-VRAM: 2048MB / 8192MB used     (大量idle!)
-GTT:  512MB / 8192MB used      (大量idle!)
+/*GPU status */
+VRAM: 2048MB / 8192MB used (lots of free space!)
+GTT: 512MB / 8192MB used (lots of free time!)
 
-/* application行as */
-applicationin快速循环incommitcommand, nowaitbeforecommandcomplete
+/*Application behavior */
+App submits commands in a fast loop without waiting for previous commands to complete
 while (rendering) {
-    submit_gpu_command();  /* no任何 fence wait! */
+    submit_gpu_command();  /*No fence wait!*/
 }`,
-            hint: 'Ring Buffer sizeis固定(usually 256KB-1MB), 而is notdynamic增长. WPTR 追on RPTR 意味着what? ',
-            answer: 'issueis Ring Buffer overflow(ring full), rather than VRAM not足. Ring Buffer is固定sizering FIFO — when WPTR 追on RPTR(i.e. CPU writecommand速度exceed GPU executecommand速度), ring 满. dmesg in "wptr=0x1FFF0, rptr=0x00010" indicate WPTR 几乎绕一圈追on RPTR. 根因: applicationin快速循环incommitcommand但fromnotwait(fence wait), cause Ring 积压. resolveplan: (1)applicationlayer面 — incommitcommandafter适when做 fence wait, oruse fence callbackasynchronouswait; (2)driverlayer面 — amdgpu_ring_alloc() in ring full 时shouldwait(spin/sleep)直to RPTR before进, rather than立i.e.returnerror; actualdriverin确实has amdgpu_ring_test_helper timeoutwaitlogic. (3)调优layer面 — 增大 Ring Buffer size(amdgpu.gfx_ring_size moduleparameter)can增加缓冲. keyunderstand: VRAM 空betweenand Ring Buffer 空betweeniscompletelydifferentresource — Ring 满not代表memorynot足. ',
+            hint: 'The size of the Ring Buffer is fixed (usually 256KB-1MB) rather than dynamically growing. What does it mean for WPTR to catch up with RPTR?',
+            answer: 'The problem is Ring Buffer overflow (ring full), not insufficient VRAM. The Ring Buffer is a fixed-size ring FIFO - when WPTR catches up with RPTR (i.e. the CPU writes commands faster than the GPU can execute them), the ring is full. "wptr=0x1FFF0, rptr=0x00010" in dmesg indicates that WPTR has almost gone around in a circle to catch up with RPTR. Root cause: The application submits commands in a fast loop but never waits (fence wait), causing Ring backlog. Solution: (1) Application level - perform fence wait appropriately after submitting the command, or use fence callback to wait asynchronously; (2) Driver level - amdgpu_ring_alloc() should wait (spin/sleep) until RPTR advances when the ring is full, instead of returning an error immediately; the actual driver does have the timeout waiting logic of amdgpu_ring_test_helper. (3) Tuning level - increasing the Ring Buffer size (amdgpu.gfx_ring_size module parameter) can increase the buffer. Key understanding: VRAM space and Ring Buffer space are completely different resources - a full Ring does not mean insufficient memory.',
           },
           interviewQ: {
-            question: 'describe amdgpu ina GPU commandfromuser spacecommitto GPU executecompletecompletepath. ',
+            question: 'Describes the complete path from user space submission to GPU execution completion for a GPU command in amdgpu.',
             difficulty: 'hard',
-            hint: '按orderdescribe: ioctl → parser → BO verify → scheduler → Ring write → Doorbell → CP execute → fence completenotify. ',
-            answer: 'completepath: (1)user space Mesa through libdrm call ioctl(fd, DRM_IOCTL_AMDGPU_CS, &cs), parametercontain IB address, BO list, fence dependency; (2)kernel amdgpu_cs_ioctl() entry point, amdgpu_cs_parser_init() parseparameter, verify IB countand Ring type; (3)amdgpu_cs_parser_bos() 对command引用all BO execute TTM reserve(reservation), verify GPU mapping, 必to时execute BO migration(GTT→VRAM)andpage tableupdate; (4)amdgpu_cs_dependencies() will syncobj/timeline dependencyconvertas dma_fence dependency; (5)create amdgpu_job 并committo drm_gpu_scheduler, scheduleraccording to Ring typeandpriorityqueued; (6)schedulerselect job execute时, call amdgpu_job_run() — 它will INDIRECT_BUFFER PM4 包(contain IB addressandsize)write GFX Ring Buffer; (7)call amdgpu_ring_commit() update WPTR 并write Doorbell register; (8)GPU Command Processor(CP)detectto WPTR > RPTR, from Ring read INDIRECT_BUFFER 包, 跟随pointerto IB address, parse PM4 commanddriver Shader Engine execute; (9)executecompleteafter GPU write fence 序列号tospecificmemoryaddress(writeback buffer), triggerinterrupt; (10)interrupt handlingfunction amdgpu_fence_process() check fence 序列号, signal related dma_fence, wakeupwait CPU thread. ',
-            amdContext: '这is AMD interviewin高频technology深度issue. completedescribefrom ioctl to fence signal 全path, 并can指出eachstagecorrespondingfunction名, is区分"解概念"and"深入understandcode"key. ',
+            hint: 'Described in order: ioctl → parser → BO verification → scheduler → Ring writing → Doorbell → CP execution → fence completion notification.',
+            answer: 'Full path: (1) User space Mesa calls ioctl(fd, DRM_IOCTL_AMDGPU_CS, &cs) through libdrm, the parameters include IB address, BO list, fence dependency; (2) Kernel amdgpu_cs_ioctl() entry, amdgpu_cs_parser_init() parses the parameters, verifies the number of IBs and Ring Type; (3) amdgpu_cs_parser_bos() performs TTM reservation for all BOs referenced by the command, verifies GPU mapping, and performs BO migration (GTT→VRAM) and page table updates if necessary; (4) amdgpu_cs_dependencies() converts syncobj/timeline dependencies to dma_fence dependencies; (5) Create amdgpu_job and submit to drm_gpu_scheduler, the scheduler queues according to Ring type and priority; (6) When the scheduler selects job execution, it calls amdgpu_job_run() - it writes the INDIRECT_BUFFER PM4 packet (including IB address and size) into the GFX Ring Buffer; (7) Calls amdgpu_ring_commit() to update WPTR and writes to the Doorbell register; (8) GPU Command Processor (CP) detects WPTR > RPTR, read the INDIRECT_BUFFER package from Ring, follow the pointer to the IB address, parse the PM4 command to drive Shader Engine execution; (9) After the execution is completed, the GPU writes the fence serial number to the specific memory address (writeback buffer), triggering an interrupt; (10) The interrupt processing function amdgpu_fence_process() checks the fence serial number, signal-related dma_fence, and wakes up the waiting CPU thread.',
+            amdContext: 'This is a high frequency technical depth question in an AMD interview. Completely describing the entire path from ioctl to fence signal, and being able to point out the function name corresponding to each stage, is the key to distinguishing "understanding the concept" from "understanding the code in depth".',
           },
         },
 
@@ -651,93 +651,93 @@ while (rendering) {
         {
           id: '5-2-2',
           number: '5.2.2',
-          title: 'Fence synchronizationmechanism: CPU-GPU 协调',
+          title: 'Fence synchronization mechanism: CPU-GPU coordination',
           titleEn: 'Fence Synchronization: CPU-GPU Coordination',
           duration: 20,
           difficulty: 'expert',
           tags: ['fence', 'dma_fence', 'synchronization', 'interrupt', 'gpu-hang'],
           concept: {
-            summary: 'Fence is CPU and GPU 之betweensynchronization原语. GPU 每complete一批command向memoryinwritea递增序列号(fence 值), CPU throughcomparethis值判断 GPU 进度. amdgpu  fence mechanism建立inkernel dma_fence framework之on, supportblockwait, callbacknotifyandtimeoutdetect(GPU Hang detect). ',
+            summary: 'Fence is a synchronization primitive between CPU and GPU. Every time the GPU completes a batch of commands, it writes an incrementing sequence number (fence value) into the memory, and the CPU compares this value to determine the progress of the GPU. amdgpu\'s fence mechanism is built on the kernel\'s dma_fence framework and supports blocking wait, callback notification and timeout detection (GPU Hang detection).',
             explanation: [
-              'CPU and GPU isasynchronousexecute — CPU commitcommandafter GPU maystill没startexecute, GPU executecomplete时 CPU mayin做other事. Fence is连接这twoasynchronous世界桥梁. 最basic fence mechanism很simple: GPU 每complete一组commandafter, 向a约定memoryaddresswritea递增序列号(sequence number). CPU 想know GPU whethercomplete某个command, 只needreadthisaddress并compare序列号. ',
-              'amdgpu  fence implementation建立inkernel dma_fence framework之on. amdgpu_fence_emit() incommand submission时向 Ring Buffer writea FENCE PM4 包 — when GPU executetothis包时, willwilla预allocation序列号write adev->fence_drv[ring_id].gpu_addr 指向memory. CPU 端 amdgpu_fence_process() readthisaddress, compare序列号, if GPU write值 >= 期望值,  signal corresponding dma_fence. ',
-              'Fence waithas两种approach: (1)blockwait(dma_fence_wait) — CPU thread sleep 直to fence by signal, 适used formustwait GPU completescenario(如 glFinish); (2)callbacknotify(dma_fence_add_callback) — registrationcallback functionin fence signal 时asynchronousexecute, notblock CPU, 适used forpipelinescenario. GPU completecommandafterthroughinterruptnotify CPU — interrupt handlingfunctionin tasklet contextincall amdgpu_fence_process(), after者traverse该 Ring allnot yet signal  fence 并 signal alreadycomplete. ',
-              'Fence timeoutis GPU Hang detectcoremechanism. drm_gpu_scheduler aseachcommit job setatimeout时between(default 10 秒). iftimeoutafter fence 仍not yet signal, scheduler认as GPU 发生 hang, trigger amdgpu_job_timedout(), start GPU 复位process. dmesg in "[drm] ring gfx_0.0.0 timeout" isthismechanismreport. understand fence timeout and GPU 复位processfordebugging GPU hang issue至关important. ',
+              'The CPU and GPU execute asynchronously - the GPU may not start execution after the CPU submits the command, and the CPU may be doing other things when the GPU execution is completed. Fence is the bridge between these two asynchronous worlds. The most basic fence mechanism is simple: every time the GPU completes a set of commands, it writes an increasing sequence number to an agreed memory address. The CPU wants to know if the GPU has completed a certain command, it just needs to read the address and compare the sequence number.',
+              'amdgpu\'s fence implementation is built on top of the kernel\'s dma_fence framework. amdgpu_fence_emit() writes a FENCE PM4 packet to the Ring Buffer when the command is submitted - when the GPU executes this packet, a pre-allocated sequence number will be written to the memory pointed to by adev->fence_drv[ring_id].gpu_addr. The amdgpu_fence_process() on the CPU side reads this address, compares the sequence number, and if the value written by the GPU >= the expected value, the corresponding dma_fence is signaled.',
+              'There are two ways to wait for Fence: (1) Blocking wait (dma_fence_wait) - the CPU thread sleeps until the fence is signaled, suitable for scenarios that must wait for the GPU to complete (such as glFinish); (2) Callback notification (dma_fence_add_callback) - the registered callback function is executed asynchronously when the fence is signaled, without blocking the CPU, suitable for pipeline scenarios. After the GPU completes the command, it notifies the CPU through an interrupt - the interrupt handler calls amdgpu_fence_process() in the tasklet context, which traverses all unsignaled fences of the Ring and signals the completed ones.',
+              'Fence timeout is the core mechanism of GPU Hang detection. drm_gpu_scheduler sets a timeout for each submitted job (default 10 seconds). If there is still no signal from the fence after the timeout, the scheduler considers that the GPU has hanged, triggers amdgpu_job_timedout(), and starts the GPU reset process. "[drm] ring gfx_0.0.0 timeout" in dmesg is reported by this mechanism. Understanding the fence timeout and GPU reset process is critical to debugging GPU hang issues.',
             ],
             keyPoints: [
-              'Fence 本质: GPU 向memory写递增序列号, CPU read并compare判断进度',
-              'amdgpu_fence_emit(): in Ring ininsert FENCE PM4 包, GPU execute时write序列号',
-              'amdgpu_fence_process(): interrupttrigger → read GPU write序列号 → signal dma_fence',
-              'waitapproach: block(dma_fence_wait)vs callback(dma_fence_add_callback)',
-              'GPU Hang detect: fence timeout(default 10s)→ amdgpu_job_timedout → GPU 复位',
-              'Timeline Semaphore: has序序列号, support跨processand跨 Ring 细粒度synchronization',
+              'The essence of Fence: the GPU writes the incremental sequence number to the memory, and the CPU reads and compares it to determine the progress.',
+              'amdgpu_fence_emit(): Insert the FENCE PM4 package in the Ring, and write the sequence number when the GPU executes',
+              'amdgpu_fence_process(): interrupt trigger → read the sequence number written by the GPU → signal dma_fence',
+              'Waiting method: blocking (dma_fence_wait) vs callback (dma_fence_add_callback)',
+              'GPU Hang detection: fence timeout (default 10s) → amdgpu_job_timedout → GPU reset',
+              'Timeline Semaphore: ordered sequence numbers, supporting fine-grained synchronization across processes and rings',
             ],
           },
           diagram: {
-            title: 'Fence synchronizationmechanismlifecycle',
-            content: `Fence lifecycle: from emit to signal
+            title: 'The life cycle of the Fence synchronization mechanism',
+            content: `Fence life cycle: from emit to signal
 
-时between ──────────────────────────────────────────────────────────→
+Time──────────────────────────────────────────────────────→
 
-CPU 端                          GPU 端
+CPU side GPU side
 ──────                          ──────
 
-1. command submission
+1. Command submission
    amdgpu_cs_submit()
    │
    ├─ amdgpu_fence_emit()
-   │  in Ring 尾部insert:
-   │  [PM4 FENCE 包:
+│ Insert at the end of Ring:
+│[PM4 FENCE PACK:
    │   addr=fence_gpu_addr,        Ring Buffer:
    │   seq=42]                     ┌──────────────────┐
-   │                               │ ...other PM4 command   │
-   │  create dma_fence              │ [INDIRECT_BUFFER] │
+│ │ ...other PM4 commands │
+│ Create dma_fence │ [INDIRECT_BUFFER] │
    │  (seq=42, unsignaled)         │ [FENCE addr seq=42]│ ← WPTR
    │                               └──────────────────┘
    ├─ ring_commit()
-   │  写 Doorbell                     │
-   │                                  │ GPU CP startexecute
+│Write Doorbell │
+│ │ GPU CP starts execution
    ▼                                  ▼
-2. GPU executein
-   CPU can做other事              GPU execute IB incommand
-   or dma_fence_wait()           ├─ execute绘制command
-   (sleep wait)                  ├─ executecomputecommand
-   │                             └─ executeto FENCE PM4 包
+2. GPU executing
+The CPU can do other things and the GPU executes commands in the IB.
+or dma_fence_wait() ├─ execute drawing command
+(sleep waiting) ├─ Execute calculation command
+│ └─ Execute to FENCE PM4 package
    │                                │
    │                                ▼
-3. GPU complete                      GPU will seq=42 write
-                                 fence_gpu_addr memory
+3. GPU completes GPU writing seq=42
+fence_gpu_addr memory
    fence_gpu_addr:               │
-   [before: 41] → [现in: 42]       └─ triggerhardwareinterrupt
+[Before: 41] → [Now: 42] └─ Trigger hardware interrupt
                                        │
-4. interrupt handling                            │
+4. Interrupt handling │
    amdgpu_irq_handler()    ◄──────────┘
    └─ tasklet_schedule()
       └─ amdgpu_fence_process()
          │
-         ├─ read *fence_gpu_addr → 42
-         ├─ 42 >= 期望 42 ✓
+├─ Read *fence_gpu_addr → 42
+├─ 42 >= expected 42 ✓
          └─ dma_fence_signal(fence_42)
             │
-            ├─ wakeupblockthread (dma_fence_wait return)
-            └─ executeregistrationcallback (dma_fence_add_callback)
+├─ Wake up the blocked thread (dma_fence_wait returns)
+└─ Execute registered callback (dma_fence_add_callback)
 
-5. Fence timeout(GPU Hang scenario)
-   if 10 秒after fence 仍not yet signal:
+5. Fence timeout (GPU Hang scenario)
+If fence does not signal after 10 seconds:
    drm_sched_job_timedout()
    └─ amdgpu_job_timedout()
       ├─ DRM_ERROR("ring gfx_0.0.0 timeout")
-      ├─ dump GPU register (GRBM_STATUS 等)
+├─ dump GPU registers (GRBM_STATUS, etc.)
       └─ amdgpu_device_gpu_recover()
-         └─ GPU 复位 → re-initializationall IP Block`,
-            caption: 'Fence completelifecycle. 正常path: emit → GPU execute → 写序列号 → interrupt → signal. 异常path: timeout → GPU hang detect → 复位. fence_gpu_addr 指向memoryis CPU and GPU 之betweenshared"信箱". ',
+└─ GPU reset → Reinitialize all IP Blocks`,
+            caption: 'The complete life cycle of Fence. Normal path: emit → GPU execution → write sequence number → interrupt → signal. Abnormal path: timeout → GPU hang detection → reset. The memory pointed to by fence_gpu_addr is the shared "mailbox" between the CPU and GPU.',
           },
           codeWalk: {
             title: 'amdgpu_fence_emit and amdgpu_fence_process',
             file: 'drivers/gpu/drm/amd/amdgpu/amdgpu_fence.c',
             language: 'c',
-            code: `/* amdgpu_fence_emit() — in Ring ininsert fence command
- * each timecommand submission时call
+            code: `/*amdgpu_fence_emit() — Insert fence command in Ring
+ *Called every time a command is submitted
  */
 int amdgpu_fence_emit(struct amdgpu_ring *ring,
                        struct dma_fence **f,
@@ -748,56 +748,56 @@ int amdgpu_fence_emit(struct amdgpu_ring *ring,
     struct amdgpu_fence *fence;
     uint32_t seq;
 
-    /* allocation递增序列号 */
+    /*Assign increasing sequence number */
     seq = ++ring->fence_drv.sync_seq;
 
-    /* initialization dma_fence structure体 */
+    /*Initialize dma_fence structure */
     dma_fence_init(&fence->base, &amdgpu_fence_ops,
                    &ring->fence_drv.lock,
                    adev->fence_context + ring->idx, seq);
 
-    /* 向 Ring Buffer write FENCE PM4 包
-     * GPU executeto此包时will: 
+    /*Write FENCE PM4 packet to Ring Buffer
+     *When the GPU executes this package:
      *   MEM_WRITE(fence_gpu_addr, seq)
-     *   → will seq write fence_gpu_addr 指向memory
+     *→ Write seq to the memory pointed to by fence_gpu_addr
      */
     amdgpu_ring_emit_fence(ring,
-        ring->fence_drv.gpu_addr,   /* GPU writegoaladdress */
-        seq,                         /* towrite序列号 */
+        ring->fence_drv.gpu_addr,   /*Target address for GPU writes*/
+        seq,                         /*Serial number to write*/
         flags);
 
     *f = &fence->base;
     return 0;
 }
 
-/* amdgpu_fence_process() — ininterruptcontextinhandlecomplete fence
- * 由interrupt handler  tasklet call
+/*amdgpu_fence_process() — Process a completed fence in interrupt context
+ *Called by the interrupt handler's tasklet
  */
 bool amdgpu_fence_process(struct amdgpu_ring *ring)
 {
     struct amdgpu_fence_driver *drv = &ring->fence_drv;
     uint32_t last_seq, seq;
 
-    /* read GPU writelatest序列号
-     * thismemoryaddress由 CPU and GPU shared(writeback buffer)
+    /*Read the latest sequence number written by the GPU
+     *This memory address is shared by CPU and GPU (writeback buffer)
      */
     last_seq = atomic_read(&drv->last_seq);
     seq = le32_to_cpu(*drv->cpu_addr);
-    /* ↑ drv->cpu_addr and drv->gpu_addr 指向同一blockphysical memory
-     *   GPU through gpu_addr write, CPU through cpu_addr read */
+    /*↑ drv->cpu_addr and drv->gpu_addr point to the same physical memory
+     *The GPU writes through gpu_addr and the CPU reads through cpu_addr */
 
     if (seq == last_seq)
-        return false;  /* no新completecommand */
+        return false;  /*No newly completed commands*/
 
     atomic_set(&drv->last_seq, seq);
 
-    /* Signal all序列号 <= seq  fence */
+    /*Signal All sequence numbers <= fence of seq */
     while (last_seq != seq) {
         struct dma_fence *fence;
-        fence = /* lookup seq=last_seq+1  fence */;
+        fence = /*Find fence with seq=last_seq+1*/;
         if (fence) {
-            /* wakeup dma_fence_wait thread
-             * execute dma_fence_add_callback callback */
+            /*Wake up the thread of dma_fence_wait
+             *Execute the callback of dma_fence_add_callback */
             dma_fence_signal(fence);
         }
         ++last_seq;
@@ -805,43 +805,43 @@ bool amdgpu_fence_process(struct amdgpu_ring *ring)
     return true;
 }`,
             annotations: [
-              'sync_seq iseach Ring 递增count器 — each time emit 加 1, 保证globalunique',
-              'dma_fence_init use fence_context + ring_idx 作ascontextidentifier符',
-              'amdgpu_ring_emit_fence is Ring specificoperate — GFX/SDMA/VCN Ring hasdifferent PM4 format',
-              'fence_gpu_addr and cpu_addr is同一physical memory GPU virtual addressand CPU virtual address',
-              'le32_to_cpu handlebytes序 — GPU 写 little-endian data',
-              'dma_fence_signal iskernel DMA fence frameworkfunction, handlewaitwakeupandcallbackexecute',
+              'sync_seq is an incrementing counter for each Ring - incremented by 1 for each emit, ensuring global uniqueness',
+              'dma_fence_init uses fence_context + ring_idx as context identifier',
+              'amdgpu_ring_emit_fence is Ring specific operation - GFX/SDMA/VCN Ring has different PM4 formats',
+              'fence_gpu_addr and cpu_addr are the GPU virtual address and CPU virtual address of the same physical memory',
+              'le32_to_cpu handles endianness - GPU writes little-endian data',
+              'dma_fence_signal is a function of the kernel DMA fence framework that handles waiting for wake-up and callback execution',
             ],
-            explanation: 'emit and process is fence mechanism两端: emit incommit时向 GPU "below订单"(in Ring ininsert fence command), process ininterrupt时"check订单completestate"(read GPU write序列号并 signal fence). 这twofunction高效implementationis GPU performancekey — 每秒mayexecute数千次. ',
+            explanation: 'emit and process are two ends of the fence mechanism: emit "places an order" to the GPU on submission (inserts the fence command in the Ring), and process "checks the order completion status" on interruption (reads the sequence number written by the GPU and signals fence). Efficient implementation of these two functions is key to GPU performance - potentially executing thousands of times per second.',
           },
           miniLab: {
-            title: 'observe GPU fence createandcomplete',
-            objective: 'through debugfs and ftrace observereal fence 活动, understand fence in GPU work流in角色. ',
+            title: 'Observe the creation and completion of the GPU fence',
+            objective: 'Observe real-life fence activity with debugfs and ftrace and understand the role of fences in GPU workflows.',
             steps: [
-              'viewcurrent fence state: sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info',
-              'observe fence 序列号变化: watch -n 0.5 "sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info | head -20"',
-              'in另a终端run GPU 负载: glxgears',
-              'observe fence 序列号快速递增(每帧at least +1)',
-              '用 ftrace tracing fence signal: echo amdgpu_fence_process > /sys/kernel/tracing/set_ftrace_filter && echo function > /sys/kernel/tracing/current_tracer && echo 1 > /sys/kernel/tracing/tracing_on',
-              'viewtracingresult: cat /sys/kernel/tracing/trace | head -30',
+              'Check the current fence status: sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info',
+              'Observe fence serial number changes: watch -n 0.5 "sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info | head -20"',
+              'Run GPU load in another terminal: glxgears',
+              'Watch the fence sequence number increase rapidly (at least +1 per frame)',
+              'Use ftrace to trace the fence signal: echo amdgpu_fence_process > /sys/kernel/tracing/set_ftrace_filter && echo function > /sys/kernel/tracing/current_tracer && echo 1 > /sys/kernel/tracing/tracing_on',
+              'View tracing results: cat /sys/kernel/tracing/trace | head -30',
             ],
             expectedOutput: `$ sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info
 --- ring gfx_0.0.0 ---
 Last signaled fence          0x00003a42
 Last emitted                 0x00003a45
-  ← 差值 3 representhas 3 个command正in GPU inexecute
+  ←A difference of 3 means there are 3 commands being executed in the GPU
 
 --- ring sdma0 ---
 Last signaled fence          0x00000128
 Last emitted                 0x00000128
-  ← 差值 0 represent SDMA idle`,
-            hint: 'if "Last signaled" and "Last emitted" 差值很大(> 100)且长时betweennot变, may意味着 GPU hang. 正常情况below差值shouldin 0-10 之between波动. ',
+  ←A difference of 0 means SDMA idle`,
+            hint: 'If the difference between "Last signaled" and "Last emitted" is large (> 100) and remains unchanged for a long time, it may mean that the GPU hangs. Normally the difference should fluctuate between 0-10.',
           },
           debugExercise: {
-            title: 'Fence timeoutcause GPU Hang',
+            title: 'Fence timeout causes GPU Hang',
             language: 'text',
-            description: 'below dmesg outputdisplaya GPU hang event. analyze fence information确定 hang  Ring andcause. ',
-            question: 'from fence informationin推断: 哪个 Ring 发生 hang? GPU inexecutewhattypeoperate? hang maycauseiswhat? ',
+            description: 'The following dmesg output shows a GPU hang event. Analyze the fence information to determine the ring and cause of the hang.',
+            question: 'Infer from fence information: Which Ring has the hang occurred? What type of operations is the GPU performing? What are the possible reasons for hang?',
             buggyCode: `[  345.678] [drm:amdgpu_job_timedout [amdgpu]] *ERROR*
   ring gfx_0.0.0 timeout, signaled seq=1024, emitted seq=1028
 [  345.678] [drm:amdgpu_job_timedout [amdgpu]]
@@ -855,15 +855,15 @@ Last emitted                 0x00000128
   CP_BUSY=1 CP_COHERENCY_BUSY=1
 [  345.680] amdgpu 0000:03:00.0: amdgpu:
   GPU reset begin!`,
-            hint: 'signaled seq=1024, emitted seq=1028 indicate 4 个 job not yetcomplete. SRC_ID:146 iswhatinterrupt源? addr 看起像invalidaddress. ',
-            answer: 'analyze: (1)hang 发生in GFX Ring(gfx_0.0.0), 这isgraphics/computecommand主 Ring. signaled=1024, emitted=1028 indicatehas 4 个 job commit但not yetcomplete. (2)SRC_ID:146 is VMC(Virtual Memory Controller)页errorinterrupt, indicate GPU tryaccessinvalidvirtual address. addr=0xDEAD0000BEEF0000 isatypicaldebugging用毒化address(poison pattern), representaccessalreadyreleaseornot yetmappingmemory. VMID=3 representisuser spaceprocess GPU virtualaddress space. (3)GRBM_STATUS display GUI_ACTIVE and GFX_BUSY, CP_BUSY=1 confirm GPU 正inexecute但卡住 — CP tryaccessinvalidaddresscause VMC fault, GFX enginetherefore停滞. (4)根因很mayis: user spaceprogramrelease BO(Buffer Object)但stillinafter续commandin引用它, cause GPU accessalready unmap address. 这istypical use-after-free in GPU 端表现. fix方向: checkapplicationprogram BO lifecyclemanagement, ensurecommandcompletebeforenotrelease引用 BO. ',
+            hint: 'signaled seq=1024, emitted seq=1028 indicates that 4 jobs are not completed. What is the interrupt source of SRC_ID:146? addr looks like an invalid address.',
+            answer: 'Analysis: (1) The hang occurs in the GFX Ring (gfx_0.0.0), which is the main Ring for graphics/computation commands. signaled=1024, emitted=1028 indicates that 4 jobs were submitted but not completed. (2) SRC_ID:146 is a VMC (Virtual Memory Controller) page fault interrupt, indicating that the GPU attempts to access an invalid virtual address. addr=0xDEAD0000BEEF0000 is a typical poison pattern for debugging, indicating that freed or unmapped memory is accessed. VMID=3 indicates the GPU virtual address space of the user space process. (3) GRBM_STATUS displays GUI_ACTIVE and GFX_BUSY, CP_BUSY=1 confirms that the GPU is executing but is stuck - CP attempts to access an invalid address causing a VMC fault, and the GFX engine stalls. (4) The root cause is probably that the user space program released the BO (Buffer Object) but still referenced it in subsequent commands, causing the GPU to access the unmap address. This is typical use-after-free behavior on the GPU side. Fix direction: Check the application\'s BO life cycle management to ensure that the referenced BO is not released before the command is completed.',
           },
           interviewQ: {
-            question: 'explain amdgpu in fence workprinciple. GPU hang 时 fence mechanismhowdetecttoissue? ',
+            question: 'Explain how fence works in amdgpu. How does the fence mechanism detect problems when the GPU hangs?',
             difficulty: 'hard',
-            hint: '先explain正常 fence process(emit → GPU 写序列号 → interrupt → signal), againexplaintimeoutdetectand复位process. ',
-            answer: 'Fence workprinciple: (1)each timecommand submission(amdgpu_fence_emit), driverin Ring Buffer 尾部inserta FENCE PM4 command packet, containgoalmemoryaddressand递增序列号 N; (2)GPU Command Processor executeto FENCE 包时, will序列号 N write指定memoryaddress(writeback buffer)并triggerhardwareinterrupt; (3)interrupt handlingfunctioncall amdgpu_fence_process(), read GPU writelatest序列号, signal all seq <= N  dma_fence; (4)by signal  fence wakeupthrough dma_fence_wait() wait CPU thread, ortriggerthrough dma_fence_add_callback() registrationcallback function. GPU Hang detect: drm_gpu_scheduler aseach job startupa定时器(default 10 秒). if定时器to期时corresponding fence 仍not yet signal, indicate GPU in预期时between内nocomplete — schedulercall amdgpu_job_timedout(). 该function: (a)recorderrorto dmesg(ring timeout, signaled/emitted seq); (b)dump key GPU register(GRBM_STATUS, CP state); (c)call amdgpu_device_gpu_recover() execute GPU 复位 — saveall Ring state, re-initializationall IP Block, re-commitnot yetcomplete job. GPU 复位isa"核武器"operate — 它willinterruptall GPU work, 但canrecover GPU toavailablestate. in SR-IOV virtual化environmentin, 只can复位allocation给current VM  GPU function.  Key gotchas that distinguish senior engineers: (1) Fence signals use spinlock (not workqueue) because they execute in interrupt/softirq context where sleeping is forbidden — but the callback chain can be long, so the kernel moved to irq_work for deferred processing in recent versions. (2) Ring buffers use Write-Combine (WC) MMIO mapping instead of cached mapping because WC provides much better sequential write performance (CPU writes are combined into full cache-line bursts), but reads from WC memory return garbage — the driver must never read back from the ring buffer, only write to it. (3) Fence timeout != GPU hang: a fence can timeout because the interrupt was lost (common with MSI-X configuration bugs), even though the GPU actually completed the work. The recovery path must check the actual fence sequence number before declaring a hang.',
-            amdContext: 'Fence and GPU hang handleis AMD interviewin深度technology话题. demonstrate你understandfrom fence emit to GPU 复位complete链条, and复位对other GPU userimpact. ',
+            hint: 'First explain the normal fence process (emit → GPU writes serial number → interrupt → signal), and then explain the timeout detection and reset process.',
+            answer: 'Fence working principle: (1) Each time a command is submitted (amdgpu_fence_emit), the driver inserts a FENCE PM4 command packet at the end of the Ring Buffer, including the target memory address and the incremented sequence number N; (2) When the GPU Command Processor executes the FENCE packet, it writes the sequence number N to the specified memory address (writeback buffer) and triggers a hardware interrupt; (3) The interrupt processing function calls amdgpu_fence_process() to read the GPU The latest sequence number written, signal all dma_fences with seq <= N; (4) The fence of signal wakes up the CPU thread waiting through dma_fence_wait(), or triggers the callback function registered through dma_fence_add_callback(). GPU Hang detection: drm_gpu_scheduler starts a timer for each job (default 10 seconds). If the corresponding fence is still not signaled when the timer expires, the GPU did not complete within the expected time - the scheduler calls amdgpu_job_timedout(). This function: (a) records errors to dmesg (ring timeout, signaled/emitted seq); (b) dumps key GPU registers (GRBM_STATUS, CP status); (c) calls amdgpu_device_gpu_recover() to perform a GPU reset - save all Ring states, reinitialize all IP Blocks, and resubmit unfinished jobs. GPU reset is a "nuclear" operation - it interrupts all GPU work, but restores the GPU to a usable state. In an SR-IOV virtualized environment, only GPU capabilities assigned to the current VM can be reset. Key gotchas that distinguish senior engineers: (1) Fence signals use spinlock (not workqueue) because they execute in interrupt/softirq context where sleeping is forbidden — but the callback chain can be long, so the kernel moved to irq_work for deferred processing in recent versions. (2) Ring buffers use Write-Combine (WC) MMIO mapping instead of cached mapping because WC provides much better sequential write performance (CPU writes are combined into full cache-line bursts), but reads from WC memory return garbage — the driver must never read back from the ring buffer, only write to it. (3) Fence timeout != GPU hang: a fence can timeout because the interrupt was lost (common with MSI-X configuration bugs), even though the GPU actually completed the work. The recovery path must check the actual fence sequence number before declaring a hang.',
+            amdContext: 'Fence and GPU hang processing are deep technical topics in AMD interviews. Show that you understand the complete chain from fence emit to GPU reset, and the impact of reset on other GPU users.',
           },
         },
       ],
@@ -875,210 +875,210 @@ Last emitted                 0x00000128
     {
       id: '5-3',
       number: '5.3',
-      title: 'displayandpower management',
+      title: 'Display and power management',
       titleEn: 'Display & Power Management',
       icon: '🖥️',
-      description: '深入 AMD Display Core(DC)displayenginearchitectureand SMU power managementmechanism — 这twosubsystemdirectlyimpactuser视觉体验and功耗/performance平衡. ',
+      description: 'Deep dive into the AMD Display Core (DC) display engine architecture and SMU power management mechanism - these two subsystems directly affect the user\'s visual experience and power consumption/performance balance.',
       lessons: [
         // ── Lesson 5.3.1 ──────────────────────────────────────
         {
           id: '5-3-1',
           number: '5.3.1',
-          title: 'Display Core (DC): AMD displayengine',
+          title: 'Display Core (DC): AMD\'s display engine',
           titleEn: 'Display Core (DC): AMD Display Engine',
           duration: 20,
           difficulty: 'expert',
           tags: ['display-core', 'DC', 'DCN', 'KMS', 'FreeSync', 'display-pipeline'],
           concept: {
-            summary: 'Display Core (DC) is amdgpu driverin最大subsystem(约 160 万行code), responsible foralldisplayoutput. DC 采用hardware无关corelayer + hardwarerelated DCN(Display Controller Next)layerdesign, implementationfrom framebuffer todisplay器completedisplaypipeline(HUBP → DPP → OPP → OPTC → DIO), 并support FreeSync/VRR 等advancedfeature. ',
+            summary: 'Display Core (DC) is the largest subsystem in the amdgpu driver (approximately 1.6 million lines of code) and is responsible for all display output. DC uses a hardware-independent core layer + hardware-related DCN (Display Controller Next) layer design to implement a complete display pipeline from the framebuffer to the display (HUBP → DPP → OPP → OPTC → DIO), and supports advanced features such as FreeSync/VRR.',
             explanation: [
-              'DC(Display Core)is AMD from Windows driver移植to Linux displayengine — 这is alsowhy它code风格andkernelother部分has明显差异(更接近 Windows driver C 风格, use大量面向objectpattern). DC 最初in 2017 年merge入kernel时引发争议(becausecode量巨大且风格独特), 但它issupport AMD 现代displayfeature必tocomponent. ',
-              'DC architecture分as两大layer: hardware无关corelayer(display/dc/core/)andhardwarerelated DCN layer(display/dc/dcn32/ 等). corelayerdefinedisplaypipelineabstraction模型 — stream(display流, correspondingadisplay器output), plane(display平面, correspondinga图layer), timing(时序parameter, 分辨率/flush率). DCN layerimplementationspecifichardwareregisterprogramming. 这种分layer使得support新一代 DCN 只需addhardwarelayercode, corelogiccan复用. ',
-              'DCN(Display Controller Next)displaypipeline由belowhardware单元组成, datafrom framebuffer todisplay器依次经过: HUBP(Hub Pipe, frommemoryread像素data)→ DPP(Display Pipe and Plane, 色彩变换, 缩放, blending)→ OPP(Output Pixel Processor, gamma 校正, dithering)→ OPTC(Output Pipe Timing Combiner, generatedisplay时序信号)→ DIO(Display I/O, 编码as DP/HDMI/DVI 信号output). each单元corresponding DCN hardwareina子module, driverneed精确configurationtheyregisterimplementationcorrectdisplayoutput. ',
-              'DC and DRM KMS(Kernel Mode Setting)relationship: DRM KMS is Linux kernelgeneraldisplaymanagementframework(drm_atomic_commit, drm_crtc, drm_connector 等), amdgpu  amdgpu_dm.c(Display Manager)is KMS and DC 之betweenadapterlayer. whenuser space(如 GNOME/KDE)call DRM atomic commit requestset分辨率时, amdgpu_dm will DRM data structureconvertas DC data structure, thencall dc_commit_state() executeactualhardwareconfiguration. FreeSync/VRR(Variable Refresh Rate)is alsothrough DC implementation — DC candynamic调整 OPTC  VBlank between隔match GPU rendering帧率. ',
+              'DC (Display Core) is AMD\'s display engine ported from Windows driver to Linux - which is why its code style is significantly different from other parts of the kernel (closer to the C style of Windows driver, using a lot of object-oriented patterns). DC was initially controversial when it was merged into the kernel in 2017 (because of the large code size and unique style), but it is a necessary component to support AMD\'s modern display features.',
+              'The DC architecture is divided into two major layers: the hardware-independent core layer (display/dc/core/) and the hardware-related DCN layer (display/dc/dcn32/, etc.). The core layer defines the abstract model of the display pipeline - stream (display stream, corresponding to a display output), plane (display plane, corresponding to a layer), and timing (timing parameters, resolution/refresh rate). The DCN layer implements hardware-specific register programming. This layering allows supporting the new generation of DCN by simply adding hardware layer code, and the core logic can be reused.',
+              'The display pipeline of DCN (Display Controller Next) consists of the following hardware units. The data passes from the framebuffer to the display in sequence: HUBP (Hub Pipe, reading pixel data from memory) → DPP (Display Pipe and Plane, color transformation, scaling, mixing) → OPP (Output Pixel Processor, gamma correction, dithering) → OPTC (Output Pipe Timing Combiner, generating display timing signals) → DIO (Display I/O, encoded as DP/HDMI/DVI signal output). Each unit corresponds to a submodule in the DCN hardware, and the driver needs to accurately configure their registers to achieve correct display output.',
+              'The relationship between DC and DRM KMS (Kernel Mode Setting): DRM KMS is the general display management framework of the Linux kernel (drm_atomic_commit, drm_crtc, drm_connector, etc.), amdgpu\'s amdgpu_dm.c (Display Manager) is the adapter layer between KMS and DC. When user space (such as GNOME/KDE) calls a DRM atomic commit request to set the resolution, amdgpu_dm converts the DRM data structure into the DC\'s data structure and then calls dc_commit_state() to perform the actual hardware configuration. FreeSync/VRR (Variable Refresh Rate) is also implemented through DC - DC can dynamically adjust the VBlank interval of OPTC to match the rendering frame rate of the GPU.',
             ],
             keyPoints: [
-              'DC is amdgpu 最大subsystem(~1.6M 行code), from Windows driver移植而',
-              '两layerarchitecture: corelayer(hardware无关)+ DCN layer(hardwarerelated, 如 dcn32 = RDNA3)',
-              'displaypipeline: HUBP → DPP → OPP → OPTC → DIO → display器',
-              'DRM KMS ←→ amdgpu_dm.c(适配layer)←→ DC Core ←→ DCN Hardware',
-              'dc_commit_state() isdisplaystatecommitcorefunction, execute atomic mode setting',
-              'FreeSync/VRR through DC dynamic调整 OPTC  VBlank 周期implementation',
+              'DC is the largest subsystem of amdgpu (~1.6M lines of code), ported from Windows driver',
+              'Two-layer architecture: core layer (hardware-independent) + DCN layer (hardware-dependent, such as dcn32 = RDNA3)',
+              'Display pipeline: HUBP → DPP → OPP → OPTC → DIO → display',
+              'DRM KMS ←→ amdgpu_dm.c (adaptation layer) ←→ DC Core ←→ DCN Hardware',
+              'dc_commit_state() is the core function to display status submission and executes atomic mode setting',
+              'FreeSync/VRR dynamically adjusts OPTC\'s VBlank cycle through DC',
             ],
           },
           diagram: {
-            title: 'DCN displaypipelinearchitecture',
-            content: `DCN (Display Controller Next) displaypipeline — RDNA3 DCN 3.2
+            title: 'DCN display pipeline architecture',
+            content: `DCN (Display Controller Next) display pipeline — RDNA3 DCN 3.2
 
 Framebuffer (VRAM)
-  像素datastoragein GPU memoryin
+Pixel data is stored in GPU memory
        │
        ▼
 ┌──────────────┐
-│    HUBP      │  Hub Pipe — frommemoryread像素data
-│              │  · configuration framebuffer addressandformat
-│              │  · support tiling pattern解码
-│              │  · requestmemory controllerreaddata
+│ HUBP │ Hub Pipe — Read pixel data from memory
+│ │ · Configure framebuffer address and format
+│ │ · Support tiling mode decoding
+│ │ · Request the memory controller to read data
 └──────┬───────┘
-       │ 像素data流
+│ Pixel data stream
        ▼
 ┌──────────────┐
-│    DPP       │  Display Pipe and Plane — 像素handle
-│              │  · color spaceconvert (sRGB → HDR)
-│              │  · 缩放 (scaling, support整数and小数缩放)
-│              │  · 多图layerblending (cursor, overlay, video)
-│              │  · 3D LUT 色彩mapping
+│ DPP │ Display Pipe and Plane — Pixel Processing
+│ │ · Color space conversion (sRGB → HDR)
+│ │ · Scaling (supports integer and decimal scaling)
+│ │ · Multi-layer blending (cursor, overlay, video)
+│ │ · 3D LUT Color Mapping
 └──────┬───────┘
-       │ handleafter像素
+│ Processed pixels
        ▼
 ┌──────────────┐
-│    OPP       │  Output Pixel Processor — output像素handle
-│              │  · Gamma 校正 (regamma)
-│              │  · Dithering (减少色带效应)
-│              │  · 位深convert (10bit → 8bit)
-│              │  · format化asoutput编码
+│ OPP │ Output Pixel Processor — Output pixel processing
+│ │ · Gamma correction (regamma)
+│ │ · Dithering (reduces color banding effect)
+│ │ · Bit depth conversion (10bit → 8bit)
+│ │ · Format to output encoding
 └──────┬───────┘
        │
        ▼
 ┌──────────────┐
-│    OPTC      │  Output Pipe Timing Combiner — 时序generate
-│              │  · generate HSync / VSync 信号
-│              │  · VBlank control (FreeSync/VRR in此调整)
-│              │  · 多display器时序synchronization
-│              │  · CRC (循环冗余校验, used forverify)
+│ OPTC │ Output Pipe Timing Combiner — timing generation
+│ │ · Generate HSync / VSync signal
+│ │ · VBlank Control (FreeSync/VRR adjusted here)
+│ │ · Multi-monitor timing synchronization
+│ │ · CRC (Cyclic Redundancy Check, used for verification)
 └──────┬───────┘
-       │ 时序 + 像素
+│ Timing + Pixel
        ▼
 ┌──────────────┐
-│    DIO       │  Display I/O — physicaloutput
-│              │  · DP (DisplayPort) 编码: 8b/10b, 128b/132b
-│              │  · HDMI 编码: TMDS / FRL
-│              │  · Link training (协商链路速率)
-│              │  · HDCP 加密 (内容protect)
+│ DIO │ Display I/O — Physical Output
+│ │ · DP (DisplayPort) encoding: 8b/10b, 128b/132b
+│ │ · HDMI encoding: TMDS / FRL
+│ │ · Link training (negotiate link speed)
+│ │ · HDCP Encryption (Content Protection)
 └──────┬───────┘
-       │ DP/HDMI 信号
+│ DP/HDMI signal
        ▼
-   display器 🖥️
+Monitor 🖥️
 
-DRM KMS and DC relationship: 
+The relationship between DRM KMS and DC:
 
-  user space (GNOME/KDE)
+Userspace (GNOME/KDE)
        │ drmModeAtomicCommit()
        ▼
-  DRM Atomic KMS framework
+DRM Atomic KMS Framework
        │ drm_atomic_helper_commit()
        ▼
-  amdgpu_dm.c (适配layer)         ← will DRM structure转as DC structure
+  amdgpu_dm.c (adapter layer)  ←Convert DRM structures to DC structures
        │ dc_commit_state()
        ▼
-  DC Core (display/dc/core/)   ← hardware无关displaylogic
-       │ call DCN hardwarefunction
+  DC Core (display/dc/core/)   ←Hardware-independent display logic
+│ Call DCN hardware function
        ▼
-  DCN 3.2 (display/dc/dcn32/)  ← RDNA3 hardwareregisterprogramming`,
-            caption: 'DCN 3.2 displaypipelineand DRM KMS to DC calllayer次. eachpipelinestage(HUBP→DPP→OPP→OPTC→DIO)correspondinghardwareina子module, driverneedconfiguration大量registerletdatacorrect流过entirepipeline. ',
+  DCN 3.2 (display/dc/dcn32/)  ←RDNA3 hardware register programming`,
+            caption: 'DCN 3.2 shows the pipeline and call hierarchy of DRM KMS to DC. Each pipeline stage (HUBP→DPP→OPP→OPTC→DIO) corresponds to a submodule in the hardware, and the driver needs to configure a large number of registers to allow data to flow correctly through the entire pipeline.',
           },
           codeWalk: {
-            title: 'dc_commit_state — displaystatecommitcoreprocess',
+            title: 'dc_commit_state — shows the core process of state submission',
             file: 'drivers/gpu/drm/amd/display/dc/core/dc.c',
             language: 'c',
-            code: `/* dc_commit_state() — will新displaystatecommittohardware
- * whenuser spacerequest改变分辨率, flush率, HDR pattern等时call
- * 这is DC subsystemin最corefunction
+            code: `/*dc_commit_state() — Commits the new display state to the hardware
+ *Called when user space requests a change in resolution, refresh rate, HDR mode, etc.
+ *This is the core function in the DC subsystem
  */
 enum dc_status dc_commit_state(struct dc *dc,
                                 struct dc_state *context)
 {
     enum dc_status result;
 
-    /* stage 1: verify新statewhethercan行
-     * checkbandwidthwhether足够, 时序whether兼容, pipelineresourcewhether充足
+    /*Phase 1: Verify that the new state is feasible
+     *Check whether the bandwidth is sufficient, whether the timing is compatible, and whether the pipeline resources are sufficient
      */
     result = dc_validate_global_state(dc, context);
     if (result != DC_OK) {
-        /* if新statenotcan行(如bandwidthnot足), returnerror
-         * user spaceneed降低to求(如降低分辨率)
+        /*If the new state is not feasible (such as insufficient bandwidth), return an error
+         *User space needs to reduce requirements (such as reducing resolution)
          */
         return result;
     }
 
-    /* stage 2: computeallpipelineparameter
-     * DML (Display Mode Library) computeeachpipelinestage水印值
-     * 水印决定何时frommemoryprefetchdata以avoid underflow
+    /*Stage 2: Calculate all pipeline parameters
+     *DML (Display Mode Library) calculates the watermark value for each pipeline stage
+     *The watermark determines when to prefetch data from memory to avoid underflow
      */
     dc->res_pool->funcs->calculate_wm_and_dlg(dc, context);
 
-    /* stage 3: compare新旧state, 确定needupdatepipelinestage */
+    /*Stage 3: Compare the old and new status to determine the pipeline stages that need to be updated */
     dc_resource_state_copy_construct(dc->current_state,
                                       context);
 
-    /* stage 4: programminghardware
-     * 按orderconfigurationeachpipelinestageregister
+    /*Stage 4: Programming the Hardware
+     *Configure registers for each pipeline stage sequentially
      */
     for (i = 0; i < context->stream_count; i++) {
         struct dc_stream_state *stream = context->streams[i];
 
-        /* configuration OPTC — set时序(分辨率, flush率)*/
+        /*Configure OPTC - set timing (resolution, refresh rate) */
         dc->hwss.setup_stream_encoder(stream);
 
-        /* configuration DIO — setoutput链路(DP/HDMI)*/
+        /*Configure DIO - Set up output link (DP/HDMI)*/
         dc->hwss.enable_stream(stream);
     }
 
     for (i = 0; i < context->plane_count; i++) {
-        /* configuration HUBP — set framebuffer addressandformat */
+        /*Configure HUBP — set framebuffer address and format */
         dc->hwss.update_plane_addr(dc, context->planes[i]);
 
-        /* configuration DPP — set缩放, 色彩变换 */
+        /*Configure DPP - set scaling, color transformation */
         dc->hwss.program_pipe(dc, context->planes[i]);
     }
 
-    /* stage 5: wait VBlank then切换  —  avoid画面撕裂 */
+    /*Stage 5: Wait for VBlank and then switch - avoid screen tearing */
     dc->hwss.wait_for_mpcc_disconnect(dc, context);
 
     dc->current_state = context;
     return DC_OK;
 }`,
             annotations: [
-              'dc_validate_global_state call DML verifybandwidth — ensurealldisplay器data量notexceedmemorybandwidth',
-              'DML (Display Mode Library) is AMD bandwidthcompute库, 水印值preventdisplay underflow(黑屏/闪烁)',
-              'dc->hwss ishardware序列化layer(Hardware Sequencer), encapsulationhardwarerelatedregisterprogramming',
-              'stream correspondingadisplayoutput(如 DP-1), plane correspondingadisplay图layer(如桌面, 视频叠加)',
-              'wait_for_mpcc_disconnect in VBlank 期between切换pipelineconfiguration, avoidcan见画面撕裂',
-              'DC_OK 以outsidereturn value(如 DC_FAIL_BANDWIDTH)needuser spacehandle(降低to求orreporterror)',
+              'dc_validate_global_state calls DML to verify bandwidth - ensuring that the data volume of all displays does not exceed the memory bandwidth',
+              'DML (Display Mode Library) is AMD\'s bandwidth calculation library. The watermark value prevents underflow (black screen/flash) from being displayed.',
+              'dc->hwss is the hardware serialization layer (Hardware Sequencer), which encapsulates hardware-related register programming',
+              'stream corresponds to a display output (such as DP-1), plane corresponds to a display layer (such as desktop, video overlay)',
+              'wait_for_mpcc_disconnect switches pipeline configuration during VBlank to avoid visible screen tearing',
+              'Return values ​​other than DC_OK (such as DC_FAIL_BANDWIDTH) require user space processing (reducing requirements or reporting an error)',
             ],
-            explanation: 'each time你拖动窗口, 改变分辨率orenable HDR 时, thisfunctionallin幕afterexecute. 它协调 DCN pipelineinallhardware单元registerconfiguration. DML bandwidthcomputeis最complex部分 — 它need考虑 VRAM bandwidth, memory时序, pipelinelatency等几十个parameterensuredisplaywill not出现 underflow. ',
+            explanation: 'This function is executed behind the scenes every time you drag the window, change the resolution, or enable HDR. It coordinates the register configuration of all hardware units in the DCN pipeline. The bandwidth calculation of DML is the most complex part - it needs to consider dozens of parameters such as VRAM bandwidth, memory timing, pipeline delay, etc. to ensure that the display does not appear underflow.',
           },
           miniLab: {
-            title: 'viewyourdisplay器连接informationand DC state',
-            objective: 'through sysfs and debugfs observe DC managementdisplay器连接state, current时序andpipelineconfiguration. ',
+            title: 'View your monitor connection information and DC status',
+            objective: 'Observe DC-managed monitor connection status, current timing, and pipeline configuration via sysfs and debugfs.',
             steps: [
-              'viewallconnectorstate: for c in /sys/class/drm/card0-*; do echo "$(basename $c): $(cat $c/status 2>/dev/null)"; done',
-              'viewcurrentdisplaypattern(分辨率andflush率): cat /sys/class/drm/card0-DP-1/modes | head -5',
-              'view EDID information: sudo cat /sys/class/drm/card0-DP-1/edid | edid-decode 2>/dev/null || echo "install edid-decode: sudo apt install edid-decode"',
-              'view DC state: sudo cat /sys/kernel/debug/dri/0/amdgpu_dm_dtn_log 2>/dev/null | head -50',
-              'check FreeSync state: cat /sys/class/drm/card0-DP-1/vrr_capable 2>/dev/null',
-              'view GPU displayrelated dmesg: dmesg | grep -i "connector\\|display\\|dc\\|hdmi\\|dp-\\|freesync"',
+              'View all connector status: for c in /sys/class/drm/card0-*; do echo "$(basename $c): $(cat $c/status 2>/dev/null)"; done',
+              'View the current display mode (resolution and refresh rate): cat /sys/class/drm/card0-DP-1/modes | head -5',
+              'View EDID information: sudo cat /sys/class/drm/card0-DP-1/edid | edid-decode 2>/dev/null || echo "Install edid-decode: sudo apt install edid-decode"',
+              'Check the DC status: sudo cat /sys/kernel/debug/dri/0/amdgpu_dm_dtn_log 2>/dev/null | head -50',
+              'Check FreeSync status: cat /sys/class/drm/card0-DP-1/vrr_capable 2>/dev/null',
+              'View GPU display related dmesg: dmesg | grep -i "connector\\|display\\|dc\\|hdmi\\|dp-\\|freesync"',
             ],
             expectedOutput: `$ for c in /sys/class/drm/card0-*; do echo "$(basename $c): $(cat $c/status)"; done
-card0-DP-1: connected         ← DisplayPort already连接
+card0-DP-1: connected         ←DisplayPort connected
 card0-DP-2: disconnected
 card0-HDMI-A-1: disconnected
 
 $ cat /sys/class/drm/card0-DP-1/modes | head -3
-2560x1440     ← currentdisplay器首选分辨率
+2560x1440     ←The preferred resolution of the current monitor
 1920x1080
 1280x720
 
 $ cat /sys/class/drm/card0-DP-1/vrr_capable
-1             ← display器support FreeSync/VRR`,
-            hint: 'connector名称(DP-1, HDMI-A-1)取决于yourphysical连接. ifuse HDMI 连接, willcommandin DP-1 替换as HDMI-A-1. amdgpu_dm_dtn_log needkernelcompilation时enable CONFIG_DEBUG_FS. ',
+1             ←Monitor supports FreeSync/VRR`,
+            hint: 'The connector name (DP-1, HDMI-A-1) depends on your physical connection. If using an HDMI connection, replace DP-1 in the command with HDMI-A-1. amdgpu_dm_dtn_log requires kernel compilation with CONFIG_DEBUG_FS enabled.',
           },
           debugExercise: {
-            title: 'display闪烁: error时序configuration',
+            title: 'Display flickering: Wrong timing configuration',
             language: 'c',
-            description: 'userreportdisplay器between歇性闪烁(黑屏 1 秒thenrecover). belowis DC  dmesg outputandkeystate. ',
-            question: 'according tologinformation判断闪烁根本cause. is时序issue, bandwidthissuestillis链路issue? ',
-            buggyCode: `/* dmesg inkeyinformation */
+            description: 'Users report that the monitor flickers intermittently (black screen for 1 second then back up). Below is the dmesg output and key status of the DC.',
+            question: 'Determine the root cause of flickering based on log information. Is it a timing issue, a bandwidth issue, or a link issue?',
+            buggyCode: `/*Key information in dmesg */
 [  120.456] [drm] DC: pipe 0 underflow detected!
 [  120.456] [drm] DC: HUBP0 urgent watermark exceeded
 [  120.457] [drm] DC: stream 0: 2560x1440@165Hz
@@ -1087,19 +1087,19 @@ $ cat /sys/class/drm/card0-DP-1/vrr_capable
 [  120.458] [drm] DC: DRAM bandwidth: 38.4 GB/s required,
             36.8 GB/s available
 
-/* debugfs amdgpu_dm_dtn_log 片段 */
+/*debugfs amdgpu_dm_dtn_log fragment */
 HUBP0: req_per_sec=4200000  prefetch_bw=37.2 GB/s
 DPP0: scl_enable=1  ratio_h=2.0  ratio_v=2.0
 OPTC0: vtotal=1500  vactive=1440  hsync=60`,
-            hint: 'underflow 意味着 HUBP frommemoryread像素data速度跟notondisplay器消耗速度. note required vs available bandwidth. ',
-            answer: '根因ismemorybandwidthnot足causedisplay underflow. analyze: (1)"HUBP0 urgent watermark exceeded" + "pipe 0 underflow detected" directly表明 HUBP unable tofrommemoryin足够快地read像素data. (2)bandwidthdataconfirm: need 38.4 GB/s 但only 36.8 GB/s available — 差值 1.6 GB/s causebetween歇性 underflow. (3)加剧因素: 2560x1440@165Hz is高bandwidth需求(约 2560*1440*4*165 = 2.27 GB/s 单流), 加on 3 个active平面(桌面+视频叠加+光标)and DPP  2x 缩放(ratio_h=2.0 使bandwidth需求翻倍), 总需求超出availablebandwidth. resolveplan: (a)降低flush率to 144Hz or 120Hz 减少bandwidth需求; (b)关闭视频叠加(减少aactive平面); (c)check DML 水印computewhetherhas bug — DML shouldin validate stage拒绝thisconfiguration而is notlet underflow 发生; (d)提高memory时钟(if pp_dpm_mclk displaynotin最高档). 这isatypical DML 水印compute bug — correct fix isfix DML bandwidth估算, 使其in validate stagereturn DC_FAIL_BANDWIDTH. ',
+            hint: 'Underflow means that HUBP cannot read pixel data from memory as fast as the monitor consumes it. Note required vs available bandwidth.',
+            answer: 'The root cause is display underflow caused by insufficient memory bandwidth. Analysis: (1) "HUBP0 urgent watermark exceeded" + "pipe 0 underflow detected" directly indicates that HUBP cannot read pixel data from memory fast enough. (2) Bandwidth data confirmation: 38.4 GB/s required but only 36.8 GB/s available - a difference of 1.6 GB/s causing intermittent underflow. (3) Exacerbating factors: 2560x1440@165Hz is a high bandwidth requirement (about 2560*1440*4*165 = 2.27 GB/s single stream), plus 3 active planes (desktop + video overlay + cursor) and 2x scaling of DPP (ratio_h=2.0 doubles the bandwidth requirement), the total requirement exceeds the available bandwidth. Solutions: (a) Reduce the refresh rate to 144Hz or 120Hz to reduce bandwidth requirements; (b) Turn off video overlay (one less active plane); (c) Check the DML watermark calculation for bugs - DML should reject this configuration during the validate phase rather than letting underflow occur; (d) Increase the memory clock (if pp_dpm_mclk is not shown in top gear). This is a typical DML watermark calculation bug - the correct fix is ​​to fix DML\'s bandwidth estimate so that it returns DC_FAIL_BANDWIDTH during the validate phase.',
           },
           interviewQ: {
-            question: 'explain AMD Display Core (DC) architecture. why AMD selectfrom Windows 移植 DC 而is not用 DRM KMS generalimplementation? ',
+            question: 'Explaining the architecture of AMD Display Core (DC). Why did AMD choose to port DC from Windows instead of using a generic implementation of DRM KMS?',
             difficulty: 'hard',
-            hint: 'fromarchitecture分layer(DC Core + DCN HW), function需求(FreeSync, HDR, 多display器)andcode复用(Windows/Linux shared)角度analyze. ',
-            answer: 'DC architecture分as三layer: (1)DRM KMS 适配layer(amdgpu_dm.c): will DRM  atomic commit API 翻译as DC internal API; (2)DC corelayer(display/dc/core/): hardware无关displaylogic, includestateverify, bandwidthcompute(DML), pipelineresourceallocation; (3)DCN hardwarelayer(display/dc/dcn32/ 等): specifichardwareregisterprogramming, 每代 DCN hasselfdirectory. AMD select移植 DC rather thanuse纯 DRM KMS cause: (1)functioncomplex度 — AMD displayhardwaresupport FreeSync/VRR, HDR, PSR(Panel Self Refresh), DSC(Display Stream Compression), MST(Multi-Stream Transport)等大量advancedfeature, DRM KMS generalimplementationnotsupportthese; (2)code复用 — DC corelayerin Windows and Linux driver之betweenshared, AMD 只need维护一份displaylogic, 而is not维护两套differentimplementation; (3)hardwareverify — DC 经过 AMD internal大量 Windows testingverify, 移植to Linux 比from头implementation风险更小; (4)DML complex度 — Display Mode Library bandwidthcompute涉及数百个parameterandcomplex数学模型, 这部分codenotmayin DRM KMS generalframeworkinimplementation. 代价is DC code风格andkernelnot一致, 维护成本较高. ',
-            amdContext: 'DC is AMD displayteamcorework. interviewindemonstrate你understand DC whyexist(function需求 + code复用)and它and DRM KMS relationship, 比只will背诵pipelinestage更has价值. ',
+            hint: 'Analysis from the perspective of architectural layering (DC Core + DCN HW), functional requirements (FreeSync, HDR, multi-monitor) and code reuse (Windows/Linux sharing).',
+            answer: 'The DC architecture is divided into three layers: (1) DRM KMS adaptation layer (amdgpu_dm.c): translates DRM\'s atomic commit API into DC\'s internal API; (2) DC core layer (display/dc/core/): hardware-independent display logic, including status verification, bandwidth calculation (DML), and pipeline resource allocation; (3) DCN hardware layer (display/dc/dcn32/ etc.): Register programming for specific hardware, each generation of DCN has its own directory. The reasons why AMD chose to port DC instead of using pure DRM KMS: (1) Functional complexity - AMD\'s display hardware supports a large number of advanced features such as FreeSync/VRR, HDR, PSR (Panel Self Refresh), DSC (Display Stream Compression), MST (Multi-Stream Transport), etc., which are not supported by the general implementation of DRM KMS; (2) Code reuse - the DC core layer is shared between Windows and Linux drivers, AMD Only one display logic needs to be maintained instead of maintaining two different sets of implementations; (3) Hardware verification - DC has been verified by a large number of Windows tests within AMD, and porting to Linux is less risky than implementing it from scratch; (4) DML complexity - the bandwidth calculation of the Display Mode Library involves hundreds of parameters and complex mathematical models. This part of the code cannot be implemented in the general framework of DRM KMS. The price is that the coding style of DC is inconsistent with the kernel and the maintenance cost is higher.',
+            amdContext: 'DC is the core work of AMD\'s display team. Showing in the interview that you understand why DC exists (functional requirements + code reuse) and how it relates to DRM KMS is more valuable than just reciting the pipeline stages.',
           },
         },
 
@@ -1107,43 +1107,43 @@ OPTC0: vtotal=1500  vactive=1440  hsync=60`,
         {
           id: '5-3-2',
           number: '5.3.2',
-          title: 'power management: SMU and DVFS',
+          title: 'Power Management: SMU vs. DVFS',
           titleEn: 'Power Management: SMU & DVFS',
           duration: 20,
           difficulty: 'expert',
           tags: ['power-management', 'SMU', 'DVFS', 'pp_dpm_sclk', 'thermal', 'sysfs'],
           concept: {
-            summary: 'GPU power managementthrough SMU(System Management Unit)firmwareimplementation DVFS(Dynamic Voltage Frequency Scaling) — according towork负载dynamic调整 GPU 时钟frequencyand电压. amdgpu driverthroughmessageinterfaceand SMU firmware通信, user spacethrough sysfs interface(pp_dpm_sclk/mclk)viewandcontrol GPU 功耗/performanceconfiguration. ',
+            summary: 'GPU power management implements DVFS (Dynamic Voltage Frequency Scaling) through SMU (System Management Unit) firmware - dynamically adjusting the clock frequency and voltage of the GPU based on the workload. The amdgpu driver communicates with the SMU firmware through the message interface, and user space views and controls the power consumption/performance configuration of the GPU through the sysfs interface (pp_dpm_sclk/mclk).',
             explanation: [
-              'SMU(System Management Unit)is GPU internalaindependenthandle器, run AMD 闭源firmware. 它core职责ispower management — control GPU 时钟frequency(clock), 电压(voltage), 功耗limit(power limit)and风扇转速. SMU 做these决策notneed主 CPU 参and — 它real-time监控 GPU 温度, 功耗andwork负载, automatic调整frequencyand电压以inperformanceand功耗之between取得平衡. ',
-              'DVFS(Dynamic Voltage Frequency Scaling)is SMU coremechanism. GPU hasmultiple DPM(Dynamic Power Management)等级, each等级corresponding一组frequency-电压对. for example RX 7600 XT  GPU core(SCLK)mayhas: 300MHz@0.7V(idle), 1200MHz@0.85V(轻负载), 2100MHz@1.0V(in负载), 2595MHz@1.15V(满载). SMU according tocurrent负载inthese等级之between切换 — 你打开a游戏, frequencyin几毫秒内from 300MHz 跳to 2595MHz; 关闭游戏afteragain降回 300MHz. ',
-              'amdgpu driverthrough PPSMC(PowerPlay SMC)messageand SMU 通信. driverwillmessagewritespecific MMIO register(MP1_SMN_C2PMSG series), wait SMU handle并returnresult. keymessageinclude: SetSoftMaxGfxClk(set最大 GFX frequency), SetHardMinGfxClk(set最低 GFX frequency), SetPowerLimit(set功耗limit), GetGfxClkFrequency(getcurrentfrequency). drivercodein pm/swsmu/ below, smu_v13_0.c is RDNA3  SMU implementation. ',
-              'Linux userthrough sysfs interfaceandpower managementinteraction. pp_dpm_sclk display/set GPU corefrequency等级, pp_dpm_mclk display/setmemoryfrequency等级, power_dpm_force_performance_level setperformancepattern(auto/high/low/manual). in manual patternbelow, 你canthroughwrite pp_dpm_sclk 锁定 GPU tospecificfrequency — 这inperformancedebugging时很has用. thermal throttling(热protect降频)is SMU automaticexecute — when GPU 温度exceed阈值(usually 100°C), SMU will降低frequency以减少发热. ',
+              'The SMU (System Management Unit) is an independent processor inside the GPU that runs AMD\'s closed-source firmware. Its core responsibility is power management - controlling the GPU\'s clock frequency, voltage, power limit and fan speed. The SMU makes these decisions without involving the main CPU—it monitors GPU temperature, power consumption, and workload in real time, automatically adjusting frequency and voltage to strike a balance between performance and power consumption.',
+              'DVFS (Dynamic Voltage Frequency Scaling) is the core mechanism of SMU. GPUs have multiple DPM (Dynamic Power Management) levels, each corresponding to a set of frequency-voltage pairs. For example, the GPU core (SCLK) of the RX 7600 XT may be: 300MHz@0.7V (idle), 1200MHz@0.85V (light load), 2100MHz@1.0V (medium load), 2595MHz@1.15V (full load). The SMU switches between these levels depending on the current load - you turn on a game and the frequency jumps from 300MHz to 2595MHz in milliseconds; turn the game off and it drops back to 300MHz.',
+              'The amdgpu driver communicates with the SMU via PPSMC (PowerPlay SMC) messages. The driver writes the message to a specific MMIO register (MP1_SMN_C2PMSG series), waits for SMU to process and returns the result. Key messages include: SetSoftMaxGfxClk (set the maximum GFX frequency), SetHardMinGfxClk (set the minimum GFX frequency), SetPowerLimit (set the power consumption limit), GetGfxClkFrequency (get the current frequency). The driver code is under pm/swsmu/, and smu_v13_0.c is the SMU implementation of RDNA3.',
+              'Linux users interact with power management through the sysfs interface. pp_dpm_sclk displays/sets the GPU core frequency level, pp_dpm_mclk displays/sets the memory frequency level, and power_dpm_force_performance_level sets the performance mode (auto/high/low/manual). In manual mode, you can lock the GPU to a specific frequency by writing pp_dpm_sclk - this is useful when performance debugging. Thermal throttling is performed automatically by the SMU - when the GPU temperature exceeds a threshold (usually 100°C), the SMU reduces frequency to reduce heat generation.',
             ],
             keyPoints: [
-              'SMU is GPU internalindependenthandle器, run闭源firmware, real-timemanagement电源/frequency/温度',
-              'DVFS coremechanism: multiple DPM 等级, each等级 = frequency + 电压对',
-              'amdgpu through PPSMC message(MMIO register)and SMU 通信',
-              'sysfs interface: pp_dpm_sclk(GPU frequency), pp_dpm_mclk(VRAMfrequency)',
-              'power_dpm_force_performance_level: auto/high/low/manual 四种pattern',
-              'Thermal throttling: 温度exceed阈值时 SMU automatic降频, driver监控但notdirectlycontrol',
+              'SMU is an independent processor inside the GPU that runs closed-source firmware and manages power/frequency/temperature in real time',
+              'DVFS core mechanism: multiple DPM levels, each level = frequency + voltage pair',
+              'amdgpu communicates with SMU via PPSMC messages (MMIO registers)',
+              'sysfs interface: pp_dpm_sclk (GPU frequency), pp_dpm_mclk (memory frequency)',
+              'power_dpm_force_performance_level: four modes: auto/high/low/manual',
+              'Thermal throttling: The SMU automatically reduces frequency when the temperature exceeds the threshold, and the driver monitors but does not directly control it.',
             ],
           },
           diagram: {
-            title: 'GPU power managementarchitectureand DVFS',
-            content: `GPU power managementarchitecture
+            title: 'GPU power management architecture and DVFS',
+            content: `GPU power management architecture
 
-user space sysfs interface
+Userspace sysfs interface
 ┌────────────────────────────────────────────────────────┐
 │ /sys/class/drm/card0/device/                           │
 │                                                        │
-│ pp_dpm_sclk          GPU corefrequency等级                  │
+│ pp_dpm_sclk GPU core frequency grade │
 │   0: 300Mhz                                            │
 │   1: 800Mhz                                            │
 │   2: 2100Mhz                                           │
-│   3: 2595Mhz *      (* = current等级)                     │
+│ 3: 2595Mhz * (* = current level) │
 │                                                        │
-│ pp_dpm_mclk          VRAMfrequency等级                      │
+│ pp_dpm_mclk memory frequency level │
 │   0: 96Mhz                                             │
 │   1: 1188Mhz *                                         │
 │                                                        │
@@ -1151,14 +1151,14 @@ user space sysfs interface
 │   auto / high / low / manual                           │
 │                                                        │
 │ hwmon/hwmon*/                                          │
-│   temp1_input        GPU 温度 (毫摄氏度)               │
-│   power1_average     平均功耗 (微瓦)                   │
-│   fan1_input         风扇转速 (RPM)                    │
+│ temp1_input GPU temperature (millidegrees) │
+│ power1_average average power consumption (microwatts) │
+│ fan1_input fan speed (RPM) │
 └────────────────────────────┬───────────────────────────┘
                              │ sysfs read/write
 ═════════════════════════════│═══════════════════════════
                              │
-kernel space(amdgpu driver pm/swsmu/)
+Kernel space (amdgpu driver pm/swsmu/)
 ┌────────────────────────────▼───────────────────────────┐
 │  smu_set_performance_level()                           │
 │  smu_get_current_clocks()                              │
@@ -1167,54 +1167,54 @@ kernel space(amdgpu driver pm/swsmu/)
 │       ▼                                                │
 │  smu_cmn_send_smc_msg()                               │
 │  ┌─────────────────────────────────────────┐           │
-│  │ write PPSMC messageto MMIO register:          │           │
+│ │ Write PPSMC message to MMIO register: │ │
 │  │ WREG32(MP1_SMN_C2PMSG_66, msg_id);     │           │
 │  │ WREG32(MP1_SMN_C2PMSG_82, param);      │           │
 │  │ WREG32(MP1_SMN_C2PMSG_90, 0x1); /*go*/ │           │
 │  │                                          │           │
-│  │ wait SMU response:                           │           │
+│ │ Waiting for SMU response: │ │
 │  │ while (RREG32(MP1_SMN_C2PMSG_90) != 1)  │           │
 │  │     usleep_range(10, 20);               │           │
 │  └─────────────────────────────────────────┘           │
 └────────────────────────────┬───────────────────────────┘
-                             │ MMIO message
-GPU hardware                     ▼
+│ MMIO messages
+GPU Hardware ▼
 ┌─────────────────────────────────────────────────────────┐
 │  SMU (System Management Unit)                           │
 │  ┌────────────────────────────────────────────┐        │
-│  │ independenthandle器, run AMD 闭源firmware               │        │
+│ │ Standalone processor, running AMD closed source firmware │ │
 │  │                                             │        │
-│  │ input:                                       │        │
-│  │   · GPU 温度传感器 (Tdie, Tjunction)        │        │
-│  │   · 功耗传感器 (Telemetry)                  │        │
-│  │   · work负载detect (activity %)               │        │
-│  │   · drivermessage (PPSMC)                        │        │
+│ │ Input: │ │
+│ │ · GPU Temperature Sensor (Tdie, Tjunction) │ │
+│ │ · Power Consumption Sensor (Telemetry) │ │
+│ │ · Workload detection (activity %) │ │
+│ │ · Driver Message (PPSMC) │ │
 │  │                                             │        │
-│  │ 决策: DVFS (frequency-电压调整)                  │        │
+│ │ Decision: DVFS (Frequency-Voltage Scaling) │ │
 │  │                                             │        │
-│  │   idle     轻负载    in负载     满载         │        │
+│ │ Idle Light load Medium load Full load │ │
 │  │   300MHz   800MHz   2100MHz   2595MHz       │        │
 │  │   0.7V     0.85V    1.0V      1.15V         │        │
 │  │   ~5W      ~30W     ~80W      ~150W         │        │
 │  │   ▲                                 ▲       │        │
-│  │   │  ← SMU automatic调整 →              │       │        │
+│  │   │  ←SMU automatic adjustment → │ │ │
 │  │                                             │        │
-│  │ protect: 热protect降频 (>100°C → 强制降频)        │        │
+│ │ Protection: Thermal protection frequency reduction (>100°C → forced frequency reduction) │ │
 │  └────────────────────────────────────────────┘        │
 │                                                         │
-│  output:                                                  │
-│  · set PLL frequency (GFX clock, Memory clock)              │
-│  · set电压调节器 (Voltage Regulator)                    │
-│  · control风扇 PWM                                         │
+│ Output: │
+│ · Set PLL frequency (GFX clock, Memory clock) │
+│ · Set up the voltage regulator (Voltage Regulator) │
+│ · Control fan PWM │
 └─────────────────────────────────────────────────────────┘`,
-            caption: 'GPU power managementcompletearchitecture. user spacethrough sysfs interfaceinteraction, driverthrough PPSMC messageand SMU 通信, SMU real-timeexecute DVFS 决策. SMU firmwarealthough闭源, 但driver-SMU messageinterfaceiscompletelyopen-source. ',
+            caption: 'Complete architecture for GPU power management. User space interacts through the sysfs interface, the driver communicates with the SMU through PPSMC messages, and the SMU executes DVFS decisions in real time. Although the SMU firmware is closed source, the driver-SMU message interface is completely open source.',
           },
           codeWalk: {
-            title: 'smu_set_performance_level — set GPU performancelevel',
+            title: 'smu_set_performance_level — Set GPU performance level',
             file: 'drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c',
             language: 'c',
-            code: `/* smu_set_performance_level() — set GPU performancepattern
- * 由 sysfs power_dpm_force_performance_level writetrigger
+            code: `/*smu_set_performance_level() — Set GPU performance mode
+ *Triggered by sysfs power_dpm_force_performance_level write
  */
 int smu_set_performance_level(struct smu_context *smu,
     enum amd_dpm_forced_level level)
@@ -1223,8 +1223,8 @@ int smu_set_performance_level(struct smu_context *smu,
 
     switch (level) {
     case AMD_DPM_FORCED_LEVEL_HIGH:
-        /* 强制 GPU use最高frequency
-         * used for基准testingordebugging */
+        /*Force the GPU to use the highest frequency
+         *for benchmarking or debugging */
         ret = smu_force_clk_levels(smu, SMU_SCLK,
             1 << smu->smu_table.max_sclk_dpm_level);
         ret = smu_force_clk_levels(smu, SMU_MCLK,
@@ -1232,21 +1232,21 @@ int smu_set_performance_level(struct smu_context *smu,
         break;
 
     case AMD_DPM_FORCED_LEVEL_LOW:
-        /* 强制 GPU use最低frequency
-         * used for省电or热debugging */
+        /*Force the GPU to use a minimum frequency
+         *For power saving or thermal debugging */
         ret = smu_force_clk_levels(smu, SMU_SCLK, 1 << 0);
         ret = smu_force_clk_levels(smu, SMU_MCLK, 1 << 0);
         break;
 
     case AMD_DPM_FORCED_LEVEL_AUTO:
-        /* recover SMU automaticmanagement(defaultpattern)
-         * SMU according to负载自主决定frequency */
+        /*Restore SMU automatic management (default mode)
+         *SMU determines frequency independently based on load */
         ret = smu_unforce_dpm_levels(smu);
         break;
 
     case AMD_DPM_FORCED_LEVEL_MANUAL:
-        /* 手动pattern: allowuserthrough pp_dpm_sclk
-         * selectspecific DPM 等级 */
+        /*Manual mode: Allow users to pass pp_dpm_sclk
+         *Select a specific DPM level */
         break;
     }
 
@@ -1254,31 +1254,31 @@ int smu_set_performance_level(struct smu_context *smu,
     return ret;
 }
 
-/* smu_force_clk_levels — through PPSMC message锁定frequency */
+/*smu_force_clk_levels — Lock frequency via PPSMC message */
 static int smu_force_clk_levels(struct smu_context *smu,
     enum smu_clk_type clk_type, uint32_t mask)
 {
-    /* callspecific SMU versionimplementation
-     * for RDNA3 → smu_v13_0_force_clk_levels */
+    /*Call the implementation of a specific SMU version
+     *For RDNA3 → smu_v13_0_force_clk_levels */
     return smu->ppt_funcs->force_clk_levels(smu,
                                               clk_type, mask);
 }
 
-/* smu_cmn_send_smc_msg — 向 SMU sendmessage底layerfunction */
+/*smu_cmn_send_smc_msg — Low-level function to send messages to SMU */
 int smu_cmn_send_smc_msg(struct smu_context *smu,
     enum smu_message_type msg, uint32_t *resp)
 {
     struct amdgpu_device *adev = smu->adev;
 
-    /* writemessageparameter */
+    /*Write message parameters */
     WREG32(smu->msg_arg_reg, param);
 
-    /* writemessage ID — SMU starthandle */
+    /*Write message ID - SMU starts processing */
     WREG32(smu->msg_reg, msg);
 
-    /* pollingwait SMU response */
+    /*Polling to wait for SMU response */
     ret = smu_cmn_wait_for_response(smu);
-    /* SMU usuallyin <1ms 内response */
+    /*SMU typically responds in <1ms */
 
     if (resp)
         *resp = RREG32(smu->resp_reg);
@@ -1286,81 +1286,81 @@ int smu_cmn_send_smc_msg(struct smu_context *smu,
     return ret;
 }`,
             annotations: [
-              'AMD_DPM_FORCED_LEVEL_HIGH 用 bitmask select最高 DPM 等级, 适合基准testing',
-              'AMD_DPM_FORCED_LEVEL_AUTO isdefaultpattern — SMU completely自主managementfrequency/电压',
-              'smu->ppt_funcs is SMU versionspecificfunction表(Power Play Table), similar IP Block interfaceabstraction',
-              'WREG32(msg_reg, msg) istrigger SMU handlekey — SMU 监控此registerwrite',
-              'smu_cmn_wait_for_response polling SMU responseregister, timeout时betweenusuallyas 10ms',
-              '闭源 SMU firmware行asthroughmessageinterfacebetween接control — drivernotcandirectlyoperate PLL or电压调节器',
+              'AMD_DPM_FORCED_LEVEL_HIGH Use bitmask to select the highest DPM level, suitable for benchmarking',
+              'AMD_DPM_FORCED_LEVEL_AUTO is the default mode - the SMU manages frequency/voltage completely autonomously',
+              'smu->ppt_funcs is a SMU version-specific function table (Power Play Table), an interface abstraction similar to IP Block',
+              'WREG32(msg_reg, msg) is key to trigger SMU processing - the SMU monitors writes to this register',
+              'smu_cmn_wait_for_response polls the SMU response register, the timeout is usually 10ms',
+              'The behavior of the closed-source SMU firmware is controlled indirectly through the message interface - the driver cannot directly operate the PLL or voltage regulator',
             ],
-            explanation: 'thiscodedemonstratedriverhowcontrol GPU 功耗/performanceconfiguration. when你in终端execute echo high > /sys/class/drm/card0/device/power_dpm_force_performance_level 时, finalcallisthisfunction. understand SMU messageinterfaceisunderstand GPU power managementkey — although SMU firmware闭源, 但messageinterface语义iscompletelyopen-source. ',
+            explanation: 'This code shows how the driver controls the power/performance configuration of the GPU. When you execute echo high > /sys/class/drm/card0/device/power_dpm_force_performance_level in the terminal, this function is ultimately called. Understanding the SMU message interface is key to understanding GPU power management - although the SMU firmware is closed source, the semantics of the message interface are completely open source.',
           },
           miniLab: {
-            title: '监控andcontrol GPU 时钟frequency',
-            objective: 'use sysfs interfacereal-time监控 GPU frequency变化, 并体验手动control GPU performancelevel. ',
-            setup: '# ensure你has root permission\n# ensurehas GPU work负载tool\nsudo apt install -y mesa-utils glmark2',
+            title: 'Monitor and control GPU clock frequency',
+            objective: 'Use the sysfs interface to monitor GPU frequency changes in real time and experience manual control of GPU performance levels.',
+            setup: '# Make sure you have root permissions\n# Make sure you have the GPU workload tool\nsudo apt install -y mesa-utils glmark2',
             steps: [
-              'viewcurrent GPU corefrequency等级: cat /sys/class/drm/card0/device/pp_dpm_sclk',
-              'viewcurrentVRAMfrequency等级: cat /sys/class/drm/card0/device/pp_dpm_mclk',
-              'startupreal-time监控(in新终端in): watch -n 0.5 cat /sys/class/drm/card0/device/pp_dpm_sclk(observefrequency档位变化, * markcurrentfrequency)',
-              'in另a终端run GPU 负载: glmark2(observe监控infrequencyfromidle跳to高档)',
-              'testing手动锁定高频: echo high | sudo tee /sys/class/drm/card0/device/power_dpm_force_performance_level',
-              'recoverautomaticpattern: echo auto | sudo tee /sys/class/drm/card0/device/power_dpm_force_performance_level',
+              'Check the current GPU core frequency level: cat /sys/class/drm/card0/device/pp_dpm_sclk',
+              'Check the current memory frequency level: cat /sys/class/drm/card0/device/pp_dpm_mclk',
+              'Start real-time monitoring (in a new terminal): watch -n 0.5 cat /sys/class/drm/card0/device/pp_dpm_sclk (observe frequency gear changes, * marks the current frequency)',
+              'Run the GPU load in another terminal: glmark2 (observe the frequency jumping from idle to high in the monitor)',
+              'Test manual locking of high frequency: echo high | sudo tee /sys/class/drm/card0/device/power_dpm_force_performance_level',
+              'Restore automatic mode: echo auto | sudo tee /sys/class/drm/card0/device/power_dpm_force_performance_level',
             ],
             expectedOutput: `$ cat /sys/class/drm/card0/device/pp_dpm_sclk
 0: 300Mhz
 1: 800Mhz
 2: 2100Mhz
-3: 2595Mhz *    ← 正inrun GPU 负载时willin最高档
+3: 2595Mhz *    ←Running GPU load will be in the highest gear
 
-idle时:
-0: 300Mhz *     ← 回to最低frequency
+When free:
+0: 300Mhz *     ←Return to lowest frequency
 1: 800Mhz
 2: 2100Mhz
 3: 2595Mhz
 
-温度and功耗变化:
-  idle: ~40°C, ~8W
-  满载: ~75°C, ~130W`,
-            hint: 'modify power_dpm_force_performance_level need root permission. 小心 echo high willlet GPU 持续全速run增加功耗and温度, experiment完记得recover auto pattern. if hwmon pathnot对, 用 ls /sys/class/drm/card0/device/hwmon/ findcorrect编号. ',
+Temperature and power consumption changes:
+Idle: ~40°C, ~8W
+Full load: ~75°C, ~130W`,
+            hint: 'Modifying power_dpm_force_performance_level requires root privileges. Be careful that echo high will cause the GPU to continue running at full speed, increasing power consumption and temperature. Remember to return to auto mode after the experiment. If the hwmon path is incorrect, use ls /sys/class/drm/card0/device/hwmon/ to find the correct number.',
           },
           debugExercise: {
-            title: 'GPU frequency锁定in低档',
+            title: 'GPU frequency locked at low range',
             language: 'text',
-            description: 'userreport游戏帧率异常低, GPU 负载 100% 但frequency始终停留in最低档. ',
-            question: 'according tobelowdiagnoseinformation, find GPU frequencyunable to提升根本cause. ',
-            buggyCode: `/* userreport现象 */
-glxgears: ~60 FPS (正常should 300+ FPS)
+            description: 'Users are reporting unusually low frame rates in the game, with the GPU loaded at 100% but the frequency always stuck at the lowest setting.',
+            question: 'Use the following diagnostic information to find the root cause of the GPU frequency failure.',
+            buggyCode: `/*Phenomenon reported by users */
+glxgears: ~60 FPS (normal should be 300+ FPS)
 GPU utilization: 100%
 
-/* sysfs output */
+/*sysfs output */
 $ cat pp_dpm_sclk
-0: 300Mhz *       ← 始终in最低frequency!
+0: 300Mhz *       ←Always on the lowest frequency!
 1: 800Mhz
 2: 2100Mhz
 3: 2595Mhz
 
 $ cat power_dpm_force_performance_level
-manual             ← note这inside!
+manual             ←Pay attention here!
 
 $ cat pp_dpm_mclk
-0: 96Mhz *         ← VRAMalsoin最低frequency
+0: 96Mhz *         ←Video memory is also at the lowest frequency
 1: 1188Mhz
 
-/* GPU 温度and功耗 */
-temp1_input: 42000  (42°C — 很凉)
-power1_average: 8500000  (8.5W — 几乎isidle功耗)
+/*GPU temperature and power consumption */
+temp1_input: 42000 (42°C — very cool)
+power1_average: 8500000 (8.5W - almost idle power consumption)
 
-/* dmesg 无异常error */`,
-            hint: 'note power_dpm_force_performance_level 值. manual patternbelow SMU will notautomatic调频. ',
-            answer: '根因: power_dpm_force_performance_level bysetas "manual" pattern, 且 pp_dpm_sclk 选in最低档(0: 300MHz). in manual patternbelow, SMU notexecuteautomatic DVFS — 它严格遵守userselect DPM 等级. due to只选in等级 0(300MHz), GPU by锁定in最低frequency. 温度(42°C)and功耗(8.5W)异常低进一步confirm这一点 — 满载 GPU shouldin 75°C+ and 100W+. resolveplan: (1)最simplefix: echo auto | sudo tee /sys/class/drm/card0/device/power_dpm_force_performance_level — recover SMU automaticmanagement. (2)ifneed保持 manual pattern, 手动enable高频等级: echo "0 1 2 3" | sudo tee /sys/class/drm/card0/device/pp_dpm_sclk — allow SMU inall等级between切换. thisissueusuallyisuserbefore做performance调优experimentafter忘记recoverset, or某个 GPU 调优脚本set manual pattern. in bug reportin, check power_dpm_force_performance_level shouldisdiagnoseperformanceissuestandardstep. ',
+/*dmesg no exception error */`,
+            hint: 'Note the value of power_dpm_force_performance_level. In manual mode, the SMU will not automatically adjust the frequency.',
+            answer: 'Root cause: power_dpm_force_performance_level is set to "manual" mode, and pp_dpm_sclk has the lowest level selected (0: 300MHz). In manual mode, the SMU does not perform automatic DVFS - it strictly adheres to the user-selected DPM level. Since only level 0 (300MHz) is selected, the GPU is locked at the lowest frequency. This is further confirmed by the unusually low temperatures (42°C) and power consumption (8.5W) - a fully loaded GPU should be at 75°C+ and 100W+. Solution: (1) The simplest fix: echo auto | sudo tee /sys/class/drm/card0/device/power_dpm_force_performance_level - restore SMU automatic management. (2) If you need to maintain manual mode, manually enable the high-frequency level: echo "0 1 2 3" | sudo tee /sys/class/drm/card0/device/pp_dpm_sclk - allows SMU to switch between all levels. This problem is usually caused by the user forgetting to restore the settings after previous performance tuning experiments, or a certain GPU tuning script setting manual mode. In bug reports, checking power_dpm_force_performance_level should be a standard step in diagnosing performance issues.',
           },
           interviewQ: {
-            question: 'describe amdgpu power managementarchitecture. driverhowand SMU firmwareinteraction? DVFS ishowwork? ',
+            question: 'Describe amdgpu\'s power management architecture. How does the driver interact with the SMU firmware? How does DVFS work?',
             difficulty: 'hard',
-            hint: 'from三layerarchitecture(sysfs → driver pm/swsmu → SMU firmware)and PPSMC messagemechanism角度describe. ',
-            answer: 'amdgpu power managementarchitecture分as三layer: (1)userinterfacelayer — through sysfs 暴露 pp_dpm_sclk(GPU frequency), pp_dpm_mclk(memoryfrequency), power_dpm_force_performance_level(performancepattern), hwmon(温度/功耗/风扇)等interface; (2)driverlayer — pm/swsmu/ belowcodeimplementation SMU 通信framework, amdgpu_smu.c isgeneralinterface, smu_v13_0.c is RDNA3 specificimplementation. driverthrough Power Play Table(PPT)data structuredescribe GPU support DPM 等级表, 并through smu->ppt_funcs interfaceabstractiondifferent SMU version差异; (3)SMU firmwarelayer — runin GPU internalindependenthandle器on闭源firmware, receivedriver PPSMC message(through MMIO register MP1_SMN_C2PMSG series), real-timeexecute DVFS 决策. messageinteractionprocess: driverwriteparameterto C2PMSG_82 → writemessage ID to C2PMSG_66 → writetriggerto C2PMSG_90 → polling C2PMSG_90 waitresponse → readresult. DVFS workprinciple: SMU 维护 DPM 等级表(frequency-电压对), according to GPU activity(work负载百分比), 温度, 功耗limit三个因素dynamicselect等级. 负载增加 → 提升frequency/电压; 温度超限 → 强制降频(thermal throttling); 功耗超限 → limitfrequency(power throttling). SMU 决策周期约 1-10ms, 远快于driver干预. ',
-            amdContext: 'SMU andpower managementis AMD interviewinimportant话题, 尤其is PM team. demonstrate你understand闭源 SMU firmwarethroughmessageinterfacebyopen-sourcedrivercontrolarchitecture, and DVFS input因素(负载, 温度, 功耗). ',
+            hint: 'Described from the perspective of three-layer architecture (sysfs → driver pm/swsmu → SMU firmware) and PPSMC message mechanism.',
+            answer: 'The amdgpu power management architecture is divided into three layers: (1) User interface layer - exposing pp_dpm_sclk (GPU frequency), pp_dpm_mclk (memory frequency), power_dpm_force_performance_level (performance mode), hwmon (temperature/power consumption/fan) and other interfaces through sysfs; (2) Driver layer - the code under pm/swsmu/ implements the SMU communication framework, amdgpu_smu.c It is a general interface, and smu_v13_0.c is the specific implementation of RDNA3. The driver describes the DPM level table supported by the GPU through the Power Play Table (PPT) data structure, and abstracts the differences between different SMU versions through the smu->ppt_funcs interface; (3) SMU firmware layer - closed source firmware running on the independent processor inside the GPU, receives the driver\'s PPSMC message (through the MMIO register MP1_SMN_C2PMSG series), and executes DVFS decisions in real time. Message interaction process: The driver writes parameters to C2PMSG_82 → writes message ID to C2PMSG_66 → writes trigger to C2PMSG_90 → polls C2PMSG_90 and waits for response → reads the result. How DVFS works: SMU maintains a DPM level table (frequency-voltage pair) and dynamically selects the level based on three factors: GPU activity (workload percentage), temperature, and power consumption limit. The load increases → increase the frequency/voltage; the temperature exceeds the limit → forced frequency reduction (thermal throttling); the power consumption exceeds the limit → limits the frequency (power throttling). The decision-making cycle of SMU is about 1-10ms, which is much faster than driver intervention.',
+            amdContext: 'SMU and power management are important topics in interviews at AMD, especially on the PM team. Demonstrate an understanding of the architecture in which closed-source SMU firmware is controlled by an open-source driver via a messaging interface, as well as the input factors to DVFS (load, temperature, power consumption).',
           },
         },
       ],
@@ -1372,106 +1372,106 @@ power1_average: 8500000  (8.5W — 几乎isidle功耗)
     {
       id: '5-4',
       number: '5.4',
-      title: 'advancedsubsystem深入',
+      title: 'Advanced subsystems in depth',
       titleEn: 'Advanced Subsystems',
       icon: 'Microscope',
-      description: '深入三个keysubsystem: Display Core independent王国architectureand DML bandwidthcompute, DRM GPU Scheduler command schedulingmechanism, and GPU virtual memory(GPUVM)多级page tablesystem — theseis amdgpu driverin bug 密度最高, interviewfrequency最高coremodule. ',
+      description: 'Go deep into three key subsystems: Display Core\'s independent kingdom architecture and DML bandwidth calculation, DRM GPU Scheduler\'s command scheduling mechanism, and the multi-level page table system of GPU virtual memory (GPUVM) - these are the core modules with the highest bug density and the highest interview frequency in the amdgpu driver.',
       lessons: [
         // ── Lesson 5.4.1 ──────────────────────────────────────
         {
           id: '5-4-1',
           number: '5.4.1',
-          title: 'Display Core 深入: dc_state, DML and DC independent王国',
+          title: 'Display Core Deep Dive: dc_state, DML, and DC\'s independent kingdom',
           titleEn: 'Display Core Deep Dive: dc_state, DML and DC\'s Independent Kingdom',
           duration: 20,
           difficulty: 'expert',
           tags: ['display-core', 'dc_state', 'DML', 'dc_stream', 'dc_plane', 'bandwidth', 'amdgpu_dm'],
           concept: {
-            summary: 'DC(Display Core)占 amdgpu code量约 40%, 拥hasdriverin最高 bug 密度. 它not只isadisplaysubsystem — 它isafrom Windows driver移植过independent王国, 拥hasselftypesystem(dc_stream, dc_plane), selfstateverify(dc_validate_state), selfmemory模型anderrorhandle, and Linux DRM/KMS framework几乎is"翻译"relationshiprather than"integration"relationship. ',
+            summary: 'DC (Display Core) accounts for about 40% of amdgpu code and has the highest bug density among drivers. It is not just a display subsystem - it is an independent kingdom ported from the Windows driver, with its own type system (dc_stream, dc_plane), its own state validation (dc_validate_state), its own memory model and error handling, and it is almost a "translation" relationship rather than an "integration" relationship with the Linux DRM/KMS framework.',
             explanation: [
-              'DC 作asindependentabstractionlayer历史根源: DC 最初is AMD Windows driverindisplayengine, use C 语言面向object风格write(大量 vtable, abstractioninterface, 构造/析构pattern). 2017 年移植to Linux 时, AMD select保持 DC independent性rather than重写as DRM/KMS 原生风格 — causeis DC complex度(160 万行code)使得重写not现实, 且 AMD need Windows and Linux shared同一份displaycorecode. this means DC hasselfmemory allocationwrapper, selflogsystem, 甚至self数学库(定点数运算used for DML), andkernelothersubsystem形成风格on鲜明compare. ',
-              'dc_state commitprocessis DC coreworkpath. whenuser spacerequest改变displayconfiguration时(如切换分辨率, enable HDR), completecommitprocessas: dc_validate_state()(verify新configurationwhetherinhardwareabilityrange内 — checkpipelineresourcecount, bandwidthlimit, 时序兼容性)→ DML bandwidthcompute(Display Mode Library computeeachpipelinestage水印值, ensuredata流will not underflow)→ dc_commit_state()(willverifythroughconfigurationprogrammingtohardwareregister, in VBlank 期between切换以avoid撕裂). 任何一步failureallwill阻止configuration生效, 向user spacereturnerror. ',
-              'DML(Display Mode Library)is DC in最complex, 最容易出 bug 子module. DML 本质onisabandwidth/latencycomputeframework — 给定displayconfiguration(分辨率, flush率, 像素format, 缩放比例, active平面数), DML compute出allpipelinestageneedmemorybandwidth, 并andavailablebandwidthcompare. if需求超出availablebandwidth, DML will拒绝该configuration(return DC_FAIL_BANDWIDTH). DML stillcompute"水印值"(watermark) — HUBP mustin像素bydisplay器消耗before多久startfrommemoryprefetchdata. 水印computeerrorwillcausedisplay underflow(HUBP not及readdata, 屏幕出现黑线or闪烁), 这is DC in最common bug type. ',
-              'DC 拥hascompletelyindependent于 DRM/KMS typesystem. DRM use drm_crtc, drm_connector, drm_plane; DC use dc_stream(correspondingadisplayoutput流), dc_plane(correspondingadisplay图layer), dc_sink(correspondingadisplaydevice). amdgpu_dm.c is连接这two世界"翻译layer" — 它will drm_atomic_state convertas dc_state, will drm_crtc_state mappingto dc_stream_state, will drm_plane_state mappingto dc_plane_state. 这种双重abstraction增加complex性, 但also使得 DC corecompletelynotdependency Linux kernel API, canin Windows and Linux 之betweenshared. ',
-              'DC errorhandleindependent于kernel. DC internaluseselferror枚举(enum dc_status: DC_OK, DC_FAIL_BANDWIDTH, DC_FAIL_RESOURCES 等), rather than Linux standard errno(-EINVAL, -ENOMEM 等). amdgpu_dm.c responsible forwill DC error code翻译as DRM/KMS 期望error code. DC internallogalsouse自define DC_LOG_* macrorather thankernel pr_info/dev_err. understand这种independent性fordebugging DC issue至关important — 你needmeanwhilein DRM layer(dmesg in [drm] before缀)and DC layer([drm] DC: before缀)lookupinformation. ',
+              'Historical roots of DC as a separate abstraction layer: DC was originally the display engine in the AMD Windows driver, written in the object-oriented style of C (lots of vtables, abstract interfaces, construction/destruction patterns). When porting to Linux in 2017, AMD chose to keep DC independent rather than rewrite it to a DRM/KMS native style - the reason was that the complexity of DC (1.6 million lines of code) made rewriting impractical, and AMD needed Windows and Linux to share the same display core code. This means that DC has its own memory allocation wrapper, its own logging system, and even its own math library (fixed-point arithmetic is used for DML), creating a stylistic contrast to other subsystems of the kernel.',
+              'The dc_state commit process is the core working path of DC. When user space requests to change the display configuration (such as switching resolution, enabling HDR), the complete submission process is: dc_validate_state() (verify whether the new configuration is within the hardware capabilities - check the number of pipeline resources, bandwidth limits, timing compatibility) → DML bandwidth calculation (Display Mode Library calculates the watermark value of each pipeline stage to ensure that the data flow will not underflow) → dc_commit_state() (program the verified configuration into the hardware register, in VBlank switch between to avoid tearing). Failure in any step will prevent the configuration from taking effect and return an error to user space.',
+              'DML (Display Mode Library) is the most complex and bug-prone submodule in DC. DML is essentially a bandwidth/latency calculation framework - given a display configuration (resolution, refresh rate, pixel format, scaling, number of active planes), DML calculates the required memory bandwidth for all pipeline stages and compares it to the available bandwidth. If demand exceeds available bandwidth, DML rejects the configuration (returning DC_FAIL_BANDWIDTH). DML also calculates the "watermark" - how long HUBP must start prefetching data from memory before a pixel is consumed by the display. Watermark calculation errors can lead to display underflow (HUBP has no time to read the data, and the screen appears with black lines or flickers), which is the most common type of bug in DC.',
+              'DC has a completely independent type system from DRM/KMS. DRM uses drm_crtc, drm_connector, and drm_plane; DC uses dc_stream (corresponding to a display output stream), dc_plane (corresponding to a display layer), and dc_sink (corresponding to a display device). amdgpu_dm.c is the "translation layer" that connects these two worlds - it converts drm_atomic_state to dc_state, maps drm_crtc_state to dc_stream_state, and drm_plane_state to dc_plane_state. This double abstraction adds complexity, but also makes the DC core completely independent of the Linux kernel API and can be shared between Windows and Linux.',
+              'DC\'s error handling is independent of the kernel. DC internally uses its own error enumeration (enum dc_status: DC_OK, DC_FAIL_BANDWIDTH, DC_FAIL_RESOURCES, etc.) instead of the Linux standard errno (-EINVAL, -ENOMEM, etc.). amdgpu_dm.c is responsible for translating DC error codes into error codes expected by DRM/KMS. DC internal logging also uses custom DC_LOG_* macros instead of the kernel\'s pr_info/dev_err. Understanding this independence is critical for debugging DC issues - you need to look for information at both the DRM layer ([drm] prefix in dmesg) and the DC layer ([drm] DC: prefix).',
             ],
             keyPoints: [
-              'DC isfrom Windows driver移植independentabstractionlayer, 占 amdgpu 约 40% code量, bug 密度最高',
-              'dc_state commitprocess: dc_validate_state → DML bandwidthcompute → dc_commit_state → hardwareprogramming',
-              'DML(Display Mode Library): bandwidth/latencycomputeframework, 水印errorcause underflow is最common bug',
-              'DC independenttypesystem: dc_stream/dc_plane/dc_sink, and DRM  drm_crtc/drm_plane is翻译relationship',
-              'amdgpu_dm.c is DRM/KMS and DC 之betweenadapterlayer, responsible fortypeconvertanderror code翻译',
-              'DC independenterrorhandle: enum dc_status(DC_OK/DC_FAIL_BANDWIDTH)rather than Linux errno',
+              'DC is an independent abstraction layer ported from the Windows driver. It accounts for about 40% of amdgpu code and has the highest bug density.',
+              'dc_state submission process: dc_validate_state → DML bandwidth calculation → dc_commit_state → hardware programming',
+              'DML (Display Mode Library): bandwidth/delay calculation framework, underflow caused by watermark errors is the most common bug',
+              'DC independent type system: dc_stream/dc_plane/dc_sink, which is a translation relationship with DRM\'s drm_crtc/drm_plane',
+              'amdgpu_dm.c is the adapter layer between DRM/KMS and DC, responsible for type conversion and error code translation',
+              'DC independent error handling: enum dc_status (DC_OK/DC_FAIL_BANDWIDTH) instead of Linux errno',
             ],
           },
           diagram: {
-            title: 'DC independent王国architectureand dc_state commitprocess',
-            content: `DC "independent王国" architecture — DRM/KMS and DC 翻译relationship
+            title: 'DC independent kingdom structure and dc_state submission process',
+            content: `DC "Independent Kingdom" Architecture - Translation Relationship between DRM/KMS and DC
 
-user space (GNOME/KDE/Wayland Compositor)
+Userspace (GNOME/KDE/Wayland Compositor)
   │ drmModeAtomicCommit()
   ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  DRM Atomic KMS framework (drivers/gpu/drm/drm_atomic.c)         │
+│ DRM Atomic KMS Framework (drivers/gpu/drm/drm_atomic.c) │
 │                                                              │
 │  drm_atomic_state  ─── drm_crtc_state                       │
 │                    ─── drm_connector_state                   │
 │                    ─── drm_plane_state                       │
 └──────────────────────────────┬───────────────────────────────┘
                                │
-                               ▼ "翻译layer"
+▼ "Translation layer"
 ┌──────────────────────────────────────────────────────────────┐
-│  amdgpu_dm.c — DRM ←→ DC adapterlayer                           │
+│  amdgpu_dm.c — DRM ←→ DC Adapter Layer │
 │                                                              │
-│  drm_crtc_state ──────→ dc_stream_state (分辨率/flush率/HDR) │
-│  drm_plane_state ─────→ dc_plane_state  (图layer/framebuffer)  │
-│  drm_connector_state ─→ dc_sink         (displaydevice)          │
+│ drm_crtc_state ──────→ dc_stream_state (resolution/refresh rate/HDR) │
+│ drm_plane_state ─────→ dc_plane_state (layer/framebuffer) │
+│ drm_connector_state ─→ dc_sink (display device) │
 │  errno (-EINVAL) ◄────── dc_status (DC_FAIL_BANDWIDTH)      │
 │                                                              │
 │  amdgpu_dm_atomic_commit() → dc_commit_state()              │
 └──────────────────────────────┬───────────────────────────────┘
                                │
-                               ▼ DC internal(independent王国)
+▼ Inside DC (Independent Kingdom)
 ┌──────────────────────────────────────────────────────────────┐
 │  DC Core (display/dc/core/)                                  │
 │  ┌─────────────────────────────────────────────────────────┐ │
-│  │  dc_state commitprocess:                                     │ │
+│ │ dc_state submission process: │ │
 │  │                                                          │ │
 │  │  1. dc_validate_state(dc, new_state)                    │ │
-│  │     ├─ checkpipelineresource(pipe count够not够? )                │ │
-│  │     ├─ check时序兼容性                                   │ │
-│  │     └─ call DML bandwidthverify                                │ │
+│ │ ├─ Check pipeline resources (is the number of pipes enough?) │ │
+│ │ ├─ Check timing compatibility │ │
+│ │ └─ Call DML bandwidth verification │ │
 │  │         │                                                │ │
 │  │  2. DML (Display Mode Library)                          │ │
-│  │     ├─ compute总bandwidth需求 (分辨率×flush率×BPP×平面数)       │ │
-│  │     ├─ compute水印值 (urgent/pstate/dram_clk_change)       │ │
-│  │     ├─ bandwidth需求 > availablebandwidth? → DC_FAIL_BANDWIDTH        │ │
-│  │     └─ 水印值 → HUBP/DPP registerconfiguration                    │ │
+│ │ ├─ Calculate the total bandwidth requirement (resolution × refresh rate × BPP × number of planes) │ │
+│ │ ├─ Calculate watermark value (urgent/pstate/dram_clk_change) │ │
+│ │ ├─ Bandwidth requirement > Available bandwidth? → DC_FAIL_BANDWIDTH │ │
+│ │ └─ Watermark value → HUBP/DPP register configuration │ │
 │  │         │                                                │ │
 │  │  3. dc_commit_state(dc, validated_state)                │ │
-│  │     ├─ wait VBlank(avoid撕裂)                          │ │
-│  │     ├─ programming HUBP register(framebuffer address)             │ │
-│  │     ├─ programming DPP register(缩放/色彩)                     │ │
-│  │     ├─ programming OPTC register(时序/VRR)                     │ │
-│  │     └─ programming DIO register(DP/HDMI output)                  │ │
+│ │ ├─ Wait for VBlank (avoid tearing) │ │
+│ │ ├─ Programming HUBP register (framebuffer address) │ │
+│ │ ├─ Programming DPP Register (Scale/Color) │ │
+│ │ ├─ Programming OPTC Register (Timing/VRR) │ │
+│ │ └─ Program DIO register (DP/HDMI output) │ │
 │  └─────────────────────────────────────────────────────────┘ │
 │                                                              │
-│  DC independent设施:                                              │
-│  · 自hastype: dc_stream, dc_plane, dc_sink (≠ DRM type)     │
-│  · 自haserror code: enum dc_status (DC_OK, DC_FAIL_*)           │
-│  · 自haslog: DC_LOG_WARNING, DC_LOG_DC (≠ pr_info/dev_err) │
-│  · 自hasmemory: dc_create_*() / dc_destroy_*()               │
-│  · 自has数学库: 定点数运算 (DML 用, avoid浮点)               │
+│ Stand-alone facilities in DC: │
+│ · Own types: dc_stream, dc_plane, dc_sink (≠ DRM type) │
+│ · Own error code: enum dc_status (DC_OK, DC_FAIL_*) │
+│ · Own logs: DC_LOG_WARNING, DC_LOG_DC (≠ pr_info/dev_err) │
+│ · Own memory: dc_create_*() / dc_destroy_*() │
+│ · Own math library: fixed-point arithmetic (for DML, avoid floating point) │
 └──────────────────────────────────────────────────────────────┘`,
-            caption: 'DC 作asindependent王国architecture全景. amdgpu_dm.c isunique连接 DRM/KMS 世界and DC 世界桥梁. DC internal拥hascompletelyindependenttypesystem, errorhandle, logsystemandmemory management — 这自于其 Windows driver历史遗产. ',
+            caption: 'An architectural panorama of DC as an independent kingdom. amdgpu_dm.c is the only bridge between the DRM/KMS world and the DC world. DC has a completely independent type system, error handling, logging system and memory management internally - this comes from its Windows driver heritage.',
           },
           codeWalk: {
-            title: 'dc_commit_state — verify → bandwidthcheck → hardware编program列',
+            title: 'dc_commit_state — Verification → Bandwidth Check → Hardware Programming Sequence',
             file: 'drivers/gpu/drm/amd/display/dc/core/dc.c',
             language: 'c',
-            code: `/* dc_commit_state() — DC corestatecommitfunction
- * completeprocess: verify → DML bandwidthcompute → hardwareprogramming
- * from amdgpu_dm.c  amdgpu_dm_atomic_commit_tail() call
+            code: `/*dc_commit_state() — DC's core state commit function
+ *Complete process: Verification → DML bandwidth calculation → Hardware programming
+ *Called from amdgpu_dm_atomic_commit_tail() in amdgpu_dm.c
  */
 enum dc_status dc_commit_state(struct dc *dc,
                                 struct dc_state *context)
@@ -1479,139 +1479,139 @@ enum dc_status dc_commit_state(struct dc *dc,
     enum dc_status result;
     int i;
 
-    /* stage 1: globalstateverify
-     * check: pipelineresourcewhether足够? 时序whether冲突?
-     * internalcall DML 进行bandwidthverify */
+    /*Phase 1: Global state verification
+     *Check: Are there sufficient pipeline resources? Are there timing conflicts?
+     *Internally call DML for bandwidth verification */
     result = dc_validate_global_state(dc, context);
     if (result != DC_OK) {
         DC_LOG_WARNING("DC: validate failed: %d\\n", result);
-        /* DC_FAIL_BANDWIDTH: bandwidthnot足
-         * DC_FAIL_RESOURCES: pipelinenot够
-         * amdgpu_dm.c 翻译as -EINVAL return给 DRM */
+        /*DC_FAIL_BANDWIDTH: Insufficient bandwidth
+         *DC_FAIL_RESOURCES: Not enough pipelines
+         *amdgpu_dm.c is translated as -EINVAL and returned to DRM */
         return result;
     }
 
-    /* stage 2: DML 水印compute
-     * aseachpipelinestagecompute "最晚prefetch时between"
-     * 水印error → display underflow (最common DC bug) */
+    /*Stage 2: DML watermark calculation
+     *Calculate the "latest prefetch time" for each pipeline stage
+     *Watermark error → show underflow (the most common DC bug) */
     if (dc->res_pool->funcs->calculate_wm_and_dlg) {
         dc->res_pool->funcs->calculate_wm_and_dlg(
             dc, context, context->res_ctx.pipe_ctx);
-        /* urgent_watermark: 紧急prefetch阈值
-         * pstate_watermark: allow DRAM 切换时钟阈值
-         * these值directlyprogrammingto HUBP register */
+        /*urgent_watermark: Urgent prefetch threshold
+         *pstate_watermark: Threshold that allows DRAM to switch clocks
+         *These values ​​are programmed directly into the HUBP register */
     }
 
-    /* stage 3: applicationpipeline拆分 (ifneed)
-     * 高分辨率/高flush率mayneed 2 个 pipe mergehandle */
+    /*Phase 3: Apply pipeline splitting (if needed)
+     *High resolution/high refresh rate may require 2 pipe merge processing */
     dc->hwss.apply_ctx_for_surface(dc, NULL, 0, context);
 
-    /* stage 4: 逐 stream programminghardware
-     * dc_stream = adisplayoutput (如 DP-1 on 2560x1440) */
+    /*Phase 4: Programming the hardware stream-by-stream
+     *dc_stream = a display output (e.g. 2560x1440 on DP-1) */
     for (i = 0; i < context->stream_count; i++) {
         struct dc_stream_state *stream = context->streams[i];
-        struct pipe_ctx *pipe = /* find stream corresponding pipe */;
+        struct pipe_ctx *pipe = /*Find the pipe corresponding to stream*/;
 
-        /* configuration OPTC: 时序信号 (HSync/VSync/VBlank) */
+        /*Configure OPTC: timing signals (HSync/VSync/VBlank) */
         dc->hwss.setup_stream_encoder(pipe);
 
-        /* configuration DIO: DP/HDMI output编码and链路 */
+        /*Configure DIO: DP/HDMI output encoding and link */
         dc->hwss.enable_stream(pipe);
 
-        /* configuration FreeSync/VRR: dynamic VBlank 调整 */
+        /*Configure FreeSync/VRR: dynamic VBlank adjustment */
         if (stream->adjust.v_total_min != 0)
             dc->hwss.set_drr(&pipe, 1,
                 stream->adjust);
     }
 
-    /* stage 5: 逐 plane programminghardware
-     * dc_plane = adisplay图layer (桌面/视频叠加/光标) */
+    /*Phase 5: Programming the hardware plane-by-plane
+     *dc_plane = a display layer (desktop/video overlay/cursor) */
     for (i = 0; i < context->res_ctx.pipe_count; i++) {
         struct pipe_ctx *pipe = &context->res_ctx.pipe_ctx[i];
 
-        /* configuration HUBP: framebuffer address, tiling pattern */
+        /*Configure HUBP: framebuffer address, tiling mode */
         dc->hwss.update_plane_addr(dc, pipe);
 
-        /* configuration DPP: 缩放比例, color spaceconvert */
+        /*Configure DPP: scaling, color space conversion */
         dc->hwss.program_pipe(dc, pipe, context);
     }
 
-    /* stage 6: in VBlank 期betweencomplete切换 */
+    /*Stage 6: Complete switchover during VBlank */
     dc->hwss.wait_for_mpcc_disconnect(dc, context);
 
     dc->current_state = context;
     return DC_OK;
 }`,
             annotations: [
-              'dc_validate_global_state internalcall DML  dml_validate() 进行completebandwidth/latencycompute',
-              'DC_FAIL_BANDWIDTH is最commonverifyfailure — 多display器 + 高flush率时容易trigger',
-              'calculate_wm_and_dlg in wm = watermark, dlg = display lag — control HUBP prefetch时机',
-              'dc->hwss (Hardware Sequencer) ishardwarerelatedoperate vtable, 每代 DCN hasdifferentimplementation',
-              'stream and plane 分离体现 DC 多图layerarchitecture: a stream canhasmultiple plane',
-              'wait_for_mpcc_disconnect in VBlank between隙切换configuration, isprevent画面撕裂key',
+              'dc_validate_global_state internally calls DML\'s dml_validate() for complete bandwidth/latency calculations',
+              'DC_FAIL_BANDWIDTH is the most common validation failure - easily triggered with multiple monitors + high refresh rates',
+              'wm = watermark, dlg = display lag in calculate_wm_and_dlg——Control the prefetch timing of HUBP',
+              'dc->hwss (Hardware Sequencer) is a vtable for hardware-related operations. Each generation of DCN has different implementations.',
+              'The separation of stream and plane reflects DC\'s multi-layer architecture: a stream can have multiple planes',
+              'Wait_for_mpcc_disconnect switches the configuration in the VBlank gap, which is the key to preventing screen tearing',
             ],
-            explanation: 'thisfunctiondemonstrate DC completework流: 先verifyconfigurationwhethercan行(avoidhardware损坏or underflow), againcompute精确pipelineparameter(水印值), finally按orderprogramminghardwareregister. 任何一步failureallwillin止并return DC 自haserror code — amdgpu_dm.c responsible forwill其翻译as DRM/KMS 期望 errno. ',
+            explanation: 'This function shows the complete workflow of DC: first verify whether the configuration is feasible (to avoid hardware damage or underflow), then calculate the precise pipeline parameters (watermark value), and finally program the hardware registers in sequence. Failure in any step will abort and return DC\'s own error code - amdgpu_dm.c is responsible for translating it into the errno expected by DRM/KMS.',
           },
           miniLab: {
-            title: 'tracing dc_commit_state executepath',
-            objective: 'use ftrace and debugfs observe dc_commit_state realexecute, understand DML verifyandhardwareprogrammingorder. ',
+            title: 'Trace the execution path of dc_commit_state',
+            objective: 'Observe the real execution of dc_commit_state using ftrace and debugfs, understand the sequence of DML verification and hardware programming.',
             setup: `sudo mount -t tracefs nodev /sys/kernel/tracing 2>/dev/null
-# confirm DC debug outputalreadyenable
+#Confirm that DC debug output is enabled
 sudo sh -c 'echo 0x1 > /sys/module/amdgpu/parameters/dc 2>/dev/null'`,
             steps: [
-              'set ftrace tracing dc_commit_state: echo dc_commit_state > /sys/kernel/tracing/set_ftrace_filter',
-              'enablefunction图tracing: echo function_graph > /sys/kernel/tracing/current_tracer',
-              'starttracing: echo 1 > /sys/kernel/tracing/tracing_on',
-              'trigger dc_commit_state execute — 切换分辨率: xrandr --output DP-1 --mode 1920x1080 && sleep 1 && xrandr --output DP-1 --mode 2560x1440',
-              'stoptracing: echo 0 > /sys/kernel/tracing/tracing_on',
-              'viewexecute序列: cat /sys/kernel/tracing/trace | grep -E "dc_commit|validate|watermark|dml" | head -30',
-              'view DC internalstate: sudo cat /sys/kernel/debug/dri/0/amdgpu_dm_dtn_log 2>/dev/null | head -80',
+              'Set ftrace tracing dc_commit_state: echo dc_commit_state > /sys/kernel/tracing/set_ftrace_filter',
+              'Enable function graph tracing: echo function_graph > /sys/kernel/tracing/current_tracer',
+              'Start tracing: echo 1 > /sys/kernel/tracing/tracing_on',
+              'Trigger dc_commit_state execution - switch resolution: xrandr --output DP-1 --mode 1920x1080 && sleep 1 && xrandr --output DP-1 --mode 2560x1440',
+              'Stop tracing: echo 0 > /sys/kernel/tracing/tracing_on',
+              'View the execution sequence: cat /sys/kernel/tracing/trace | grep -E "dc_commit|validate|watermark|dml" | head -30',
+              'Check the DC internal status: sudo cat /sys/kernel/debug/dri/0/amdgpu_dm_dtn_log 2>/dev/null | head -80',
             ],
             expectedOutput: `$ cat /sys/kernel/tracing/trace | grep -E "dc_commit|validate" | head -10
   kworker/0:2-345  =>  dc_commit_state() {
   kworker/0:2-345      dc_validate_global_state() {
   kworker/0:2-345        dml_validate() {
-  kworker/0:2-345          ... (DML bandwidthcompute) ...
+kworker/0:2-345 ... (DML bandwidth calculation) ...
   kworker/0:2-345        } /* 2.345 ms */
   kworker/0:2-345      } /* 3.012 ms */
-  kworker/0:2-345      ... (hardwareprogramming) ...
+kworker/0:2-345 ... (hardware programming) ...
   kworker/0:2-345  } /* 8.567 ms */
 
-note: dc_validate_global_state 耗时较长because DML computecomplex`,
-            hint: 'need root permission. if xrandr notavailable(纯 Wayland), 用 wlr-randr or gnome-randr 代替. amdgpu_dm_dtn_log needkernelcompilation时enable CONFIG_DEBUG_FS and CONFIG_DRM_AMD_DC_DEBUG. ',
+Note: dc_validate_global_state takes a long time because DML calculation is complex`,
+            hint: 'Requires root privileges. If xrandr is not available (pure Wayland), use wlr-randr or gnome-randr instead. amdgpu_dm_dtn_log requires kernel compilation with CONFIG_DEBUG_FS and CONFIG_DRM_AMD_DC_DEBUG enabled.',
           },
           debugExercise: {
-            title: 'display underflow: DML bandwidthcomputefailure',
+            title: 'Show underflow: DML bandwidth calculation failed',
             language: 'c',
-            description: 'userin连接two 4K@60Hz display器after, 第二个display器between歇性黑屏 0.5 秒thenrecover. dmesg and debugfs displaybelowinformation. ',
-            question: 'according to DML computedataand underflow report, diagnose根因并提出fixplan. ',
-            buggyCode: `/* dmesg output */
-[  234.567] [drm] DC: dc_validate_state passed  ← verify居然through!
+            description: 'After a user connects two 4K@60Hz monitors, the second monitor intermittently goes black for 0.5 seconds and then resumes. dmesg and debugfs display the following information.',
+            question: 'Diagnose root causes and propose fixes based on DML calculation data and underflow reports.',
+            buggyCode: `/*dmesg output */
+[  234.567] [drm] DC: dc_validate_state passed  ←The verification actually passed!
 [  234.890] [drm] DC: pipe 1 underflow detected!
 [  234.890] [drm] DC: HUBP1 urgent watermark breached
 [  234.891] [drm] DC: stream 1: 3840x2160@60Hz 10bpc HDR
 
-/* DML computedata (debugfs amdgpu_dm_dtn_log) */
-Stream 0: 3840x2160@60Hz 8bpc  → need 15.9 GB/s
-Stream 1: 3840x2160@60Hz 10bpc → need 19.9 GB/s
+/*DML calculation data (debugfs amdgpu_dm_dtn_log) */
+Stream 0: 3840x2160@60Hz 8bpc → requires 15.9 GB/s
+Stream 1: 3840x2160@60Hz 10bpc → Requires 19.9 GB/s
 Total required: 35.8 GB/s
-Available DRAM BW: 36.0 GB/s   ← 仅多 0.2 GB/s 余量!
+Available DRAM BW: 36.0 GB/s   ←Just 0.2 GB/s more headroom!
 
-/* HUBP 水印 (from dtn_log) */
+/*HUBP watermark (from dtn_log) */
 HUBP1 urgent_watermark: 22.5 us
-HUBP1 actual_prefetch:  23.1 us  ← 勉强满足
+HUBP1 actual_prefetch:  23.1 us  ←Barely satisfied
 
-/* relatedcondition */
-GPU 正inrun 3D 游戏(GFX engineactive, 抢占memorybandwidth)`,
-            hint: 'dc_validate_state instaticconditionbelowthrough, 但actualrun时 GFX engineanddisplayengineshared memorybandwidth. DML bandwidthcomputewhether考虑这种竞争? ',
-            answer: '根因: DML bandwidthcomputeinverifystagethrough(36.0 > 35.8 GB/s), 但actual余量仅 0.2 GB/s (0.56%), 几乎no容错空between. when GFX enginerun 3D 游戏时, GPU memory controllerneedmeanwhile服务displayreadandrendering读写 — GFX memoryaccessand DC displayread竞争bandwidth, cause HUBP actualcan获得bandwidth低于 DML staticcompute值. specific表现: HUBP1  urgent_watermark (22.5us) and actual_prefetch (23.1us) 之between仅has 0.6us 余量, GFX 突发memoryaccess轻微latency HUBP prefetchtrigger underflow. 这is DML 经典 bug pattern — DML 假设displayenginecan获得其needentirebandwidth, 但not yet充分考虑and GFX enginebandwidth竞争. fixplan: (1)短期 — 降低 Stream 1 as 8bpc(减少 4 GB/s bandwidth需求)or降低flush率; (2)根本fix — DML shouldreserve更大bandwidth余量(增加 "bandwidth_margin" parameter), typicalsecurity余量shouldis 10-15% rather than 0.56%; (3)checkkernelversion — updatekernelmayalreadyfix此 DML 水印compute低估issue(搜索 git log --oneline display/dc/dml/ viewrelatedpatch). ',
+/*Related conditions */
+The GPU is running a 3D game (the GFX engine is active, occupying memory bandwidth)`,
+            hint: 'dc_validate_state passes under static conditions, but when actually running the GFX engine shares memory bandwidth with the display engine. Do DML\'s bandwidth calculations take this competition into account?',
+            answer: 'Root cause: DML\'s bandwidth calculation passed during the verification phase (36.0 > 35.8 GB/s), but the actual margin was only 0.2 GB/s (0.56%), leaving almost no room for error. When the GFX engine runs a 3D game, the GPU memory controller needs to service both display reads and rendering reads and writes - GFX\'s memory access competes with DC\'s display reads for bandwidth, causing the actual bandwidth available to HUBP to be lower than the statically calculated value of DML. Specific performance: There is only a 0.6us margin between HUBP1\'s urgent_watermark (22.5us) and actual_prefetch (23.1us). GFX\'s burst memory access is slightly delayed, and HUBP\'s prefetch triggers underflow. This is a classic DML bug pattern - DML assumes that the display engine gets all the bandwidth it needs, but doesn\'t take enough account of competing for bandwidth with the GFX engine. Fixes: (1) Short-term - reduce Stream 1 to 8bpc (reduces 4 GB/s bandwidth requirements) or reduce refresh rate; (2) Fundamental fix - DML should reserve a larger bandwidth margin (increase "bandwidth_margin" parameter), typical safety margin should be 10-15% instead of 0.56%; (3) Check kernel version - newer kernels may have fixed this DML Underestimation problem of watermark calculation (search git log --oneline display/dc/dml/ to view related patches).',
           },
           interviewQ: {
             question: 'Why does amdgpu have its own display abstraction layer (DC) instead of using DRM/KMS directly? What are the trade-offs?',
             difficulty: 'hard',
-            hint: 'from历史cause(Windows 移植), technologycause(functioncomplex度), 工程cause(code复用)三个维度analyze, 并讨论代价. ',
-            answer: 'AMD selectuseindependent DC layerrather thandirectlyuse DRM/KMS has三方面cause: (1)历史cause — DC 最初is Windows driverdisplayengine, AMD in 2017 年will其移植to Linux 时保持原hasarchitecture, because 160 万行code重写成本notcan接受; (2)technologycause — AMD displayhardwaresupport大量 DRM/KMS generalframeworknotsupportadvancedfeature: FreeSync/VRR, HDR tone mapping, DSC(Display Stream Compression), PSR(Panel Self Refresh), MST(Multi-Stream Transport), ABM(Adaptive Backlight Management)等. thesefeatureneedcomplexbandwidthcompute(DML)and精确pipelineresourcemanagement, DRM generalframeworkunable toprovide; (3)工程cause — DC corelayerin Windows and Linux 之betweenshared, AMD 只需维护一份displaylogic. when Windows 端fixa DML 水印 bug, Linux 端candirectlysynchronizationthisfix. Trade-offs: (优势)functioncomplete, Windows/Linux codeshared, independentverify; (代价)code风格andkernelnot一致, amdgpu_dm.c 适配layer增加complex性, DC 独hastypesystemanderrorhandle增加learn成本, DC code量巨大causecompilation时between长, DC  Windows 风格(如avoid浮点/use定点数)in Linux kernelin显得异类. 尽管hasthese代价, DC patternalreadybyverifyissuccess — AMD isuniquein Linux onprovidecomplete FreeSync/VRR/HDR support GPU 厂商. ',
-            amdContext: '这is AMD Display teaminterviewin经典issue. interviewer希望看to你既understand DC existtechnology必to性, alsocan客观评价其代价. 特别note提to DML complex度 — 它is DC unable toby DRM generalframework替代corecause. ',
+            hint: 'Analyze from three dimensions: historical reasons (Windows porting), technical reasons (functional complexity), and engineering reasons (code reuse), and discuss the costs.',
+            answer: 'AMD chose to use an independent DC layer instead of directly using DRM/KMS for three reasons: (1) Historical reasons - DC was originally a Windows-driven display engine, and AMD maintained the original architecture when porting it to Linux in 2017 because the cost of rewriting 1.6 million lines of code was unacceptable; (2) Technical reasons - AMD display hardware supports a large number of advanced features that are not supported by the DRM/KMS common framework: FreeSync/VRR, HDR tone mapping, DSC (Display) Stream Compression), PSR (Panel Self Refresh), MST (Multi-Stream Transport), ABM (Adaptive Backlight Management), etc. These features require complex bandwidth calculations (DML) and precise pipeline resource management, which the DRM general framework cannot provide; (3) Engineering reasons - the DC core layer is shared between Windows and Linux, and AMD only needs to maintain one copy of the display logic. When a DML watermark bug is fixed on the Windows side, the Linux side can directly synchronize the fix. Trade-offs: (Advantages) Full functionality, Windows/Linux code sharing, independent verification; (Cost) The code style is inconsistent with the kernel, the amdgpu_dm.c adaptation layer increases complexity, DC\'s unique type system and error handling increase learning costs, the huge amount of DC code leads to long compilation time, DC\'s Windows style (such as avoiding floating point/using fixed point numbers) appears alien in the Linux kernel. Despite these costs, DC mode has proven successful - AMD is the only GPU vendor to offer full FreeSync/VRR/HDR support on Linux.',
+            amdContext: 'This is a classic AMD Display team interview question. The interviewer wants to see that you both understand the technical necessity for DC and can objectively evaluate its cost. Special attention is paid to mentioning the complexity of DML - it is the core reason why DC cannot be replaced by a universal framework for DRM.',
           },
         },
 
@@ -1619,137 +1619,137 @@ GPU 正inrun 3D 游戏(GFX engineactive, 抢占memorybandwidth)`,
         {
           id: '5-4-2',
           number: '5.4.2',
-          title: 'DRM GPU Scheduler: 现代command submissioncore',
+          title: 'DRM GPU Scheduler: The heart of modern command submission',
           titleEn: 'DRM GPU Scheduler: Core of Modern Command Submission',
           duration: 20,
           difficulty: 'expert',
           tags: ['drm-scheduler', 'gpu-scheduler', 'drm_sched_job', 'amdgpu_job', 'timeout', 'preemption'],
           concept: {
-            summary: 'DRM GPU Scheduler(drm_gpu_scheduler)is Linux kernelin GPU command schedulingcoreframework — amdgpu each Ring Buffer allhasaindependentscheduler实例. 它management job lifecycle(init → arm → push → run → complete/timeout), implementation多process公平scheduling, 并providebased ontimeout GPU hang detect. amdgpu_job structure体implementation drm_sched_job interface, in run_job callbackinwillcommandwrite Ring Buffer. ',
+            summary: 'DRM GPU Scheduler (drm_gpu_scheduler) is the core framework for GPU command scheduling in the Linux kernel - each Ring Buffer of amdgpu has an independent scheduler instance. It manages the job life cycle (init → arm → push → run → complete/timeout), implements fair scheduling of multiple processes, and provides timeout-based GPU hang detection. The amdgpu_job structure implements the drm_sched_job interface, and writes commands to the Ring Buffer in the run_job callback.',
             explanation: [
-              'drm_gpu_scheduler is DRM subsystemprovidegeneral GPU schedulingframework(codein drivers/gpu/drm/scheduler/), 最初由 AMD engineerdevelopment并contribution给upstream. 它aseachhardwarequeue(in amdgpu iniseach Ring Buffer)provideaindependentscheduler实例. schedulercoredesigngoalis: 多process之between公平scheduling(preventaprocess垄断 GPU), based onprioritycommand排序, andtimeoutdriver GPU hang detect. amdgpu aseach Ring(GFX Ring, SDMA Ring, VCN Ring 等)createa drm_gpu_scheduler 实例. ',
-              'Job completelifecyclecontain五个stage: (1)drm_sched_job_init() — initialization job structure体, 关联tocorrespondingscheduler实体(drm_sched_entity, 代表acommit源/process); (2)drm_sched_job_arm() — "武装" job: allocation fence, record时between戳, job 准备好bycommit; (3)drm_sched_entity_push_job() — will job 推入scheduling实体queue; (4)schedulerthread(kthread)fromqueuein取出最高priority job, call run_job callback(对 amdgpu is amdgpu_job_run)willcommandwrite Ring Buffer; (5)job complete(fence signal)ortimeout(timeout callback). thislifecycleensurecommand submissionhas序性andcantracing性. ',
-              'amdgpu_job is amdgpu 对 drm_sched_job 扩展implementation. amdgpu_job_run() is最keycallback — 它inschedulerthreadcontextinexecute, willusercommit IB(Indirect Buffer)引用write Ring Buffer, specificstepas: amdgpu_ib_schedule() get Ring Buffer 空between → write INDIRECT_BUFFER PM4 包(指向 IB  GPU virtual address)→ write FENCE PM4 包(fence 序列号)→ amdgpu_ring_commit() update WPTR 并write Doorbell notify GPU. from amdgpu_cs_submit()(usercommit)to amdgpu_job_run()(actualwrite Ring)之betweenmayhaslatency — 这取决于schedulerqueue深度andpriority. ',
-              'Timeout handleisscheduler最importantsecuritymechanism. scheduleraseach正inexecute job 维护a定时器(through delayed_work), defaulttimeout时between由 amdgpu set(GFX ring usuallyas 10 秒). if定时器to期时 job  fence 仍not yetby signal, indicate GPU may hang  — schedulercall timedout_job callback, amdgpu implementationas amdgpu_job_timedout(). 该functionfirstcheck fence whether刚刚complete(avoid误判), then dump GPU registerstate(GRBM_STATUS, CP state), finallytrigger amdgpu_device_gpu_recover() executecomplete GPU 复位. GPU 复位after, allhang job willbyre-commitormarkasfailure. ',
-              'priorityscheduling: drm_gpu_scheduler supportmultiplepriorityqueue(DRM_SCHED_PRIORITY_KERNEL > HIGH > NORMAL > LOW). 高priority job will先于低prioritybyschedulingexecute. in amdgpu in, kernelinternaloperate(如page tableupdate, GPU 复位afterrecovercommand)use KERNEL priority, 普通user spacerenderinguse NORMAL priority. hardwarelayer面, RDNA seriessupport GFX Ring level抢占(preemption) — 高priority GFX job canpausecurrent正inexecute低priority job, completeafteragainrecover. 这for VR scenario特别important(VR 合成器need高priority以维持低latency). ',
+              'drm_gpu_scheduler is a general-purpose GPU scheduling framework provided by the DRM subsystem (code in drivers/gpu/drm/scheduler/), originally developed by AMD engineers and contributed to upstream. It provides a separate scheduler instance for each hardware queue (in amdgpu, each Ring Buffer). The core design goals of the scheduler are: fair scheduling among multiple processes (preventing one process from monopolizing the GPU), priority-based command sorting, and timeout-driven GPU hang detection. amdgpu creates a drm_gpu_scheduler instance for each Ring (GFX Ring, SDMA Ring, VCN Ring, etc.).',
+              'The complete life cycle of Job includes five stages: (1) drm_sched_job_init() - initialize the job structure, associated to the corresponding scheduler entity (drm_sched_entity, representing a submission source/process); (2) drm_sched_job_arm() - "arm" the job: allocate fences, record timestamps, and the job is ready to be submitted; (3) drm_sched_entity_push_job() - push the job Push into the queue of the scheduling entity; (4) The scheduler thread (kthread) takes out the highest priority job from the queue, calls the run_job callback (amdgpu_job_run for amdgpu) and writes the command into the Ring Buffer; (5) The job is completed (fence signal) or times out (timeout callback). This life cycle ensures the orderliness and traceability of command submissions.',
+              'amdgpu_job is amdgpu\'s extended implementation of drm_sched_job. amdgpu_job_run() is the most critical callback - it is executed in the scheduler thread context and writes the IB (Indirect Buffer) reference submitted by the user into the Ring Buffer. The specific steps are: amdgpu_ib_schedule() obtains the Ring Buffer space → writes the INDIRECT_BUFFER PM4 package (pointing to the GPU virtual address of the IB) → writes the FENCE PM4 package (fence sequence number) → amdgpu_ring_commit() updates the WPTR and writes a Doorbell notification to the GPU. There may be a delay between amdgpu_cs_submit() (user submission) and amdgpu_job_run() (actual writing to the Ring) - this depends on scheduler queue depth and priority.',
+              'Timeout handling is the most important safety mechanism of the scheduler. The scheduler maintains a timer (via delayed_work) for each executing job, and the default timeout is set by amdgpu (usually 10 seconds for GFX ring). If the fence of the job has not been signaled when the timer expires, it means that the GPU may hang - the scheduler calls the timedout_job callback, and amdgpu implements amdgpu_job_timedout(). This function first checks whether the fence has just been completed (to avoid misjudgment), then dumps the GPU register status (GRBM_STATUS, CP status), and finally triggers amdgpu_device_gpu_recover() to perform a complete GPU reset. After the GPU is reset, all pending jobs will be resubmitted or marked as failed.',
+              'Priority scheduling: drm_gpu_scheduler supports multiple priority queues (DRM_SCHED_PRIORITY_KERNEL > HIGH > NORMAL > LOW). High-priority jobs will be scheduled for execution before low-priority jobs. In amdgpu, kernel internal operations (such as page table updates, recovery commands after GPU reset) use KERNEL priority, and normal user space rendering uses NORMAL priority. At the hardware level, the RDNA series supports GFX Ring-level preemption—a high-priority GFX job can pause the currently executing low-priority job and then resume it after completion. This is especially important for VR scenarios (VR compositors need high priority to maintain low latency).',
             ],
             keyPoints: [
-              'drm_gpu_scheduler: DRM general GPU schedulingframework, each Ring Buffer a实例',
-              'Job lifecycle: init → arm → push → (schedulerthread) → run_job → fence signal / timeout',
-              'amdgpu_job_run(): will IB 引用write Ring Buffer, call amdgpu_ring_commit() notify GPU',
-              'Timeout mechanism: default 10s timeout → amdgpu_job_timedout → GPU register dump → GPU 复位',
-              'priorityqueue: KERNEL > HIGH > NORMAL > LOW, kerneloperate优先于userrendering',
-              'schedulerthread(kthread): per-ring independentthread, from实体queue取 job schedulingexecute',
+              'drm_gpu_scheduler: DRM general GPU scheduling framework, one instance per Ring Buffer',
+              'Job life cycle: init → arm → push → (scheduler thread) → run_job → fence signal / timeout',
+              'amdgpu_job_run(): Write the IB reference to the Ring Buffer and call amdgpu_ring_commit() to notify the GPU',
+              'Timeout mechanism: default 10s timeout → amdgpu_job_timedout → GPU register dump → GPU reset',
+              'Priority queue: KERNEL > HIGH > NORMAL > LOW, kernel operations take precedence over user rendering',
+              'Scheduler thread (kthread): per-ring independent thread, takes job scheduling and execution from the entity queue',
             ],
           },
           diagram: {
-            title: 'DRM GPU Scheduler architectureand Job lifecycle',
-            content: `DRM GPU Scheduler — Job schedulingprocess
+            title: 'DRM GPU Scheduler architecture and job life cycle',
+            content: `DRM GPU Scheduler — Job scheduling process
 
-user space (Mesa / Vulkan)
+User space (Mesa / Vulkan)
   │ ioctl(DRM_IOCTL_AMDGPU_CS)
   ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  amdgpu_cs_ioctl() — command submissionentry point                           │
-│  ├─ amdgpu_cs_parser_init()    parse ioctl parameter              │
-│  ├─ amdgpu_cs_parser_bos()     verifyandmapping BO                │
-│  └─ amdgpu_cs_submit()         create amdgpu_job              │
+│ amdgpu_cs_ioctl() — command submission entry │
+│ ├─ amdgpu_cs_parser_init() parses ioctl parameters │
+│ ├─ amdgpu_cs_parser_bos() verification and mapping BO │
+│ └─ amdgpu_cs_submit() creates amdgpu_job │
 │      │                                                       │
-│      ├─ drm_sched_job_init()   initialization job, 关联 entity       │
-│      ├─ drm_sched_job_arm()    武装 job: allocation fence          │
-│      └─ drm_sched_entity_push_job()  推入实体queue ──────┐   │
+│ ├─ drm_sched_job_init() initializes the job and associates the entity │
+│ ├─ drm_sched_job_arm() arm job: assign fence │
+│ └─ drm_sched_entity_push_job() Push into the entity queue ──────┐ │
 │                                                          │   │
 └──────────────────────────────────────────────────────────│───┘
                                                            │
          ┌─────────────────────────────────────────────────┘
          ▼
 ┌──────────────────────────────────────────────────────────────┐
-│  drm_gpu_scheduler (per-ring scheduler实例)                     │
+│ drm_gpu_scheduler (per-ring scheduler instance) │
 │                                                              │
-│  priorityqueue:                                                 │
+│Priority Queue: │
 │  ┌─────────┬──────────┬──────────┬──────────┐               │
 │  │ KERNEL  │  HIGH    │ NORMAL   │  LOW     │               │
-│  │ (page table   │ (VR 合成 │ (普通    │ (after台    │               │
-│  │  update)  │  器)     │  rendering)   │  compute)   │               │
+│ │ (Page table │ (VR Composition │ (Normal │ (Backend │ │
+│ │ update) │ renderer) │ render) │ calculate) │ │
 │  └────┬────┴────┬─────┴────┬─────┴────┬─────┘               │
 │       │         │          │          │                      │
 │       └────┬────┘          │          │                      │
-│            │   priorityfrom高to低select     │                      │
+│ │ Select priority from high to low │ │
 │            ▼                          │                      │
-│  scheduler kthread (per-ring):           │                      │
+│ Scheduler kthread (per-ring): │ │
 │  ┌────────────────────────────────────────────────────────┐  │
 │  │ while (true) {                                         │  │
-│  │   job = from最高priority非空queue取 job;                    │  │
-│  │   if (available Ring 空between && dependency fence already signal) {      │  │
+│ │ job = take job from the highest priority non-empty queue; │ │
+│ │ if (available Ring space && dependent fence signaled) { │ │
 │  │     fence = job->sched->ops->run_job(job);             │  │
 │  │     /* → amdgpu_job_run():                             │  │
 │  │      *   amdgpu_ib_schedule()                          │  │
-│  │      *   → 写 INDIRECT_BUFFER PM4 to Ring              │  │
-│  │      *   → 写 FENCE PM4 to Ring                        │  │
+│ │ * → Write INDIRECT_BUFFER PM4 to Ring │ │
+│ │ * → Write FENCE PM4 to Ring │ │
 │  │      *   → amdgpu_ring_commit() + Doorbell             │  │
 │  │      */                                                │  │
-│  │     startup timeout 定时器 (default 10s);                    │  │
+│ │ Start timeout timer (default 10s); │ │
 │  │   }                                                    │  │
 │  │ }                                                      │  │
 │  └────────────────────────────────────────────────────────┘  │
 │                                                              │
-│  Timeout detect:                                               │
+│ Timeout detection: │
 │  ┌────────────────────────────────────────────────────────┐  │
-│  │ 定时器to期 && fence not yet signal?                         │  │
+│ │ timer expired && fence not signal? │ │
 │  │   → drm_sched_job_timedout()                          │  │
 │  │     → amdgpu_job_timedout()                           │  │
-│  │       ├─ check fence whether刚complete (avoid误判)             │  │
+│ │ ├─ Check whether the fence has just been completed (to avoid misjudgment) │ │
 │  │       ├─ DRM_ERROR("ring xxx timeout")                │  │
-│  │       ├─ dump GPU register (GRBM_STATUS, CP_*)         │  │
+│ │ ├─ dump GPU registers (GRBM_STATUS, CP_*) │ │
 │  │       └─ amdgpu_device_gpu_recover()                  │  │
-│  │           └─ GPU 复位 → re-initialization → 重commit/failure      │  │
+│ │ └─ GPU reset → Reinitialize → Resubmit/Fail │ │
 │  └────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────┘
          │
          ▼ Ring Buffer (amdgpu_ring_commit → Doorbell)
 ┌──────────────────────────────────────────────────────────────┐
 │  GPU Command Processor (CP)                                  │
-│  · read Ring Buffer in INDIRECT_BUFFER PM4               │
-│  · 跟随pointerto IB addressexecutecommand                               │
-│  · completeafter写 fence 序列号 → triggerinterrupt → signal fence         │
+│ · Read INDIRECT_BUFFER PM4 in Ring Buffer │
+│ · Follow the pointer to the IB address to execute the command │
+│ · After completion, write the fence serial number → trigger interrupt → signal fence │
 └──────────────────────────────────────────────────────────────┘`,
-            caption: 'DRM GPU Scheduler completework流: job fromuser spacecommit, 经过schedulerpriorityqueue排序, 由schedulerthreadcall run_job write Ring Buffer, final由 GPU CP execute. timeout mechanismis GPU hang detectcore. ',
+            caption: 'The complete workflow of DRM GPU Scheduler: the job is submitted from user space, sorted by the scheduler\'s priority queue, written to the Ring Buffer by the scheduler thread calling run_job, and finally executed by the GPU CP. The timeout mechanism is the core of GPU hang detection.',
           },
           codeWalk: {
-            title: 'amdgpu_cs_submit → scheduler → amdgpu_job_run completepath',
+            title: 'amdgpu_cs_submit → scheduler → amdgpu_job_run full path',
             file: 'drivers/gpu/drm/amd/amdgpu/amdgpu_job.c',
             language: 'c',
-            code: `/* amdgpu_cs_submit() — create job 并committoscheduler
- * from amdgpu_cs_ioctl() finallystagecall
+            code: `/*amdgpu_cs_submit() — Create a job and submit it to the scheduler
+ *Called from the final stage of amdgpu_cs_ioctl()
  */
 static int amdgpu_cs_submit(struct amdgpu_cs_parser *p,
                              union drm_amdgpu_cs *cs)
 {
     struct amdgpu_job *job = p->job;
 
-    /* step 1: initializationscheduler job
-     * 关联 job tocommitprocess drm_sched_entity */
+    /*Step 1: Initialize the scheduler job
+     *Associate the job to the drm_sched_entity of the submitting process */
     r = drm_sched_job_init(&job->base,
-                           entity,      /* commitprocessscheduling实体 */
-                           owner);      /* processidentifier */
+                           entity,      /*Submit the scheduling entity of the process*/
+                           owner);      /*Process ID*/
 
-    /* step 2: 武装 job — allocation fence, record时between戳
-     * 此after job canbyother job dependency */
+    /*Step 2: Arm the job — allocate fence, record timestamp
+     *Thereafter the job can be relied upon by other jobs */
     drm_sched_job_arm(&job->base);
 
-    /* step 3: 推入scheduling实体queue
-     * schedulerthreadwillfromqueuein取出 job execute */
+    /*Step 3: Push the scheduling entity to the queue
+     *The scheduler thread will take out the job from the queue and execute it */
     drm_sched_entity_push_job(&job->base);
 
-    /* cs->out.handle return给user space, used for查询completestate */
+    /*cs->out.handle is returned to user space for querying completion status */
     cs->out.handle = amdgpu_ctx_add_fence(ctx, entity,
                                            &job->base.s_fence->finished);
     return 0;
 }
 
-/* amdgpu_job_run() — scheduler run_job callback
- * inscheduler kthread contextinexecute
- * 这is job from"queued"变as"GPU execute"key转折点
+/*amdgpu_job_run() — scheduler's run_job callback
+ *Execute in scheduler kthread context
+ *This is the key turning point for the job to change from "queuing" to "GPU execution"
  */
 static struct dma_fence *amdgpu_job_run(struct drm_sched_job *sched_job)
 {
@@ -1758,18 +1758,18 @@ static struct dma_fence *amdgpu_job_run(struct drm_sched_job *sched_job)
     struct dma_fence *fence = NULL;
     int r;
 
-    /* will IB write Ring Buffer
-     * amdgpu_ib_schedule internalprocess:
-     *   1. amdgpu_ring_alloc() — in Ring inallocation空between
-     *   2. write INDIRECT_BUFFER PM4 包 (指向 IB)
-     *   3. amdgpu_fence_emit() — in Ring ininsert fence command
-     *   4. amdgpu_ring_commit() — update WPTR + Doorbell
+    /*Write IB to Ring Buffer
+     *Internal process of amdgpu_ib_schedule:
+     *1. amdgpu_ring_alloc() — allocate space in Ring
+     *2. Write INDIRECT_BUFFER PM4 packet (pointing to IB)
+     *3. amdgpu_fence_emit() — Insert fence command in Ring
+     *4. amdgpu_ring_commit() — Update WPTR + Doorbell
      */
     r = amdgpu_ib_schedule(ring,
-                           job->num_ibs,    /* IB count */
-                           job->ibs,        /* IB 数组 */
+                           job->num_ibs,    /*IB quantity*/
+                           job->ibs,        /*IB array*/
                            job,
-                           &fence);         /* return fence */
+                           &fence);         /*returned fence*/
     if (r) {
         DRM_ERROR("Error scheduling IBs (%d)\\n", r);
         dma_fence_set_error(&job->base.s_fence->finished, r);
@@ -1779,8 +1779,8 @@ static struct dma_fence *amdgpu_job_run(struct drm_sched_job *sched_job)
     return fence;
 }
 
-/* amdgpu_job_timedout() — timeoutcallback
- * when job  fence intimeout时between内not yet signal 时call
+/*amdgpu_job_timedout() — timeout callback
+ *Called when the job's fence does not signal within the timeout period
  */
 static enum drm_gpu_sched_stat
 amdgpu_job_timedout(struct drm_sched_job *s_job)
@@ -1789,20 +1789,20 @@ amdgpu_job_timedout(struct drm_sched_job *s_job)
     struct amdgpu_ring *ring = to_amdgpu_ring(s_job->sched);
     struct amdgpu_device *adev = ring->adev;
 
-    /* check fence whether刚刚complete(竞争conditionavoid误判)*/
+    /*Check whether the fence has just been completed (race conditions avoid misjudgment) */
     if (amdgpu_ring_soft_recovery(ring, s_job->s_fence->parent))
         return DRM_GPU_SCHED_STAT_NOMINAL;
 
-    /* confirmis真正 hang — recorderrorinformation */
+    /*Confirm that it is a real hang - record error information */
     DRM_ERROR("ring %s timeout, signaled seq=%u, emitted seq=%u\\n",
               ring->sched.name,
               atomic_read(&ring->fence_drv.last_seq),
               ring->fence_drv.sync_seq);
 
-    /* dump GPU registerstateused fordebugging */
+    /*dump GPU register status for debugging */
     amdgpu_debugfs_gpu_recover(adev);
 
-    /* trigger GPU 复位 */
+    /*Trigger GPU reset */
     r = amdgpu_device_gpu_recover(adev, job, false);
     if (r)
         DRM_ERROR("GPU Recovery Failed: %d\\n", r);
@@ -1810,76 +1810,76 @@ amdgpu_job_timedout(struct drm_sched_job *s_job)
     return DRM_GPU_SCHED_STAT_NOMINAL;
 }`,
             annotations: [
-              'drm_sched_job_init will job and entity 关联 — entity 代表acommitprocess, used for公平scheduling',
-              'drm_sched_job_arm allocation scheduled/finished two fence: scheduled in run_job bycall时 signal, finished in GPU complete时 signal',
-              'drm_sched_entity_push_job will job 放入 entity queue — schedulerthread按priorityfromqueue取 job',
-              'amdgpu_job_run inscheduler kthread inrun — notinuserprocesscontext, notcanaccessuser spacememory',
-              'amdgpu_ib_schedule is Ring Buffer writecore: allocation空between → 写 PM4 → emit fence → commit',
-              'amdgpu_ring_soft_recovery try"软recover": if CP 只is卡in某条commandon, send preempt 信号',
+              'drm_sched_job_init associates job with entity - entity represents a submitting process for fair scheduling',
+              'drm_sched_job_arm allocates scheduled/finished two fences: scheduled signal when run_job is called, finished signal when GPU completes',
+              'drm_sched_entity_push_job puts the job into the entity queue - the scheduler thread takes the job from the queue according to priority',
+              'amdgpu_job_run runs in the scheduler kthread - not in the user process context and cannot access user space memory',
+              'amdgpu_ib_schedule is the core of Ring Buffer writing: allocate space → write PM4 → emit fence → commit',
+              'amdgpu_ring_soft_recovery attempts "soft recovery": if the CP is just stuck on a certain command, send a preempt signal',
             ],
-            explanation: '这三个function构成 amdgpu command submissioncorepath: submit responsible for job createand入队, run responsible foractual Ring Buffer write, timedout responsible for异常handle. understandthispathafter, 你cananswer"a GPU commandfromcommittoexecute经历whichstage" — 这is AMD interviewin高频issue. ',
+            explanation: 'These three functions form the core path for amdgpu command submission: submit is responsible for job creation and enqueueing, run is responsible for actual Ring Buffer writing, and timedout is responsible for exception handling. After understanding this path, you can answer "What stages does a GPU command go through from submission to execution" - this is a high-frequency question in AMD interviews.',
           },
           miniLab: {
-            title: 'observe DRM GPU Scheduler runstate',
-            objective: 'through debugfs and ftrace observeschedulerqueue深度, job execute时betweenand timeout configuration. ',
-            setup: `# ensure debugfs already挂载
+            title: 'Observe the running status of DRM GPU Scheduler',
+            objective: 'Observe the scheduler\'s queue depth, job execution time, and timeout configuration through debugfs and ftrace.',
+            setup: `#Make sure debugfs is mounted
 sudo mount -t debugfs none /sys/kernel/debug 2>/dev/null
-# 准备 GPU work负载
+#Prepare GPU workloads
 sudo apt install -y mesa-utils vulkan-tools`,
             steps: [
-              'viewschedulerstate: sudo cat /sys/kernel/debug/dri/0/amdgpu_gpu_recover 2>/dev/null',
-              'vieweach Ring  fence information: sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info',
-              'set ftrace tracingscheduler: echo amdgpu_job_run > /sys/kernel/tracing/set_ftrace_filter',
-              'enabletracing并run GPU 负载: echo function_graph > /sys/kernel/tracing/current_tracer && echo 1 > /sys/kernel/tracing/tracing_on && glxgears & sleep 3 && kill %1',
-              'stoptracing并viewresult: echo 0 > /sys/kernel/tracing/tracing_on && cat /sys/kernel/tracing/trace | head -40',
-              'viewschedulertimeoutconfiguration: dmesg | grep -i "timeout\\|scheduler" | head -10',
+              'Check the scheduler status: sudo cat /sys/kernel/debug/dri/0/amdgpu_gpu_recover 2>/dev/null',
+              'View the fence information of each Ring: sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info',
+              'Set the ftrace tracing scheduler: echo amdgpu_job_run > /sys/kernel/tracing/set_ftrace_filter',
+              'Enable tracing and run GPU load: echo function_graph > /sys/kernel/tracing/current_tracer && echo 1 > /sys/kernel/tracing/tracing_on && glxgears & sleep 3 && kill %1',
+              'Stop tracing and view the results: echo 0 > /sys/kernel/tracing/tracing_on && cat /sys/kernel/tracing/trace | head -40',
+              'View scheduler timeout configuration: dmesg | grep -i "timeout\\|scheduler" | head -10',
             ],
             expectedOutput: `$ sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info
 --- ring gfx_0.0.0 ---
 Last signaled fence          0x00008a31
 Last emitted                 0x00008a34
-  ← 3 个 job 正inexecute/queued
+  ←3 jobs are executing/queued
 
 --- ring sdma0 ---
 Last signaled fence          0x00000456
 Last emitted                 0x00000456
-  ← SDMA idle
+  ←SDMA idle
 
 $ cat /sys/kernel/tracing/trace | head -10
 # tracer: function_graph
  sched-gfx_0-789  =>  amdgpu_job_run() {
  sched-gfx_0-789      amdgpu_ib_schedule() { ... }
- sched-gfx_0-789  } /* 5.234 us */   ← 单次 job scheduling约 5us`,
-            hint: 'ftrace in sched-gfx_0 is GFX Ring 0 scheduler kthread. each timecall amdgpu_job_run correspondingoncecommandfromqueueto Ring commit. if "Last signaled" and "Last emitted" 差值很大且not变, indicate GPU hang. ',
+ sched-gfx_0-789  } /* 5.234 us */   ←Single job scheduling takes about 5us`,
+            hint: 'sched-gfx_0 in ftrace is the scheduler kthread of GFX Ring 0. Each call to amdgpu_job_run corresponds to a command submission from the queue to the Ring. If the difference between "Last signaled" and "Last emitted" is large and unchanged, it means the GPU hangs.',
           },
           debugExercise: {
-            title: 'understand GPU hang timeout: schedulertimeout vs hardware hang',
+            title: 'Understanding GPU hang timeout: scheduler timeout vs hardware hang',
             language: 'text',
-            description: 'userreport GPU 频繁 "timeout" 但systemnotcrash. dmesg display周期性 ring timeout information. need判断is真正hardware hang stillisscheduler误判. ',
-            question: 'analyzebelow两组 timeout log, 判断哪个is真正 GPU hang, 哪个isscheduler误判. explainyour推理process. ',
-            buggyCode: `/* scenario A */
+            description: 'Users report frequent GPU "timeouts" but no system crashes. dmesg displays periodic ring timeout messages. It is necessary to determine whether it is a real hardware hang or a misjudgment by the scheduler.',
+            question: 'Analyze the following two sets of timeout logs to determine which one is a real GPU hang and which one is a misjudgment by the scheduler. Explain your reasoning.',
+            buggyCode: `/*Scene A */
 [  100.123] ring gfx_0.0.0 timeout, signaled seq=5000, emitted seq=5001
 [  100.123] GRBM_STATUS=0x00000000 (GFX IDLE!)
 [  100.124] CP_RB_RPTR=0x0000A000
 [  100.124] CP_RB_WPTR=0x0000A000  (RPTR == WPTR)
 [  100.125] GPU reset succeeded
 
-/* scenario B */
+/*Scene B */
 [  200.456] ring gfx_0.0.0 timeout, signaled seq=8000, emitted seq=8004
 [  200.456] GRBM_STATUS=0x00030300 (GUI_ACTIVE | GFX_BUSY | CP_BUSY)
 [  200.457] CP_RB_RPTR=0x0000F100
-[  200.457] CP_RB_WPTR=0x0000F200  (RPTR < WPTR, Ring hasnot yethandlecommand)
+[200.457] CP_RB_WPTR=0x0000F200 (RPTR < WPTR, Ring has unprocessed command)
 [  200.458] SRC_ID: 146, VMID: 3, addr: 0x0000DEAD0000
 [  200.460] GPU reset succeeded`,
-            hint: 'comparetwoscenario GRBM_STATUS(GPU whether繁忙)and RPTR/WPTR relationship(Ring whetherhasnot yethandlecommand). GFX_IDLE + RPTR==WPTR 意味着what? ',
-            answer: 'scenario A isscheduler误判(false timeout), scenario B is真正 GPU hang. analyze: scenario A — GRBM_STATUS=0 represent GFX enginecompletelyidle(no任何活动), CP_RB_RPTR == CP_RB_WPTR indicate Ring Buffer as空(GPU alreadyhandleallcommand), signaled=5000, emitted=5001 indicate只差 1 个 fence not yet signal. 组合起: GPU actualonalreadycompleteexecute(Ring as空, GFX idle), 但 fence 值nocorrectupdate — mayis fence 写回interrupt丢失(interrupt coalescing or IH ring overflow)or writeback memory mappingissue. fix方向: check IH (Interrupt Handler) ring whetheroverflow, or fence writeback buffer  GPU→CPU coherence. scenario B — GRBM_STATUS display GUI_ACTIVE, GFX_BUSY, CP_BUSY(GPU 正inexecute但卡住), RPTR < WPTR(Ring inhasnot yethandlecommand), signaled=8000, emitted=8004(4 个 job 积压), SRC_ID:146 is VMC page fault, addr=0x0000DEAD0000 is明显 poison address. 这istypical GPU hang: GPU tryaccessinvalidvirtual addresscause VMC fault, GFX engine因 fault 而停滞. 根因isuser space use-after-free(release BO 但仍in shader in引用其address). ',
+            hint: 'Compare the GRBM_STATUS (whether the GPU is busy) and the RPTR/WPTR relationship (whether the Ring has unprocessed commands) of the two scenarios. What does GFX_IDLE + RPTR==WPTR mean?',
+            answer: 'Scenario A is a scheduler misjudgment (false timeout), and scenario B is a real GPU hang. Analysis: Scenario A - GRBM_STATUS=0 means that the GFX engine is completely idle (no activity), CP_RB_RPTR == CP_RB_WPTR means that the Ring Buffer is empty (GPU has processed all commands), signaled=5000, emitted=5001 means that there is only 1 fence missing. Putting it all together: the GPU has actually completed execution (Ring is empty, GFX is idle), but the fence value is not updating correctly - possibly a missing fence writeback interrupt (interrupt coalescing or IH ring overflow) or a writeback memory map issue. Repair direction: Check whether the IH (Interrupt Handler) ring overflows, or the GPU→CPU consistency of the fence writeback buffer. Scenario B - GRBM_STATUS shows GUI_ACTIVE, GFX_BUSY, CP_BUSY (GPU is executing but stuck), RPTR < WPTR (there are unprocessed commands in Ring), signaled=8000, emitted=8004 (4 jobs backlog), SRC_ID:146 is VMC page fault, addr=0x0000DEAD0000 is obvious poison address. This is a typical GPU hang: the GPU tries to access an invalid virtual address causing a VMC fault, and the GFX engine stalls on the fault. The root cause is userspace use-after-free (the BO is released but its address is still referenced in the shader).',
           },
           interviewQ: {
             question: 'Explain the DRM GPU scheduler\'s role in amdgpu command submission. How does it handle job scheduling and GPU hang detection?',
             difficulty: 'hard',
-            hint: 'describeschedulerarchitecture(per-ring 实例, priorityqueue, schedulerthread), job lifecycle, and timeout→reset complete链条. ',
-            answer: 'DRM GPU Scheduler in amdgpu command submissionin扮演三个core角色: (1)多process公平scheduling — eachcommitprocess(drm_sched_entity)hasself job queue, scheduler按照priority(KERNEL > HIGH > NORMAL > LOW)and公平性原则frommultiple entity inselect job execute. each Ring Buffer hasindependentscheduler实例and kthread, 使得 GFX, SDMA, VCN scheduling互not干扰. (2)Job lifecyclemanagement — completepath: usercommit ioctl → amdgpu_cs_submit() incall drm_sched_job_init()/arm()/push() will job 入队 → scheduler kthread select job → call amdgpu_job_run() callback → amdgpu_ib_schedule() will INDIRECT_BUFFER PM4 包write Ring → amdgpu_ring_commit() through Doorbell notify GPU CP → GPU executecompleteafterwrite fence 序列号 → interrupttrigger fence signal → schedulermark job complete. (3)GPU hang detect — scheduleraseachrunin job startup定时器(amdgpu GFX ring default 10 秒), if定时器to期而 fence not yet signal, call amdgpu_job_timedout(): firsttry soft recovery(send preempt 信号), iffailure则 dump GPU register(GRBM_STATUS, CP_RB_RPTR/WPTR, GPU fault information), finallycall amdgpu_device_gpu_recover() execute GPU mode 1/2 reset — savestate, 复位 GPU hardware, re-initializationall IP Block, 重commitnot yetcomplete job ormarkasfailurereturn -ECANCELED 给user space. ',
-            amdContext: 'DRM GPU Scheduler 最初由 AMD engineer(Christian König)development. interviewindemonstrate你understandschedulerhow连接"user spacecommit"and"GPU execute", and timeout mechanismhowprotectsystem免受 GPU hang impact, is体现深度understandkey. ',
+            hint: 'Describe the scheduler architecture (per-ring instances, priority queues, scheduler threads), job life cycle, and the complete chain of timeout→reset.',
+            answer: 'DRM GPU Scheduler plays three core roles in amdgpu command submission: (1) Multi-process fair scheduling - each submission process (drm_sched_entity) has its own job queue, and the scheduler selects jobs from multiple entities for execution according to priority (KERNEL > HIGH > NORMAL > LOW) and fairness principles. Each Ring Buffer has an independent scheduler instance and kthread, so that the scheduling of GFX, SDMA, and VCN does not interfere with each other. (2) Job life cycle management - full path: User submits ioctl → call drm_sched_job_init()/arm()/push() in amdgpu_cs_submit() to enqueue job → scheduler kthread selects job → call amdgpu_job_run() callback → amdgpu_ib_schedule() writes INDIRECT_BUFFER PM4 package to Ring → amdgpu_ring_commit() notifies the GPU CP through Doorbell → writes the fence sequence number after the GPU execution is completed → interrupts the fence signal → the scheduler marks the job completion. (3) GPU hang detection - the scheduler starts a timer for each running job (amdgpu GFX ring defaults to 10 seconds). If the timer expires and the fence does not signal, call amdgpu_job_timedout(): first try soft recovery (send preempt signal), if it fails, dump GPU registers (GRBM_STATUS, CP_RB_RPTR/WPTR, GPU fault information), and finally call amdgpu_device_gpu_recover() performs GPU mode 1/2 reset - saves state, resets GPU hardware, reinitializes all IP Blocks, resubmits unfinished jobs or marks failure and returns -ECANCELED to user space.',
+            amdContext: 'DRM GPU Scheduler was originally developed by AMD engineer (Christian König). Showing in the interview that you understand how the scheduler connects "user space submission" and "GPU execution", and how the timeout mechanism protects the system from GPU hangs, is the key to demonstrating in-depth understanding.',
           },
         },
 
@@ -1887,32 +1887,32 @@ $ cat /sys/kernel/tracing/trace | head -10
         {
           id: '5-4-3',
           number: '5.4.3',
-          title: 'GPU virtual memorysubsystem: amdgpu_vm 详解',
+          title: 'GPU virtual memory subsystem: amdgpu_vm detailed explanation',
           titleEn: 'GPU Virtual Memory Subsystem: amdgpu_vm In-Depth',
           duration: 20,
           difficulty: 'expert',
           tags: ['GPUVM', 'amdgpu_vm', 'page-table', 'PDB', 'PTE', 'VM-fault', 'VMID'],
           concept: {
-            summary: 'GPUVM(GPU Virtual Memory)is amdgpu virtual memorysubsystem, aseachprocessprovideindependent GPU virtualaddress space. 它use多级page table(PDB2→PDB1→PDB0→PD→PT→PTE, 最多 6 级, similar x86 但as GPU 定制)will GPU virtual address翻译as VRAM/GTT physical address. amdgpu_vm_bo_update() is最corefunction — whena Buffer Object by绑定to VM 时, 它create/update GPU page table条目. ',
+            summary: 'GPUVM (GPU Virtual Memory) is the virtual memory subsystem of amdgpu, which provides an independent GPU virtual address space for each process. It uses multi-level page tables (PDB2→PDB1→PDB0→PD→PT→PTE, up to 6 levels, like x86 but customized for GPU) to translate GPU virtual addresses into VRAM/GTT physical addresses. amdgpu_vm_bo_update() is the core function - when a Buffer Object is bound to the VM, it creates/updates the GPU page table entry.',
             explanation: [
-              'GPUVM page tablelayer次structure: AMD GPU use最多 6 级page table翻译virtual address, from高位to低位as: PDB2(Page Directory Base 2)→ PDB1 → PDB0 → PD(Page Directory)→ PT(Page Table)→ PTE(Page Table Entry). 每级索引usevirtual addressindifferent位域 — for example 48 位virtualaddress spacein, PDB2 use VA[47:39](9 位, 512 个条目), PDB1 use VA[38:30], PDB0 use VA[29:21], PT use VA[20:12], PTE instoragephysical页帧号. 这and x86 CPU  4/5 级page table概念相似, 但 GPUVM page tablestoragein VRAM in(rather thansystem memory), 由 GPU  UTCL2(Unified Translation Cache Level 2)hardwaretraverse. ',
-              'struct amdgpu_vm 代表aprocess GPU virtualaddress space. each打开 /dev/dri/renderD128 processallwillcreatea amdgpu_vm 实例. core字段include: root — 根页directory(PDB2) Buffer Object, isentirepage table树entry point; va — red-black tree, recordallalreadymappingvirtual address区between(VA mapping); evicted — byevictionpage table BO list(when VRAM 压力大时page table本身alsomaybyevictionto GTT); last_update — 指向最近oncepage tableupdate fence, used for跟踪page tableupdate GPU 端completestate. page table BO managementis GPUVM 一大challenge — page table自身is also GPU memoryin Buffer Object, needthrough TTM management, 且in BO migration时needsynchronizationupdate. ',
-              'amdgpu_vm_bo_update() is GPUVM 最corefunction — whena BO bymappingto某个process GPU virtualaddress space时, orwhen BO in VRAM and GTT 之betweenmigrationafterneedupdatemapping时, allwillcallthisfunction. 它workprocess: (1)traverse BO 关联all VA mapping(a BO maymappingtomultiplevirtual address); (2)对each mapping, call amdgpu_vm_update_ptes() updatecorrespondingpage table条目 — computeneedmodifywhichlevelpage table, will PTE physical address字段updateas BO 新location; (3)page tableupdatethrough SDMA Ring commit(SDMA 比 GFX 更高效地executememory填充operate), return fence used for跟踪updatecomplete. ',
-              'GPUVM fault(VM fault)handleisdebugging GPU issuekeyscenario. when GPU accessanot yetmappingorinvalidvirtual address时, UTCL2(GPU  TLB/page tabletraversehardware)willgeneratea page fault interrupt. amdgpu interrupt handlingfunctionreceivetothisinterruptafter: (1)from IH ring inread fault information — include fault address(VA), VMID(identifier哪个processaddress space), is读stillis写, fault 源(GFX/SDMA/VCN 等); (2)in dmesg inrecord "[drm] VM fault (src_id:146, ring:0, vmid:3, addr:0xDEAD0000)"; (3)对user spaceprocess, usuallycause该process GPU contextbymarkashaserror. common VM fault cause: use-after-free(release BO after仍in shader in引用), out of boundsaccess(shader access超出 BO rangeaddress), page tablenot yetupdate(BO migrationafterpage tablesynchronizationfailure). ',
-              'VM address space布局: GPUVM virtualaddress spaceusuallyas 48 位(256 TB), 分asseveralregion: 低addressregionallocation给user space BO mapping(through amdgpu_vm_bo_map allocation VA), 高addressregionreserve给kernel(如 kernel BO, page table自身). VA allocationuse drm_mm manager(between隔树/区betweenallocation), amdgpu_vm_bo_map() in VM  VA 空betweeninfind一block足够大idle区between, createmappingrecord(struct amdgpu_bo_va_mapping), 但此时stillnot写page table — page tableactualupdatelatencyto amdgpu_vm_bo_update() inexecute(incommand submissionbeforeensuremappingvalid). 这种"latencymapping"design减少not必topage tableupdate. ',
+              'GPUVM page table hierarchy: AMD GPU uses up to 6 levels of page tables to translate virtual addresses, from high to low: PDB2 (Page Directory Base 2) → PDB1 → PDB0 → PD (Page Directory) → PT (Page Table) → PTE (Page Table Entry). Each level of the index uses a different bit field in the virtual address - for example, in a 48-bit virtual address space, PDB2 uses VA[47:39] (9 bits, 512 entries), PDB1 uses VA[38:30], PDB0 uses VA[29:21], PT uses VA[20:12], and the physical page frame number is stored in the PTE. This is similar to the x86 CPU\'s level 4/5 page table concept, but the GPUVM\'s page table is stored in VRAM (rather than system memory) and traversed by the GPU\'s UTCL2 (Unified Translation Cache Level 2) hardware.',
+              'struct amdgpu_vm represents the GPU virtual address space of a process. Each process that opens /dev/dri/renderD128 creates an amdgpu_vm instance. The core fields include: root - the Buffer Object of the root page directory (PDB2), which is the entrance to the entire page table tree; va - the red-black tree, which records all mapped virtual address ranges (VA mapping); evicted - the evicted page table BO list (the page table itself may also be evicted to GTT when the VRAM pressure is high); last_update - the fence pointing to the latest page table update, used to track the GPU-side completion status of the page table update. Page table BO management is a major challenge for GPUVM - the page table itself is also a Buffer Object in GPU memory, which needs to be managed through TTM and needs to be updated synchronously during BO migration.',
+              'amdgpu_vm_bo_update() is the core function of GPUVM - this function is called when a BO is mapped to the GPU virtual address space of a process, or when the mapping needs to be updated after the BO is migrated between VRAM and GTT. Its workflow: (1) Traverse all VA mappings associated with the BO (a BO may be mapped to multiple virtual addresses); (2) For each mapping, call amdgpu_vm_update_ptes() to update the corresponding page table entries - calculate which levels of page tables need to be modified, and update the physical address field of the PTE to the new location of the BO; (3) Page table updates are submitted through the SDMA Ring (SDMA is smaller than GFX perform memory filling operations more efficiently), the returned fence is used to track update completion.',
+              'GPUVM fault (VM fault) handling is a key scenario for debugging GPU issues. When the GPU accesses an unmapped or invalid virtual address, UTCL2 (the GPU\'s TLB/page table walk hardware) generates a page fault interrupt. After receiving this interrupt, amdgpu\'s interrupt processing function: (1) Read fault information from the IH ring - including fault address (VA), VMID (address space that identifies which process), whether to read or write, fault source (GFX/SDMA/VCN, etc.); (2) Record "[drm] VM fault (src_id:146, ring:0, vmid:3, addr:0xDEAD0000)"; (3) For user space processes, this usually causes the GPU context of the process to be marked as having an error. Common VM fault causes: use-after-free (the BO is still referenced in the shader after releasing it), out-of-bounds access (the shader accesses an address beyond the BO range), the page table is not updated (the page table synchronization fails after BO migration).',
+              'VM address space layout: The virtual address space of GPUVM is usually 48 bits (256 TB) and is divided into several regions: the low address region is allocated to the user space BO map (VA is allocated through amdgpu_vm_bo_map), and the high address region is reserved for the kernel (such as kernel BO, page table itself). VA allocation uses the drm_mm manager (interval tree/interval allocation), amdgpu_vm_bo_map() finds a large enough free interval in the VM\'s VA space, creates a mapping record (struct amdgpu_bo_va_mapping), but does not write the page table at this time - the actual update of the page table is delayed to amdgpu_vm_bo_update() (to ensure that the mapping is valid before the command is submitted). This "lazy mapping" design reduces unnecessary page table updates.',
             ],
             keyPoints: [
-              'GPUVM 多级page table: PDB2→PDB1→PDB0→PD→PT→PTE, 最多 6 级, storagein VRAM in',
-              'struct amdgpu_vm: per-process GPU address space, contain根页directory BO and VA mappingred-black tree',
-              'amdgpu_vm_bo_update(): corefunction, BO 绑定/migration时update GPU page table条目',
-              'VM fault: GPU accessinvalid VA → UTCL2 generateinterrupt → dmesg record fault information(VMID + addr)',
-              'page tableupdatethrough SDMA Ring commit, page table BO 自身also由 TTM management(maybyevictionto GTT)',
-              'VA 空between布局: 48 位(256TB), user区in低address, kernelreservein高address',
+              'GPUVM multi-level page table: PDB2→PDB1→PDB0→PD→PT→PTE, up to 6 levels, stored in VRAM',
+              'struct amdgpu_vm: per-process GPU address space, including root page directory BO and VA mapping red-black tree',
+              'amdgpu_vm_bo_update(): core function, updates GPU page table entries during BO binding/migration',
+              'VM fault: GPU access is invalid VA → UTCL2 generates an interrupt → dmesg records fault information (VMID + addr)',
+              'Page table updates are committed through the SDMA Ring, and the page table BO itself is also managed by TTM (may be evicted to GTT)',
+              'VA space layout: 48 bits (256TB), user area is at low address, kernel is reserved at high address',
             ],
           },
           diagram: {
-            title: 'GPUVM 多级page tablestructureandaddress translation',
-            content: `GPUVM 多级page tableaddress translation — AMD GPU virtual memory
+            title: 'GPUVM multi-level page table structure and address translation',
+            content: `GPUVM multi-level page table address translation - AMD GPU virtual memory
 
 GPU virtual address (48 bit):
 ┌──────┬──────┬──────┬──────┬──────┬──────┐
@@ -1923,9 +1923,9 @@ GPU virtual address (48 bit):
    │      │      │      │      │
    ▼      ▼      ▼      ▼      ▼
 ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐
-│PDB2  │→│PDB1  │→│PDB0  │→│ PD   │→│ PT   │→ physical页
-│(根)  │  │      │  │      │  │      │  │      │  (VRAM/GTT)
-│512项 │  │512项 │  │512项 │  │8项   │  │64项  │
+│PDB2 │→│PDB1 │→│PDB0 │→│ PD │→│ PT │→ Physical page
+│(root) │ │ │ │ │ │ │ │ │ (VRAM/GTT)
+│512 items │ │512 items │ │512 items │ │8 items │ │64 items │
 │      │  │      │  │      │  │      │  │      │
 │[idx] │  │[idx] │  │[idx] │  │[idx] │  │[idx] │
 │  ↓   │  │  ↓   │  │  ↓   │  │  ↓   │  │  ↓   │
@@ -1934,57 +1934,57 @@ GPU virtual address (48 bit):
 
 PTE (Page Table Entry) format:
 ┌──────────────────────────────────────────────────┐
-│ [63:57] reserve                                      │
-│ [56:12] physical页帧号 (PFN) — VRAM or GTT physical address  │
-│ [11]    P (Present) — 页whethervalid                  │
+│ [63:57] Reserved │
+│ [56:12] Physical Page Frame Number (PFN) — VRAM or GTT physical address │
+│ [11] P (Present) — Whether the page is valid │
 │ [10]    S (System) — 0=VRAM, 1=System Memory(GTT) │
-│ [9:7]   MTYPE — memorytype (Cached/Uncached 等)     │
+│ [9:7] MTYPE — Memory type (Cached/Uncached, etc.) │
 │ [6]     W (Writeable)                             │
 │ [5]     R (Readable)                              │
 │ [4]     X (Executable)                            │
-│ [3:0]   Fragment — 大页support (similar CPU hugepage)    │
+│ [3:0] Fragment — Hugepage support (similar to CPU hugepage) │
 └──────────────────────────────────────────────────┘
 
-struct amdgpu_vm (per-process GPU virtualaddress space):
+struct amdgpu_vm (per-process GPU virtual address space):
 ┌──────────────────────────────────────────────────┐
-│  root (BO)           ← PDB2 根页directory Buffer Object│
-│  va (red-black tree)         ← all VA mapping 索引      │
-│  evicted (linked list)      ← byevictionto GTT page table BO     │
-│  invalidated (linked list)  ← needupdatemapping              │
-│  last_update (fence) ← 最近page tableupdatecomplete跟踪      │
+│  root (BO)           ←PDB2 root page directory Buffer Object│
+│  va (red-black tree) ←Index of all VA mappings │
+│  evicted (linked list) ←Page-table BOs evicted to GTT │
+│  invalidated (linked list) ←Mappings that need updates │
+│  last_update (fence) ←Completion tracking of recent page table updates │
 │  pasid               ← Process Address Space ID    │
 └──────────────────────────────────────────────────┘
          │
-         ▼ VM address space布局 (48-bit, 256 TB)
+▼ VM address space layout (48-bit, 256 TB)
 ┌──────────────────────────────────────────────────┐
-│ 0x000000000000 ──────────────────── user space      │
-│   BO mappingregion (amdgpu_vm_bo_map allocation)            │
-│   shader code, vertex buffer, texture,            │
-│   framebuffer 等user BO mappingto这inside               │
+│ 0x000000000000 ───────────────────── User Space │
+│ BO mapping area (amdgpu_vm_bo_map allocation) │
+│ shader code, vertex buffer, texture, │
+│ framebuffer and other user BOs are mapped here │
 │                                                   │
-│ ~~~~~~~~~~~~~~~~~~~~~~~~ (巨大idle空between) ~~~~~~~~│
+│ ~~~~~~~~~~~~~~~~~~~~~~~~ (huge free space) ~~~~~~~~│
 │                                                   │
-│ 0xFFFFF0000000 ──────────────────── kernelreserve      │
-│   kernel BO, page table自身, SVM reserveregion              │
-│ 0xFFFFFFFFFFFF ──────────────────── address space顶部  │
+│ 0xFFFFF0000000 ──────────────────── Kernel reserved │
+│ Kernel BO, page table itself, SVM reserved area │
+│ 0xFFFFFFFFFFFF ─────────────────── Top of address space │
 └──────────────────────────────────────────────────┘
 
-VM fault handleprocess:
-GPU accessinvalid VA → UTCL2 TLB miss → page tabletraversefailure
-  → VMC generate page fault interrupt (SRC_ID: 146)
-    → IH ring record: {vmid, addr, rw, src}
+VM fault handling process:
+GPU access invalid VA → UTCL2 TLB miss → page table walk failed
+→ VMC generates page fault interrupt (SRC_ID: 146)
+→ IH ring record: {vmid, addr, rw, src}
       → amdgpu_vm_fault_handler()
         → dmesg: "VM fault (vmid:3, addr:0xDEAD0000)"
-          → markprocess GPU contextaserrorstate`,
-            caption: 'GPUVM 多级page tablestructureandaddress translationprocess. and x86 CPU page table概念相似, 但page tablestoragein VRAM in, 由 GPU  UTCL2 hardwaretraverse. PTE in S 位区分physical页isin VRAM stillis GTT(system memory)in. ',
+→ Mark process GPU context as error state`,
+            caption: 'GPUVM\'s multi-level page table structure and address translation process. Similar concept to x86 CPU page tables, but page tables are stored in VRAM and traversed by the GPU\'s UTCL2 hardware. The S bit in the PTE differentiates whether the physical page is in VRAM or GTT (system memory).',
           },
           codeWalk: {
-            title: 'amdgpu_vm_bo_update — will BO mappingto GPU virtualaddress space',
+            title: 'amdgpu_vm_bo_update — Map BO into GPU virtual address space',
             file: 'drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c',
             language: 'c',
-            code: `/* amdgpu_vm_bo_update() — update BO in GPU page tableinmapping
- * when BO 首次绑定to VM, or BO in VRAM↔GTT migrationaftercall
- * 这is GPUVM 最corefunction
+            code: `/*amdgpu_vm_bo_update() — Update the mapping of BO in the GPU page table
+ *Called when BO is bound to the VM for the first time, or after BO is migrated to VRAM↔GTT
+ *This is the core function of GPUVM
  */
 int amdgpu_vm_bo_update(struct amdgpu_device *adev,
                          struct amdgpu_bo_va *bo_va,
@@ -1995,27 +1995,27 @@ int amdgpu_vm_bo_update(struct amdgpu_device *adev,
     struct list_head *head;
     int r;
 
-    /* get BO physical address
-     * if BO in VRAM: addr = VRAM offset
-     * if BO in GTT:  addr = system memory DMA address
-     * if clear=true: addr = 0 (解除mapping) */
+    /*Get the physical address of BO
+     *If BO is in VRAM: addr = VRAM offset
+     *If BO is in GTT: addr = system memory DMA address
+     *if clear=true: addr = 0 (unmap) */
     if (clear) {
         addr = 0;
         flags = 0;
     } else {
         addr = amdgpu_bo_gpu_offset(bo);
         flags = amdgpu_ttm_tt_pte_flags(adev, bo->tbo.ttm);
-        /* flags contain: readable, writeable, executable,
+        /*flags include: readable, writeable, executable,
          * MTYPE (cached/uncached), system vs vram */
     }
 
-    /* traverse此 BO all VA mapping
-     * a BO maymappingto同a VM multiplevirtual address */
+    /*Traverse all VA mappings of this BO
+     *A BO ​​may be mapped to multiple virtual addresses of the same VM */
     list_for_each_entry(mapping, &bo_va->invalids, list) {
-        /* mapping->start: VA 起始address (页alignment)
-         * mapping->last:  VA endaddress
-         * addr:           physical address
-         * flags:          PTE property (R/W/X, MTYPE 等) */
+        /*mapping->start: VA starting address (page alignment)
+         *mapping->last: VA end address
+         *addr: physical address
+         *flags: PTE attributes (R/W/X, MTYPE, etc.) */
 
         r = amdgpu_vm_update_ptes(adev, vm,
                                    mapping->start,
@@ -2028,19 +2028,19 @@ int amdgpu_vm_bo_update(struct amdgpu_device *adev,
                 * AMDGPU_GPU_PAGE_SIZE;
     }
 
-    /* will mapping from invalids 移to valids list */
+    /*Move mapping from invalids to valids list */
     list_splice_init(&bo_va->invalids, &bo_va->valids);
 
-    /* commitpage tableupdateto SDMA Ring
-     * SDMA 比 GFX 更适合大量小write (page tableupdate) */
+    /*Commit page table updates to SDMA Ring
+     *SDMA is better suited than GFX for large numbers of small writes (page table updates) */
     r = amdgpu_vm_update_pdes(adev, vm, false);
 
-    /* record fence used for跟踪updatecomplete */
+    /*Logging fence is used to track update completion */
     vm->last_update = fence;
     return r;
 }
 
-/* amdgpu_vm_update_ptes — update指定 VA rangepage table条目 */
+/*amdgpu_vm_update_ptes — Update page table entries for the specified VA range */
 static int amdgpu_vm_update_ptes(struct amdgpu_device *adev,
                                   struct amdgpu_vm *vm,
                                   uint64_t start, uint64_t end,
@@ -2048,20 +2048,20 @@ static int amdgpu_vm_update_ptes(struct amdgpu_device *adev,
 {
     struct amdgpu_vm_update_params params;
 
-    /* according to VA rangecomputeneedmodifywhichpage tablelevel
-     * ifmappingsize >= 2MB 且alignment, canuse大页
-     * (in PD leveldirectlymapping, 跳过 PT level) */
+    /*Calculate which page table levels need to be modified based on VA range
+     *Hugepages can be used if map size >= 2MB and aligned
+     *(Direct mapping at PD level, skipping PT level) */
     amdgpu_vm_update_flags(&params, start, end, flags);
 
-    /* traverse多级page table, findgoal PTE location
-     * ifinbetweenlevel页directorynotexist, dynamiccreate
-     * (allocation新 BO 作as页directory) */
+    /*Traverse the multi-level page table to find the target PTE location
+     *If the intermediate-level page directory does not exist, create it dynamically
+     *(Allocate new BO as page directory) */
     while (start < end) {
-        /* computecurrent PTE correspondingpage table BO */
+        /*Calculate the page table BO corresponding to the current PTE */
         pt_bo = amdgpu_vm_get_pt(&params, start);
 
-        /* write PTE: will dst (physical address) writepage table条目
-         * through SDMA WRITE_DATA commandexecute */
+        /*Write PTE: Write dst (physical address) to page table entry
+         *Executed through SDMA WRITE_DATA command */
         amdgpu_vm_cpu_set_ptes(&params, pt_bo,
                                 pe_start, dst, count,
                                 AMDGPU_GPU_PAGE_SIZE,
@@ -2073,34 +2073,34 @@ static int amdgpu_vm_update_ptes(struct amdgpu_device *adev,
     return 0;
 }`,
             annotations: [
-              'bo_va->invalids liststorageneedupdatemapping — BO migrationaftermapping变as invalid',
-              'amdgpu_bo_gpu_offset return BO in VRAM/GTT inphysicaloffsetaddress',
-              'PTE flags in S 位(System)决定 GPU through VRAM stillis PCIe accessphysical页',
-              'amdgpu_vm_update_pdes ensure页directory链coherence — modify PTE afterneedflush TLB',
-              'page tableupdatethrough SDMA commit — SDMA  memset/memcpy operate比 GFX 更高效',
-              '大页support(PD leveldirectlymapping)减少page table级数, 提高 TLB 命in率',
+              'The bo_va->invalids list stores the mappings that need to be updated - the mapping becomes invalid after BO migration',
+              'amdgpu_bo_gpu_offset returns the physical offset address of BO in VRAM/GTT',
+              'The S bit (System) in PTE flags determines whether the GPU accesses the physical page through VRAM or PCIe',
+              'amdgpu_vm_update_pdes ensures the consistency of the page directory chain - the TLB needs to be refreshed after modifying the PTE',
+              'Page table updates are committed via SDMA - SDMA\'s memset/memcpy operations are more efficient than GFX',
+              'Large page support (PD level direct mapping) reduces the number of page table levels and improves TLB hit rate',
             ],
-            explanation: 'thisfunctionis GPU memory managementcore — each time BO byusebeforeallneedensure其mappingvalid. incommand submissionpathin(amdgpu_cs_parser_bos), driverwillcheckcommand引用all BO mappingstate, 对 invalid mappingcall amdgpu_vm_bo_update updatepage table. page tableupdateperformancedirectlyimpactcommand submissionlatency. ',
+            explanation: 'This function is the core of GPU memory management - each time BO is used, it needs to ensure that its mapping is valid. In the command submission path (amdgpu_cs_parser_bos), the driver will check the mapping status of all BOs referenced by the command, and call amdgpu_vm_bo_update for invalid mappings to update the page table. The performance of page table updates directly affects command submission latency.',
           },
           miniLab: {
-            title: 'view GPU virtualmemory mappingandpage tableinformation',
-            objective: 'through debugfs observe GPUVM addressmapping, page tablelayer级and VM fault handlemechanism. ',
-            setup: `# ensure debugfs already挂载
+            title: 'View GPU virtual memory mapping and page table information',
+            objective: 'Observe GPUVM\'s address mapping, page table hierarchy and VM fault handling mechanism through debugfs.',
+            setup: `#Make sure debugfs is mounted
 sudo mount -t debugfs none /sys/kernel/debug 2>/dev/null
-# 准备 GPU work负载trigger BO mapping
+#Preparing GPU workloads to trigger BO mapping
 sudo apt install -y mesa-utils`,
             steps: [
-              'viewall VMID allocation: sudo cat /sys/kernel/debug/dri/0/amdgpu_vm_info 2>/dev/null',
-              'run GPU applicationtrigger VA mapping: glxgears & GLXPID=$!; sleep 2',
-              'view GPU process BO list: sudo cat /sys/kernel/debug/dri/0/amdgpu_gem_info | head -30',
-              'view VM statisticsinformation: sudo cat /sys/kernel/debug/dri/0/amdgpu_vm_info 2>/dev/null',
-              'view近期whetherhas VM fault: dmesg | grep -i "vm fault\\|page fault\\|vmid" | tail -10',
-              'cleanup: kill $GLXPID 2>/dev/null',
+              'View all VMID assignments: sudo cat /sys/kernel/debug/dri/0/amdgpu_vm_info 2>/dev/null',
+              'Running a GPU application triggers VA mapping: glxgears & GLXPID=$!; sleep 2',
+              'View the BO list of the GPU process: sudo cat /sys/kernel/debug/dri/0/amdgpu_gem_info | head -30',
+              'View VM statistics: sudo cat /sys/kernel/debug/dri/0/amdgpu_vm_info 2>/dev/null',
+              'Check whether there are recent VM faults: dmesg | grep -i "vm fault\\|page fault\\|vmid" | tail -10',
+              'Cleanup: kill $GLXPID 2>/dev/null',
             ],
             expectedOutput: `$ sudo cat /sys/kernel/debug/dri/0/amdgpu_vm_info
 VM info:
-  num VMs: 3         ← currentactive GPU virtualaddress spacecount
-  num page tables: 128   ← activepage table BO count
+  num VMs: 3         ←The number of currently active GPU virtual address spaces
+  num page tables: 128   ←Number of active page table BOs
   VMID usage:
     VMID 0: kernel reserved
     VMID 1: pid 1234 (Xorg)
@@ -2108,64 +2108,64 @@ VM info:
 
 $ sudo cat /sys/kernel/debug/dri/0/amdgpu_gem_info | head -10
 pid   5678 command glxgears:
-  BO: 0x00007F0000000000 size: 16MB  domain: VRAM  ← 主 framebuffer
+  BO: 0x00007F0000000000 size: 16MB  domain: VRAM  ←main framebuffer
   BO: 0x00007F0001000000 size: 4MB   domain: VRAM  ← texture/vertex
   BO: 0x00007F0002000000 size: 256KB domain: GTT   ← command buffer
   ...`,
-            hint: 'specific debugfs pathandoutputformat取决于kernelversion. amdgpu_gem_info displayeachprocess BO list及其 GPU virtual address, isunderstand VM mapping最directlyapproach. if VM info notavailable, try amdgpu_fence_info and dmesg 组合. ',
+            hint: 'The specific debugfs path and output format depend on the kernel version. amdgpu_gem_info displays the BO list of each process and its GPU virtual address, which is the most direct way to understand the VM mapping. If VM info is not available, try amdgpu_fence_info and dmesg combination.',
           },
           debugExercise: {
-            title: 'diagnose VM fault: from dmesg output解码 fault addressand VMID',
+            title: 'Diagnosing VM faults: decoding fault address and VMID from dmesg output',
             language: 'text',
-            description: '生产environmentina GPU compute任务周期性trigger VM fault. belowis dmesg outputand相relationship统state. need解码 fault information并locate根因. ',
-            question: '解码below VM fault information: 确定 fault 发生in哪个process, accesswhataddress, fault causeiswhat, andhowfix. ',
-            buggyCode: `/* dmesg VM fault output */
+            description: 'A GPU computing task in the production environment periodically triggers VM fault. Below is the dmesg output and related system status. Need to decode fault information and locate the root cause.',
+            question: 'Decode the following VM fault information: determine in which process the fault occurred, what address was accessed, what caused the fault, and how to fix it.',
+            buggyCode: `/*dmesg VM fault output */
 [  456.789] amdgpu 0000:03:00.0: amdgpu:
   [gfxhub0] VMC page fault
   src_id:146 ring:0 vmid:5 pasid:32773
   addr:0x0000800100004000
   [read, type:4, protections:0x0]
 
-/* GPU processinformation */
+/*GPU process information */
 $ cat /sys/kernel/debug/dri/0/amdgpu_gem_info | grep "pid.*32773"
 pid 32773 command my_compute_app:
   BO: 0x0000800100000000 size: 16KB domain: VRAM  flags: r/w
   BO: 0x0000800200000000 size: 4MB  domain: VRAM  flags: r/w
 
-/* applicationcode片段 (OpenCL kernel) */
+/*Application code snippet (OpenCL kernel) */
 __kernel void process(__global float* input, int N) {
     int idx = get_global_id(0);
-    /* input buffer size: 16KB = 4096 个 float */
-    float val = input[idx];  /* idx may > 4096! */
+    /*input buffer size: 16KB = 4096 float */
+    float val = input[idx];  /*idx may > 4096!*/
     ...
 }
 
-/* startupconfiguration */
-global_work_size = 8192;  /* 8192 个thread */
-/* 但 input only 4096 个 float (16KB) */`,
-            hint: 'compare fault address (0x0000800100004000) and BO mappingaddress (0x0000800100000000, size: 16KB=0x4000). fault address恰好in BO endboundary. ',
-            answer: '解码analyze: (1)VMID=5, PASID=32773 — PASID is Process Address Space ID, through amdgpu_gem_info confirmis "my_compute_app" process(pid 32773). VMID=5 is GPU hardwareas该processallocationvirtualaddress spaceidentifier符. (2)Fault address=0x0000800100004000 — 该process input BO mappingin 0x0000800100000000, size 16KB(0x4000 bytes). BO overwriteaddressrangeis [0x800100000000, 0x800100004000). fault address 0x800100004000 恰好is BO 末尾(第aout of boundsaddress). (3)type:4 = "no valid PTE", protections:0x0 = "no permissions" — page tablein该addressnovalidmapping. (4)根因: 经典数组out of boundsaccess. OpenCL kernel startup 8192 个thread(global_work_size=8192), eachthreadread input[get_global_id(0)], 但 input buffer only 4096 个 float(16KB). whenthread ID >= 4096 时, accessaddress超出 BO mappingrange. thread 4096 accessaddress = base + 4096*4 = base + 0x4000, 正好trigger VM fault. fixplan: (a)增大 input buffer to 32KB(8192 个 float); (b)in kernel inaddboundarycheck: if (idx < N) val = input[idx]; (c)调整 global_work_size as 4096 以matchactualdata量. 这is GPU programmingin最common VM fault type — 等同于 CPU 端 segfault/out of boundsaccess. ',
+/*Startup configuration */
+global_work_size = 8192;  /*8192 threads*/
+/*But input only has 4096 floats (16KB) */`,
+            hint: 'Compare the fault address (0x0000800100004000) and the BO mapping address (0x0000800100000000, size: 16KB=0x4000). The fault address is exactly at the boundary where the BO ends.',
+            answer: 'Decoding analysis: (1) VMID=5, PASID=32773 - PASID is the Process Address Space ID, and it is confirmed by amdgpu_gem_info that it is the "my_compute_app" process (pid 32773). VMID=5 is the virtual address space identifier assigned by the GPU hardware to the process. (2) Fault address = 0x0000800100004000 - the input BO of this process is mapped at 0x0000800100000000, with a size of 16KB (0x4000 bytes). The address range covered by BO is [0x800100000000, 0x800100004000). The fault address 0x800100004000 happens to be the end of BO (the first out-of-bounds address). (3) type:4 = "no valid PTE", protections:0x0 = "no permissions" - there is no valid mapping for this address in the page table. (4) Root cause: classic array out-of-bounds access. The OpenCL kernel starts 8192 threads (global_work_size=8192), and each thread reads input[get_global_id(0)], but the input buffer only has 4096 floats (16KB). When thread ID >= 4096, the access address exceeds the BO mapping range. The access address of thread 4096 = base + 4096*4 = base + 0x4000, which happens to trigger a VM fault. Repair plan: (a) Increase the input buffer to 32KB (8192 floats); (b) Add boundary check in the kernel: if (idx < N) val = input[idx]; (c) Adjust global_work_size to 4096 to match the actual data amount. This is the most common type of VM fault in GPU programming - the equivalent of a segfault/out-of-bounds access on the CPU side.',
           },
           interviewQ: {
             question: 'Describe the GPU virtual memory system in amdgpu and how it differs from CPU virtual memory.',
             difficulty: 'hard',
-            hint: 'frompage tablestructure(多级, VRAM storage), address spacemanagement(per-process VM), fault handle(notcanrecover vs CPU  demand paging)andmappingupdatemechanism四个维度compare. ',
-            answer: 'GPUVM and CPU virtual memorycompare: (1)page tablestructure — GPUVM use最多 6 级page table(PDB2→PDB1→PDB0→PD→PT→PTE), CPU x86_64 use 4-5 级(PML5→PML4→PDPT→PD→PT→PTE). keydifferenceis GPUVM page tablestoragein VRAM in(rather thansystem memory), 由 GPU  UTCL2 hardware单元traverse, 且page table BO 自身also由 TTM memory management器management(mayin VRAM 压力belowbyevictionto GTT). (2)address spacemanagement — 两者allis per-process independentaddress space: CPU use struct mm_struct, GPUVM use struct amdgpu_vm. GPU eachprocessallocationa VMID(similar CPU  ASID/PCID), used for TLB mark. GPUVM  VA allocationuse drm_mm 区betweenallocation器, mappingthrough amdgpu_vm_bo_map() 建立. (3)Fault handle — 这is最大difference. CPU page fault support demand paging(缺页时allocationphysical页并continueexecute), GPU VM fault usuallyisnotcanrecover — fault 发生时 GPU contextbymarkaserror, 该processafter续 GPU operatewillfailure. this is because GPU  wavefront(similar CPU thread)一旦遇to fault unable to干净地pauseandrecover. RDNA after期startsupport "recoverable page fault"(through SVM/XNACK mechanism), allowsimilar CPU  demand paging, 但needspecifichardwareand软件support. (4)mappingupdate — CPU page tableupdate由 CPU directly写memorycomplete(atomic operation + TLB flush), GPUVM page tableupdatethrough SDMA Ring commit GPU commandcomplete(asynchronousoperate, need fence 跟踪completestate). this means GPU page tableupdatehaslatency, mustincommand submissionbeforeensuremappingcomplete(through fence wait). amdgpu_vm_bo_update() iscorefunction, in amdgpu_cs_parser_bos() inaseach引用 BO checkandupdatemapping. ',
-            amdContext: 'GPUVM is AMD interviewin高频深度话题, 尤其is Memory Management team. demonstrate你understand GPU and CPU virtual memory本质差异(fault handle, page tablestoragelocation, asynchronousupdate), 而not仅仅is类比"GPU alsohaspage table", is区分优秀candidatekey. ',
+            hint: 'Comparison from four dimensions: page table structure (multi-level, VRAM storage), address space management (per-process VM), fault processing (non-recoverable vs CPU demand paging) and mapping update mechanism.',
+            answer: 'Comparison between GPUVM and CPU virtual memory: (1) Page table structure - GPUVM uses up to 6 levels of page tables (PDB2→PDB1→PDB0→PD→PT→PTE), and CPU x86_64 uses 4-5 levels (PML5→PML4→PDPT→PD→PT→PTE). The key difference is that the GPUVM page tables are stored in VRAM (rather than system memory), traversed by the GPU\'s UTCL2 hardware unit, and the page table BO itself is also managed by the TTM memory manager (possibly evicted to GTT under VRAM pressure). (2) Address space management - both are per-process independent address spaces: CPU uses struct mm_struct, GPUVM uses struct amdgpu_vm. The GPU assigns a VMID per process (similar to the ASID/PCID of the CPU) for TLB tagging. GPUVM\'s VA allocation uses the drm_mm range allocator, and the mapping is established through amdgpu_vm_bo_map(). (3) Fault processing - this is the biggest difference. CPU page fault supports demand paging (allocate physical pages and continue execution when a page fault occurs). GPU VM fault is usually unrecoverable - when a fault occurs, the GPU context is marked as an error, and subsequent GPU operations of the process will fail. This is because the GPU\'s wavefront (similar to a CPU thread) cannot be paused and resumed cleanly once it encounters a fault. RDNA later began to support "recoverable page fault" (through the SVM/XNACK mechanism), allowing demand paging similar to CPU, but requires specific hardware and software support. (4) Mapping update - The CPU page table update is completed by the CPU writing directly to the memory (atomic operation + TLB flush), and the GPUVM page table update is completed by submitting GPU commands through the SDMA Ring (asynchronous operation, requiring fence to track the completion status). This means there is a delay in GPU page table updates, and the mapping must be ensured (via fence wait) before the command is submitted. amdgpu_vm_bo_update() is the core function that checks and updates the mapping for each referenced BO in amdgpu_cs_parser_bos().',
+            amdContext: 'GPUVM is a frequent and in-depth topic in interviews at AMD, especially on the Memory Management team. Showing that you understand the essential differences between GPU and CPU virtual memory (fault handling, page table storage locations, asynchronous updates), and not just the analogy of "GPUs have page tables too", is key to differentiating good candidates.',
           },
         },
       ],
     },
   ],
   completionChecklist: [
-    'can画出 amdgpu driversource codedirectorystructure, 说出each子directory职责(amdgpu/, display/dc/, amdkfd/, pm/)',
-    'master cscope/ctags or clangd inkernelsource codein导航, can快速from dmesg errorlocatetosource codelocation',
-    'understand IP Block architecture: 统一 amd_ip_funcs interface, initializationorderdependency, IP Discovery mechanism',
-    'cancompletedescribecommand submissionpath: ioctl → parser → BO verify → scheduler → Ring Buffer → Doorbell → CP execute',
-    'understand Fence synchronizationmechanism: emit/signal process, interrupt handling, GPU hang detectand复位',
-    'understand DC displayenginearchitecture: DRM KMS → amdgpu_dm → DC Core → DCN hardwarelayer',
-    'canthrough sysfs interface监控andcontrol GPU frequency/温度/功耗, understand SMU and DVFS workprinciple',
-    'cananalyze dmesg in GPU errorinformation(ring timeout, underflow, VM fault)并locate根因',
+    'Able to draw the amdgpu driver source code directory structure and state the responsibilities of each subdirectory (amdgpu/, display/dc/, amdkfd/, pm/)',
+    'Master cscope/ctags or clangd to navigate in the kernel source code and quickly locate the source code location from dmesg errors',
+    'Understand IP Block architecture: unified amd_ip_funcs interface, initialization sequence dependency, IP Discovery mechanism',
+    'Can fully describe the command submission path: ioctl → parser → BO verification → scheduler → Ring Buffer → Doorbell → CP execution',
+    'Understand the Fence synchronization mechanism: emit/signal process, interrupt processing, GPU hang detection and reset',
+    'Understand the DC display engine architecture: DRM KMS → amdgpu_dm → DC Core → DCN hardware layer',
+    'Able to monitor and control GPU frequency/temperature/power consumption through the sysfs interface, and understand the working principles of SMU and DVFS',
+    'Able to analyze GPU error information (ring timeout, underflow, VM fault) in dmesg and locate the root cause',
     'Understand DC architecture: dc_state commit flow, DML bandwidth validation, DC vs DRM adapter layer',
     'Can explain DRM GPU Scheduler: job lifecycle, timeout handling, priority-based scheduling',
     'Understand GPUVM: multi-level page tables, amdgpu_vm_bo_update, VM fault diagnosis',
