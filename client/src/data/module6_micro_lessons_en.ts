@@ -1186,5 +1186,6 @@ se0.sh0.cu0:
     'Master GPU hang analysis methodology: GRBM_STATUS analysis + RPTR/WPTR analysis + IB test',
     'Understand the processes of amdgpu_job_timedout and amdgpu_device_gpu_recover',
     'Able to install and use umr to read GPU registers, analyze ring streams, and view wave status',
+    'Can justify which observability tool to start with for a new bug instead of turning on every trace source at once',
   ],
 };

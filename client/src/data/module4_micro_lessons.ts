@@ -1278,5 +1278,6 @@ void use_as_texture(int gpu_fd, int dmabuf_fd)
     '能解释 DMA-BUF 的 exporter/importer 模型和零拷贝原理',
     '知道 amdgpu 中的对应实现：amdgpu_kms_driver, amdgpu_dm, amdgpu_ttm, amdgpu_dma_buf',
     '能使用 sysfs/debugfs/modetest/strace 工具观察 DRM 子系统的运行状态',
+    '能够讲清一次完整的显示或 BO 路径：从用户态请求到 DRM 状态变化，再到硬件可见结果',
   ],
 };

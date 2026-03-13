@@ -1153,5 +1153,6 @@ static irqreturn_t gpu_irq_handler(int irq, void *data)
     'Knows the differences between kmalloc/vmalloc/slab/dma_alloc_coherent and the appropriate scenario for each',
     'Can observe amdgpu\'s slab cache state through /proc/slabinfo',
     'Can read the goto cleanup chain in amdgpu_device_init and understand the meaning of each error label',
+    'Can trace one resource from allocation to cleanup and verify the error path releases it in reverse order',
   ],
 };

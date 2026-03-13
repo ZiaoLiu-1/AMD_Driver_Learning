@@ -948,5 +948,6 @@ hipStreamSynchronize(stream2);
     'Can explain the svm_range data structure and the migration process of svm_migrate_to_vram/ram',
     'Understand how HSA semaphores (64-bit atomic counters) and KFD events (interrupt-driven wake-up) work',
     'Can describe the complete interrupt path from GPU kernel completion to CPU thread wake-up',
+    'Can explain to a graphics-only developer why ROCm compute needs KFD/HSA concepts beyond the traditional DRM rendering path',
   ],
 };

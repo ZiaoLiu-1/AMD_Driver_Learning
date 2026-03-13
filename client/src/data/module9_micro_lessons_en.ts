@@ -1106,5 +1106,6 @@ s_or_b32 exec_lo, exec_lo, s0 ; restore full exec`,
     'Understand the Pass pipeline of AMDGPU backend: ISel → RegAlloc → Scheduling → MC Emit',
     'Understand the difference between VGPR/SGPR, Uniformity Analysis, and the impact of VGPR usage on Occupancy',
     'Able to read RDNA3 ISA assembly: VOP/SOP/SMEM/GLOBAL instruction format, s_waitcnt synchronization, exec mask branch',
+    'Can connect one HIP source-level change to the resulting LLVM IR and ISA differences and explain the performance consequence',
   ],
 };

@@ -1069,5 +1069,6 @@ make[4]: *** [scripts/Makefile.build:257:
     'Have set up a complete kernel development environment and can compile the amdgpu module',
     'Can navigate kernel source code using cscope/ctags or clangd',
     'Understand AMD\'s open source strategy advantages and the role of the amd-gfx mailing list',
+    'Can teach back the end-to-end path from an application call to GPU execution in your own words without looking at notes',
   ],
 };

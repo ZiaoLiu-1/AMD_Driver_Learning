@@ -1056,5 +1056,6 @@ __global__ void particle_update(Particle *particles, int n) {
     '理解 Wavefront 执行模型和分支分歧的性能影响，能识别和消除分歧',
     '掌握内存合并访问规则和 AoS→SoA 优化，能解决 LDS bank conflict',
     '能使用 rocprof --stats / -i / --hsa-trace 完成完整的性能分析工作流',
+    '能够在编码前先提出一个小型 HIP 优化方案，并说明 block size、内存放置和测量方法的选择依据',
   ],
 };

@@ -1281,5 +1281,6 @@ void use_as_texture(int gpu_fd, int dmabuf_fd)
     'Explain the DMA-BUF exporter/importer model and zero-copy principles',
     'Know the corresponding amdgpu implementations: amdgpu_kms_driver, amdgpu_dm, amdgpu_ttm, amdgpu_dma_buf',
     'Use sysfs/debugfs/modetest/strace tools to observe the operating state of the DRM subsystem',
+    'Can narrate one complete display or BO path from user-space request to DRM state change and hardware-visible result',
   ],
 };

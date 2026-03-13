@@ -2169,5 +2169,6 @@ global_work_size = 8192;  /*8192 threads*/
     'Understand DC architecture: dc_state commit flow, DML bandwidth validation, DC vs DRM adapter layer',
     'Can explain DRM GPU Scheduler: job lifecycle, timeout handling, priority-based scheduling',
     'Understand GPUVM: multi-level page tables, amdgpu_vm_bo_update, VM fault diagnosis',
+    'Can take a single dmesg error line and decide which amdgpu subsystem to inspect first and which debugging tool to use next',
   ],
 };

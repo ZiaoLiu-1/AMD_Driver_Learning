@@ -1027,6 +1027,7 @@ touch drivers/gpu/drm/amd/amdgpu/amdgpu_debug_new.c
     '能说明虚拟内存和页表走读过程',
     '能写出一个简单的 PCI 驱动模板',
     '能使用 git format-patch 生成内核补丁',
+    '能够在修改前先审查一小段内核 C 代码，并解释其中主要的指针、加锁和内存安全风险',
   ],
 };
 

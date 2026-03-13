@@ -1151,5 +1151,6 @@ static irqreturn_t gpu_irq_handler(int irq, void *data)
     '知道 kmalloc/vmalloc/slab/dma_alloc_coherent 的区别和适用场景',
     '能通过 /proc/slabinfo 观察 amdgpu 的 slab 缓存状态',
     '能阅读 amdgpu_device_init 的 goto 清理链并理解每个错误标签的含义',
+    '能够追踪一个资源从分配到释放的完整生命周期，并验证错误路径是否按逆序正确释放',
   ],
 };

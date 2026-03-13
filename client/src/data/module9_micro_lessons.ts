@@ -1106,5 +1106,6 @@ s_or_b32 exec_lo, exec_lo, s0       ; 恢复完整 exec`,
     '了解 AMDGPU 后端的 Pass 管线：ISel → RegAlloc → Scheduling → MC Emit',
     '理解 VGPR/SGPR 的区别、Uniformity Analysis、以及 VGPR 使用量对 Occupancy 的影响',
     '能阅读 RDNA3 ISA 汇编：VOP/SOP/SMEM/GLOBAL 指令格式、s_waitcnt 同步、exec mask 分支',
+    '能够把一次 HIP 源码修改与 LLVM IR、最终 ISA 的变化对应起来，并解释其性能后果',
   ],
 };

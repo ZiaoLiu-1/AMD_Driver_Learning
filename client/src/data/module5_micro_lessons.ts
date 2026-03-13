@@ -2166,8 +2166,9 @@ global_work_size = 8192;  /* 8192 个线程 */
     '理解 DC 显示引擎架构：DRM KMS → amdgpu_dm → DC Core → DCN 硬件层',
     '能通过 sysfs 接口监控和控制 GPU 频率/温度/功耗，理解 SMU 和 DVFS 的工作原理',
     '能分析 dmesg 中的 GPU 错误信息（ring timeout、underflow、VM fault）并定位根因',
-    'Understand DC architecture: dc_state commit flow, DML bandwidth validation, DC vs DRM adapter layer',
-    'Can explain DRM GPU Scheduler: job lifecycle, timeout handling, priority-based scheduling',
-    'Understand GPUVM: multi-level page tables, amdgpu_vm_bo_update, VM fault diagnosis',
+    '理解 DC 架构：dc_state 提交流程、DML 带宽验证、DC 与 DRM 适配层',
+    '能够解释 DRM GPU Scheduler：job 生命周期、timeout 处理、基于优先级的调度',
+    '理解 GPUVM：多级页表、amdgpu_vm_bo_update、VM fault 诊断',
+    '能够从一条 dmesg 错误信息出发，判断应先查看哪个 amdgpu 子系统以及下一步该用什么调试工具',
   ],
 };

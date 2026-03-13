@@ -1056,5 +1056,6 @@ __global__ void particle_update(Particle *particles, int n) {
     'Understand the Wavefront execution model and the performance impact of branch divergences, and be able to identify and resolve divergences',
     'Master memory merged access rules and AoS→SoA optimization to solve LDS bank conflict',
     'A complete performance analysis workflow can be completed using rocprof --stats / -i / --hsa-trace',
+    'Can propose a small HIP optimization plan and justify block size, memory placement, and measurement method before coding it',
   ],
 };

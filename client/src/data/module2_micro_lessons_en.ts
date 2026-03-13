@@ -39,5 +39,6 @@ export const module2MicroLessonsEn: MicroLessonModule = {
         'Can query GPU memory usage via sysfs',
         'Understand how Command Ring Buffers work',
         'Can explain the GPU firmware loading process',
+        'Can connect PCIe discovery, BAR mapping, DMA, VRAM/GTT placement, ring submission, and firmware loading into one coherent bring-up story',
     ],
 };

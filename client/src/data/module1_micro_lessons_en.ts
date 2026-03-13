@@ -1027,6 +1027,7 @@ touch drivers/gpu/drm/amd/amdgpu/amdgpu_debug_new.c
     'Can describe virtual memory and the page table walk process',
     'Can write a simple PCI driver template',
     'Can generate kernel patches using git format-patch',
+    'Can review a small kernel C snippet and explain the main pointer, locking, and memory-safety risks before editing it',
   ],
 };
 

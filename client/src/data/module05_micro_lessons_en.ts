@@ -880,6 +880,7 @@ NVIDIA side:
     'Can describe each layer of the AMD driver stack and its code repository location',
     'Can quickly determine which layer of the driver stack an error message originates from',
     'Understand the amd-gfx mailing list workflow and patch merge path',
+    'Can look at an AMD GPU model name and verbally derive the likely codename, IP version, and driver area to inspect first',
   ],
 };
 

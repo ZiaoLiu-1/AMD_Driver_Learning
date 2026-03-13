@@ -1036,5 +1036,6 @@ CI failure list:
     'Ability to analyze CI results to distinguish true regressions from expected-failures',
     'Master git bisect to locate submissions that introduce regressions',
     'Understand the processing strategy of flaky test: retry, mark, track and fix',
+    'Can turn a bug report into a small reproducible test plus a regression-check workflow before attempting the fix',
   ],
 };

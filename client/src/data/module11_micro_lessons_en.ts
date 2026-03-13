@@ -1031,5 +1031,6 @@ static int amdgpu_gem_create_ioctl(struct drm_device *dev,
     'Completed mock interview exercises and marked areas for improvement',
     'Submitted at least one patch (even a typo fix) to the amd-gfx mailing list',
     'Be prepared with 2-3 specific projects/contributions that can be described in detail during the interview',
+    'Can present your learning path as evidence-based growth with patch links, write-ups, and tests instead of only resume claims',
   ],
 };
