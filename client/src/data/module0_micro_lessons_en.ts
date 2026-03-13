@@ -884,7 +884,7 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
             explanation: [
               'Kernel development has one fundamental difference from regular application development: your code runs in kernel space, and a single null pointer dereference can crash the entire system (Kernel Panic). Therefore, a safe testing environment is crucial. The recommended approach is to use KVM/QEMU virtual machines for risky kernel experiments — load your modified kernel or modules in the VM, and even if it crashes, you just need to restart the VM.',
               'The toolchain required for kernel compilation includes: gcc or clang (compiler), make (build system), flex and bison (lexer/parser generators needed by the kernel configuration system), libelf-dev and libssl-dev (ELF processing and signature verification), and bc (math calculations in build scripts). For amdgpu development, you also need libdrm-dev and xserver-xorg-dev (if you\'re running IGT tests).',
-              'There are several ways to obtain kernel source code: (1) Linus Torvalds\' mainline repository (latest stable): git clone https://github.com/torvalds/linux.git; (2) AMD\'s drm-next branch (latest amdgpu development): git clone https://gitlab.freedesktop.org/agd5f/linux.git --branch amd-staging-drm-next; (3) Shallow clone (saves space): add the --depth=1 parameter. AMD\'s drm-next branch contains the latest amdgpu patches not yet merged into Linus\' mainline — this is the recommended source base for amdgpu development.',
+              'There are several ways to obtain kernel source code: (1) Linus Torvalds\' mainline repository: git clone https://github.com/torvalds/linux.git; (2) the relevant DRM or maintainer integration tree if you are following current amdgpu development; (3) shallow clone (saves space): add the --depth=1 parameter. The exact branch name can change over time, so it is better to verify the current maintainer tree from public kernel workflow references instead of hard-coding one branch name forever.',
               'Code navigation is key to efficiently reading kernel code. Two recommended approaches: (1) cscope + ctags (classic): run make cscope && make tags at the kernel source root, then jump to function definitions and find references in vim/emacs; (2) clangd (modern): run scripts/clang-tools/gen_compile_commands.py to generate compile_commands.json, then VS Code\'s clangd extension provides intelligent completion and navigation.',
             ],
             keyPoints: [
@@ -903,8 +903,8 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
 ┌─────────────────────────────────────────────────────────────┐
 │  1. Obtain Source Code                                       │
 │  git clone --depth=1                                        │
-│    https://gitlab.freedesktop.org/agd5f/linux.git           │
-│    --branch amd-staging-drm-next                            │
+│    <kernel-tree-url>                                        │
+│    --branch <maintainer-branch>                             │
 │                                                              │
 │  Directory Structure:                                        │
 │  linux/                                                      │
@@ -969,10 +969,10 @@ sudo apt install -y \\
     libudev-dev libjson-c-dev \\
     trace-cmd linux-tools-common
 
-# 3. Clone AMD drm-next kernel source (shallow clone saves space)
+# 3. Clone the kernel source you want to track (shallow clone saves space)
 git clone --depth=1 \\
-    https://gitlab.freedesktop.org/agd5f/linux.git \\
-    --branch amd-staging-drm-next \\
+    <kernel-tree-url> \\
+    --branch <maintainer-branch> \\
     ~/kernel-src
 cd ~/kernel-src
 
@@ -1003,7 +1003,7 @@ echo "Development environment setup complete!"`,
               'build-essential includes gcc, make, and other basic compilation tools',
               'flex/bison are lexer/parser generators required by the kernel configuration system (Kconfig)',
               'libelf-dev handles the ELF format (kernel and modules are both ELF files)',
-              'amd-staging-drm-next branch contains the latest amdgpu patches, weeks ahead of Linus\' mainline',
+              'Maintainer integration branches can contain amdgpu patches that have not yet landed in Linus\' mainline',
               'cp /boot/config-$(uname -r) reuses the current kernel\'s config, avoiding the hassle of configuring from scratch',
               'make M=drivers/gpu/drm/amd is the most commonly used command in daily development — compile only the modified module',
             ],

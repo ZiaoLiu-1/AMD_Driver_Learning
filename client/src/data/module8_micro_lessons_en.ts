@@ -251,7 +251,7 @@ int main()
           concept: {
             summary: 'GPUs have deep memory hierarchies—from the fastest registers to the slowest system memory—with latency and bandwidth varying by dozens of times at each layer. Understanding this hierarchy and choosing the correct memory allocation strategy (hipMalloc vs hipHostMalloc vs hipMallocManaged) is the key to writing high-performance HIP programs.',
             explanation: [
-              'The memory hierarchy of the GPU from fast to slow is: (1) Register (Register): private to each thread, access delay ~1 cycle, RDNA3 each CU has 192KB VGPR (Vector General Register); (2) LDS (Local Data Share): shared within the Block, delay ~4-10 cycles, each CU 64KB, equivalent to CUDA\'s shared memory; (3) L1 cache: each Unique to CU, 16-32KB, automatically caches global memory access; (4) L2/Infinity Cache: L2 body is about 2MB, plus 32MB Infinity Cache (as the last-level cache), both of which jointly reduce access to VRAM (RDNA3\'s Infinity Cache is the key to bandwidth); (5) VRAM (video memory): GPU local high-bandwidth memory, 8GB GDDR6, bandwidth ~288 GB/s; (6) System RAM: accessed through PCIe bus, bandwidth only ~32 GB/s (PCIe 4.0 x16).',
+              'The memory hierarchy of the GPU from fast to slow is: (1) Registers: private to each thread and the fastest storage. (2) LDS (Local Data Share): shared within a block/workgroup and far faster than external memory. (3) Cache hierarchy: per-CU caches plus larger GPU-shared cache levels reduce pressure on external memory. (4) VRAM: the GPU\'s local high-bandwidth memory; for the RX 7600 XT example, AMD lists 16GB of GDDR6 at roughly 288 GB/s board memory bandwidth. (5) System RAM: host memory reached over the PCIe link, which is much slower than on-board VRAM and depends on the actual PCIe generation and lane width of the platform.',
               'Choosing the correct HIP memory allocation function is crucial: hipMalloc() allocates memory on the GPU VRAM, which is the most common way, with the fastest GPU access but not direct access by the CPU; hipHostMalloc() allocates pinned (page-locked) memory on the CPU side, which can be simultaneously directly accessed by the GPU over PCIe through the hipHostMallocMapped flag - this avoids explicit hipMemcpy, but GPU access speed is limited by PCIe Bandwidth limitation; hipMallocManaged() allocates a unified virtual address (Managed Memory). The CPU and GPU can access it with the same pointer. Data is automatically migrated between CPU/GPU during runtime (through page fault). Development is simple but the performance may not be as good as manual management.',
               'Pinned memory (page-locked memory) is critical for DMA transfers. The memory allocated by ordinary malloc may be swapped to disk by the operating system, and the GPU\'s DMA engine cannot directly access this memory. The memory allocated by hipHostMalloc is locked in physical RAM (mlock), and the DMA engine can transfer directly on PCIe, avoiding a memory copy by the operating system. That\'s why hipMemcpy is 2-3 times faster than normal memory when using pinned memory.',
               'HIP Stream is the core mechanism for overlapping asynchronous execution and data transmission. A Stream represents an ordered sequence of operations (copy/kernel function), and operations between different Streams can be executed in parallel. Typical double buffering mode: When Stream 0 executes the kernel function of the current batch, Stream 1 simultaneously transmits the next batch of data. hipMemcpyAsync() initiates asynchronous data transfer (requires pinned memory), and hipStreamCreate/hipStreamSynchronize manages the life cycle of Stream. Under the hood, each Stream corresponds to an HSA queue created by KFD.',
@@ -292,12 +292,12 @@ Delay Bandwidth Size Scope
 └────┬────┘
      │
 ┌────▼────┐
-│ VRAM │ ~300 cy ~288 GB/s 8GB GPU Global
+│ VRAM │ ~300 cy ~288 GB/s 16GB GPU Global
 │ (GDDR6) │ hipMalloc allocated here GDDR6
 └────┬────┘
-     │  PCIe 4.0 x16 (~32 GB/s)  ←Transmission bottleneck!
+     │  PCIe link (platform dependent)  ←Transmission bottleneck!
 ┌────▼────┐
-│ System │ ~1000+ cy ~32 GB/s ≥16GB CPU Global
+│ System │ ~1000+ cy host DRAM over PCIe CPU Global
 │  RAM    │    hipHostMalloc (pinned)          DDR5
 └─────────┘
 
@@ -381,13 +381,13 @@ __global__ void matmul_tiled(const float *A, const float *B,
               'Solution 1: malloc + hipMalloc + hipMemcpy(H2D), use hipEventElapsedTime for timing',
               'Solution 2: hipHostMalloc(flagDefault) + hipMalloc + hipMemcpy(H2D)',
               'Solution 3: hipMallocManaged, access directly in the kernel function (trigger automatic migration), measure the first execution time of the kernel function',
-              'Calculate effective bandwidth (GB/s) for each option and compare to PCIe 4.0 x16 theoretical bandwidth (~32 GB/s)',
+              'Calculate effective bandwidth (GB/s) for each option and compare to the theoretical bandwidth of your actual PCIe link',
               'Based on solution 2, use hipMemcpyAsync + dual Stream to achieve overlapping calculation and transmission',
             ],
-            expectedOutput: `Expected results (RX 7600 XT, PCIe 4.0 x16):
-Option 1 (plain malloc):  ~12 GB/s   ←There is additional staging copy
-Option 2 (pinned):        ~25 GB/s   ←Close to PCIe theoretical bandwidth
-Option 3 (managed):       first run ~8 GB/s ←Page fault + migration is expensive
+            expectedOutput: `Expected results (example platform):
+Option 1 (plain malloc):  lower than pinned memory due to staging overhead
+Option 2 (pinned):        closer to your platform's PCIe bandwidth limit
+Option 3 (managed):       first run is usually slower because migration/page faults are expensive
 Dual Stream overlap: throughput increased by 30-40%`,
             hint: 'Timing with hipEventCreate/Record/ElapsedTime is more accurate than clock() because it measures GPU-side time. The performance of hipMallocManaged is very dependent on the access pattern - if the CPU and GPU access the same page alternately, performance will severely degrade (ping-pong migration).',
           },

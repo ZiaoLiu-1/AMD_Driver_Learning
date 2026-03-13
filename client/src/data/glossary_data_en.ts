@@ -183,7 +183,7 @@ export const glossaryByModuleEn: Record<string, GlossaryTerm[]> = {
       abbr: 'PCIe',
       fullEn: 'Peripheral Component Interconnect Express',
       zhName: '高速外设互联总线',
-      description: 'High-speed serial bus for GPU connection; RX 7600 XT uses PCIe 4.0 x16.',
+      description: 'High-speed serial bus for GPU connection; AMD\'s RX 7600 XT quick-reference specs list PCIe Gen 4 x8.',
       category: 'hardware'
     },
     {
@@ -391,7 +391,7 @@ export const glossaryByModuleEn: Record<string, GlossaryTerm[]> = {
       abbr: 'wavefront',
       fullEn: 'Wavefront (AMD) / Warp (NVIDIA)',
       zhName: '波前/线程束',
-      description: 'AMD GPU execution unit; 64 threads; execute same instruction together.',
+      description: 'AMD GPU execution group; traditionally Wave64, while RDNA also supports Wave32 execution.',
       category: 'compute'
     },
     {

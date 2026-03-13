@@ -31,19 +31,19 @@ export const module05MicroLessonsEn: MicroLessonModule = {
           concept: {
             summary: 'AMD GPUs span three tiers: consumer Radeon RX (gaming), professional Radeon Pro (workstations), and data-center Instinct MI (AI/HPC). They all share the same amdgpu kernel driver, but differ in firmware and user-space configuration.',
             explanation: [
-              'AMD\'s GPU business is managed by the Radeon Technologies Group (RTG), with the product line divided into three distinct tiers. Understanding this tiering is critical for driver developers — because the single amdgpu kernel driver must support all three tiers, yet each has fundamentally different optimization goals and feature requirements.',
-              'Consumer Radeon RX: The gaming and creative-professional product line (the RX 7600 XT is used as the example throughout this tutorial). Driver optimization focuses on OpenGL/Vulkan rendering performance, low-latency display output (FreeSync), and video encode/decode (VCN engine). In kernel code, RX series GPUs expose functionality through the standard /dev/dri/card0 DRM interface. Price range: $200–$1200.',
-              'Professional Radeon Pro: Designed for CAD designers, film/VFX post-production, and scientific visualization. Uses the same GPU silicon as consumer cards (e.g., Pro W7900 uses Navi31, the same die as the RX 7900 XTX), but with different firmware: (1) driver is certified for professional applications (SolidWorks, Maya, etc.); (2) ECC memory support (error-correction to prevent data corruption); (3) more conservative clock speeds for long-term stability. In the amdgpu driver, Pro and RX share the exact same code — differences are purely at the firmware level.',
-              'Data-center Instinct MI: AMD\'s answer to NVIDIA A100/H100. The MI300X has 192 GB HBM3 memory, designed specifically for AI training and HPC. Key differences: (1) No display output — Instinct GPUs are pure-compute cards with no HDMI/DP ports; the amdgpu driver\'s DC (Display Core) module is not loaded. (2) Compute capabilities are exposed via the ROCm/KFD interface. (3) GPU-to-GPU direct links (AMD Infinity Fabric) let multiple cards work as one large GPU. In kernel code, Instinct uses a separate range of Device IDs, and the KFD module provides HSA interfaces for them.',
+              'AMD\'s graphics and accelerator portfolio is commonly discussed in three product tiers. Understanding this tiering is useful for driver developers because the amdgpu stack must span consumer graphics, professional workstation use, and compute-focused accelerator deployments with different priorities.',
+              'Consumer Radeon RX: the gaming-oriented Radeon product line used as the running example in this tutorial. Driver optimization focuses on graphics APIs such as OpenGL/Vulkan, display features, and media blocks such as VCN. In kernel code, RX series GPUs expose standard DRM device nodes such as /dev/dri/card* and /dev/dri/renderD*.',
+              'Professional Radeon Pro: workstation-oriented GPUs for CAD, media, VFX, and visualization workloads. They often share architectural building blocks with consumer Radeon products, but differ in firmware, validation, certification, memory configuration, and product positioning. In the kernel they typically reuse the same major amdgpu framework rather than living in a separate driver.',
+              'Data-center Instinct MI: AMD accelerator products for AI and HPC. AMD\'s Instinct MI300X specifications list 192 GB of HBM3 memory. These products emphasize compute and ROCm/HSA software paths; many accelerator configurations are displayless, so display-related paths are not the primary focus in the same way they are for Radeon graphics cards.',
               'What this means for driver developers: any line you change in the amdgpu codebase could affect all three product tiers. A GEM memory-allocation bug might cause game crashes on RX, CAD rendering errors on Pro, and AI training data corruption on Instinct. This is why amdgpu CI must test across multiple generations and multiple tiers of hardware.',
             ],
             keyPoints: [
-              'Radeon RX (consumer): gaming & creative, optimized for Vulkan/OpenGL, $200–$1200',
-              'Radeon Pro (professional): CAD/VFX, same silicon but professionally certified with ECC',
-              'Instinct MI (data center): AI/HPC pure-compute card, no display output, HBM memory, ROCm interface',
+              'Radeon RX (consumer): gaming and client graphics workloads, using the standard DRM graphics stack',
+              'Radeon Pro (professional): workstation-oriented products with pro validation and workstation-focused configurations',
+              'Instinct MI (data center): AI/HPC accelerator products, typically centered on ROCm and HBM-equipped compute deployments',
               'All three tiers share the same amdgpu kernel driver — differences are in firmware and user-space config',
-              'Pro and RX typically use the same GPU die (Navi31, etc.) — only firmware and certification differ',
-              'Instinct MI300X has 192 GB HBM3, making it the largest AMD GPU product',
+              'Radeon Pro and Radeon RX often share substantial kernel infrastructure even when product configuration differs',
+              'AMD lists Instinct MI300X with 192 GB HBM3 memory',
             ],
           },
           diagram: {
@@ -66,8 +66,8 @@ Performance/Price
     \u2502  \u2502  Radeon Pro Series (Professional Workstation)            \u2502
     \u2502  \u2502                                                         \u2502
     \u2502  \u2502  W7900  \u2502 Navi31 \u2502 48GB \u2502 Pro certified + ECC            \u2502
-    \u2502  \u2502  W7800  \u2502 Navi31 \u2502 32GB \u2502 Same die as RX 7900           \u2502
-    \u2502  \u2502  W7600  \u2502 Navi33 \u2502 8GB  \u2502 Same die as your RX 7600 XT! \u2502
+    \u2502  \u2502  W7800  \u2502 Navi31 \u2502 32GB \u2502 RDNA3 workstation GPU        \u2502
+    \u2502  \u2502  W7600  \u2502 Navi33 \u2502 8GB  \u2502 Entry workstation option     \u2502
     \u2502  \u2502                                                         \u2502
     \u2502  \u2502  \u2192 OpenGL/Vulkan + pro app certification                \u2502
     \u2502  \u2502  \u2192 Competitors: NVIDIA RTX A series                     \u2502
@@ -75,10 +75,10 @@ Performance/Price
     \u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510
     \u2502  \u2502  Radeon RX Series (Consumer Gaming)                      \u2502
     \u2502  \u2502                                                         \u2502
-    \u2502  \u2502  RX 9070 XT  \u2502 Navi48  \u2502 RDNA4 \u2502 $549  \u2502 Latest      \u2502
-    \u2502  \u2502  RX 7900 XTX \u2502 Navi31  \u2502 RDNA3 \u2502 $999  \u2502 Flagship    \u2502
-    \u2502  \u2502  RX 7800 XT  \u2502 Navi32  \u2502 RDNA3 \u2502 $499  \u2502 High-end    \u2502
-    \u2502  \u2502  RX 7600 XT  \u2502 Navi33  \u2502 RDNA3 \u2502 $329  \u2502 \u2190 Your card \u2502
+    \u2502  \u2502  RX 9070 XT  \u2502 Navi48  \u2502 RDNA4 \u2502 Current gen │
+    \u2502  \u2502  RX 7900 XTX \u2502 Navi31  \u2502 RDNA3 \u2502 Flagship    │
+    \u2502  \u2502  RX 7800 XT  \u2502 Navi32  \u2502 RDNA3 \u2502 Higher tier  │
+    \u2502  \u2502  RX 7600 XT  \u2502 Navi33  \u2502 RDNA3 \u2502 \u2190 Example   │
     \u2502  \u2502  RX 6800 XT  \u2502 Navi21  \u2502 RDNA2 \u2502 (prev gen)           \u2502
     \u2502  \u2502                                                         \u2502
     \u2502  \u2502  \u2192 Gaming / creative work / light compute                \u2502
@@ -89,8 +89,8 @@ Performance/Price
 Kernel driver perspective:
   All products \u2192 same amdgpu.ko \u2192 differentiated by Device ID
   RX/Pro   \u2192 loads DC (display) + GFX + SDMA + VCN
-  Instinct \u2192 does NOT load DC, loads KFD + GFX + SDMA`,
-            caption: 'AMD GPU three-tier product line. RX 7600 XT (Navi33) and Radeon Pro W7600 use the exact same silicon. The amdgpu driver differentiates products via PCI Device ID but shares the vast majority of code — this pattern applies across the entire AMD product family.',
+  Instinct \u2192 often uses compute-focused paths and displayless configs`,
+            caption: 'AMD GPU three-tier product line. Consumer, workstation, and accelerator products are differentiated by PCI IDs, firmware, enabled IP blocks, and software stacks, while still sharing major parts of the amdgpu framework.',
           },
           codeWalk: {
             title: 'Differentiating Consumer and Data-Center GPUs in Kernel Code',
@@ -210,15 +210,15 @@ int setup_display(struct amdgpu_device *adev)
             summary: 'Every AMD GPU has four naming layers: marketing name, chip codename, IP version, and PCI Device ID. Master the mapping between these four layers and you can instantly navigate from any layer to the other three in driver code. This section uses the RX 7600 XT (Navi33 / gfx1102 / 0x7480) as a running example; the method applies to all AMD GPUs.',
             explanation: [
               'When you see "gfx1102" in the amdgpu source, you need to immediately know it corresponds to the Navi33 chip on the RDNA3 architecture, marketed as the RX 7600 series. This rapid mapping ability is key to efficiently reading driver code. Let\'s break down AMD GPU\'s complete naming system.',
-              'Layer 1: Marketing Name (RX 7600 XT). This is what consumers see. RX = Radeon eXperience (consumer identifier); first digit 7 = architecture generation (7=RDNA3, 6=RDNA2, 5=RDNA1); second digit 6 = performance tier (9=flagship, 8=high-end, 7=upper-mid, 6=mid-range, 5=entry); last two digits 00 = specific SKU; suffix XT = enhanced (higher clocks or more compute units), XTX = flagship enhanced. So RX 7600 XT = RDNA3 architecture, mid-range performance, enhanced edition.',
-              'Layer 2: Chip Codename (Navi33). This is the internal engineering code. Navi = the codename series for RDNA architectures (predecessors were Vega/Polaris). The tens digit indicates generation (3x = RDNA3, 2x = RDNA2, 1x = RDNA1); the ones digit from large to small indicates die size: Navi31 is the flagship large die (RX 7900 XTX), Navi32 is the high-end mid die (RX 7800 XT), Navi33 is the mid-range small die (RX 7600 XT). In kernel code, CHIP_NAVI33 is the enum value used to select IP Block implementations.',
-              'Layer 3: IP Version (gfx1102). The name closest to the hardware. gfx = Graphics IP prefix; 11 = major version (maps to RDNA3); 0 = minor version; 2 = revision. gfx1100 = Navi31 (flagship), gfx1102 = Navi33 (mid-range). Different revisions mean minor differences within the same architecture generation (like clock domains, CU count). In LLVM, -mcpu=gfx1102 specifies the target GPU when compiling GPU programs. In driver code, gfx_v11_0.c is the implementation file for the gfx11xx family.',
+              'Layer 1: Marketing Name (RX 7600 XT). This is the product name users see on retail pages and driver control panels. Marketing names communicate product family and segment, but the exact numbering rules evolve between generations, so it is safer to use them as labels than as a strict decoding system.',
+              'Layer 2: Chip Codename (Navi33). This is the engineering codename used throughout kernel enums and driver discussions. Within current RDNA-era naming, Navi31/Navi32/Navi33 refer to different dies in the same broad architecture family, and CHIP_NAVI33 is the kernel enum used for this example GPU.',
+              'Layer 3: IP Version (gfx1102). This is the LLVM/ROCm-style GPU target name closest to the instruction-set level. In current tooling, gfx1102 corresponds to the RX 7600 XT example GPU, and flags such as -mcpu=gfx1102 or --offload-arch=gfx1102 select that target when compiling GPU code. In driver code, gfx_v11_0.c is the shared implementation file for the gfx11 family.',
               'Layer 4: PCI Device ID (0x7480). The unique identifier on the PCI bus. The kernel matches Vendor ID (0x1002) + Device ID (0x7480) to find the amdgpu driver. The same chip may have multiple Device IDs (different SKUs), but they all map to the same CHIP type. In amdgpu_drv.c\'s pciidlist, both 0x7480 and 0x7483 map to CHIP_NAVI33.',
             ],
             keyPoints: [
-              'Marketing name RX 7600 XT \u2192 first digit 7=RDNA3, second digit 6=mid-range, XT=enhanced',
-              'Chip codename Navi33 \u2192 3x=RDNA3 generation, 3=mid-range die (smallest RDNA3 die)',
-              'IP version gfx1102 \u2192 11=RDNA3, 02=Navi33 revision (00=Navi31, 02=Navi33)',
+              'Marketing name RX 7600 XT \u2192 product-facing label used in retail and driver UX',
+              'Chip codename Navi33 \u2192 engineering codename used in kernel enums and driver discussion',
+              'IP version gfx1102 \u2192 LLVM/ROCm GPU target name used by compilers and tooling',
               'PCI Device ID 0x7480 \u2192 unique identifier for kernel driver matching',
               'Full mapping chain: RX 7600 XT \u2194 Navi33 \u2194 gfx1102 \u2194 0x7480 \u2194 CHIP_NAVI33',
               'In LLVM: -mcpu=gfx1102, in driver: gfx_v11_0.c, in PCI table: CHIP_NAVI33',
@@ -329,7 +329,7 @@ static int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
 \u2502 Architecture\u2502 RDNA3                        \u2502
 \u2502 Process     \u2502 TSMC 6nm                     \u2502
 \u2502 CU count    \u2502 32 CU                        \u2502
-\u2502 VRAM        \u2502 8GB GDDR6                    \u2502
+\u2502 VRAM        \u2502 16GB GDDR6                   \u2502
 \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518`,
             hint: 'If dmesg doesn\'t show IP version, try dmesg | grep -i "gfx\\|gc.*version" or cat /sys/class/drm/card0/device/gpu_metrics.',
           },
@@ -500,7 +500,7 @@ bool amdgpu_gfx_has_wmma(struct amdgpu_device *adev)
 - L0 Cache: 16KB per CU
 - L1 Cache: 128KB per Shader Array
 - L2 Cache: 32MB (Infinity Cache)
-- VRAM: 8GB GDDR6 @ 288 GB/s
+- VRAM: 16GB GDDR6 @ 288 GB/s
 - Supports WMMA AI instructions
 - Navi33 (RX 7600 XT) is a monolithic die (not chiplet)`,
             hint: 'If dmesg info isn\'t detailed enough, install rocminfo (ROCm tool): rocminfo outputs very detailed GPU architecture information.',
@@ -546,14 +546,14 @@ void setup_wmma_compute(struct amdgpu_device *adev)
               'Layer 2: Mesa 3D / ROCm Runtime. Mesa (https://mesa3d.org/) is the open-source OpenGL/Vulkan implementation. AMD\'s Mesa drivers include radeonsi (OpenGL) and radv (Vulkan). Mesa\'s job is to compile shaders (GLSL/SPIR-V \u2192 AMD ISA), build GPU command buffers (PM4 format), and manage user-space buffer allocation. ROCm\'s HIP Runtime does similar work but for compute \u2014 it communicates with KFD via the HSA Runtime. Both Mesa and ROCm run in user space.',
               'Layer 3: libdrm. This is a user-space C library (https://gitlab.freedesktop.org/mesa/drm) that wraps DRM ioctl calls. libdrm\'s amdgpu sub-library (libdrm_amdgpu) provides APIs like amdgpu_bo_alloc (allocate GPU memory) and amdgpu_cs_submit (submit commands). Both Mesa and ROCm depend on libdrm.',
               'Layer 4: DRM Kernel Framework. Located in Linux kernel\'s drivers/gpu/drm/drm_*.c. DRM provides a generic GPU management framework: device files (/dev/dri/card0), ioctl interface, KMS (display mode setting), GEM/TTM (memory management). DRM is shared code used by all Linux GPU drivers \u2014 AMD, Intel, and NVIDIA all use the same DRM framework.',
-              'Layer 5: amdgpu Kernel Driver. Located in drivers/gpu/drm/amd/, with over 4 million lines of code. This is the AMD GPU-specific implementation, containing: GFX (graphics engine control), SDMA (DMA transfers), DC (Display Core), VCN (video codec), KFD (ROCm compute interface), PM/SMU (power management). amdgpu is the core subject of your study.',
+              'Layer 5: amdgpu Kernel Driver. Located in drivers/gpu/drm/amd/, this is a very large AMD GPU-specific implementation containing GFX (graphics engine control), SDMA (DMA transfers), DC (Display Core), VCN (video codec), KFD (ROCm compute interface), PM/SMU (power management), and related support code. amdgpu is the core subject of your study.',
             ],
             keyPoints: [
               'OpenGL/Vulkan/HIP API \u2192 application-layer standard interface, cross-platform',
               'Mesa radeonsi/radv \u2192 user-space driver, compiles shaders and builds command packets',
               'libdrm (libdrm_amdgpu) \u2192 wraps ioctl calls, provides C API',
               'DRM Core \u2192 generic kernel GPU framework shared by all GPU drivers',
-              'amdgpu \u2192 AMD-specific kernel driver, IP Block architecture, 4M+ lines of code',
+              'amdgpu \u2192 AMD-specific kernel driver, IP Block architecture, large multi-subsystem codebase',
               'Each layer has its own code repository, team, and release cycle',
             ],
           },
@@ -866,7 +866,7 @@ NVIDIA side:
             question: 'How does AMD\'s amdgpu driver get merged into the Linux kernel mainline? Describe the complete flow from patch submission to final release.',
             difficulty: 'easy',
             hint: 'Describe the path: mailing list \u2192 review \u2192 drm-next \u2192 merge window \u2192 release.',
-            answer: 'Complete flow: (1) Developer (AMD engineer or community contributor) develops and tests a patch locally. (2) Sends the patch to amd-gfx@lists.freedesktop.org via git send-email. (3) AMD maintainers (primarily Alex Deucher) and other community members review the patch, giving Reviewed-by or suggesting changes. (4) Approved patches enter Alex Deucher\'s amd-staging-drm-next branch (Git repo at gitlab.freedesktop.org/agd5f/linux). (5) Alex periodically sends pull requests to Dave Airlie (DRM subsystem maintainer), merging patches into the drm-next branch. (6) During the Linux kernel\'s merge window (the first two weeks of each release cycle), Dave Airlie sends a pull request to Linus Torvalds. (7) Patches enter Linus\' Linux mainline and go through the rc1\u2013rc7 testing cycle before official release. Urgent bug fixes can request backporting to LTS kernels via the Cc: stable@vger.kernel.org tag.',
+            answer: 'Complete flow: (1) Developer (AMD engineer or community contributor) develops and tests a patch locally. (2) Sends the patch to amd-gfx@lists.freedesktop.org via git send-email. (3) AMD maintainers and other community members review the patch, giving Reviewed-by or suggesting changes. (4) Accepted patches are typically collected in the relevant maintainer integration branch before reaching the DRM maintainer tree. (5) DRM maintainers then merge those changes into drm-next for an upcoming kernel cycle. (6) During the Linux kernel merge window, the DRM pull request is sent to Linus Torvalds. (7) Patches enter Linux mainline and go through the rc cycle before release. Urgent bug fixes can request backporting to stable kernels via the Cc: stable@vger.kernel.org tag.',
             amdContext: 'Understanding this workflow demonstrates your knowledge of how the Linux kernel community operates \u2014 this is a bonus point in AMD interviews.',
           },
         },
