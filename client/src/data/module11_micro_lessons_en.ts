@@ -1,6 +1,6 @@
 // ============================================================
 // AMD Linux Driver Learning Platform - Module 11 Micro-Lessons (English)
-// Module 11: Career & Contribution (社区contributionandcareer发展)
+// Module 11: Career & Contribution
 // 4 lessons in 2 groups, ~15 min each, total ~60 min
 // ============================================================
 import type { MicroLessonModule } from './micro_lesson_types';
@@ -9,76 +9,76 @@ export const module11MicroLessonsEn: MicroLessonModule = {
   moduleId: 'career',
   groups: [
     // ════════════════════════════════════════════════════════════
-    // Group 11.1: kernelpatch实战
+    // Group 11.1: Kernel patching in action
     // ════════════════════════════════════════════════════════════
     {
       id: '11-1',
       number: '11.1',
-      title: 'kernelpatch实战',
+      title: 'Kernel patching in action',
       titleEn: 'Kernel Patch Workflow in Practice',
       icon: 'Mail',
-      description: 'masterfrom git format-patch to git send-email completekernelpatchcommitprocess, 学will写出高质量 commit message 并专业地回应code review. ',
+      description: 'Master the complete kernel patch submission process from git format-patch to git send-email, learn to write high-quality commit messages and respond to code reviews professionally.',
       lessons: [
         // ── Lesson 11.1.1 ──────────────────────────────────────
         {
           id: '11-1-1',
           number: '11.1.1',
-          title: 'kernelpatchwork流',
+          title: 'Kernel patch workflow',
           titleEn: 'Kernel Patch Workflow',
           duration: 15,
           difficulty: 'intermediate',
           tags: ['git', 'format-patch', 'send-email', 'checkpatch', 'amd-gfx'],
           concept: {
-            summary: 'Linux kernelpatchcommitnotuse Pull Request — but ratherthrough git format-patch generatepatchfile, scripts/checkpatch.pl checkcode风格, scripts/get_maintainer.pl findcorrectreviewer, then git send-email sendto amd-gfx mailing list. understand并熟练masterthiswork流is成askernelcontributor门槛. ',
+            summary: 'Patch submissions for the Linux kernel do not use Pull Requests - instead, git format-patch generates the patch file, scripts/checkpatch.pl checks the code style, scripts/get_maintainer.pl finds the correct reviewer, and then git send-email is sent to the amd-gfx mailing list. Understanding and mastering this workflow is the threshold for becoming a kernel contributor.',
             explanation: [
-              'Linux kernelis世界on最大协作open-sourceproject之一, 但它notuse GitHub/GitLab  Pull Request pattern. allpatchthrough电子邮件commitand审查 — 这is Linus Torvalds from 2002 年至今坚持approach. for amdgpu driver, patchsendto amd-gfx@lists.freedesktop.org mailing list, 由 AMD maintainer(Alex Deucher, Harry Wentland 等)审查. ',
-              'git format-patch isgeneratepatchfilestandardcommand. 它willyour git commit convertasstandard邮件formatfile(.patch). 常用approach: git format-patch HEAD~1 generate最近acommitpatch, git format-patch -3 generate最近 3 个commitpatchseries. forpatchseries, git format-patch willautomaticadd编号([PATCH 1/3], [PATCH 2/3], [PATCH 3/3])并generate一封封面邮件(cover letter). ',
-              'scripts/checkpatch.pl iskernelcode风格check脚本. insendpatchbefore, mustrun它checkcodewhether符合kernel编码specification. runapproach: scripts/checkpatch.pl 0001-your-patch.patch. 它willcheck: 缩进(must用 Tab, 8 字符宽), 行长度(notexceed 100 字符), 空格use(if after面musthas空格), commit message format(Subject notexceed 75 字符)等. goalis 0 errors, 0 warnings. 少量 WARNING in合理情况belowcan接受(如超长字符串constant), 但 ERROR mustfix. ',
-              'scripts/get_maintainer.pl 帮你findshouldwillpatchsend给谁. runapproach: scripts/get_maintainer.pl 0001-your-patch.patch. 它analyzepatchmodifyfile, from MAINTAINERS fileinlookupcorrespondingmaintainerandmailing list. for amdgpu patch, usuallyoutput Alex Deucher(maintainer), amd-gfx@lists.freedesktop.org(mailing list)等. 你needwill他们addto git send-email  To/Cc listin. ',
-              'git send-email willpatchfilethrough SMTP sendtomailing list. 首次useneedconfiguration SMTP 服务器: git config --global sendemail.smtpserver smtp.gmail.com 等. sendpatchseries时: git send-email --to amd-gfx@lists.freedesktop.org --cc alex.deucher@amd.com 0001-*.patch. patchsendafter, maintainerand社区成员willinmailing liston回复 Review 意见. ifneedmodify, send v2 version: git format-patch --subject-prefix="PATCH v2" HEAD~1. ',
-              'patchversion迭代(v2/v3...)iscommonprocess. v2 patchshouldin commit message 末尾(--- 分隔符after)add changelog, indicate v1 to v2 变更. 封面邮件alsoshouldupdate changelog. 保持耐心and专业 — 大多数patchneed 2-3 轮迭代only thencanby接受. ',
+              'The Linux kernel is one of the largest collaborative open source projects in the world, but it doesn\'t use GitHub/GitLab\'s Pull Request model. All patches are submitted and reviewed via email - this is the way Linus Torvalds has insisted from 2002 to the present day. For the amdgpu driver, patches are sent to the amd-gfx@lists.freedesktop.org mailing list and reviewed by AMD maintainers (Alex Deucher, Harry Wentland, etc.).',
+              'git format-patch is the standard command for generating patch files. It converts your git commits into a standard email format file (.patch). Commonly used methods: git format-patch HEAD~1 generates the latest submitted patch, git format-patch -3 generates the latest 3 submitted patch series. For patch series, git format-patch will automatically add numbers ([PATCH 1/3], [PATCH 2/3], [PATCH 3/3]) and generate a cover letter.',
+              'scripts/checkpatch.pl is the kernel\'s code style checking script. Before sending a patch, it must be run to check that the code complies with kernel coding specifications. Run as: scripts/checkpatch.pl 0001-your-patch.patch. It will check: indentation (must use Tab, 8 characters wide), line length (no more than 100 characters), space usage (if must have a space after it), commit message format (Subject no more than 75 characters), etc. The goal is 0 errors, 0 warnings. A small number of WARNINGs are acceptable under reasonable circumstances (such as overlong string constants), but ERRORs must be fixed.',
+              'scripts/get_maintainer.pl helps you find who to send patches to. Run as: scripts/get_maintainer.pl 0001-your-patch.patch. It analyzes the files modified by the patch and finds the corresponding maintainer and mailing list from the MAINTAINERS file. For amdgpu patches, the usual output is Alex Deucher (maintainer), amd-gfx@lists.freedesktop.org (mailing list), etc. You need to add them to the To/Cc list of git send-email.',
+              'git send-email sends patch files to the mailing list via SMTP. For first time use, you need to configure the SMTP server: git config --global sendemail.smtpserver smtp.gmail.com, etc. When sending a patch series: git send-email --to amd-gfx@lists.freedesktop.org --cc alex.deucher@amd.com 0001-*.patch. After a patch is sent, maintainers and community members respond to Review comments on the mailing list. If modifications are needed, send the v2 version: git format-patch --subject-prefix="PATCH v2" HEAD~1.',
+              'Patch version iteration (v2/v3...) is a common process. v2 patches should add a changelog at the end of the commit message (after the --- separator) to describe the changes from v1 to v2. The cover email should also update the changelog. Be patient and professional - most patches take 2-3 iterations before they are accepted.',
               'Since 2023, the b4 tool (https://b4.docs.kernel.org/) has become the recommended way to send kernel patches, replacing the manual git send-email workflow. b4 automates: retrieving maintainer lists, formatting cover letters, threading patch series, and tracking versions. Key commands: b4 prep (prepare a patch series from commits), b4 send (send the series to the correct mailing lists), b4 trailers (collect Reviewed-by/Acked-by from replies). Many AMD engineers now use b4 as their daily tool. While git send-email still works and is widely documented, showing familiarity with b4 in an interview signals that your knowledge is current.',
             ],
             keyPoints: [
-              'Linux kernelthroughmailing listcommitpatch, notuse Pull Request',
-              'git format-patch generatestandardpatchfile(.patch), supportpatchseries编号',
-              'scripts/checkpatch.pl checkcode风格 — goalis 0 errors, 0 warnings',
-              'scripts/get_maintainer.pl findcorrectmaintainerandmailing list',
-              'git send-email sendto amd-gfx@lists.freedesktop.org mailing list',
-              'v2/v3 version迭代: --subject-prefix="PATCH v2", 附加 changelog',
+              'The Linux kernel submits patches through the mailing list, without using Pull Requests',
+              'git format-patch generates standard patch files (.patch) and supports patch series numbers.',
+              'scripts/checkpatch.pl checks code style - target 0 errors, 0 warnings',
+              'scripts/get_maintainer.pl finds the correct maintainer and mailing list',
+              'git send-email Send to amd-gfx@lists.freedesktop.org mailing list',
+              'v2/v3 version iteration: --subject-prefix="PATCH v2", append changelog',
               'b4 is the modern (2023+) patch sending tool — automates maintainer lookup, threading, and version tracking',
             ],
           },
           diagram: {
-            title: 'completekernelpatchcommitprocess',
-            content: `kernelpatchcommitcompleteprocess
+            title: 'Complete kernel patch submission process',
+            content: `Kernel patch submission complete process
 
-Step 1: writecode & commit
+Step 1: Write code & submit
 ─────────────────────────
 $ vim drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
-$ make M=drivers/gpu/drm/amd -j$(nproc)     # compilation
-$ make W=1 M=drivers/gpu/drm/amd            # check额outside警告
+$ make M=drivers/gpu/drm/amd -j$(nproc)     #compile
+$ make W=1 M=drivers/gpu/drm/amd            #Check for additional warnings
 
-$ git add -p                                 # 逐blockselecttocommitmodify
-$ git commit -s                              # -s automaticadd Signed-off-by
+$ git add -p                                 #Select changes to commit block by block
+$ git commit -s                              #-s automatically adds Signed-off-by
   │
-  │  Commit message format:
+│ Commit message format:
   │  ┌─────────────────────────────────────────┐
-  │  │ drm/amdgpu: fix VM page table update    │ ← Subject (≤75 字符)
+  │  │ drm/amdgpu: fix VM page table update    │ ←Subject (≤75 characters)
   │  │                                         │
   │  │ The VM page table update was missing     │ ← Body (what & why)
   │  │ a TLB flush after unmapping pages,       │
   │  │ causing stale mappings that lead to      │
   │  │ GPU page faults on RDNA3 hardware.       │
   │  │                                         │
-  │  │ Fixes: abc123def ("drm/amdgpu: ...")    │ ← 引用引入 Bug commit
-  │  │ Signed-off-by: You <you@email.com>      │ ← 法律声明
+  │  │ Fixes: abc123def ("drm/amdgpu: ...")    │ ←Reference the commit that introduced the bug
+  │  │ Signed-off-by: You <you@email.com>      │ ←Legal statement
   │  └─────────────────────────────────────────┘
   ▼
-Step 2: check
+Step 2: Check
 ─────────────
 $ scripts/checkpatch.pl --strict HEAD~1..HEAD
-  total: 0 errors, 0 warnings, 15 lines checked    ← ✓ through
+  total: 0 errors, 0 warnings, 15 lines checked    ←✓ Pass
 
 $ scripts/get_maintainer.pl --git HEAD~1..HEAD
   Alex Deucher <alexander.deucher@amd.com> (maintainer)
@@ -87,13 +87,13 @@ $ scripts/get_maintainer.pl --git HEAD~1..HEAD
   dri-devel@lists.freedesktop.org (list)
   │
   ▼
-Step 3: generatepatchfile
+Step 3: Generate patch file
 ─────────────────────
 $ git format-patch HEAD~1
   0001-drm-amdgpu-fix-VM-page-table-update.patch
   │
   ▼
-Step 4: send
+Step 4: Send
 ─────────────
 $ git send-email \\
     --to amd-gfx@lists.freedesktop.org \\
@@ -101,57 +101,57 @@ $ git send-email \\
     --cc christian.koenig@amd.com \\
     0001-drm-amdgpu-fix-VM-page-table-update.patch
 
-  mailing list: ✉️ patchalreadysend
+Mailing list: ✉️ Patch sent
   │
   ▼
-Step 5: wait Review & 迭代
+Step 5: Wait for Review & Iteration
 ──────────────────────────
-  Reviewer: "请the TLB flush 移to mutex unlock before"
+Reviewer: "Please move TLB flush before mutex unlock"
   │
   ▼
-$ git commit --amend                         # modifycommit
+$ git commit --amend                         #Modify Submit
 $ git format-patch --subject-prefix="PATCH v2" HEAD~1
 $ git send-email ... \\
-    --in-reply-to="<original-message-id>"    # 回复raw邮件thread
+    --in-reply-to="<original-message-id>"    #Reply to original message thread
   ▼
-  Reviewer: "Reviewed-by: Christian König <...>"  ← ✓ 审查through
-  Maintainer: mergeto amd-staging-drm-next         ← ✓ alreadymerge`,
-            caption: 'fromcodemodifytopatchbymergecompleteprocess. 每一步allhascorrespondingcommandandtool. 大多数patchneed 2-3 轮 Review 迭代. ',
+  Reviewer: "Reviewed-by: Christian König <...>"  ←✓ Review passed
+  Maintainer: merged into amd-staging-drm-next    ←✓ Merged`,
+            caption: 'The complete process from code modification to patch being merged. There are corresponding commands and tools for each step. Most patches require 2-3 review iterations.',
           },
           codeWalk: {
-            title: 'completepatchcommitcommand演示',
+            title: 'Complete patch submission command demonstration',
             file: 'terminal',
             language: 'bash',
             code: `#!/bin/bash
-# completekernelpatchcommitwork流演示
+#Complete kernel patch submission workflow demonstration
 
 # ========================================
-# Step 1: configuration git send-email (只需做once)
+#Step 1: Configure git send-email (only needs to be done once)
 # ========================================
 git config --global sendemail.smtpserver smtp.gmail.com
 git config --global sendemail.smtpserverport 587
 git config --global sendemail.smtpencryption tls
 git config --global sendemail.smtpuser your.email@gmail.com
-# Gmail needuse App Password (非账户密码)
+#Gmail requires an App Password (not an account password)
 
 # ========================================
-# Step 2: modifycode并commit
+#Step 2: Modify the code and submit
 # ========================================
 cd ~/kernel-src
 
-# createworkbranch
+#Create a working branch
 git checkout -b fix/vm-tlb-flush amd-staging-drm-next
 
-# 编辑code
+#Edit code
 vim drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
 
-# 只compilation amdgpu moduleverifycompilationthrough
+#Only compile the amdgpu module and verify that the compilation passes
 make M=drivers/gpu/drm/amd -j$(nproc)
 
-# commit (-s automaticadd Signed-off-by)
+#Submit (-s automatically adds Signed-off-by)
 git add drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
 git commit -s
-# 编辑器in写 commit message:
+#Write commit message in the editor:
 #   drm/amdgpu: flush TLB after VM page table unmap
 #
 #   Add missing TLB invalidation after unmapping pages
@@ -163,35 +163,35 @@ git commit -s
 #   Signed-off-by: Your Name <your.email@gmail.com>
 
 # ========================================
-# Step 3: checkpatch质量
+#Step 3: Check patch quality
 # ========================================
-# code风格check
+#Code style check
 scripts/checkpatch.pl --strict -g HEAD~1..HEAD
-# goal: total: 0 errors, 0 warnings
+#Goal: total: 0 errors, 0 warnings
 
-# findmaintainer
+#Find the maintainer
 scripts/get_maintainer.pl -g HEAD~1..HEAD
-# output:
+#Output:
 #   Alex Deucher <alexander.deucher@amd.com>
 #   Christian König <christian.koenig@amd.com>
 #   amd-gfx@lists.freedesktop.org
 
 # ========================================
-# Step 4: generatepatchfile
+#Step 4: Generate patch file
 # ========================================
-# 单个patch
+#single patch
 git format-patch HEAD~1
 # → 0001-drm-amdgpu-flush-TLB-after-VM-page-table-unmap.patch
 
-# patchseries (multiplecommit)
+#Patch series (multiple commits)
 git format-patch --cover-letter HEAD~3
-# → 0000-cover-letter.patch  (need编辑)
+#→ 0000-cover-letter.patch (needs editing)
 # → 0001-first-change.patch
 # → 0002-second-change.patch
 # → 0003-third-change.patch
 
 # ========================================
-# Step 5: sendpatch
+#Step 5: Send patch
 # ========================================
 git send-email \\
     --to amd-gfx@lists.freedesktop.org \\
@@ -201,12 +201,12 @@ git send-email \\
     0001-drm-amdgpu-flush-TLB-after-VM-page-table-unmap.patch
 
 # ========================================
-# Step 6: v2 迭代 (Review aftermodify)
+#Step 6: v2 iteration (modify after review)
 # ========================================
-# according to Review 意见modifycode
+#Modify the code based on Review comments
 vim drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
 git add -u && git commit --amend
-# in commit message  --- 分隔符afteradd changelog:
+#Add changelog after the --- delimiter of the commit message:
 #   ---
 #   v2: Move TLB flush before mutex_unlock (Christian)
 
@@ -217,27 +217,27 @@ git send-email \\
     --cc alexander.deucher@amd.com \\
     0001-drm-amdgpu-flush-TLB-after-VM-page-table-unmap.patch`,
             annotations: [
-              'git config sendemail.* 只需configurationonce, Gmail needinsecuritysetincreate App Password',
-              'git commit -s automaticadd Signed-off-by 行 — 这iskernelpatch法律to求(DCO 声明)',
-              'scripts/checkpatch.pl --strict enable更严格check, includecertain WARNING levelrecommended',
-              'scripts/get_maintainer.pl -g from git 历史(rather thanpatchfile)inanalyzemaintainer',
-              '--in-reply-to will v2 patch放入 v1 邮件threadin, 方便 Reviewer 跟踪',
-              'v2 changelog 写in --- 分隔符after, 这样 git am applicationpatch时willautomatic忽略它',
+              'git config sendemail.* Configure only once, Gmail requires creating App Password in security settings',
+              'git commit -s automatically adds the Signed-off-by line - this is a legal requirement for kernel patches (DCO statement)',
+              'scripts/checkpatch.pl --strict enables stricter checks, including certain WARNING level recommendations',
+              'scripts/get_maintainer.pl -g parse maintainers from git history (not patch files)',
+              '--in-reply-to Put the v2 patch into the v1 email thread to facilitate Reviewer tracking',
+              'v2 changelog is written after the --- delimiter so that git am will automatically ignore it when applying the patch.',
             ],
-            explanation: '这套commandiseachkernelcontributormustmaster. recommended你先ina小modifyonpracticethisprocess(如fixa typo or改善一条注释), 熟悉eachstepafteragaincommit实质性codemodify. amd-gfx mailing list对新手友好 — your第apatchwill得to耐心 Review. ',
+            explanation: 'This set of commands is a must for every kernel contributor. It is recommended that you practice this process on a small modification first (such as fixing a typo or improving a comment), and then commit to substantive code modifications after you are familiar with each step. The amd-gfx mailing list is newbie friendly - your first patch will get a patient review.',
           },
           miniLab: {
-            title: 'complete走一遍patchcommitprocess',
-            objective: 'inyourlocalkernelrepositoryincompleteoncecompletepatch准备process(notneed真send邮件), 熟悉eachcommand. ',
+            title: 'Completely go through the patch submission process',
+            objective: 'Go through a complete patch preparation process in your local kernel repository (no need to actually send emails) and become familiar with each command.',
             steps: [
-              '进入kernelsource code: cd ~/kernel-src && git checkout -b practice/first-patch',
-              '做a小modify — in drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c 某个注释infixa typo or改善措辞',
-              'commit: git add -p && git commit -s(写specification commit message)',
-              'run checkpatch: scripts/checkpatch.pl --strict -g HEAD~1..HEAD(ensure 0 errors)',
-              'run get_maintainer: scripts/get_maintainer.pl -g HEAD~1..HEAD(看tomaintainerlist)',
-              'generatepatchfile: git format-patch HEAD~1(viewgenerate .patch file内容)',
-              '用 git send-email --dry-run simulatesend(will not真发邮件): git send-email --dry-run --to test@example.com 0001-*.patch',
-              'cleanuppracticebranch: git checkout main && git branch -D practice/first-patch',
+              'Enter the kernel source code: cd ~/kernel-src && git checkout -b practice/first-patch',
+              'Make a small change - fix a typo or improve the wording in a comment in drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c',
+              'Submit: git add -p && git commit -s (write a standardized commit message)',
+              'Run checkpatch: scripts/checkpatch.pl --strict -g HEAD~1..HEAD (ensure 0 errors)',
+              'Run get_maintainer: scripts/get_maintainer.pl -g HEAD~1..HEAD (see maintainer list)',
+              'Generate patch file: git format-patch HEAD~1 (view the contents of the generated .patch file)',
+              'Use git send-email --dry-run to simulate sending (it will not actually send an email): git send-email --dry-run --to test@example.com 0001-*.patch',
+              'Clean up the practice branch: git checkout main && git branch -D practice/first-patch',
             ],
             expectedOutput: `$ scripts/checkpatch.pl --strict -g HEAD~1..HEAD
 total: 0 errors, 0 warnings, 5 lines checked
@@ -254,49 +254,49 @@ $ git send-email --dry-run --to test@example.com 0001-*.patch
 (dry-run) sendmail ... 0001-drm-amdgpu-fix-comment-typo.patch
 OK. Log says:
 Dry-OK. Log says: ...`,
-            hint: 'if git send-email 报错 "send-email is not a git command", install它: sudo apt install git-email. --dry-run patterncompletelysecurity, will notsend任何邮件. ',
+            hint: 'If git send-email reports an error "send-email is not a git command", install it: sudo apt install git-email. --dry-run mode is completely safe and no email will be sent.',
           },
           debugExercise: {
-            title: 'findpatchcommitprocessinissue',
+            title: 'Identify issues in the patch submission process',
             language: 'bash',
-            description: 'belowisadevelopment者commitpatchcommand序列, 但wherehas多处issue. findallerror. ',
-            question: 'thispatchcommitprocesshaswhichissue? whypatchmaybymaintainer拒绝? ',
-            buggyCode: `# development者errorcommitprocess
+            description: 'The following is a command sequence used by a developer to submit a patch, but there are many problems in it. Find any errors.',
+            question: 'What are the issues with this patch submission process? Why might a patch be rejected by the maintainer?',
+            buggyCode: `#Developer's bug submission process
 
-# 1. directlyin主branchonmodify
+#1. Modify directly on the main branch
 git checkout amd-staging-drm-next
 vim drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
 
-# 2. commit(no -s flag)
+#2. Submit (without -s flag)
 git add .
 git commit -m "fixed bug"
 
-# 3. 跳过 checkpatch
-# "反正我know我codeis对"
+#3. Skip checkpatch
+#"I know my code is correct anyway"
 
-# 4. generatepatch
+#4. Generate patches
 git format-patch HEAD~1
 
-# 5. 只发给mailing list, not Cc maintainer
+#5. Only send to mailing list, not Cc maintainers
 git send-email \\
     --to amd-gfx@lists.freedesktop.org \\
     0001-fixed-bug.patch
 
-# 6. v2 not回复rawthread
+#6. v2 does not reply to the original thread
 git commit --amend -m "fixed bug v2"
 git format-patch HEAD~1
 git send-email \\
     --to amd-gfx@lists.freedesktop.org \\
     0001-fixed-bug-v2.patch`,
-            hint: 'check每一步: branchmanagement, commitmessageformat, codecheck, 收件人list, version迭代approach. ',
-            answer: '六个issue: (1)directlyin主branchmodify — shouldcreateworkbranch(git checkout -b fix/vm-bug), directlyin跟踪remote主branchoncommitwill搞乱localbranchstate. (2)git add . addallfile — may意outsidecontainnotrelatedmodify, should用 git add -p 逐blockselect. git commit -m "fixed bug" 缺少 -s flag(无 Signed-off-by), 且 commit message not符合specification: 缺少 "drm/amdgpu:" before缀, Subject 太短not够describe性, no Body explain what and why. (3)跳过 checkpatch — maintainerwillin Review in指出code风格issue并to求re-commit, 浪费双方时between. should始终insendbeforerun. (4)git format-patch 本身没issue, 但because commit message formaterror, generatepatchfile名is also无意义. (5)no Cc maintainer — 只发tomailing list, maintainermaywill notnoteto. mustuse get_maintainer.pl findmaintainer并 --cc 他们. (6)v2 nouse --subject-prefix="PATCH v2", no --in-reply-to 回复rawthread, commit message stillnotspecification, noadd v1→v2  changelog. correct做法见 Step 6 example. ',
+            hint: 'Check every step: branch management, commit message format, code inspection, recipient list, version iteration method.',
+            answer: 'Six problems: (1) Modify directly on the master branch - a working branch should be created (git checkout -b fix/vm-bug). Submitting directly on the master branch tracking the remote will mess up the local branch status. (2) git add . All files are added - they may accidentally contain irrelevant modifications and should be selected block by block with git add -p. git commit -m "fixed bug" lacks the -s flag (no Signed-off-by), and the commit message does not conform to the specification: the "drm/amdgpu:" prefix is ​​missing, the Subject is too short and not descriptive enough, and there is no Body to explain what and why. (3) Skip checkpatch - the maintainer will point out code style issues in the Review and ask for resubmission, wasting both parties\' time. Should always be run before sending. (4) There is no problem with git format-patch itself, but because the commit message is in the wrong format, the generated patch file name is also meaningless. (5) No Cc maintainer - just send to the mailing list, the maintainer may not notice. Maintainers must be found using get_maintainer.pl and --cc them. (6) v2 does not use --subject-prefix="PATCH v2", does not use --in-reply-to to reply to the original thread, the commit message is still not standardized, and the changelog of v1→v2 is not added. See the example in Step 6 for the correct approach.',
           },
           interviewQ: {
-            question: 'describe你向 Linux kernelcommitpatchcompleteprocess. how would youensurepatch质量? ',
+            question: 'Describe your complete process for submitting patches to the Linux kernel. How will you ensure patch quality?',
             difficulty: 'medium',
-            hint: 'fromcodemodifytofinalbymerge, include checkpatch, get_maintainer, format-patch, send-email, Review 迭代. ',
-            answer: 'completeprocess: (1)准备work: based on amd-staging-drm-next createworkbranch, ensureandupstreamsynchronization. (2)codemodify: 编辑code, make M=drivers/gpu/drm/amd compilationverify无警告, runrelated IGT testingconfirmfunctioncorrect且无回归. (3)commit: git add -p 逐block审查tocommitmodify(avoid意outsidecontain无关改动), git commit -s commit并add Signed-off-by. Commit message usestandardformat: Subject "drm/amdgpu: <concise description>", Body explain what and why(is not how), 必to时add Fixes: label. (4)质量check: scripts/checkpatch.pl --strict ensure 0 errors 0 warnings; scripts/get_maintainer.pl findcorrectmaintainer. (5)send: git format-patch generatepatch, git send-email sendto amd-gfx mailing list, Cc all get_maintainer 列出人. (6)Review 迭代: 认真read每条 Review 意见, modifycodeaftersend v2(use --subject-prefix and --in-reply-to), in changelog inindicateeachversion变更. (7)waitmerge: usuallymaintainerwilladd Reviewed-by/Acked-by labelaftermergeto staging branch, final流入 Linus mainline. 质量保证key: not跳过 checkpatch, commit message 写清楚 what/why, each timesendbeforeinrealhardwareontesting. ',
-            amdContext: 'in AMD interviewin, if你can说出"我already向 amd-gfx mailing listcommit过patch"并demonstratespecific commit, 这比任何interviewanswerallhas说服力. even ifisa小 typo fixalsodemonstrate你对process熟悉. ',
+            hint: 'From code modification to final merging, including checkpatch, get_maintainer, format-patch, send-email, and Review iterations.',
+            answer: 'Complete process: (1) Preparation: Create a working branch based on amd-staging-drm-next to ensure synchronization with upstream. (2) Code modification: Edit the code, make M=drivers/gpu/drm/amd, compile and verify that there are no warnings, and run the relevant IGT test to confirm that the function is correct and there are no regressions. (3) Submit: git add -p reviews the modifications to be submitted block by block (to avoid accidentally including irrelevant changes), git commit -s submits and adds Signed-off-by. Commit message uses the standard format: Subject "drm/amdgpu: <concise description>", the Body explains what and why (not how), and adds Fixes: tags if necessary. (4) Quality check: scripts/checkpatch.pl --strict ensures 0 errors and 0 warnings; scripts/get_maintainer.pl finds the correct maintainer. (5) Send: git format-patch generates the patch, git send-email sends it to the amd-gfx mailing list, Cc all people listed by get_maintainer. (6) Review iteration: Carefully read each Review opinion, modify the code and send v2 (use --subject-prefix and --in-reply-to), and explain the changes of each version in the changelog. (7) Waiting for merging: Usually the maintainer will add the Reviewed-by/Acked-by tag and then merge it into the staging branch, which will eventually flow into Linus\' main line. The key to quality assurance: do not skip checkpatch, write clearly what/why in the commit message, and test on real hardware before sending each time.',
+            amdContext: 'In an AMD interview, if you can say "I have submitted a patch to the amd-gfx mailing list" and show specific commits, this is more convincing than any interview answer. Even a small typo fix demonstrates your familiarity with the process.',
           },
         },
 
@@ -304,89 +304,89 @@ git send-email \\
         {
           id: '11-1-2',
           number: '11.1.2',
-          title: '写好 Commit Message and回应 Review',
+          title: 'Write the Commit Message and respond to the Review',
           titleEn: 'Writing Good Commit Messages & Responding to Reviews',
           duration: 15,
           difficulty: 'intermediate',
           tags: ['commit-message', 'code-review', 'Signed-off-by', 'Fixes-tag', 'etiquette'],
           concept: {
-            summary: 'Commit message 质量and对 Review 专业回应iskerneldevelopment者最important软skill. 好 commit message explain "what & why"(is not how), 遵循 "drm/amdgpu: ..."  Subject format, 并correctuse Fixes/Signed-off-by/Reviewed-by label. 回应 Review 时to逐点回复, 对has争议意见providetechnology论据. ',
+            summary: 'The quality of commit messages and professional responses to reviews are the most important soft skills for kernel developers. A good commit message explains "what & why" (not how), follows the Subject format of "drm/amdgpu: ...", and uses Fixes/Signed-off-by/Reviewed-by tags correctly. When responding to Reviews, respond point by point and provide technical arguments for controversial opinions.',
             explanation: [
-              'Commit message isyourpatch给世界第一印象. kernelmaintainer每天read数十甚至on百个patch — a模糊 commit message(如 "fix bug")willbydirectly忽略orto求重写. 好 commit message let Reviewer inreadcodebeforeunderstand你in做whatandwhy. 5 年aftermaintainerthrough git blame 看toyourcode时, commit message is他understandthiscode目unique线索. ',
-              'Subject 行format: 以subsystembefore缀开头, 如 "drm/amdgpu: fix VM page fault on TLB invalidation". for amdgpu driverdifferentmodule, before缀has细分: "drm/amdgpu: "(general), "drm/amd/display: "(display/DC module), "drm/amd/pm: "(power management), "drm/amdkfd: "(KFD/compute). Subject notexceed 75 字符(git log --oneline display宽度), 用小写开头(fix rather than Fix), not加句号. 动词用祈使句(fix, add, remove, refactor rather than fixed, adds). ',
-              'Body 部分explain两件事: What(modifywhat, observetowhatissue)and Why(whyneedthismodify, 根本causeiswhat). nottoexplain How(codehow改 — Reviewer 看 diff know). 例outside: ifmodify涉及not直观算法orhardware行as, can简toexplain How. Body 每行notexceed 75 字符, 段落between用空行分隔. ',
-              'Fixes: labelformat: Fixes: <12 位 commit hash> ("raw commit  Subject"). thislabel告诉maintainerandautomatic化tool: yourpatchfix哪个commit引入 Bug. 它by stable kernelmaintainer用判断whetherneedwillyourfix backport to stable branch. generatemethod: git log --oneline | grep "引入 bug key词", find commit, then git log --format="Fixes: %h (\"%s\")" -1 <commit-hash>. ',
-              'Signed-off-by is Developer Certificate of Origin(DCO)声明 — 你签名representthiscodeis你写(or你has权commit它), 并同意以 GPL 许canpublish. eachcontributormustadd. Reviewed-by represent某人审查code并认ascanmerge. Acked-by represent某人(usuallyissubsystemmaintainer)同意thispatch, 但mayno做detailedcode review. Tested-by represent某人inrealhardwareontestingthispatch. theselabel按时betweenorder排列in commit message 末尾. ',
-              '回应 Review 专业态度: 逐点回复每条意见(even ifis你different意); technologyonhas争议时providedataand论据(如performancetestingresult, hardware规格indicate); for你接受modify意见, inbelow一versioninimplementation并in Reply inconfirm; 永远保持礼貌 — kernel社区重视technology讨论建设性. notto认as Review 意见is人身攻击, theyisletcode变得更好process. ',
+              'The Commit message is the first impression your patch gives to the world. Kernel maintainers read dozens or even hundreds of patches every day - a vague commit message (such as "fix bug") will be ignored or required to be rewritten. A good commit message lets reviewers understand what you are doing and why before they even read the code. When the maintainer 5 years later sees your code through git blame, the commit message is his only clue to understand the purpose of this code.',
+              'Subject line format: Start with the subsystem prefix, such as "drm/amdgpu: fix VM page fault on TLB invalidation". For different modules of the amdgpu driver, the prefixes are subdivided: "drm/amdgpu: " (general), "drm/amd/display: " (display/DC module), "drm/amd/pm: " (power management), "drm/amdkfd: " (KFD/compute). Subject should not exceed 75 characters (the display width of git log --oneline), start with lowercase (fix instead of Fix), and do not add a period. Use imperative verbs (fix, add, remove, refactor instead of fixed, adds).',
+              'The Body section explains two things: What (what was modified, what problems were observed) and Why (why this modification is needed, what is the root cause). Don\'t explain how (how the code was changed - Reviewer will know by looking at the diff). Exception: If the modification involves unintuitive algorithmic or hardware behavior, a brief explanation of the How can be provided. Each line of Body should not exceed 75 characters, and paragraphs should be separated by blank lines.',
+              'Fixes: Tag format: Fixes: <12-bit commit hash> ("Subject of the original commit"). This label tells maintainers and automated tools which commit introduced your patch to fix the bug. It is used by stable kernel maintainers to determine whether your fix needs to be backported to the stable branch. Generation method: git log --oneline | grep "keywords that introduce bugs", find the commit, and then git log --format="Fixes: %h ("%s")" -1 <commit-hash>.',
+              'Signed-off-by is a Developer Certificate of Origin (DCO) statement - your signature indicates that you wrote this code (or that you have the right to submit it) and agree to release it under the GPL license. Each contributor must be added. Reviewed-by means someone reviewed the code and thought it could be merged. Acked-by means someone (usually a subsystem maintainer) agrees with the patch, but may not have done a detailed code review. Tested-by means someone tested the patch on real hardware. These tags are arranged chronologically at the end of the commit message.',
+              'Professional attitude in responding to Reviews: Reply to each opinion point by point (even if you disagree with it); provide data and arguments (such as performance test results, hardware specifications) when there is a technical dispute; implement the modifications you accept in the next version and confirm them in Reply; always remain polite - the kernel community values ​​the constructiveness of technical discussions. Don\'t think of review comments as personal attacks; they are part of the process of making the code better.',
             ],
             keyPoints: [
-              'Subject: "drm/amdgpu: <imperative verb> <concise description>", ≤75 字符',
-              'Body: explain What & Why(is not How), 每行 ≤75 字符',
-              'Fixes: label引用引入 Bug  commit, 帮助 stable backport 决策',
-              'Signed-off-by: DCO 声明(must); Reviewed-by/Acked-by/Tested-by: Review label',
-              '回应 Review: 逐点回复, technology争议provide论据, 保持建设性态度',
-              'v2 changelog 写in --- 分隔符after, indicate每版变更及提出recommended人',
+              'Subject: "drm/amdgpu: <imperative verb> <concise description>", ≤75 characters',
+              'Body: Explanation of What & Why (not How), ≤75 characters per line',
+              'Fixes: tags refer to commits that introduce bugs to help make stable backport decisions',
+              'Signed-off-by: DCO statement (required); Reviewed-by/Acked-by/Tested-by: Review tag',
+              'Response Review: Reply point by point, provide arguments for technical disputes, and maintain a constructive attitude',
+              'v2 changelog is written after the --- delimiter, describing each version change and the person who made the suggestion',
             ],
           },
           diagram: {
-            title: 'Commit Message profiling: 好 vs 差',
-            content: `Commit Message compare
+            title: 'Anatomy of Commit Message: Good vs. Bad',
+            content: `Commit Message comparison
 
-差 Commit Message
+Bad Commit Message
 ──────────────────────
 fix bug
 
 Signed-off-by: dev@email.com
 
-issue:
-├─ Subject nosubsystembefore缀
-├─ "fix bug" completelynodescribe性
-├─ no Body explainissueandcause
-├─ no Fixes: label
-└─ 5 年after看tothis commit notknow它修what
+question:
+├─ Subject has no subsystem prefix
+├─ "fix bug" is not descriptive at all
+├─ No Body to explain the problem and reasons
+├─ No Fixes: tag
+└─ I saw this commit 5 years later and I don't know what it fixed.
 
 
-好 Commit Message
+OK Commit Message
 ──────────────────────
 drm/amdgpu: fix page fault on VM unmap due to missing TLB flush
                 │                        │
-                │                        └─ 简洁describeissue
-                └─ subsystembefore缀
+│ └─ Briefly describe the problem
+└─ Subsystem prefix
 
 When unmapping pages from GPU virtual address space, the TLB
 (Translation Lookaside Buffer) was not invalidated before
 releasing the physical pages. This caused subsequent GPU memory
 accesses to hit stale page table entries, triggering:
                                                 │
-  [drm:amdgpu_vm_bo_update] *ERROR* VM fault    │ ← What: observeto现象
+  [drm:amdgpu_vm_bo_update] *ERROR* VM fault    │ ←What: observed phenomenon
   src_id:0 ring:0 vmid:3 addr:0x800100000       │
 
 The root cause is commit a1b2c3d4e5f6 which refactored the     │
-unmap path but accidentally removed the amdgpu_vm_flush() call.  │ ← Why: 根因
+unmap path but accidentally removed the amdgpu_vm_flush() call.  │ ←Why: root cause
 The fix adds back the TLB invalidation between the PTE clear    │
 and the page release, matching the sequence in the map path.    │
 
-Tested on RX 7600 XT (gfx1102) with IGT amd_basic@vm-tests.   ← testinginformation
+Tested on RX 7600 XT (gfx1102) with IGT amd_basic@vm-tests.   ←Test information
 
-Fixes: a1b2c3d4e5f6 ("drm/amdgpu: refactor VM unmap path")     ← Fixes label
-Signed-off-by: Your Name <your@email.com>                        ← DCO 签名
----                                                              ← 分隔符
+Fixes: a1b2c3d4e5f6 ("drm/amdgpu: refactor VM unmap path")     ←Fixes Tag
+Signed-off-by: Your Name <your@email.com>                        ←DCO signature
+---                                                              ←delimiter
 v2: Move TLB flush before mutex_unlock per Christian's review    ← v2 changelog
-v1: https://lore.kernel.org/amd-gfx/original-message-id/        ← v1 linking
+v1: https://lore.kernel.org/amd-gfx/original-message-id/        ←v1 link
 
-Review labelinmerge时由maintaineradd:
+Review tags are added by the maintainer when merging:
 Reviewed-by: Christian König <christian.koenig@amd.com>
 Acked-by: Alex Deucher <alexander.deucher@amd.com>`,
-            caption: '好 commit message let Reviewer in看codebeforeunderstandissueandplan. Fixes label帮助 stable backport, changelog 帮助跟踪迭代. ',
+            caption: 'A good commit message allows Reviewers to understand the problem and solution before looking at the code. The Fixes tag helps with the stable backport, and the changelog helps track iterations.',
           },
           codeWalk: {
-            title: 'Review 回应示范对话',
+            title: 'Sample dialogue for Review response',
             file: 'amd-gfx mailing list thread',
             language: 'text',
-            code: `# 这isa虚构但typical amd-gfx Review 对话
+            code: `#This is a fictional but typical amd-gfx Review conversation
 
 # ═══════════════════════════════════════════════
-# v1: yourrawpatch
+#v1: your original patch
 # ═══════════════════════════════════════════════
 From: You <your@email.com>
 Subject: [PATCH] drm/amdgpu: fix use-after-free in VM fault handler
@@ -403,7 +403,7 @@ Signed-off-by: You <your@email.com>
  1 file changed, 5 insertions(+), 3 deletions(-)
 
 # ═══════════════════════════════════════════════
-# Review 1: Christian König (资深 Reviewer)
+#Review 1: Christian König (Senior Reviewer)
 # ═══════════════════════════════════════════════
 From: Christian König <christian.koenig@amd.com>
 
@@ -421,7 +421,7 @@ Also, what happens if amdgpu_vm_handle_fault() returns
 an error? We should still call unref in that case.
 
 # ═══════════════════════════════════════════════
-# your回应 (专业, specific, 感谢recommended)
+#Your response (professional, specific, thanks for the suggestion)
 # ═══════════════════════════════════════════════
 From: You <your@email.com>
 
@@ -449,7 +449,7 @@ out_unref:
 Will send v2 shortly. Thanks for the review!
 
 # ═══════════════════════════════════════════════
-# v2: according to Review 意见modify
+#v2: Modified according to Review opinions
 # ═══════════════════════════════════════════════
 From: You <your@email.com>
 Subject: [PATCH v2] drm/amdgpu: fix use-after-free in VM fault handler
@@ -465,33 +465,33 @@ v2:
  - Fix reference leak on error path (Christian)
 
 # ═══════════════════════════════════════════════
-# Review 2: through!
+#Review 2: Passed!
 # ═══════════════════════════════════════════════
 From: Christian König <christian.koenig@amd.com>
 Reviewed-by: Christian König <christian.koenig@amd.com>`,
             annotations: [
-              'v1  commit message 清晰explainissue(use-after-free), cause(并发 eviction)andplan(reference counting)',
-              'Reviewer 指出two改进点: use DRM core API anderrorpathhandle — 这istypical高质量 Review',
-              'your回应逐点回复每条意见, 对 API recommendedrepresent同意, 对errorpathprovidespecificfixplan',
-              'v2  changelog recordeach变更及recommended者名字 — 这iskernel社区礼貌',
-              'Reviewed-by label由 Reviewer in回复in给出, is not你selfadd',
-              'entireprocessmay跨越 2-3 天 — 耐心iskerneldevelopment者美德',
+              'The commit message of v1 clearly explains the problem (use-after-free), the cause (concurrent eviction) and the solution (reference counting)',
+              'Reviewers pointed out two improvements: use of DRM core API and error path handling - this is typical of high-quality reviews',
+              'Your response addresses each comment point by point, agrees with the API suggestion, and provides specific fixes for the error path',
+              'The v2 changelog records each change and the name of the proposer - this is courtesy of the kernel community',
+              'The Reviewed-by tag is given by the Reviewer in the reply, not added by you yourself',
+              'The entire process may span 2-3 days - patience is a kernel developer virtue',
             ],
-            explanation: 'this对话demonstratekernel Review 理想pattern: Reviewer 指出specifictechnologyissue(is not人身攻击), development者认真回应并modify(is not辩解or忽略), final达成technology共识. note v2 changelog in感谢 Reviewer approach — in括号in写名字. 这种专业沟通abilityandyourtechnologyability一样important. ',
+            explanation: 'This conversation shows the ideal model of kernel review: the reviewer points out specific technical issues (not personal attacks), the developers respond seriously and modify them (not excuse or ignore), and finally reach a technical consensus. Note the way to thank Reviewers in the v2 changelog - write their names in parentheses. This professional communication skill is just as important as your technical skills.',
           },
           miniLab: {
-            title: 'practice写 Commit Message andsimulate Review',
-            objective: '针对a假设 bug fix, practice写出高质量 commit message, 并practice回应 Review 意见. ',
+            title: 'Practice writing Commit Message and simulate Review',
+            objective: 'Practice writing a high-quality commit message for a hypothetical bug fix, and practice responding to review comments.',
             steps: [
-              'scenario假设: 你fix amdgpu_gmc.c ina bug — VRAM sizereport比actual少 256MB, causeisnocontain firmware reserve区size. ',
-              '写出complete commit message(Subject + Body + Fixes + Signed-off-by), saveto ~/practice_commit_msg.txt',
-              '自我 Review: check Subject whether ≤75 字符, whether以 "drm/amdgpu:" 开头, Body whetherexplain What and Why',
-              'simulate Review 意见: "incompute VRAM size时, need考虑to SR-IOV environmentbelow firmware reserve区sizedifferent情况. "',
-              '写出你对这条 Review 意见回复',
-              '写出 v2  commit message(include changelog)',
-              'compareyour commit message andon面图表in"好例子" — 差距in哪inside? ',
+              'Scenario: You fix a bug in amdgpu_gmc.c - the VRAM size reported is 256MB less than the actual size because the size of the firmware reserved area is not included.',
+              'Write out the complete commit message (Subject + Body + Fixes + Signed-off-by) and save it to ~/practice_commit_msg.txt',
+              'Self-Review: Check whether the Subject is ≤75 characters, whether it starts with "drm/amdgpu:", and whether the Body explains What and Why',
+              'Simulation Review Comment: "When calculating the VRAM size, you need to take into account the different sizes of the firmware reserved area in the SR-IOV environment."',
+              'Write your reply to this Review',
+              'Write the commit message of v2 (including changelog)',
+              'Compare your commit message to the "good example" in the chart above - what\'s the gap?',
             ],
-            expectedOutput: `# 参考答案 (yourmaydifferent, keyisformatand内容质量)
+            expectedOutput: `#Reference answer (yours may be different, the key is format and content quality)
 
 Subject: drm/amdgpu: include fw reserved VRAM in total size report
 
@@ -508,13 +508,13 @@ physical VRAM size visible in the GPU specification.
 
 Fixes: def456 ("drm/amdgpu: reserve VRAM for firmware")
 Signed-off-by: Your Name <your@email.com>`,
-            hint: '好 commit message 特征: aoutside部人(not解yourcodemodify)读完 Subject and Body know发生what, whyneedfix. ',
+            hint: 'Characteristics of a good commit message: An outsider (who doesn\'t know your code changes) will know what happened and why it needs to be fixed after reading the Subject and Body.',
           },
           debugExercise: {
-            title: 'fixerror Commit Message',
+            title: 'Fix wrong Commit Message',
             language: 'text',
-            description: 'below commit message has多处not符合kernelspecificationissue. findallissue并改正. ',
-            question: 'this commit message haswhichformatand内容issue? 重写acorrectversion. ',
+            description: 'The following commit message has many issues that do not comply with the kernel specifications. Find any problems and correct them.',
+            question: 'What are the format and content issues with this commit message? Rewrite a correct version.',
             buggyCode: `Fix the SDMA bug that was causing issues on the new GPU.
 
 I changed the register offset from 0x1234 to 0x1238 because the
@@ -522,88 +522,88 @@ old one was wrong. Also fixed a typo in the comment nearby.
 
 Signed-off-by: developer <dev@company.com>
 Fixes: some old commit`,
-            hint: 'check Subject format(before缀, size写, 长度), Body 内容(what vs how), Fixes labelformat, andwhethershouldwilltwodifferentmodify放in同apatchin. ',
-            answer: 'issue清单: (1)Subject 缺少subsystembefore缀 — shouldis "drm/amdgpu: fix SDMA register offset for ...". (2)Subject 以大写字母开头 — should小写 "fix". (3)Subject 太笼统 — "bug that was causing issues" nodescribespecificissue. (4)Body explain How("changed the register offset from 0x1234 to 0x1238")rather than Why — shouldexplainwhy旧offset量is错(如"hardware规格书勘误"or"RDNA3 改变register布局"). (5)Fixes labelformatcompletelyerror — shouldis Fixes: <12位hash> ("raw Subject"), 而is not "some old commit". (6)willtwodifferentmodify(registerfix + typo fix)放in同apatchin — kernelspecificationto求eachpatch只做一件事(One logical change per patch). should拆分astwoindependentpatch. correctversion: Subject: drm/amdgpu: fix SDMA doorbell offset on RDNA3. Body: "The SDMA doorbell register offset was incorrect for RDNA3 GPUs (gfx11). The hardware reference manual (v4.2, Table 3.7) specifies offset 0x1238 for SDMA0_DOORBELL, but the driver used 0x1234 which was the GCN5 offset. This caused SDMA ring timeouts on RX 7600 XT." + independent typo fixpatch. ',
+            hint: 'Check the Subject format (prefix, case, length), Body content (what vs how), Fixes tag format, and whether two different modifications should be placed in the same patch.',
+            answer: 'Problem list: (1) Subject is missing subsystem prefix - it should be "drm/amdgpu: fix SDMA register offset for ...". (2) Subject starts with a capital letter - "fix" should be lowercase. (3) Subject is too general - "bug that was causing issues" does not describe the specific problem. (4) Body explained How ("changed the register offset from 0x1234 to 0x1238") rather than Why - it should explain why the old offset is wrong (such as "hardware specification errata" or "RDNA3 changed the register layout"). (5) The Fixes tag format is completely wrong - it should be Fixes: <12-bit hash> ("original Subject"), not "some old commit". (6) Put two different modifications (register fix + typo fix) in the same patch - the kernel specification requires that each patch only do one thing (One logical change per patch). Should be split into two separate patches. Correct version: Subject: drm/amdgpu: fix SDMA doorbell offset on RDNA3. Body: "The SDMA doorbell register offset was incorrect for RDNA3 GPUs (gfx11). The hardware reference manual (v4.2, Table 3.7) specifies offset 0x1238 for SDMA0_DOORBELL, but the driver used 0x1234 which was the GCN5 offset. This caused SDMA ring timeouts on RX 7600 XT." + independent typo fix.',
           },
           interviewQ: {
-            question: 'akernel commit message shouldcontainwhatinformation? explain Signed-off-by, Reviewed-by and Fixes label含义. ',
+            question: 'What information should a kernel commit message contain? Explain the meaning of the Signed-off-by, Reviewed-by, and Fixes tags.',
             difficulty: 'easy',
-            hint: 'from Subject format, Body  What/Why, and各个label法律andtechnology含义角度answer. ',
-            answer: 'Commit message structure: (1)Subject 行: 以subsystembefore缀开头(如 "drm/amdgpu:"), 用祈使句简洁describemodify(≤75 字符), 小写字母开头, not加句号. (2)空行. (3)Body: detailedexplain What(modifywhat, observetowhatissue)and Why(whyneedthismodify, 根本causeiswhat). notexplain How — diff alreadydemonstratecodemodify. 每行 ≤75 字符. (4)labelregion: Fixes: <hash> ("subject") — 引用引入 bug raw commit, by stable maintainer用判断whetherneed backport to stable branch. thislabeluse git log formatautomaticgenerate. Signed-off-by: Name <email> — Developer Certificate of Origin (DCO) 声明. 签名者声明codeisself写(orhas权commit), 并同意以kernelopen-source许can证publish. eachcontributormustadd. Reviewed-by: Name <email> — 某人审查code并认ascanmerge. 比 Acked-by 更强 — 意味着 Reviewer 逐行checkcode. Acked-by: Name <email> — 某人同意thismodify方向, 但mayno做detailedcode review. usually由subsystemmaintainer给出. Tested-by: Name <email> — 某人inrealhardwareontestingpatch, confirm它resolveissue且no引入回归. ',
-            amdContext: 'thisissuein AMD interviewin属于basics题 — if你连 commit message formatallnot熟悉, interviewerwill质疑你whetherhas过kerneldevelopmentexperience. 但反过, if你can流畅地answer并举出selfcommitpatch作as例子, 这willis强has力加分项. ',
+            hint: 'Answer from the perspective of Subject format, Body What/Why, and the legal and technical meaning of each tag.',
+            answer: 'Commit message structure: (1) Subject line: Start with the subsystem prefix (such as "drm/amdgpu:"), use an imperative sentence to briefly describe the modification (≤75 characters), start with a lowercase letter, and do not add a period. (2) Blank line. (3) Body: Explain in detail What (what was modified, what problems were observed) and Why (why this modification is needed, what is the root cause). No explanation of the How - the diff already shows the code modification. ≤75 characters per line. (4) Tag area: Fixes: <hash> ("subject") - refers to the original commit that introduced the bug, and is used by stable maintainers to determine whether backport to the stable branch is needed. This tag is automatically generated using the git log format. Signed-off-by: Name <email> — Developer Certificate of Origin (DCO) statement. The signer declares that he or she wrote the code (or has the right to submit it) and agrees to release it under the kernel\'s open source license. Each contributor must be added. Reviewed-by: Name <email> — Someone reviewed the code and thought it could be merged. Stronger than Acked-by - means the Reviewer checked the code line by line. Acked-by: Name <email> — Someone agrees with the direction of the change, but may not have done a detailed code review. Usually given by the subsystem maintainer. Tested-by: Name <email> — Someone tested the patch on real hardware and confirmed that it solved the problem and introduced no regressions.',
+            amdContext: 'This question is a basic question in AMD interviews - if you are not familiar with the commit message format, the interviewer will question whether you have any experience in kernel development. But conversely, if you can answer fluently and give examples of patches you submitted, this will be a strong bonus.',
           },
         },
       ],
     },
 
     // ════════════════════════════════════════════════════════════
-    // Group 11.2: career发展
+    // Group 11.2: Career Development
     // ════════════════════════════════════════════════════════════
     {
       id: '11-2',
       number: '11.2',
-      title: 'career发展',
+      title: 'career development',
       titleEn: 'Career Development',
       icon: 'Rocket',
-      description: 'will你in本课程in积累skillandproject转化ascareer优势 — build引人注目engineer Portfolio, 深入解 AMD teamstructureandinterviewprocess. ',
+      description: 'Turn the skills and projects you develop in this course into a career advantage—build a compelling engineering portfolio and gain insight into AMD\'s team structure and interview process.',
       lessons: [
         // ── Lesson 11.2.1 ──────────────────────────────────────
         {
           id: '11-2-1',
           number: '11.2.1',
-          title: 'buildyour AMD engineer Portfolio',
+          title: 'Build your AMD Engineer Portfolio',
           titleEn: 'Building Your AMD Engineer Portfolio',
           duration: 15,
           difficulty: 'beginner',
           tags: ['portfolio', 'GitHub', 'blog', 'LinkedIn', 'career'],
           concept: {
-            summary: 'a精心build Portfolio is你technologyability公开proof — for GPU driverthis小众领域, acontainkernelpatch, driveranalyze文章, IGT testing用例and本learn平台completerecord Portfolio 比任何resumedescribeallhas说服力. 本节教你howbuildalet AMD hiring经理印象深刻 Portfolio. ',
+            summary: 'A carefully constructed portfolio is a public proof of your technical ability - for the niche field of GPU driver, a portfolio that includes kernel patches, driver analysis articles, IGT test cases and completion records of this learning platform is more convincing than any resume description. This section teaches you how to build a portfolio that will impress AMD hiring managers.',
             explanation: [
-              'GPU driverdevelopmentisa高度专业化领域 — 全球mayonly几千人in做thiswork. this meanshiring经理in评估candidate时, 非常看重canverifytechnologyability. a公开 Portfolio let他们candirectly看toyourcode质量, technologyunderstand深度andlearnability, 而notneeddependencyinterviewin口头describe. ',
-              'Portfolio core内容应include: (1)kernelpatchrecord — linkingto你in amd-gfx mailing listonpatch(even ifis typo fixalsodemonstrate你熟悉patchprocess). use lore.kernel.org 搜索your邮箱addressfindall公开patch. (2)amdgpu source codeanalyze — selectdriverasubsystem(如 VM management, GFX ring, power management), 写一篇深入analyze文章, demonstrate你对codeunderstand. (3)IGT testing用例 — 你as amdgpu writetestingcode, demonstrateyourtesting思维and C programmingability. (4)本learn平台completerecord — allmodulelearn笔记and lab complete情况. ',
-              'technology博客isdemonstrate深度understand最佳approach. recommended博客平台: GitHub Pages(免费, andyour GitHub 关联), 个人域名博客(更专业), or Medium/知乎(if你goalisin文受众). 博客文章structure: issuedescribe → related背景 → source codeanalyze(附带code片段and注释)→ experimentverify → 总结. 一篇高质量 amdgpu source codeanalyze文章may比 10 篇普通technology文章更has价值. ',
-              'LinkedIn optimization: Headline directly写goalposition(如 "GPU Driver Engineer | Linux Kernel | AMD amdgpu"); Summary 突出yourkernelcontributionanddriver知识; Experience in列出your open source contributions(even ifisinlearnstage). usekey词let AMD hiring人员can搜索to你: Linux kernel, DRM, amdgpu, GPU driver, Mesa, VRAM management, KMS 等. ',
-              'GitHub repository组织: createa专门 "gpu-driver-portfolio" repository, contain README(概述yourskillandproject), patches/(你commitkernelpatch副本), analysis/(source codeanalyze文章), tests/(你写 IGT testing), notes/(learn笔记). README isthisrepository最important部分 — 它ishiring经理第一印象. ',
+              'GPU driver development is a highly specialized field - there are probably only a few thousand people working on it worldwide. This means hiring managers place a premium on verifiable technical abilities when evaluating candidates. A public portfolio allows them to directly see your code quality, depth of technical understanding, and learning ability without having to rely on verbal descriptions in interviews.',
+              'The core content of the portfolio should include: (1) Kernel patch records - links to your patches on the amd-gfx mailing list (even typo fixes demonstrate your familiarity with the patching process). Use lore.kernel.org to search your email address to find all public patches. (2) amdgpu source code analysis - select a subsystem of the driver (such as VM management, GFX ring, power management) and write an in-depth analysis article to show your understanding of the code. (3) IGT test case - the test code you wrote for amdgpu, showing your testing thinking and C programming capabilities. (4) Completion records of this learning platform - study notes and lab completion status of all modules.',
+              'Technical blogs are the best way to demonstrate deep understanding. Recommended blogging platforms: GitHub Pages (free, tied to your GitHub), personal domain blog (more professional), or Medium/Zhihu (if you target a Chinese audience). The structure of the blog post: problem description → related background → source code analysis (with code snippets and comments) → experimental verification → summary. A high-quality amdgpu source code analysis article may be more valuable than 10 ordinary technical articles.',
+              'LinkedIn optimization: Headline directly writes the target position (such as "GPU Driver Engineer | Linux Kernel | AMD amdgpu"); Summary highlights your kernel contributions and driver knowledge; Experience lists your open source contributions (even in the learning stage). Use keywords to make yourself searchable by AMD recruiters: Linux kernel, DRM, amdgpu, GPU driver, Mesa, VRAM management, KMS, etc.',
+              'GitHub repository organization: Create a dedicated "gpu-driver-portfolio" repository, including README (overview of your skills and projects), patches/ (copies of kernel patches you submitted), analysis/ (source code analysis articles), tests/ (IGT tests you wrote), notes/ (study notes). The README is the most important part of this repository – it\'s the hiring manager\'s first impression.',
             ],
             keyPoints: [
-              'Portfolio 比resumedescribe更has说服力 — GPU driver领域重视canverifytechnologyability',
-              'core内容: kernelpatch + amdgpu source codeanalyze + IGT testing + learnrecord',
-              'technology博客: select amdgpu asubsystem深入analyze, 一篇质量 > 十篇count',
-              'LinkedIn optimization: Headline containgoalkey词, let AMD hiring人员can搜to你',
-              'GitHub repositorystructure化组织, README is第一印象',
-              'lore.kernel.org 搜索your邮箱canfindall公开mailing listcontribution',
+              'A portfolio is more persuasive than a resume description - the GPU driver field values ​​verifiable technical abilities',
+              'Core content: kernel patch + amdgpu source code analysis + IGT test + learning record',
+              'Technology Blog: Select a subsystem of amdgpu for in-depth analysis, the quality of one article > the quantity of ten articles',
+              'LinkedIn Optimization: Headline includes targeted keywords so AMD recruiters can search for you',
+              'Structured organization of GitHub warehouse, README is the first impression',
+              'lore.kernel.org Search your inbox to find all public mailing list contributions',
             ],
           },
           diagram: {
-            title: '理想 GPU driverengineer Portfolio structure',
-            content: `Portfolio 内容architecture
+            title: 'The ideal portfolio structure for GPU driver engineers',
+            content: `Portfolio content architecture
 
 GitHub: github.com/yourname
-├── gpu-driver-portfolio/           ★ 主 Portfolio repository
-│   ├── README.md                   ← 概述, skill总结, linking索引
-│   ├── patches/                    ← yourkernelpatch副本
+├── gpu-driver-portfolio/ ★ Main Portfolio repository
+│   ├── README.md                   ←Overview, skill summary, link index
+│   ├── patches/                    ←A copy of your kernel patch
 │   │   ├── 0001-fix-vm-tlb.patch
 │   │   └── 0002-add-igt-test.patch
-│   ├── analysis/                   ← source code深度analyze
-│   │   ├── amdgpu-vm-subsystem.md  ← "amdgpu VM subsystemsource codeanalyze"
-│   │   └── gfx-ring-buffer.md     ← "GFX Ring Buffer workprinciple"
-│   ├── tests/                      ← 你writetestingcode
-│   │   └── amd_vram_stress.c      ← IGT VRAM 压力testing
-│   └── learning-notes/             ← modulelearn笔记
+│   ├── analysis/                   ←In-depth source code analysis
+│   │   ├── amdgpu-vm-subsystem.md  ←"Amdgpu VM subsystem source code analysis"
+│   │   └── gfx-ring-buffer.md     ←"How GFX Ring Buffer works"
+│   ├── tests/                      ←Test code you wrote
+│   │   └── amd_vram_stress.c      ←IGT VRAM stress test
+│   └── learning-notes/             ←Module study notes
 │       ├── module05-amdgpu-init.md
 │       └── module07-display.md
 │
-├── linux/ (fork)                   ← Linux kernel fork
-│   └── (yourpatchbranch)               containyourcodemodify
+├── linux/ (fork)                   ←Linux kernel fork
+│ └── (your patch branch) contains your code changes
 │
 └── igt-gpu-tools/ (fork)           ← IGT fork
-    └── (yourtestingbranch)               contain你写testing
+└── (your test branch) contains the tests you wrote
 
-博客 (blog.yourname.com or GitHub Pages)
-├── "深入 amdgpu VM subsystem: frompage tableto TLB"
-├── "用 ftrace tracingonce GPU Hang completeprocess"
-├── "我第akernelpatch: from typo to Reviewed-by"
-└── "RDNA3 GFX Ring Buffer completely指南"
+Blog (blog.yourname.com or GitHub Pages)
+├── "A Deep Dive into the amdgpu VM Subsystem: From Page Tables to TLB"
+├── "Use ftrace to track the complete process of a GPU Hang"
+├── "My first kernel patch: from typo to Reviewed-by"
+└── "RDNA3 GFX Ring Buffer Complete Guide"
 
 LinkedIn Profile
 ┌─────────────────────────────────────────────┐
@@ -623,12 +623,12 @@ LinkedIn Profile
 │ • Technical blog on GPU driver internals    │
 └─────────────────────────────────────────────┘
 
-mailing listrecord (can公开verify)
+Mailing list records (publicly verifiable)
 lore.kernel.org/amd-gfx/?q=your@email.com
 ├── [PATCH] drm/amdgpu: fix comment typo
 ├── [PATCH v2] drm/amdgpu: add IGT VRAM stress test
-└── (eachpatchallis你ability公开proof)`,
-            caption: 'Portfolio eachcomponentfromdifferent角度demonstrateyourability: patchdemonstrateprocess熟练度, analyzedemonstrateunderstand深度, testingdemonstrate质量意识, 博客demonstrate沟通ability. ',
+└── (Each patch is a public proof of your ability)`,
+            caption: 'Each component of the portfolio demonstrates your capabilities from a different perspective: patches demonstrate process proficiency, analysis demonstrates depth of understanding, tests demonstrate quality awareness, and blogs demonstrate communication skills.',
           },
           codeWalk: {
             title: 'Portfolio README template',
@@ -677,8 +677,8 @@ Processor reading from the GFX ring buffer.
 
 ## Technical Blog Posts
 
-- example: 深入 amdgpu VM subsystem: frompage tableto TLB(替换asyourreal博客linking)
-- example: 我第akernelpatch之旅(替换asyourreal博客linking)
+- Example: A deep dive into the amdgpu VM subsystem: from page tables to TLB (replace with your real blog link)
+- Example: My journey to my first kernel patch (replace with your real blog link)
 
 ## Skills & Tools
 
@@ -696,27 +696,27 @@ Hardware:   RDNA3 (Navi33), RDNA2, PCIe, MMIO, VRAM
 - [Linux Kernel Development](link) — self-study curriculum
 \`\`\``,
             annotations: [
-              'README 开头directlyindicate你is谁, 你willwhat — hiring经理时betweenhas限',
-              'kernelpatch表格带 lore.kernel.org linking — let任何人allcanverifyyourcontribution',
-              'source codeanalyzeselectspecificsubsystem — demonstrate深度understandrather than浅尝辄止',
-              'IGT testingdemonstrateyour质量意识 — not只is写code, stillknowhowtesting',
-              'Skills 部分usekey词 — 帮助 ATS(Applicant Tracking System)matchyourresume',
-              '博客linkingdemonstrateyour沟通ability — canthecomplextechnologyexplain清楚',
+              'Start your README by stating directly who you are and what you do – hiring managers have limited time',
+              'Kernel patch form with link to lore.kernel.org - allows anyone to verify your contribution',
+              'Source code analysis selects specific subsystems - demonstrating deep understanding rather than just scratching the surface',
+              'IGT testing demonstrates your quality awareness - not just writing code, but knowing how to test it',
+              'Use keywords in the Skills section - help ATS (Applicant Tracking System) match your resume',
+              'Blog links demonstrate your communication skills - being able to explain complex technologies clearly',
             ],
-            explanation: 'this README templateisyour Portfolio "首页". hiring经理usually只花 30 秒浏览a GitHub Profile — your README needin这 30 秒内let他看to: 你haskernelpatchexperience, 你understanddriverinternalimplementation, 你hastestingability. eachlinkingall指向can深入verify内容. ',
+            explanation: 'This README template is the "home page" of your portfolio. Hiring managers usually only spend 30 seconds browsing a GitHub Profile - your README needs to show him within these 30 seconds: you have kernel patching experience, you understand the driver internal implementation, and you have the ability to test. Each link leads to content that can be verified in depth.',
           },
           miniLab: {
-            title: 'startbuildyour Portfolio',
-            objective: 'create Portfolio repositorybasicsstructure, 并complete第a内容 — 你in本课程学to知识总结. ',
+            title: 'Start building your portfolio',
+            objective: 'Create the infrastructure for a portfolio repository and complete the first section - a summary of what you learned in this course.',
             steps: [
-              'in GitHub oncreaterepository: gpu-driver-portfolio(Public, 带 README)',
-              '克隆tolocal: git clone https://github.com/<yourname>/gpu-driver-portfolio.git',
-              'createdirectorystructure: mkdir -p patches analysis tests learning-notes',
-              '编辑 README.md — 参考the abovetemplate, 填入yourrealinformation(even ifpatchlist暂时as空)',
-              '写第一篇learn笔记: in learning-notes/ belowcreatea你最感兴趣module总结',
-              'if你already写 IGT testing(Module 10), willcodecopyto tests/ directory',
-              'commit并推送: git add . && git commit -m "Initial portfolio structure" && git push',
-              'in LinkedIn  Featured 部分addyour Portfolio repositorylinking',
+              'Create a repository on GitHub: gpu-driver-portfolio (Public, with README)',
+              'Clone to local: git clone https://github.com/<yourname>/gpu-driver-portfolio.git',
+              'Create the directory structure: mkdir -p patches analysis tests learning-notes',
+              'Edit README.md - refer to the template above and fill in your real information (even if the patch list is temporarily empty)',
+              'Write your first study note: Create a summary of the module you are most interested in under learning-notes/',
+              'If you have already written IGT tests (Module 10), copy the code into the tests/ directory',
+              'Commit and push: git add . && git commit -m "Initial portfolio structure" && git push',
+              'Add a link to your portfolio repository in the Featured section of LinkedIn',
             ],
             expectedOutput: `$ tree gpu-driver-portfolio/
 gpu-driver-portfolio/
@@ -732,13 +732,13 @@ gpu-driver-portfolio/
 
 $ git log --oneline
 abc1234 Initial portfolio structure`,
-            hint: 'notto等to Portfolio "完美"only thenpublish — 先createbasicsstructure, theninlearnprocessin逐步add内容. ahasreallearn轨迹 Portfolio 比a精心wrapper但空洞更has价值. ',
+            hint: 'Don\'t wait until your portfolio is "perfect" before launching it – create the infrastructure first and then add content as you learn. A portfolio with a real learning trajectory is more valuable than one that is well packaged but empty.',
           },
           debugExercise: {
-            title: '评估一份 GPU driverengineerresume',
+            title: 'Evaluate a GPU Driver Engineer Resume',
             language: 'text',
-            description: 'belowis一份job application AMD GPU driverpositionresume摘to. find它优缺点, 并提出改进recommended. ',
-            question: '这份resumehaswhat好地方andneed改进地方? howlet它对 AMD hiring经理更has吸引力? ',
+            description: 'The following is a summary of a resume applying for an AMD GPU driver position. Find out its strengths and weaknesses and make suggestions for improvements.',
+            question: 'What is good about this resume and what needs improvement? How do you make it more attractive to AMD hiring managers?',
             buggyCode: `Resume Summary:
 "Experienced software engineer with 3 years in C/C++
 development. Familiar with Linux and open source."
@@ -757,15 +757,15 @@ BS Computer Science, University of XYZ, 2022
 Projects:
 - Personal website (React + Node.js)
 - Todo app (Flutter)`,
-            hint: 'from AMD hiring经理角度看 — 他in找what? kernelexperience? driver知识? canverifycontribution? 这份resumecananswertheseissue吗? ',
-            answer: '优点: (1)has 3 年 C/C++ experience — GPU driverbasics语言. (2)has OpenGL applicationdevelopmentexperience — indicate接触过graphics领域. 缺点and改进: (1)Summary 太泛 — "Familiar with Linux and open source" 对 GPU driverpositionno区分度. 改进: 明确提to GPU driver, kernel module, DRM 等key词. (2)"Familiar with GPU concepts" 太模糊 — what概念? VRAM management? command submission? shadercompilation? 改进: 列出specifictechnology知识点. (3)"Interested in kernel development" is致命缺陷 — for GPU driverposition, "感兴趣"远远not够. 改进: demonstrate行动 — read过 amdgpu source code(whichmodule), commit过patch(linking), 写过analyze文章(linking). (4)Skills listcontainnotrelatedtechnology(Java, Flutter, Docker, AWS) — 稀释core竞争力. 改进: 突出relatedskill: C(kernel), DRM/KMS, amdgpu, IGT, ftrace, libdrm. (5)Projects andpositioncompletelynotrelated — React 网站and Todo app notcandemonstrate任何driverdevelopmentability. 改进: 替换as GPU driverrelatedproject: amdgpu source codeanalyze, IGT testing用例, kernelpatch. ',
+            hint: 'Look at it from the AMD hiring manager\'s perspective – what is he looking for? Kernel experience? Driving knowledge? Verifiable contribution? Does this resume answer these questions?',
+            answer: 'Advantages: (1) 3 years of experience in C/C++ - the basic language for GPU drivers. (2) Have experience in OpenGL application development - indicating that you have been exposed to the graphics field. Disadvantages and improvements: (1) Summary is too general - "Familiar with Linux and open source" does not differentiate between GPU driver positions. Improvement: Explicitly mention keywords such as GPU driver, kernel module, and DRM. (2) "Familiar with GPU concepts" is too vague - what concept? VRAM management? Order submission? Shader compilation? Improvement: List specific technical knowledge points. (3) "Interested in kernel development" is a fatal flaw - for GPU driver positions, "interested" is not enough. Improvement: Show actions - read amdgpu source code (which modules), submitted patches (link), and wrote analysis articles (link). (4) The Skills list contains irrelevant technologies (Java, Flutter, Docker, AWS) - diluting core competencies. Improvement: Highlight related skills: C (kernel), DRM/KMS, amdgpu, IGT, ftrace, libdrm. (5) Projects are completely irrelevant to the position - React website and Todo app cannot demonstrate any driver development capabilities. Improvement: Replaced with GPU driver related projects: amdgpu source code analysis, IGT test cases, kernel patches.',
           },
           interviewQ: {
-            question: '你做过whichand GPU driverrelatedprojectorcontribution? 请specificdescribe. ',
+            question: 'What projects or contributions have you done related to GPU drivers? Please describe it in detail.',
             difficulty: 'easy',
-            hint: '准备 2-3 个specific例子: akernelpatch(demonstratecodeability), asource codeanalyze(demonstrateunderstand深度), atestingproject(demonstrate质量意识). ',
-            answer: '示范answer(according to本课程learn内容): (1)kernelpatchcontribution: 我向 amd-gfx mailing listcommit [specificpatch], fix amdgpu driverin [specificissue]. patch经过两轮 Review afterbymergeto amd-staging-drm-next. inthisprocessin, 我学willkernelpatchcommitprocess(checkpatch, format-patch, send-email)and专业 Review 回应approach. (2)amdgpu source code深入analyze: 我深入analyze amdgpu  VM subsystem, from amdgpu_vm_init to GPU page tableupdatecompleteprocess. 我theanalyzeresult写成一篇technology博客文章, 附带source code引用andexecuteprocess图. 这帮助我understand GPU virtualmemory managementand CPU coredifference. (3)IGT testingwrite: 我as amdgpu writea VRAM allocation压力testing(amd_vram_stress.c), contain正面testing(各种sizeallocation)and负面testing(invalidparameterhandle), and 1000 次allocation/release压力testingdetectmemoryleak. thistestingalreadycommitto IGT repository. each例子allhas公开linkingcanverify — 这is我 Portfolio core价值. ',
-            amdContext: 'in AMD interviewin, "specificdescribe"意味着interviewer期望听tospecificcode, specificfile, specificissue — 而is not泛泛"我学过driver". 准备好随时in屏幕on打开your GitHub demonstratecode. ',
+            hint: 'Prepare 2-3 concrete examples: a kernel patch (demonstrates code prowess), a source code analysis (demonstrates depth of understanding), and a test project (demonstrates quality awareness).',
+            answer: 'Model answers (based on the learning content of this course): (1) Kernel patch contribution: I submitted [specific patch] to the amd-gfx mailing list to fix [specific issue] in the amdgpu driver. The patch is merged into amd-staging-drm-next after two rounds of review. In this process, I learned the kernel patch submission process (checkpatch, format-patch, send-email) and professional Review response methods. (2) In-depth analysis of amdgpu source code: I conducted an in-depth analysis of the VM subsystem of amdgpu, from amdgpu_vm_init to the complete process of GPU page table update. I wrote the analysis results into a technical blog article, with source code references and execution flow charts. This helped me understand the core differences between GPU virtual memory management and CPU. (3) IGT test writing: I wrote a VRAM allocation stress test (amd_vram_stress.c) for amdgpu, which contains positive tests (allocations of various sizes) and negative tests (invalid parameter processing), as well as 1000 allocation/release stress tests to detect memory leaks. This test has been submitted to the IGT repository. Every example has a public link to verify it – a core value of my portfolio.',
+            amdContext: 'In an AMD interview, "specific description" means that the interviewer expects to hear specific code, specific files, and specific questions-not a general "I have learned drivers." Be prepared to have your GitHub demo code open on your screen at any time.',
           },
         },
 
@@ -773,39 +773,39 @@ Projects:
         {
           id: '11-2-2',
           number: '11.2.2',
-          title: 'AMD interview准备',
+          title: 'AMD interview preparation',
           titleEn: 'AMD Interview Preparation',
           duration: 15,
           difficulty: 'beginner',
           tags: ['AMD', 'interview', 'career', 'STAR', 'salary'],
           concept: {
-            summary: 'AMD  GPU driverengineerinterviewcontaintechnology深度考察and行asinterview两部分. differentteam(Display/3D/Compute/PM/Toolchain)考察重点different. 本节detailedanalyze AMD teamstructure, commoninterview题型, STAR 行asinterview法and薪资range, 帮助你做出has针对性准备. ',
+            summary: 'AMD\'s GPU driver engineer interview consists of two parts: technical in-depth examination and behavioral interview. Different teams (Display/3D/Compute/PM/Toolchain) have different inspection focuses. This section analyzes AMD\'s team structure, common interview questions, STAR behavioral interview method and salary range in detail to help you make targeted preparations.',
             explanation: [
-              'AMD  GPU driverdevelopmentmain集inintwo地点: 加拿大 Markham(多伦多附近, AMD 总部之一)andin国on海(AMD on海研发in心). two办公室allhascompletedriverteam. Markham teamscale更大, is amdgpu drivercoredevelopment基地. on海team近年快速扩张, especiallyindisplay(DC)andcompute(KFD/ROCm)方向. ',
-              'teamstructureandinterview重点: (1)Display Team(displayteam)— responsible for DC(Display Core)module, handlepatternset(KMS), HDMI/DP output, HDR, FreeSync/VRR. interview重点: DRM KMS API, atomic commit, CRTC/Plane/Connector 概念, 色彩management, VBlank and Page Flip. Alex Deucher and Harry Wentland isthisteamkey人物. (2)3D/Graphics Team(graphicsteam)— responsible for GFX enginerelatedcode: command submission(CS), Ring Buffer management, GPU scheduling(scheduler), VM(virtual memory)management. interview重点: PM4 command packet, Ring Buffer workprinciple, GPU schedulingstrategy, TLB management. Christian König isthis领域专家. (3)Compute/KFD Team(computeteam)— responsible for KFD(Kernel Fusion Driver)and ROCm support: HSA(Heterogeneous System Architecture)queue, GPU computescheduling, SVM(Shared Virtual Memory). interview重点: GPU compute模型, HSA architecture, GPUVM, processbetween GPU 隔离. (4)Power Management Team(power managementteam)— responsible for SMU(System Management Unit)driver, DVFS(dynamic调频调压), 电源statemanagement. interview重点: GPU 电源state(D0/D3), frequency/电压调节, thermal throttling. (5)Toolchain/Infra Team(toolchain/basics设施team)— responsible for CI system, testingframework, buildsystem, firmwaretool. interview重点: CI architecture, IGT framework, kernelbuildsystem, automatic化testingstrategy. ',
-              'technologyinterviewusuallycontain: (1)basics知识 — Linux kernelbasics(memory management, processscheduling, interrupt handling, locking mechanism), C 语言深度(pointer运算, memoryalignment, volatile/const 语义, 位operate). (2)GPU driver知识 — DRM/KMS framework, amdgpu driverarchitecture, IP Block 概念, 你in Portfolio indemonstrateproject深度追问. (3)systemdesign/debugging — 给你a GPU hang  dmesg loglet你analyze根因, designa新driverfunction, analyze一段has bug kernelcode. (4)编码 — usuallyis not LeetCode 算法题, but ratherkernel风格 C code: implementationalinked listoperate, 写a ioctl handler, analyze一段hasrace conditionconditioncode. ',
-              '行asinterviewuse STAR method(Situation-Task-Action-Result): (1)Situation: describe背景andchallenge; (2)Task: yourspecific任务; (3)Action: 你采取行动; (4)Result: generateresultand学to教训. commonissue: describeonce你debuggingcomplex bug 经历, 你howhandletechnology分歧, 你howlearn新technology领域. even ifyour例子is not自 GPU driver(but rather自otherdevelopment经历), demonstratesystem化思维process比specific领域更important. ',
-              '薪资参考(2024-2025 年, 仅供参考, actual因level/experience/地点different而异): Markham(加拿大)— Junior/New Grad: CAD 80-100K, Mid-level (3-5 yrs): CAD 110-140K, Senior (5-10 yrs): CAD 140-180K+. on海(in国)— Junior: RMB 25-35W/年(含奖金), Mid-level: RMB 35-55W/年, Senior: RMB 55-80W/年. 美国(ifhas Remote or US position)— Junior: USD 100-130K, Mid-level: USD 130-170K, Senior: USD 170-220K+. these数字notcontain RSU(股票奖励)and年终奖金. AMD 股票激励近年价值can观. ',
+              'AMD\'s GPU driver development is mainly concentrated in two locations: Markham, Canada (near Toronto, one of AMD\'s headquarters) and Shanghai, China (AMD Shanghai R&D Center). Both offices have full driver teams. The Markham team is larger and is the core development base for amdgpu drivers. The Shanghai team has expanded rapidly in recent years, especially in the display (DC) and computing (KFD/ROCm) directions.',
+              'Team structure and interview focus: (1) Display Team - Responsible for the DC (Display Core) module, processing mode settings (KMS), HDMI/DP output, HDR, FreeSync/VRR. Interview focus: DRM KMS API, atomic commit, CRTC/Plane/Connector concepts, color management, VBlank and Page Flip. Alex Deucher and Harry Wentland are key figures on this team. (2) 3D/Graphics Team—Responsible for GFX engine-related code: command submission (CS), Ring Buffer management, GPU scheduling (scheduler), and VM (virtual memory) management. Interview focus: PM4 command package, Ring Buffer working principle, GPU scheduling strategy, TLB management. Christian König is an expert in this field. (3) Compute/KFD Team - Responsible for KFD (Kernel Fusion Driver) and ROCm support: HSA (Heterogeneous System Architecture) queue, GPU computing scheduling, SVM (Shared Virtual Memory). Interview focus: GPU computing model, HSA architecture, GPUVM, inter-process GPU isolation. (4) Power Management Team - Responsible for SMU (System Management Unit) driver, DVFS (Dynamic Frequency and Voltage Regulation), and power status management. Interview focus: GPU power state (D0/D3), frequency/voltage adjustment, thermal throttling. (5) Toolchain/Infra Team—Responsible for CI system, test framework, build system, and firmware tools. Interview focus: CI architecture, IGT framework, kernel build system, automated testing strategy.',
+              'Technical interviews usually include: (1) Basic knowledge - Linux kernel basics (memory management, process scheduling, interrupt handling, locking mechanism), C language depth (pointer operations, memory alignment, volatile/const semantics, bit operations). (2) GPU driver knowledge - DRM/KMS framework, amdgpu driver architecture, IP Block concept, in-depth questioning of the projects you display in your portfolio. (3) System design/debugging - Give you a GPU hang dmesg log to allow you to analyze the root cause, design a new driver function, and analyze a buggy kernel code. (4) Coding - usually not LeetCode algorithm questions, but kernel-style C code: implementing a linked list operation, writing an ioctl handler, and analyzing a piece of code with race conditions.',
+              'Behavioral interviews use the STAR method (Situation-Task-Action-Result): (1) Situation: describe the background and challenges; (2) Task: your specific task; (3) Action: the action you took; (4) Result: the results produced and lessons learned. Frequently Asked Questions: Describe a time when you debugged a complex bug, how you handled technical differences, and how you learned about new technology areas. Even if your examples don\'t come from GPU drivers (but from other development experiences), it\'s more important to demonstrate a systematic thought process than a specific domain.',
+              'Salary reference (2024-2025, for reference only, actual varies by level/experience/location): Markham (Canada) — Junior/New Grad: CAD 80-100K, Mid-level (3-5 yrs): CAD 110-140K, Senior (5-10 yrs): CAD 140-180K+. Shanghai (China) - Junior: RMB 25-35W/year (including bonus), Mid-level: RMB 35-55W/year, Senior: RMB 55-80W/year. United States (if there are Remote or US positions) - Junior: USD 100-130K, Mid-level: USD 130-170K, Senior: USD 170-220K+. These figures do not include RSUs (stock awards) and year-end bonuses. AMD\'s stock incentives have been worth considerable value in recent years.',
             ],
             keyPoints: [
-              'AMD driverteam: Display / 3D-Graphics / Compute-KFD / Power-Management / Toolchain',
-              'main地点: 加拿大 Markham(core)andin国on海(快速扩张)',
-              'technologyinterview: kernelbasics + GPU driver知识 + systemdesign/debugging + C 编码',
-              '行asinterview: STAR method(Situation-Task-Action-Result)',
-              '编码考察iskernel风格 C code, is not LeetCode 算法题',
-              'canverifyopen-sourcecontribution(kernelpatch)is最has力job applicationproof',
+              'AMD driver team: Display / 3D-Graphics / Compute-KFD / Power-Management / Toolchain',
+              'Key locations: Markham, Canada (core) and Shanghai, China (rapid expansion)',
+              'Technical interview: Kernel basics + GPU driver knowledge + system design/debugging + C coding',
+              'Behavioral Interviewing: STAR Method (Situation-Task-Action-Result)',
+              'The coding test is kernel-style C code, not LeetCode algorithm questions',
+              'Verifiable open source contributions (kernel patches) are the most powerful proof of employment',
             ],
           },
           diagram: {
-            title: 'AMD GPU driverteamstructureandinterview重点矩阵',
-            content: `AMD GPU driverteamstructure
+            title: 'AMD GPU driver team structure and interview focus matrix',
+            content: `AMD GPU driver team structure
 
 ┌─────────────────────────────────────────────────────────────┐
 │                    AMD GPU Driver Division                    │
 │                                                              │
 │  Markham (Canada)                Shanghai (China)            │
 │  ─────────────────               ────────────────            │
-│  主力developmentteam                    快速扩张in                   │
+│ Main development team is rapidly expanding │
 │  Alex Deucher (Lead)             Display & Compute focus     │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
@@ -822,7 +822,7 @@ Projects:
 │  └──────────┴──────────┴──────────┴─────────┴──────────┘   │
 └─────────────────────────────────────────────────────────────┘
 
-interview考察重点矩阵
+Interview focus matrix
 ─────────────────
 
           │ C/Kernel │ DRM/KMS  │ GPU Arch │ Debugging │ Testing
@@ -833,36 +833,36 @@ Compute   │  ★★★★  │  ★★      │  ★★★★★ │  ★★�
 Power Mgmt│  ★★★★  │  ★★      │  ★★★★   │  ★★★    │ ★★
 Toolchain │  ★★★    │  ★★      │  ★★      │  ★★★    │ ★★★★★
 
-★ = 考察深度 (1-5)
+★ = Depth of investigation (1-5)
 
-interviewprocess (typical)
+Interview process (typical)
 ────────────────
 Round 1: Phone Screen (45 min)
-  → basicstechnology + project经历
-  → C 语言 + kernelbasicsissue
+→ Basic technology + project experience
+→ C language + kernel basic issues
 
 Round 2: Technical Deep Dive (60 min × 2)
-  → twotechnology面, 分别侧重different方面
-  → GPU driver知识 + systemdesign/debugging
+→ Two technical aspects, each focusing on different aspects
+→ GPU driver knowledge + system design/debugging
 
 Round 3: Behavioral (45 min)
-  → STAR method, team协作, learnability
+→ STAR method, teamwork, learning ability
 
 Round 4: Hiring Manager (30 min)
-  → careergoal, teammatch度`,
-            caption: 'differentteaminterview重点different — in准备时, according to你感兴趣teamhas针对性地深入learn. Display team重 KMS, 3D team重 GPU architecture, Compute team重 HSA/ROCm. ',
+→ Career goals, team fit`,
+            caption: 'Different teams have different interview priorities - when preparing, study in depth based on the team you are interested in. The Display team focuses on KMS, the 3D team focuses on GPU architecture, and the Compute team focuses on HSA/ROCm.',
           },
           codeWalk: {
-            title: 'analyzeareal AMD hiringpositionto求',
+            title: 'Analyze a real AMD recruitment job requirement',
             file: 'AMD Job Posting Analysis',
             language: 'text',
             code: `# =====================================================
-# real AMD hiringpositionanalyze (based on公开information, 综合multipleposition)
-# position: GPU Kernel Driver Engineer
-# 地点: Markham, ON, Canada / Shanghai, China
+#Analysis of real AMD recruitment positions (based on public information, integrating multiple positions)
+#Position: GPU Kernel Driver Engineer
+#Location: Markham, ON, Canada / Shanghai, China
 # =====================================================
 
-# --- Job Description (原文摘to) ---
+#--- Job Description (original summary) ---
 "We are looking for a GPU Kernel Driver Engineer to work
 on AMD's open-source Linux GPU driver stack. You will
 develop and maintain the amdgpu kernel driver, collaborate
@@ -870,107 +870,107 @@ with upstream Linux kernel community, and work closely
 with hardware teams to enable new GPU features."
 
 # --- Required Qualifications ---
-# 逐条analyze你in本课程in学towhat
+#A point-by-point analysis of what you learned in this course
 
 1. "BS/MS in Computer Science or Electrical Engineering"
-   → 学历to求, 大多数positionto求本科or硕士
+→ Education requirements, most positions require a bachelor's or master's degree
 
 2. "3+ years experience in C programming"
-   → 本课程allcodepracticealluse C
-   → 重点: pointer, memory management, 位operate, kernel编码风格
-   ✓ Module 0-11 all Code Walk and Lab
+→ All coding exercises in this course are in C
+→ Focus: pointers, memory management, bit operations, kernel coding style
+✓ All Code Walks and Labs for Module 0-11
 
 3. "Experience with Linux kernel development"
-   → 本课程core内容
-   ✓ Module 0: developmentenvironment搭建
-   ✓ Module 10: KUnit and kselftest
-   ✓ Module 11: patchcommitprocess
+→ Core content of this course
+✓ Module 0: Development environment setup
+✓ Module 10: KUnit and kselftest
+✓ Module 11: Patch submission process
 
 4. "Knowledge of GPU architecture and graphics pipeline"
-   → 本课程overwrite
-   ✓ Module 1: GPU hardwarearchitecture (RDNA3)
-   ✓ Module 2: shaderandgraphics pipeline
-   ✓ Module 3: commandhandle器and Ring Buffer
+→ This course covers
+✓ Module 1: GPU hardware architecture (RDNA3)
+✓ Module 2: Shaders and Graphics Pipeline
+✓ Module 3: Command Processor and Ring Buffer
 
 5. "Familiarity with DRM/KMS framework"
-   → 本课程overwrite
-   ✓ Module 4: DRM coreframework
-   ✓ Module 7: KMS anddisplaymanagement
+→ This course covers
+✓ Module 4: DRM core framework
+✓ Module 7: KMS and display management
 
-# --- Preferred Qualifications (加分项) ---
+#--- Preferred Qualifications (bonus points) ---
 
 6. "Upstream Linux kernel contributions"
-   → yourpatchrecord!
-   ✓ Module 11: patchwork流, 你in amd-gfx commit
+→ Your patch record!
+✓ Module 11: Patch workflow, your commit in amd-gfx
 
 7. "Experience with GPU memory management (TTM, GEM)"
-   ✓ Module 5: amdgpu memory management
-   ✓ Module 6: TTM and Buffer Object
+✓ Module 5: amdgpu memory management
+✓ Module 6: TTM and Buffer Object
 
 8. "Experience with GPU power management"
-   ✓ Module 9: power managementand SMU
+✓ Module 9: Power Management and SMU
 
 9. "Familiarity with GPU testing (IGT)"
-   ✓ Module 10: IGT frameworkandtestingwrite
+✓ Module 10: IGT framework and test writing
 
 10. "Good communication skills for upstream collaboration"
-    ✓ Module 11: Review 回应andmailing list沟通
+✓ Module 11: Review responses and mailing list communication
 
-# --- your优势总结 ---
+#--- Summary of your advantages ---
 #
-# if你complete本课程allmodule:
-# Required: overwrite 5/5 ✓
-# Preferred: overwrite 5/5 ✓ (假设你alsocommitpatch)
+#If you complete all modules of this course:
+#Required: Coverage 5/5 ✓
+#Preferred: Coverage 5/5 ✓ (assuming you also submit a patch)
 #
-# key差异化因素:
-# 1. canverify amd-gfx patchcontribution
-# 2. 公开 Portfolio (analyze文章 + testingcode)
-# 3. 对 amdgpu driverarchitecture深入understand
+#Key differentiators:
+#1. Verifiable amd-gfx patch contribution
+#2. Public Portfolio (analysis articles + test code)
+#3. In-depth understanding of amdgpu driver architecture
 #
-# theseis大多数candidatenot具备 — your竞争优势`,
+#These are things most candidates don't have — your competitive advantages`,
             annotations: [
-              '大多数 AMD driverpositionto求 3+ 年 C experience — 但质量比年限更important',
-              '"Linux kernel development" notto求你iskernelmaintainer — haspatchcontributionexperience足够',
-              '"GPU architecture" 知识through本课程cansystem获得',
-              'Preferred qualifications in每一项allis本课程amodule',
-              '"Upstream contributions" is最强差异化因素 — 大多数candidateno',
-              'complete本课程并haspatchrecord, 你already满足几乎allto求',
+              'Most AMD driver jobs require 3+ years of C experience - but quality matters more than years',
+              '"Linux kernel development" does not require you to be a kernel maintainer - experience in patch contribution is sufficient',
+              '"GPU architecture" knowledge can be systematically acquired through this course',
+              'Each of the Preferred qualifications is a module of this course',
+              '"Upstream contributions" are the strongest differentiator - most candidates don\'t have them',
+              'By completing this course and having a patch record, you have met almost all the requirements',
             ],
-            explanation: '这份analyzedemonstrate本课程andreal AMD positionto求精确mapping. each Required and Preferred qualification allcorresponding课程inaormultiplemodule. key洞察: 大多数candidatehas C programmingexperience, 但很少has人hasrealkernelpatchcontribution — 这is你最大差异化机will. ',
+            explanation: 'This analysis demonstrates the precise mapping of this course to real AMD job requirements. Each Required and Preferred qualification corresponds to one or more modules in the course. Key Insight: Most candidates have C programming experience, but few have real kernel patch contributions - your biggest differentiation opportunity.',
           },
           miniLab: {
-            title: 'simulate AMD technologyinterview',
-            objective: '用本课程in学to知识, completeoncesimulate AMD GPU driverengineertechnologyinterview. ',
+            title: 'Mock AMD technical interview',
+            objective: 'Use the knowledge you learned in this course to complete a simulated AMD GPU driver engineer technical interview.',
             steps: [
-              '计时 45 分钟, independentanswerbelow 5 个interview题(not看答案)',
-              '题 1(basics): explain GPU driverin Linux systemin作用, amdgpu drivermainsubsystemhaswhich? ',
-              '题 2(DRM/KMS): whatis DRM Atomic Commit? explain CRTC, Plane and Connector relationship. ',
-              '题 3(debugging): when你看to dmesg in出现 "[drm:amdgpu_job_timedout] *ERROR* ring gfx_0.0.0 timeout", how would youdebugging? 列出before 5 步. ',
-              '题 4(编码): 手写asimple ioctl handler, receiveuser space传入 buffer addressandsize, verifyparametervalid性, 并will其mappingto GPU virtualaddress space(伪codei.e.can). ',
-              '题 5(行as): use STAR methoddescribeonce你resolvecomplextechnologyissue经历. ',
-              'completeafter, 回顾你in各题in表现, markneed加强领域',
-              '针对薄弱领域, 回tocorresponding课程module复习',
+              'Time 45 minutes to answer the following 5 interview questions independently (without looking at the answers)',
+              'Question 1 (Basics): Explain the role of the GPU driver in the Linux system. What are the main subsystems of the amdgpu driver?',
+              'Question 2 (DRM/KMS): What is DRM Atomic Commit? Explain the relationship between CRTC, Plane and Connector.',
+              'Question 3 (Debugging): When you see "[drm:amdgpu_job_timedout] *ERROR* ring gfx_0.0.0 timeout" appearing in dmesg, how will you debug it? List the first 5 steps.',
+              'Question 4 (Coding): Handwrite a simple ioctl handler to receive the buffer address and size passed in from user space, verify the validity of the parameters, and map it to the GPU virtual address space (pseudocode is enough).',
+              'Question 5 (Behavior): Use the STAR method to describe a time when you solved a complex technical problem.',
+              'Once completed, review your performance on each question and mark areas that need improvement.',
+              'For weak areas, return to the corresponding course module to review',
             ],
-            expectedOutput: `simulateinterview自评表:
+            expectedOutput: `Mock interview self-evaluation form:
 
-题目                    自评        need复习module
+Topics Self-Assessment Modules that require review
 ─────────────────────   ─────       ─────────────
-1. GPU driver角色          ★★★★☆     Module 0, 5
+1. GPU driver role ★★★★☆ Module 0, 5
 2. DRM Atomic Commit    ★★★☆☆     Module 4, 7
-3. GPU Hang debugging        ★★★★☆     Module 5, 10
-4. ioctl handler 编码   ★★★☆☆     Module 4, 5
-5. STAR 行asinterview        ★★★★★     N/A
+3. GPU Hang Debugging ★★★★☆ Module 5, 10
+4. ioctl handler coding ★★★☆☆ Module 4, 5
+5. STAR Behavioral Interview ★★★★★ N/A
 
-整体准备度: 75%
-重点补强: DRM/KMS 深度 + 编码practice`,
-            hint: 'interviewin最importantisdemonstrateyour思维process — even if答案not完美, 清晰analyze思路alsowill给interviewer留below好印象. not确定地方说"我not确定, 但我will这样思考...", 比沉默or瞎猜好得多. ',
+Overall readiness: 75%
+Key enhancements: DRM/KMS depth + coding exercises`,
+            hint: 'The most important thing in an interview is to show your thought process - even if the answer is not perfect, a clear analysis will leave a good impression on the interviewer. Where you are unsure, it is much better to say "I\'m not sure, but I would think like this..." than to remain silent or make blind guesses.',
           },
           debugExercise: {
-            title: 'analyzeinterview编码题inrace conditioncondition',
+            title: 'Analyzing race conditions in interview coding questions',
             language: 'c',
-            description: 'belowisa简化 ioctl handler, handleuser spacerequestallocation GPU buffer. interviewerlet你find其in并发securityissue. ',
-            question: 'this ioctl handler haswhat并发securityissue? in多threadscenariobelowwill发生what? howfix? ',
-            buggyCode: `/* 简化 GPU buffer allocation ioctl handler */
+            description: 'The following is a simplified ioctl handler that handles user space requests to allocate GPU buffers. The interviewer asks you to identify the concurrency security issues.',
+            question: 'What are the concurrency security issues with this ioctl handler? What happens in a multi-threaded scenario? How to fix it?',
+            buggyCode: `/*Simplified GPU buffer allocation ioctl handler */
 static int amdgpu_gem_create_ioctl(struct drm_device *dev,
                                     void *data,
                                     struct drm_file *filp)
@@ -980,24 +980,24 @@ static int amdgpu_gem_create_ioctl(struct drm_device *dev,
     struct amdgpu_bo *bo;
     int ret;
 
-    /* checkwhetherhas足够 VRAM */
+    /*Check if there is enough VRAM */
     if (args->in.bo_size > adev->gmc.vram_available) {
-        /* BUG: vram_available incheckandallocation之betweenmay改变 */
+        /*BUG: vram_available may change between check and allocation */
         return -ENOMEM;
     }
 
-    /* allocation buffer */
+    /*allocate buffer */
     ret = amdgpu_bo_create(adev, args->in.bo_size, 0,
                             AMDGPU_GEM_DOMAIN_VRAM,
                             0, NULL, &bo);
     if (ret)
         return ret;
 
-    /* updateavailable VRAM */
+    /*Update available VRAM */
     adev->gmc.vram_available -= args->in.bo_size;
-    /* BUG: 非atomic operation, twothreadmaymeanwhile读-改-写 */
+    /*BUG: Non-atomic operation, two threads may read-modify-write at the same time */
 
-    /* create GEM handle return给user space */
+    /*Create GEM handle and return to user space */
     ret = drm_gem_handle_create(filp, &bo->tbo.base,
                                  &args->out.handle);
     if (ret) {
@@ -1008,28 +1008,28 @@ static int amdgpu_gem_create_ioctl(struct drm_device *dev,
 
     return 0;
 }`,
-            hint: '思考twothreadmeanwhilecallthis ioctl 时时序: TOCTOU(Time of Check to Time of Use)issueand非atomic read-modify-write. ',
-            answer: 'two并发securityissue: (1)TOCTOU(Time-of-Check-Time-of-Use)race condition: thread A check vram_available > bo_size(condition满足), thread B in A checkafter, allocationbeforealsocheck并allocation大量 VRAM, cause A actualallocation时 VRAM alreadynot足 — 但 A 认ascheckalreadythrough. 这maycause过度allocation VRAM. fix: willcheckandallocation放in同a锁protectregion内, ornotdependency预check, let amdgpu_bo_create internalhandle ENOMEM. (2)非atomic read-modify-write: adev->gmc.vram_available -= args->in.bo_size is notatomic operation. twothreadmaymeanwhilereadsame vram_available 值, 各自减self bo_size, then写回 — wherea减法will丢失. for example: available=1000MB, A allocation 200MB, B allocation 300MB, correctresultshouldis 500MB, 但may变成 700MB or 800MB. fixplan: (a)use mutex protectentirecheck-allocation-update序列: mutex_lock(&adev->gmc.vram_lock); check → allocation → update; mutex_unlock(). (b)use atomic64_t 替代普通variable: atomic64_sub(bo_size, &adev->gmc.vram_available). (c)actual amdgpu driveruse TTM frameworkmanagement VRAM, TTM internalalreadyhandlethese并发issue — notneed手动维护 vram_available count器. interviewin最佳answer: 指出twoissue, 给出锁plan, then提toactualdriveristhrough TTM resolve. ',
+            hint: 'Think about the timing when two threads call this ioctl at the same time: TOCTOU (Time of Check to Time of Use) problem and non-atomic read-modify-write.',
+            answer: 'Two concurrency security issues: (1) TOCTOU (Time-of-Check-Time-of-Use) race condition: Thread A checks vram_available > bo_size (condition is met), thread B also checks and allocates a large amount of VRAM after A checks but before allocating, resulting in insufficient VRAM when A actually allocates - but A thinks the check has passed. This can lead to overcommitment of VRAM. Fix: Put check and allocation in the same lock-protected region, or don\'t rely on precheck and let amdgpu_bo_create handle ENOMEM internally. (2) Non-atomic read-modify-write: adev->gmc.vram_available -= args->in.bo_size is not an atomic operation. Two threads might simultaneously read the same vram_available value, each subtract their own bo_size, and write back - one of the subtractions would be lost. For example: available=1000MB, A allocates 200MB, B allocates 300MB, the correct result should be 500MB, but it may become 700MB or 800MB. Fixes: (a) Use mutex to protect the entire check-allocate-update sequence: mutex_lock(&adev->gmc.vram_lock); check → allocate → update; mutex_unlock(). (b) Use atomic64_t instead of ordinary variables: atomic64_sub(bo_size, &adev->gmc.vram_available). (c) The actual amdgpu driver uses the TTM framework to manage VRAM, and TTM already handles these concurrency issues internally - no need to manually maintain the vram_available counter. Best answer in the interview: Point out two problems, give the lock solution, and then mention that the actual driver is solved through TTM.',
           },
           interviewQ: {
-            question: 'why你想add AMD 做 GPU driverdevelopment? 你对 AMD 哪个team最感兴趣? ',
+            question: 'Why do you want to join AMD for GPU driver development? Which team at AMD are you most excited about?',
             difficulty: 'easy',
-            hint: 'demonstrate你对 AMD open-sourcestrategyunderstandandyourtechnology热情. 提tospecificteam(如 Display or 3D/GFX)and你感兴趣technology方向. ',
-            answer: '示范answer: 我想add AMD 做 GPU driverdevelopmentbased on三个cause: (1)technologychallenge — GPU driveris我所知最complexsystem软件之一, needmeanwhileunderstandhardwarearchitecture, operatesystemkernelandapplicationlayer需求. amdgpu driver 400 万行codeinhas太多值得深入technologyissue, frommemory managementto电源optimizationtodisplay control. (2)open-source文化 — AMD isuniquecompletelyopen-source GPU driverstack厂商. this means我caninaddbeforereadcode, commitpatch, 参and社区讨论. 我alreadythrough amd-gfx mailing listcommit [specificpatch], 体验this社区technology水平and协作氛围. (3)team偏好 — 我对 3D/Graphics team最感兴趣, especially GPU virtualmemory managementandcommand submissionsubsystem. inlearn amdgpu source codeprocessin, 我by VM subsystemdesign所吸引 — GPU page tablemanagementand TLB optimization涉及system级思维is我最享受technologychallenge. 我in Portfolio in VM subsystemanalyze文章demonstrate我对this领域深入understand. ',
-            amdContext: 'thisissue几乎一定willin AMD interview行as面环节by问to. keyisdemonstrate你not只is"找一份work" — 你对 GPU driverhas真正热情, moreover你already用行动proof(patch, analyze, learnrecord). 提tospecificteamindicate你做调研, is not海投resume. ',
+            hint: 'Demonstrate your understanding of AMD\'s open source policies and your passion for technology. Mention specific teams (such as Display or 3D/GFX) and technical directions that interest you.',
+            answer: 'Model answer: I want to join AMD to do GPU driver development for three reasons: (1) Technical challenges - GPU drivers are one of the most complex system software I know and require a simultaneous understanding of hardware architecture, operating system kernel and application layer requirements. There are too many technical issues worth digging into in the amdgpu driver\'s 4 million lines of code, from memory management to power optimization to display control. (2) Open source culture - AMD is the only manufacturer that fully open source its GPU driver stack. This means I can read the code, submit patches, and participate in community discussions before joining. I\'ve submitted [specific patches] via the amd-gfx mailing list and experienced the technical level and collaborative atmosphere of this community. (3) Team preference - I am most interested in the 3D/Graphics team, specifically the GPU virtual memory management and command submission subsystem. In the process of learning the amdgpu source code, I was attracted by the design of the VM subsystem - the system-level thinking involved in GPU page table management and TLB optimization are the technical challenges I enjoy most. My VM subsystem analysis article in Portfolio demonstrates my deep understanding of this area.',
+            amdContext: 'This question will almost certainly be asked during the behavioral portion of an AMD interview. The key is to show that you\'re not just "looking for a job" - you have a real passion for GPU drivers, and you\'ve proven it with actions (patches, analysis, learning records). Mentioning a specific team shows that you have done research, not an overseas investment resume.',
           },
         },
       ],
     },
   ],
   completionChecklist: [
-    'mastercompletekernelpatchwork流: format-patch → checkpatch → get_maintainer → send-email',
-    'can写出符合kernelspecification commit message(Subject + Body + Fixes + Signed-off-by)',
-    'understand Review process, can专业地回应 Review 意见并send v2 version',
-    '建立公开 GPU driverengineer Portfolio(GitHub + 博客 + LinkedIn)',
-    '解 AMD teamstructure(Display/3D/Compute/PM/Toolchain)and各teamtechnology重点',
-    'completesimulateinterviewpractice, markneed加强领域',
-    '向 amd-gfx mailing listcommitat leastapatch(even ifis typo fix)',
-    '准备好 2-3 个specificproject/contributioncanininterviewindetaileddescribe',
+    'Master the complete kernel patch workflow: format-patch → checkpatch → get_maintainer → send-email',
+    'Able to write commit messages that comply with kernel specifications (Subject + Body + Fixes + Signed-off-by)',
+    'Understand the review process, be able to respond to review comments professionally and send v2 version',
+    'Established a public GPU driver engineer portfolio (GitHub + Blog + LinkedIn)',
+    'Understand AMD\'s team structure (Display/3D/Compute/PM/Toolchain) and the technical focus of each team',
+    'Completed mock interview exercises and marked areas for improvement',
+    'Submitted at least one patch (even a typo fix) to the amd-gfx mailing list',
+    'Be prepared with 2-3 specific projects/contributions that can be described in detail during the interview',
   ],
 };
