@@ -1,6 +1,6 @@
 // ============================================================
 // AMD Linux Driver Learning Platform - Module 7 Micro-Lessons (English)
-// Module 7: ROCm Kernel Interface (ROCm kernelinterface KFD)
+// Module 7: ROCm Kernel Interface
 // 4 lessons in 2 groups, ~15-20 min each, total ~70 min
 // ============================================================
 import type { MicroLessonModule } from './micro_lesson_types';
@@ -9,87 +9,87 @@ export const module7MicroLessonsEn: MicroLessonModule = {
   moduleId: 'rocm-kernel',
   groups: [
     // ════════════════════════════════════════════════════════════
-    // Group 7.1: HSA architectureand KFD basics
+    // Group 7.1: HSA Architecture and KFD Basics
     // ════════════════════════════════════════════════════════════
     {
       id: '7-1',
       number: '7.1',
-      title: 'HSA architectureand KFD basics',
+      title: 'HSA Architecture and KFD Basics',
       titleEn: 'HSA Architecture & KFD Basics',
       icon: 'Zap',
-      description: 'understand HSA 异构computestandard, KFD in amdgpu in角色, /dev/kfd devicenode运作mechanism, and KFD and传统 DRM interfacecore差异. ',
+      description: 'Understand the HSA heterogeneous computing standard, the role of KFD in amdgpu, how the /dev/kfd device node operates, and the core differences between KFD and traditional DRM interfaces.',
       lessons: [
         // ── Lesson 7.1.1 ──────────────────────────────────────
         {
           id: '7-1-1',
           number: '7.1.1',
-          title: 'HSA architectureand KFD 概述',
+          title: 'HSA Architecture and KFD Overview',
           titleEn: 'HSA Architecture & KFD Overview',
           duration: 18,
           difficulty: 'advanced',
           tags: ['HSA', 'KFD', 'ROCm', '/dev/kfd', 'kfd_process', 'chardev'],
           concept: {
-            summary: 'HSA(Heterogeneous System Architecture)is一种异构computestandard, define CPU and GPU howshared memoryand协作execute. KFD(Kernel Fusion Driver)is amdgpu driverinimplementation HSA kernelinterface子module, through /dev/kfd devicenode暴露computeability, and传统 DRM renderinginterface /dev/dri/renderD128 形成互补. ',
+            summary: 'HSA (Heterogeneous System Architecture) is a heterogeneous computing standard that defines how CPUs and GPUs share memory and collaborate for execution. KFD (Kernel Fusion Driver) is a submodule in the amdgpu driver that implements the HSA kernel interface. It exposes computing capabilities through the /dev/kfd device node and complements the traditional DRM rendering interface /dev/dri/renderD128.',
             explanation: [
-              'HSA 由 HSA Foundation 制定(AMD is创始成员), 其core理念is: CPU and GPU notagainis"主fromrelationship", but rather平等compute代理(Agent). in HSA 模型in, CPU and GPU shared同avirtualaddress space(Shared Virtual Memory), GPU candirectlyaccess CPU memory页, 反之亦然. 这消除传统 GPGPU programminginexplicit cudaMemcpy 需求 — datanotneedin CPU and GPU 之between手动copy. ',
-              'KFD is HSA in Linux kernelinimplementation, code位于 drivers/gpu/drm/amd/amdkfd/ directory. 它is notaindependentdriver, but rather amdgpu driver子module. KFD through /dev/kfd character devicenode向user space暴露 HSA function. ROCm run时(libhsa-runtime64.so)through ioctl call KFD createcomputequeue, allocation GPU memory, managementsemaphore等. ',
-              'understand KFD and DRM interfacedifference至关important. DRM interface(/dev/dri/card0, renderD128)面向graphicsrenderingandgeneral GPU access — Mesa radeonsi/radv through它commitrenderingcommand. KFD interface(/dev/kfd)专门面向 HSA compute — ROCm/HIP through它commitcompute任务. 两者inkernelin共用 amdgpu driver底layerhardwareaccesslayer, 但usedifferentcommandformat(DRM 用 PM4, KFD 用 AQL), differentqueuetype(DRM 用 GFX Ring, KFD 用 Compute Queue), differentmemory模型(DRM 用 GEM/TTM, KFD still额outsidesupport SVM). ',
-              'KFD lifecyclemanagement围绕 kfd_process structure体展开. whenuser spaceprocess第oncethrough ioctl access /dev/kfd 时, KFD as该processcreatea kfd_process 实例, wherecontainprocess GPU resource(queue, memory mapping, event). thisstructure体贯穿entire KFD subsystem, isunderstand KFD codecoredata structure. kfd_process 持has该processinall GPU on kfd_process_device list — each GPU correspondinga kfd_process_device, whererecord该processin这block GPU on doorbell mapping, queuelistandaddress space ID(PASID). ',
+              'HSA was formulated by the HSA Foundation (AMD is a founding member). Its core concept is that the CPU and GPU are no longer a "master-slave relationship" but equal computing agents. In the HSA model, the CPU and GPU share the same virtual address space (Shared Virtual Memory), and the GPU can directly access the CPU\'s memory pages, and vice versa. This eliminates the need for explicit cudaMemcpy in traditional GPGPU programming - data does not need to be manually copied between CPU and GPU.',
+              'KFD is the implementation of HSA in the Linux kernel, and the code is located in the drivers/gpu/drm/amd/amdkfd/ directory. It is not an independent driver, but a submodule of the amdgpu driver. KFD exposes HSA functionality to user space through the /dev/kfd character device node. The ROCm runtime (libhsa-runtime64.so) calls KFD through ioctl to create calculation queues, allocate GPU memory, manage semaphores, etc.',
+              'It is important to understand the difference between KFD and DRM interfaces. The DRM interface (/dev/dri/card0, renderD128) is for graphics rendering and general GPU access - Mesa radeonsi/radv submits rendering commands through it. The KFD interface (/dev/kfd) is specifically for HSA calculations - ROCm/HIP submits calculation tasks through it. The two share the underlying hardware access layer of the amdgpu driver in the kernel, but use different command formats (DRM uses PM4, KFD uses AQL), ​​different queue types (DRM uses GFX Ring, KFD uses Compute Queue), and different memory models (DRM uses GEM/TTM, KFD additionally supports SVM).',
+              'KFD\'s life cycle management revolves around the kfd_process structure. When a userspace process first accesses /dev/kfd via an ioctl, KFD creates a kfd_process instance for the process, which contains the process\'s GPU resources (queues, memory maps, events). This structure runs throughout the entire KFD subsystem and is the core data structure for understanding KFD code. kfd_process holds the kfd_process_device list of the process on all GPUs - each GPU corresponds to a kfd_process_device, which records the doorbell mapping, queue list and address space ID (PASID) of the process on this GPU.',
             ],
             keyPoints: [
-              'HSA define CPU/GPU as平等compute代理(Agent), sharedvirtualaddress space, 消除explicitdatacopy',
-              'KFD code位于 drivers/gpu/drm/amd/amdkfd/, is amdgpu 子modulerather thanindependentdriver',
-              '/dev/kfd 面向 HSA compute(ROCm/HIP), /dev/dri/renderD128 面向graphicsrendering(Mesa)',
-              'KFD use AQL command packet + Compute Queue; DRM use PM4 command packet + GFX Ring',
-              'kfd_process is KFD coredata structure, managementaprocessinall GPU oncomputeresource',
-              'kfd_process_device 关联processandspecific GPU, 持has PASID, doorbell mappingandqueuelist',
+              'HSA defines CPU/GPU as equal computing agents, sharing virtual address space and eliminating explicit data copying.',
+              'The KFD code is located in drivers/gpu/drm/amd/amdkfd/ and is a submodule of amdgpu rather than an independent driver.',
+              '/dev/kfd is for HSA calculations (ROCm/HIP), /dev/dri/renderD128 is for graphics rendering (Mesa)',
+              'KFD uses AQL command package + Compute Queue; DRM uses PM4 command package + GFX Ring',
+              'kfd_process is the core data structure of KFD, which manages the computing resources of a process on all GPUs.',
+              'kfd_process_device associates a process with a specific GPU, holding PASID, doorbell mapping and queue list',
             ],
           },
           diagram: {
-            title: 'KFD and DRM 双patharchitecture',
-            content: `amdgpu driver双interfacearchitecture: DRM(graphics)vs KFD(compute)
+            title: 'KFD and DRM dual path architecture',
+            content: `amdgpu driven dual interface architecture: DRM (graphics) vs KFD (computing)
 
 user space
 ─────────────────────────────────────────────────────────────
-  graphicspath                              computepath
+graphics path calculation path
   ────────                              ────────
-  游戏 / Blender                        HIP program / PyTorch
+Games / Blender HIP Program / PyTorch
        │                                     │
        ▼                                     ▼
   Mesa radeonsi/radv                    ROCm Runtime
   (OpenGL / Vulkan)                     libhsa-runtime64.so
        │                                     │
        ▼                                     ▼
-  libdrm (amdgpu)                       directly ioctl
+libdrm (amdgpu) direct ioctl
        │                                     │
        ▼                                     ▼
   /dev/dri/renderD128                   /dev/kfd
   (DRM render node)                     (HSA device node)
        │                                     │
-═══════╪═════ system callboundary ══════════════════╪═══════════════
+═══════╪═════ system call boundary ══════════════════╪═══════════════
        │                                     │
-kernel space│                                     │
+Kernel space │ │
        ▼                                     ▼
-  DRM ioctl 分发                        KFD ioctl 分发
+DRM ioctl distribution KFD ioctl distribution
   drm_ioctl()                           kfd_ioctl()
        │                                     │
        ▼                                     ▼
   amdgpu_cs_ioctl()                     kfd_ioctl_create_queue()
-  ├─ PM4 command packetverify                     ├─ AQL queuecreate
-  ├─ GFX Ring commit                      ├─ Compute Queue mapping
-  └─ fence synchronization                         └─ doorbell allocation
+├─ PM4 command package verification ├─ AQL queue creation
+├─ GFX Ring submission ├─ Compute Queue mapping
+└─ fence synchronization └─ doorbell allocation
        │                                     │
        └──────────┬──────────────────────────┘
                   │
                   ▼
-          amdgpu hardwareabstractionlayer
-          ├─ MMIO registeraccess
-          ├─ VRAM management (TTM)
-          ├─ interrupt handling (IH Ring)
-          └─ firmwareinterface (PSP/SMU)
+amdgpu hardware abstraction layer
+├─ MMIO register access
+├─ VRAM Management (TTM)
+├─ Interrupt processing (IH Ring)
+└─ Firmware Interface (PSP/SMU)
                   │
                   ▼
-            GPU hardware (Navi33)
+GPU hardware (Navi33)
             ┌─────────────────────────┐
             │ Shader Engines (32 CU)  │
             │ ┌─────┐ ┌─────┐        │
@@ -97,20 +97,20 @@ kernel space│                                     │
             │ │Rings│ │Queue│        │
             │ └─────┘ └─────┘        │
             └─────────────────────────┘`,
-            caption: 'amdgpu drivermeanwhileasgraphicsrenderingand GPU computeprovidekernelinterface. 两条pathinuser space分别through /dev/dri/renderD128 and /dev/kfd 进入kernel, in底layersharedhardwareaccesslayer. Compute Queue canindependent于 GFX Ring by GPU directlyscheduling. ',
+            caption: 'The amdgpu driver provides kernel interfaces for both graphics rendering and GPU computing. The two paths enter the kernel through /dev/dri/renderD128 and /dev/kfd in user space respectively, and share the hardware access layer at the bottom. Compute Queue can be scheduled directly by the GPU independently of the GFX Ring.',
           },
           codeWalk: {
-            title: 'kfd_open — process首次打开 /dev/kfd entry point',
+            title: 'kfd_open — The process opens the entry to /dev/kfd for the first time',
             file: 'drivers/gpu/drm/amd/amdkfd/kfd_chardev.c',
             language: 'c',
-            code: `/* kfd_chardev.c — /dev/kfd fileoperateimplementation */
+            code: `/*kfd_chardev.c — File operation implementation of /dev/kfd */
 
 static const struct file_operations kfd_fops = {
     .owner   = THIS_MODULE,
-    .unlocked_ioctl = kfd_ioctl,  /* all KFD ioctl entry point */
+    .unlocked_ioctl = kfd_ioctl,  /*Entrance to all KFD ioctls*/
     .compat_ioctl   = compat_ptr_ioctl,
-    .open    = kfd_open,           /* process打开 /dev/kfd */
-    .release = kfd_release,        /* process关闭 /dev/kfd */
+    .open    = kfd_open,           /*Process opens /dev/kfd*/
+    .release = kfd_release,        /*Process shutdown /dev/kfd*/
     .mmap    = kfd_mmap,           /* mmap doorbell / events */
 };
 
@@ -119,7 +119,7 @@ static int kfd_open(struct inode *inode, struct file *filep)
     struct kfd_process *process;
     bool is_32bit_user_mode;
 
-    /* checkcurrentprocesswhetheris 32 位 — KFD notsupport 32 位process */
+    /*Check if the current process is 32-bit - KFD does not support 32-bit processes */
     is_32bit_user_mode = in_compat_syscall();
     if (is_32bit_user_mode) {
         dev_warn(kfd_device,
@@ -127,26 +127,26 @@ static int kfd_open(struct inode *inode, struct file *filep)
         return -EPERM;
     }
 
-    /* core: getorcreatecurrentprocess kfd_process
-     * ifprocessalready打开过 /dev/kfd, returnalreadyhas kfd_process
-     * otherwisecreate新 kfd_process 并initialization: 
-     *   - allocation PASID (Process Address Space ID)
-     *   - aseach GPU create kfd_process_device
-     *   - registration MMU notifier(监控processpage table变化)
+    /*Core: Get or create kfd_process of the current process
+     *If the process has already opened /dev/kfd, return the existing kfd_process
+     *Otherwise create a new kfd_process and initialize it:
+     *- Assign PASID (Process Address Space ID)
+     *- Create kfd_process_device for each GPU
+     *- Register MMU notifier (monitor process page table changes)
      */
     process = kfd_create_process(current);
     if (IS_ERR(process))
         return PTR_ERR(process);
 
-    /* will kfd_process saveto file  private_data
-     * after续all ioctl callallthrough它getprocesscontext
+    /*Save kfd_process to private_data of file
+     *All subsequent ioctl calls obtain the process context through it
      */
     if (kfd_is_locked()) {
         kfd_unref_process(process);
         return -EAGAIN;
     }
 
-    /* kfd_process reference counting +1 */
+    /*kfd_process reference count +1 */
     filep->private_data = process;
 
     dev_dbg(kfd_device, "Opened /dev/kfd for pid %d\\n",
@@ -154,73 +154,73 @@ static int kfd_open(struct inode *inode, struct file *filep)
     return 0;
 }`,
             annotations: [
-              'kfd_fops is /dev/kfd devicenodefileops table, kfd_ioctl handleall HSA ioctl request',
-              'KFD notsupport 32 位process — HSA to求 64 位virtualaddress space以implementation CPU-GPU 统一寻址',
-              'kfd_create_process() iscorefunction: allocation PASID, create kfd_process_device, registration MMU notifier',
-              'PASID isprocessaddress space ID, GPU 用它区分differentprocesspage table, implementationprocess隔离',
-              'MMU notifier let KFD 感知processpage table变化(如 munmap), 及时update GPU page table保持一致',
-              'filep->private_data save kfd_process pointer, after续 ioctl through它findprocess GPU resource',
+              'kfd_fops is the file operation table of the /dev/kfd device node, kfd_ioctl handles all HSA ioctl requests',
+              'KFD does not support 32-bit processes - HSA requires 64-bit virtual address space for CPU-GPU unified addressing',
+              'kfd_create_process() is the core function: assign PASID, create kfd_process_device, register MMU notifier',
+              'PASID is the process address space ID. The GPU uses it to distinguish the page tables of different processes and achieve process isolation.',
+              'MMU notifier allows KFD to sense process page table changes (such as munmap) and update the GPU page table in a timely manner to maintain consistency.',
+              'filep->private_data saves the kfd_process pointer, and subsequent ioctl uses it to find the GPU resources of the process.',
             ],
-            explanation: 'thiscodeisuser space ROCm run时access GPU computeability第一步. when libhsa-runtime64.so call open("/dev/kfd", ...) 时, kernelexecute kfd_open, as该processcreatecomplete HSA executeenvironment. kfd_create_process internalwilltraversesysteminall KFD device(GPU), aseach GPU create kfd_process_device, this meansa ROCm processfrom一startcanaccessallalreadyregistration GPU. understandthisentry point点isreadall KFD code起点. ',
+            explanation: 'This code is the first step for the userspace ROCm runtime to access GPU computing power. When libhsa-runtime64.so calls open("/dev/kfd", ...), the kernel executes kfd_open, creating a complete HSA execution environment for the process. kfd_create_process internally traverses all KFD devices (GPUs) in the system and creates a kfd_process_device for each GPU, which means that a ROCm process can access all registered GPUs from the beginning. Understanding this entry point is the starting point for reading all KFD code.',
           },
           miniLab: {
-            title: '探索 /dev/kfd devicenodeand KFD source codestructure',
-            objective: 'checksystemon KFD devicenode, kernel moduleparameter, 并解 KFD source codedirectorystructure. ',
+            title: 'Explore the /dev/kfd device node and KFD source code structure',
+            objective: 'Check the KFD device nodes and kernel module parameters on the system, and understand the KFD source code directory structure.',
             steps: [
-              'check /dev/kfd whetherexist: ls -la /dev/kfd(need amdgpu kernel moduleand ROCm support)',
-              'view KFD in dmesg ininitializationinformation: dmesg | grep -i "kfd\\|hsa"',
-              'ifinstall ROCm: run /opt/rocm/bin/rocminfo view HSA Agent list',
-              'statistics KFD source codescale: find drivers/gpu/drm/amd/amdkfd/ -name "*.c" -o -name "*.h" | xargs wc -l | tail -1',
-              'view KFD ioctl define: grep -n "AMDKFD_IOC_" include/uapi/linux/kfd_ioctl.h | head -20',
-              'checkkernelwhetherenable KFD: zgrep HSA_AMD /proc/config.gz or grep HSA_AMD /boot/config-$(uname -r)',
+              'Check if /dev/kfd exists: ls -la /dev/kfd (requires amdgpu kernel module and ROCm support)',
+              'View KFD initialization information in dmesg: dmesg | grep -i "kfd\\|hsa"',
+              'If ROCm is installed: Run /opt/rocm/bin/rocminfo to view the HSA Agent list',
+              'Statistics KFD source code size: find drivers/gpu/drm/amd/amdkfd/ -name "*.c" -o -name "*.h" | xargs wc -l | tail -1',
+              'Check the KFD ioctl definition: grep -n "AMDKFD_IOC_" include/uapi/linux/kfd_ioctl.h | head -20',
+              'Check if KFD is enabled in the kernel: zgrep HSA_AMD /proc/config.gz or grep HSA_AMD /boot/config-$(uname -r)',
             ],
             expectedOutput: `$ ls -la /dev/kfd
-crw-rw---- 1 root render 234, 0  /dev/kfd   ← major 234 character device
+crw-rw---- 1 root render 234, 0  /dev/kfd   ←major 234 character device
 
 $ dmesg | grep -i kfd
 [  2.65] kfd kfd: Initialized module
-[  2.66] kfd kfd: added device 1002:7480   ← your Navi33
+[  2.66] kfd kfd: added device 1002:7480   ←Your Navi33
 
 $ rocminfo | grep -A2 "Agent"
 Agent 1: CPU (gfx000)
-Agent 2: GPU (gfx1102)          ← your GPU 作as HSA Agent
+Agent 2: GPU (gfx1102)          ←Your GPU as HSA Agent
 
 $ grep HSA_AMD /boot/config-$(uname -r)
-CONFIG_HSA_AMD=y                ← KFD alreadycompilation进kernel`,
-            hint: 'if /dev/kfd notexist, checkkernelconfigurationin CONFIG_HSA_AMD whetherenable. ifusedistributionkernel, 大多数现代distributiondefaultenable此选项. ROCm installis notmust — /dev/kfd 由kernel amdgpu modulecreate. ',
+CONFIG_HSA_AMD=y                ←KFD is compiled into the kernel`,
+            hint: 'If /dev/kfd does not exist, check whether CONFIG_HSA_AMD is enabled in the kernel configuration. Most modern distributions enable this option by default if using a distribution kernel. ROCm installation is not required - /dev/kfd is created by the kernel amdgpu module.',
           },
           debugExercise: {
-            title: 'diagnose KFD device打开failure',
+            title: 'Diagnosing KFD device open failure',
             language: 'c',
-            description: 'a ROCm applicationincall open("/dev/kfd", O_RDWR) 时returnerror. belowisrelated strace outputand dmesg log. findfailurecause. ',
-            question: 'whyprocessunable to打开 /dev/kfd? 给出根本causeandresolvemethod. ',
-            buggyCode: `/* strace output */
+            description: 'A ROCm application returns an error when calling open("/dev/kfd", O_RDWR). Below is the relevant strace output and dmesg log. Find out why it failed.',
+            question: 'Why can\'t the process open /dev/kfd? Give the root cause and solution.',
+            buggyCode: `/*strace output */
 openat(AT_FDCWD, "/dev/kfd", O_RDWR) = -1 EACCES (Permission denied)
 
-/* dmesg log */
+/*dmesg log */
 [  2.65] kfd kfd: Initialized module
 [  2.66] kfd kfd: added device 1002:7480
 
-/* devicenodepermission */
+/*Device node permissions */
 $ ls -la /dev/kfd
 crw-rw---- 1 root render 234, 0 /dev/kfd
 
-/* currentuser组 */
+/*Current user's group */
 $ groups
 myuser adm sudo audio
 
-/* 另一种mayfailurescenario */
+/*Another possible failure scenario */
 $ /opt/rocm/bin/rocminfo
 HSA_STATUS_ERROR_OUT_OF_RESOURCES: PASID allocation failed`,
-            hint: '第ascenario: checkuserwhether属于 render 组. 第二个scenario: PASID allocationfailureusuallyand IOMMU configurationhas关. ',
-            answer: 'scenario 1(EACCES): /dev/kfd permissionis crw-rw---- root:render, only root and render 组usercan打开. currentusernotin render 组in. resolve: sudo usermod -aG render myuser, thenre-登录. scenario 2(PASID allocationfailure): PASID(Process Address Space ID)由 IOMMU subsystemmanagement. ifkernelstartup时not yetenable IOMMU(缺少 iommu=on or amd_iommu=on kernelparameter), KFD mayunable toallocation PASID. resolve: in GRUB configurationinadd amd_iommu=on iommu=pt kernelparameter, re-startup. iommu=pt(passthrough)patternallow KFD use IOMMU 进行 PASID management而notimpact DMA performance. 这twoallis部署 ROCm 时最commonissue. ',
+            hint: 'First scenario: Check if the user belongs to the render group. Second scenario: PASID allocation failure is usually related to IOMMU configuration.',
+            answer: 'Scenario 1 (EACCES): The permissions of /dev/kfd are crw-rw---- root:render, and only users in the root and render groups can open it. The current user is not in the render group. Solution: sudo usermod -aG render myuser, then log in again. Scenario 2 (PASID allocation failure): PASID (Process Address Space ID) is managed by the IOMMU subsystem. KFD may fail to assign a PASID if the kernel is booted without IOMMU enabled (the iommu=on or amd_iommu=on kernel parameter is missing). Solution: Add the amd_iommu=on iommu=pt kernel parameter to the GRUB configuration and reboot. iommu=pt (passthrough) mode allows KFD to use IOMMU for PASID management without affecting DMA performance. Both of these are the most common issues when deploying ROCm.',
           },
           interviewQ: {
-            question: 'explain KFD in amdgpu driverin角色. 它and传统 DRM renderinginterfacehaswhatdifference? whyneedtwoindependentinterface? ',
+            question: 'Explain the role of KFD in amdgpu driver. How does it differ from traditional DRM rendering interfaces? Why do we need two separate interfaces?',
             difficulty: 'medium',
-            hint: 'fromdesigngoal(graphics vs compute), commandformat(PM4 vs AQL), queue模型(kernelscheduling vs user-spacescheduling)andmemory模型(GEM/TTM vs SVM)四个维度compare. ',
-            answer: 'KFD(Kernel Fusion Driver)is amdgpu driverinimplementation HSA computeinterface子module, through /dev/kfd 向 ROCm run时暴露 GPU computeability. 它and DRM renderinginterfacecoredifference: (1)designgoal: DRM 面向graphicsrendering(Mesa  OpenGL/Vulkan), KFD 面向generalcompute(ROCm  HIP/OpenCL); (2)commandformat: DRM use PM4 command packet(GPU commandhandle器原生format), KFD use AQL(Architected Queuing Language)包(HSA standarddefine平台无关format); (3)queue模型: DRM command submissionneed经过kernelverify(amdgpu_cs_ioctl), KFD allowuser spacedirectlywritequeue并through doorbell notify GPU, 绕过kernel热path(减少latency); (4)memory模型: DRM use GEM/TTM explicitmanagement GPU memory, KFD still额outsidesupport SVM(Shared Virtual Memory), CPU and GPU shared同一virtualaddress space. needtwointerfacecauseiscomputework负载hasdifferentperformanceto求 — GPU computeneed极低latencyqueuecommitand统一memoryaccess, thesein传统graphics API inis not优先考虑. ',
-            amdContext: '这is AMD ROCm teaminterview经典issue. keyisdemonstrate你understand KFD is not DRM 替代品, but rather针对computescenario专用interface, 两者in底layershared amdgpu hardwareabstractionlayer. ',
+            hint: 'Comparison from four dimensions: design goals (graphics vs computing), command format (PM4 vs AQL), ​​queue model (kernel scheduling vs user mode scheduling) and memory model (GEM/TTM vs SVM).',
+            answer: 'KFD (Kernel Fusion Driver) is a submodule in the amdgpu driver that implements the HSA computing interface. It exposes GPU computing capabilities to the ROCm runtime through /dev/kfd. The core differences between it and the DRM rendering interface: (1) Design goals: DRM is oriented to graphics rendering (Mesa\'s OpenGL/Vulkan), KFD is oriented to general computing (ROCm\'s HIP/OpenCL); (2) Command format: DRM uses the PM4 command package (GPU command processor native format), KFD uses the AQL (Architected Queuing Language) package (platform-independent format defined by the HSA standard); (3) Queue model: DRM Command submission needs to be verified by the kernel (amdgpu_cs_ioctl). KFD allows user space to directly write to the queue and notify the GPU through doorbell, bypassing the kernel hot path (reducing latency); (4) Memory model: DRM uses GEM/TTM to explicitly manage GPU memory. KFD also additionally supports SVM (Shared Virtual Memory), and the CPU and GPU share the same virtual address space. The reason for needing two interfaces is that compute workloads have different performance requirements - GPU compute requires extremely low-latency queue submissions and unified memory access, which are not a priority in traditional graphics APIs.',
+            amdContext: 'This is a classic AMD ROCm team interview question. The key is to show that you understand that KFD is not a replacement for DRM, but a dedicated interface for computing scenarios, and the two share amdgpu\'s hardware abstraction layer under the hood.',
           },
         },
 
@@ -228,39 +228,39 @@ HSA_STATUS_ERROR_OUT_OF_RESOURCES: PASID allocation failed`,
         {
           id: '7-1-2',
           number: '7.1.2',
-          title: 'KFD queuemanagementand AQL command packet',
+          title: 'KFD queue management and AQL command package',
           titleEn: 'KFD Queue Management & AQL Packets',
           duration: 20,
           difficulty: 'advanced',
           tags: ['AQL', 'compute-queue', 'HQD', 'MQD', 'doorbell', 'user-mode-queue'],
           concept: {
-            summary: 'computequeueis KFD coreabstraction. andgraphics Ring Buffer different, KFD computequeueallowuser spacedirectlywrite AQL command packet并through doorbell registernotify GPU execute, 无需kernel参and热path. HQD(Hardware Queue Descriptor)and MQD(Memory Queue Descriptor)iswill软件queuemappingto GPU hardwarekeydata structure. ',
+            summary: 'Computation queues are the core abstraction of KFD. Unlike the graphics ring buffer, KFD\'s compute queue allows user space to write AQL command packets directly and notify GPU execution through the doorbell register, without the need for the kernel to participate in the hot path. HQD (Hardware Queue Descriptor) and MQD (Memory Queue Descriptor) are key data structures that map software queues to GPU hardware.',
             explanation: [
-              'in传统graphicsrenderingpathin, each timecommitcommandalltothroughkernel(ioctl → amdgpu_cs_ioctl → verify → write Ring Buffer), 这引入system call开销. for高throughput GPU computescenario(如 AI 训练in每秒数千次 kernel launch), this开销notcan接受. KFD resolveplanisuser-spacequeue(User-Mode Queue): queuememorydirectlymappingtouser space, user spacecandirectlywrite AQL 包, then写 doorbell registernotify GPU, entireprocessnotneedsystem call. ',
-              'AQL(Architected Queuing Language)is HSA standarddefinecommand packetformat. each AQL 包is固定 64 bytes, contain: type(Kernel Dispatch, Barrier, Agent Dispatch), 维度information(grid_size_x/y/z, workgroup_size_x/y/z), kernelcodeentry pointaddress(kernel_object), kernelparameteraddress(kernarg_address), complete信号(completion_signal). and PM4 formatkeydifferenceis: AQL is HSA standard化, 跨平台can移植; PM4 is AMD GPU hardware私has, performancemay更高但notcan移植. ',
-              'HQD(Hardware Queue Descriptor)is GPU hardwarein固定countqueue槽位, each HQD correspondingahardwarecandirectlyschedulingqueue. Navi33 each Compute Engine hasmultiple HQD, 总数has限. MQD(Memory Queue Descriptor)is KFD inmemoryincreatequeuedescribedata structure, containqueueallstate: 基address, size, 读写pointer, doorbell offset 等. whenqueuebymappingto HQD 时, GPU  CP(Command Processor)from MQD inloadingqueueparameter; whenqueueby抢占(preempt)时, CP willcurrentstatesave回 MQD. 这种 MQD-HQD mappingmechanismallow软件queuecount远超hardware HQD count — throughqueuescheduler(HWS, Hardware Scheduler or SWS, Software Scheduler)dynamicmapping. ',
-              'user-spacequeuecommitcompleteprocess: (1)user spaceinqueuememoryinwrite AQL 包; (2)updatequeue write_dispatch_id(写pointer); (3)写 doorbell register — 这isamemory mapping MMIO address, once 4 byteswritecannotify GPU  CP has新command; (4)GPU  CP detectto doorbell write, fromcorrespondingqueue MQD inget读pointer, read AQL 包; (5)CP parse AQL 包, startupcomputeshader(dispatch); (6)computecompleteafter, GPU updatecomplete信号(completion_signal). entire热path — from写 AQL 包to GPU startexecute — 只needuser spacememory写operateandonce doorbell MMIO write, latencyin微秒级. ',
+              'In the traditional graphics rendering path, each command submission goes through the kernel (ioctl → amdgpu_cs_ioctl → verify → write ring buffer), which introduces system call overhead. For high-throughput GPU computing scenarios (such as thousands of kernel launches per second in AI training), this overhead is unacceptable. KFD\'s solution is User-Mode Queue: the memory of the queue is directly mapped to user space. User space can directly write the AQL package, and then write the doorbell register to notify the GPU. The whole process does not require system calls.',
+              'AQL (Architected Queuing Language) is the command packet format defined by the HSA standard. Each AQL package is a fixed 64 bytes, including: type (Kernel Dispatch, Barrier, Agent Dispatch), dimension information (grid_size_x/y/z, workgroup_size_x/y/z), kernel code entry address (kernel_object), kernel parameter address (kernarg_address), completion signal (completion_signal). The key difference from the PM4 format is that AQL is HSA standardized and portable across platforms; PM4 is proprietary to AMD GPU hardware and may have higher performance but is not portable.',
+              'HQD (Hardware Queue Descriptor) is a fixed number of queue slots in GPU hardware. Each HQD corresponds to a queue that can be directly scheduled by the hardware. Each Compute Engine of Navi33 has multiple HQDs, and the total number is limited. MQD (Memory Queue Descriptor) is a queue description data structure created by KFD in memory, including all status of the queue: base address, size, read and write pointers, doorbell offset, etc. When the queue is mapped to HQD, the GPU\'s CP (Command Processor) loads the queue parameters from MQD; when the queue is preempted, CP saves the current state back to MQD. This MQD-HQD mapping mechanism allows the number of software queues to far exceed the number of hardware HQDs - dynamically mapped via a queue scheduler (HWS, Hardware Scheduler or SWS, Software Scheduler).',
+              'The complete process of user mode queue submission: (1) User space writes the AQL package in the queue memory; (2) Updates the queue\'s write_dispatch_id (write pointer); (3) Writes the doorbell register - this is a memory-mapped MMIO address. A 4-byte write can notify the GPU\'s CP that there is a new command; (4) The GPU\'s CP detects the doorbell write, obtains the read pointer from the MQD of the corresponding queue, and reads the AQL package; (5) CP parses the AQL package and starts the calculation shader (dispatch); (6) After the calculation is completed, the GPU updates the completion signal (completion_signal). The entire hot path—from writing the AQL package to the start of execution on the GPU—requires only a userspace memory write and a doorbell MMIO write, with microsecond latency.',
             ],
             keyPoints: [
-              'user-spacequeueallowdirectlywrite AQL 包 + doorbell MMIO, 绕过kernel热path, latencyin微秒级',
-              'AQL 包固定 64 bytes, contain dispatch 维度, kernel_object address, kernarg addressand completion_signal',
-              'HQD is GPU hardwarequeue槽位(counthas限), MQD ismemoryinqueuedescriptor(can很多)',
-              'MQD ↔ HQD dynamicmapping由 HWS(Hardware Scheduler)or KFD 软件schedulermanagement',
-              'doorbell isa 4 bytes MMIO write, GPU CP detecttoafterfromcorrespondingqueueread新command',
-              'queue抢占: CP willcurrentstatesave回 MQD, release HQD 给otherqueueuse',
+              'User mode queue allows direct writing of AQL packages + doorbell MMIO, bypassing the kernel hot path, and the delay is at the microsecond level',
+              'AQL package is fixed at 64 bytes, including dispatch dimension, kernel_object address, kernarg address and completion_signal',
+              'HQD is the GPU hardware queue slot (limited number), MQD is the queue descriptor in memory (can be many)',
+              'MQD ↔ HQD dynamic mapping is managed by HWS (Hardware Scheduler) or KFD software scheduler',
+              'Doorbell is a 4-byte MMIO write. After the GPU CP detects it, it reads the new command from the corresponding queue.',
+              'Queue preemption: CP saves the current state back to MQD and releases HQD for use by other queues',
             ],
           },
           diagram: {
-            title: 'AQL user-spacequeuecommitprocess',
-            content: `user-space AQL queuecommitpath(零kernel介入)
+            title: 'AQL user mode queue submission process',
+            content: `User mode AQL queue submission path (zero kernel intervention)
 
-user space (ROCm Runtime)
+User space (ROCm Runtime)
 ─────────────────────────────────────────────────────────
-  1) write AQL 包toqueuememory
+1) Write AQL package to queue memory
   ┌──────────────────────────────────────────────┐
   │  AQL Queue (mmap'd to userspace)             │
   │  ┌────────┬────────┬────────┬────────┐       │
-  │  │AQL pkt │AQL pkt │AQL pkt │ (空)   │       │
+│ │AQL pkt │AQL pkt │AQL pkt │ (empty) │ │
   │  │dispatch│dispatch│barrier │        │       │
   │  │grid:   │grid:   │signal  │        │       │
   │  │256x1x1 │1024x1  │wait    │        │       │
@@ -268,18 +268,18 @@ user space (ROCm Runtime)
   │   read_ptr ──────────────▲  ▲── write_ptr    │
   └──────────────────────────┼──┼────────────────┘
                              │  │
-  2) update write_dispatch_id  │  │
-  3) 写 doorbell register ─────┼──┘
+2) Update write_dispatch_id │ │
+3) Write doorbell register ─────┼──┘
      *(uint32_t*)doorbell_mmap = new_wptr;
                              │
-═══════════════ 无system call ══╪════════════════════════
+═══════════════ No system call ══╪════════════════════════
                              │
-GPU hardware                     │
+GPU Hardware │
 ─────────────────────────────┼───────────────────────
-  4) Command Processor detect doorbell write
+4) Command Processor detects doorbell writing
      ┌───────────────────────┐
      │    CP (MEC/HPD)       │
-     │    detect doorbell      │──→ read MQD
+│ Detect doorbell │──→ Read MQD
      │    doorbell[queue_id] │      │
      └───────────────────────┘      ▼
                               ┌──────────┐
@@ -290,7 +290,7 @@ GPU hardware                     │
                               │ doorbell │
                               └────┬─────┘
                                    │
-  5) fromqueuememoryread AQL 包         │
+5) Read AQL package from queue memory │
      ┌─────────────────────────────▼──┐
      │  AQL Packet (64 bytes)         │
      │  ┌───────────────────────────┐ │
@@ -304,16 +304,16 @@ GPU hardware                     │
      │  └───────────────────────────┘ │
      └────────────────┬───────────────┘
                       │
-  6) startup Compute Shader
-     Shader Engines execute kernel
-     completeafterupdate completion_signal`,
-            caption: 'user-space AQL queuecommitprocess. entire热pathnot涉及system call: user spacedirectlyin mmap queuememoryinwrite AQL 包, then写 doorbell MMIO notify GPU. GPU  Command Processor(MEC)detectto doorbell afterread并executecommand. ',
+6) Start Compute Shader
+Shader Engines execute kernel
+Update completion_signal after completion`,
+            caption: 'Submission process of user mode AQL queue. The entire hot path involves no system calls: userspace directly writes the AQL packet in mmap\'s queue memory, and then writes doorbell MMIO to notify the GPU. The GPU\'s Command Processor (MEC) reads and executes the command after detecting the doorbell.',
           },
           codeWalk: {
-            title: 'kfd_ioctl_create_queue — createcomputequeue',
+            title: 'kfd_ioctl_create_queue — Create a calculation queue',
             file: 'drivers/gpu/drm/amd/amdkfd/kfd_chardev.c',
             language: 'c',
-            code: `/* kfd_chardev.c — create KFD computequeue ioctl handlefunction */
+            code: `/*kfd_chardev.c — Create an ioctl handler function for the KFD calculation queue */
 
 static int kfd_ioctl_create_queue(struct file *filep,
                 struct kfd_process *p, void *data)
@@ -324,20 +324,20 @@ static int kfd_ioctl_create_queue(struct file *filep,
     struct queue_properties properties;
     int err;
 
-    /* lookupgoal GPU device */
+    /*Find target GPU device */
     dev = kfd_device_by_id(args->gpu_id);
     if (!dev)
         return -EINVAL;
 
-    /* getprocessin该 GPU on process_device */
+    /*Get the process_device of the process on the GPU */
     pdd = kfd_get_process_device_data(dev, p);
     if (!pdd)
         return -ENOMEM;
 
-    /* willuser spaceparameterconvertaskernel queue_properties
-     * include: queuetype, queuesize, priority
-     *       ring_base_address(queuememory基address, user-spaceallocation)
-     *       write_ptr / read_ptr address
+    /*Convert userspace parameters to kernel queue_properties
+     *Including: queue type, queue size, priority
+     *ring_base_address (queue memory base address, user mode allocation)
+     *write_ptr / read_ptr address
      *       doorbell_offset
      */
     memset(&properties, 0, sizeof(properties));
@@ -347,15 +347,15 @@ static int kfd_ioctl_create_queue(struct file *filep,
     properties.queue_percent = args->queue_percentage;
     properties.priority = args->queue_priority;
 
-    /* allocation doorbell page并setoffset */
+    /*Allocate doorbell page and set offset */
     err = kfd_queue_acquire_buffers(pdd, &properties);
     if (err)
         return err;
 
-    /* core: createqueue并mappingto GPU hardware
-     * 1. allocation MQD(Memory Queue Descriptor)
-     * 2. initialization MQD inqueueparameter
-     * 3. through HWS ordirectly写 HQD registerwillqueue激活
+    /*Core: Create queues and map to GPU hardware
+     *1. Allocate MQD (Memory Queue Descriptor)
+     *2. Initialize queue parameters in MQD
+     *3. Activate the queue through HWS or directly writing to the HQD register
      */
     err = pqm_create_queue(&p->pqm, dev, filep, &properties,
                            &args->queue_id,
@@ -363,11 +363,11 @@ static int kfd_ioctl_create_queue(struct file *filep,
     if (err)
         goto err_create;
 
-    /* return给user space: 
-     * args->queue_id     — queue ID(after续operate引用)
-     * args->doorbell_offset — doorbell in mmap regioninoffset
-     *   user space mmap /dev/kfd  doorbell 页after
-     *   对 (mmap_base + doorbell_offset) 做 32 位writei.e.cantrigger GPU
+    /*Return to user space:
+     *args->queue_id — Queue ID (referenced by subsequent operations)
+     *args->doorbell_offset — The offset of the doorbell in the mmap area
+     *After the doorbell page of userspace mmap /dev/kfd
+     *Doing a 32-bit write to (mmap_base + doorbell_offset) triggers the GPU
      */
     return 0;
 
@@ -376,189 +376,189 @@ err_create:
     return err;
 }`,
             annotations: [
-              'args->ring_base_address isuser space预先allocationqueuering bufferaddress — AQL 包directlywrite这inside',
-              'kfd_queue_acquire_buffers allocation doorbell page — doorbell is GPU MMIO 空between一小blockregion',
-              'pqm_create_queue iscorecall链: allocation MQD → initialization → mappingto HQD oraddscheduler',
-              'args->doorbell_offset return给user spaceafter, usercan mmap doorbell 页并directlywritetrigger GPU',
-              'queue_type canis KFD_IOC_QUEUE_TYPE_COMPUTE(compute)or KFD_IOC_QUEUE_TYPE_SDMA(DMA)',
-              'queuecreateafter, user space对该queueallcommand submissionallnotneedagain经过kernel(零 ioctl 热path)',
+              'args->ring_base_address is the queue ring buffer address pre-allocated by user space - the AQL package is written directly here',
+              'kfd_queue_acquire_buffers allocates doorbell pages - a doorbell is a small area of ​​GPU MMIO space',
+              'pqm_create_queue is the core call chain: allocate MQD → initialize → map to HQD or join the scheduler',
+              'After args->doorbell_offset is returned to user space, the user can mmap the doorbell page and write directly to trigger the GPU',
+              'queue_type can be KFD_IOC_QUEUE_TYPE_COMPUTE (compute) or KFD_IOC_QUEUE_TYPE_SDMA (DMA)',
+              'After the queue is created, all command submissions to the queue from user space no longer need to go through the kernel (zero ioctl hot path)',
             ],
-            explanation: 'thisfunctionis建立user-space GPU computechannelkeystep. user spacethrough此 ioctl once性set好queue, afterallcommand submission(写 AQL 包 + 写 doorbell)alldirectlyinuser spacecomplete. pqm_create_queue internalwillcall GPU specific MQD initializationfunction(如 gfx_v11_0  MQD initialization), set HQD register, final使 GPU  MEC(Micro Engine Compute)startpollingthisqueue doorbell. ',
+            explanation: 'This function is a key step in establishing a user-mode GPU computing channel. The user space sets the queue once through this ioctl, and all subsequent command submissions (writing AQL packages + writing doorbell) are completed directly in the user space. pqm_create_queue internally calls the GPU-specific MQD initialization function (such as gfx_v11_0\'s MQD initialization), sets the HQD register, and finally causes the GPU\'s MEC (Micro Engine Compute) to start polling the doorbell of this queue.',
           },
           miniLab: {
-            title: 'tracing ROCm queuecreate ioctl call',
-            objective: 'use strace observe ROCm run时howthrough /dev/kfd ioctl createcomputequeueandcommit任务. ',
-            setup: `# needinstall ROCm andasimple HIP program
-# ifalreadyinstall ROCm, canuse rocm-examples in vectorAdd
-sudo apt install rocm-hip-sdk  # ifstill没install`,
+            title: 'Tracing ioctl calls for ROCm queue creation',
+            objective: 'Use strace to observe how the ROCm runtime creates calculation queues and submits tasks through the /dev/kfd ioctl.',
+            setup: `#Requires installation of ROCm and a simple HIP program
+#If ROCm is installed, you can use vectorAdd from rocm-examples
+sudo apt install rocm-hip-sdk  #If you haven't installed it yet`,
             steps: [
-              'writeorgetasimple HIP 向量加法program(vectorAdd)',
-              'use strace tracing KFD ioctl: strace -e ioctl -f ./vectorAdd 2>&1 | grep kfd',
-              'lookup AMDKFD_IOC_CREATE_QUEUE ioctl call, observequeuecreateparameter',
-              'lookup AMDKFD_IOC_ALLOC_MEMORY_OF_GPU ioctl, observe GPU memory allocation',
-              'statistics各类 KFD ioctl call次数: strace -e ioctl -c -f ./vectorAdd 2>&1',
-              'compare DRM ioctl: strace -e ioctl -f glxgears 2>&1 | head -30(observe DRM path差异)',
+              'Write or obtain a simple HIP vector addition program (vectorAdd)',
+              'Use strace to trace KFD ioctl: strace -e ioctl -f ./vectorAdd 2>&1 | grep kfd',
+              'Look for the AMDKFD_IOC_CREATE_QUEUE ioctl call and observe the queue creation parameters',
+              'Find AMDKFD_IOC_ALLOC_MEMORY_OF_GPU ioctl and observe GPU memory allocation',
+              'Count the number of calls of various KFD ioctl: strace -e ioctl -c -f ./vectorAdd 2>&1',
+              'Compare DRM ioctl: strace -e ioctl -f glxgears 2>&1 | head -30 (observe the difference in DRM paths)',
             ],
             expectedOutput: `$ strace -e ioctl -f ./vectorAdd 2>&1 | grep -c CREATE_QUEUE
-2        ← create 2 个computequeue(a compute, a SDMA)
+2        ←Created 2 calculation queues (one compute, one SDMA)
 
 $ strace -e ioctl -f ./vectorAdd 2>&1 | grep ALLOC_MEMORY
-ioctl(4, AMDKFD_IOC_ALLOC_MEMORY_OF_GPU, ...)   ← allocation GPU memory
-ioctl(4, AMDKFD_IOC_ALLOC_MEMORY_OF_GPU, ...)   ← kernarg memory
+ioctl(4, AMDKFD_IOC_ALLOC_MEMORY_OF_GPU, ...)   ←Allocate GPU memory
+ioctl(4, AMDKFD_IOC_ALLOC_MEMORY_OF_GPU, ...)   ←kernarg memory
 
-note: command submission(写 AQL + doorbell)will not出现in strace in, 
-becausetheydirectlythrough mmap inuser spacecomplete, nosystem call! `,
-            hint: 'ifnoinstall ROCm, canuse ftrace fromkernel侧tracing KFD functioncall: echo kfd_ioctl_create_queue > /sys/kernel/debug/tracing/set_ftrace_filter. ',
+Note: Command submission (write AQL + doorbell) will not appear in strace,
+Because they are done directly in user space via mmap, no system calls!`,
+            hint: 'If ROCm is not installed, you can use ftrace to trace KFD function calls from the kernel side: echo kfd_ioctl_create_queue > /sys/kernel/debug/tracing/set_ftrace_filter.',
           },
           debugExercise: {
-            title: 'diagnosequeuecreatefailure',
+            title: 'Diagnostic queue creation failed',
             language: 'c',
-            description: 'a HIP programin hipLaunchKernelGGL 时crash. strace display AMDKFD_IOC_CREATE_QUEUE return -ENOMEM. belowismaycause. ',
-            question: 'queuecreatereturn -ENOMEM maycauseiswhat? howdiagnoseandresolve? ',
-            buggyCode: `/* strace output */
+            description: 'A HIP program crashes on hipLaunchKernelGGL. strace shows AMDKFD_IOC_CREATE_QUEUE returns -ENOMEM. The following are possible reasons.',
+            question: 'What are the possible reasons why queue creation returns -ENOMEM? How to diagnose and resolve?',
+            buggyCode: `/*strace output */
 ioctl(4, AMDKFD_IOC_CREATE_QUEUE, {queue_type=COMPUTE,
-    ring_size=0x400000,    /* 4MB queuesize */
-    ring_base=0x0,         /* BUG! user spaceno预allocationqueuememory */
+    ring_size=0x400000,    /*4MB queue size*/
+    ring_base=0x0,         /*BUG! User space does not pre-allocate queue memory*/
     ...}) = -1 ENOMEM
 
-/* 另一种情况: doorbell resource耗尽 */
-/* processcreateexceed 1024 个queueafter */
+/*Another situation: doorbell resources are exhausted */
+/*After the process creates more than 1024 queues */
 ioctl(4, AMDKFD_IOC_CREATE_QUEUE, ...) = -1 ENOMEM
 
-/* dmesg log */
+/*dmesg log */
 [  45.2] kfd: Failed to allocate MQD for queue
 [  45.2] kfd: Can't create queue: doorbell allocation failed`,
-            hint: 'has两种commoncause: (1) user space传入invalid ring_base_address; (2) GPU  doorbell resourceor MQD memory耗尽. ',
-            answer: '两种commoncause: (1)ring_base_address = 0x0: user spaceincall CREATE_QUEUE ioctl beforemust先allocationqueuering buffermemory(usuallythrough AMDKFD_IOC_ALLOC_MEMORY_OF_GPU allocation). ring_base as 0 意味着 ROCm run时memory allocationstepfailure, needcheck GPU memorywhether充足(cat /sys/class/drm/card0/device/mem_info_vram_used). (2)doorbell resource耗尽: eachqueueneeda doorbell slot, GPU  doorbell BAR sizehas限(usually 2MB), each slot 4 bytes, 最多约 512K 个 doorbell. 但actuallimit更小 — KFD aseachprocessallocation doorbell page(4KB/页), 每页can容纳 1024 个 32 位 doorbell. ifaprocesscreate过多queue, doorbell pagewill耗尽. resolvemethod: 销毁notagainusequeue(DESTROY_QUEUE ioctl), orinapplicationdesignin复用queue. 生产environmentinusuallyeach GPU 只needseveralto几十个queue. ',
+            hint: 'There are two common reasons: (1) User space passes in an invalid ring_base_address; (2) The GPU\'s doorbell resources or MQD memory is exhausted.',
+            answer: 'Two common reasons: (1) ring_base_address = 0x0: User space must first allocate queue ring buffer memory (usually via AMDKFD_IOC_ALLOC_MEMORY_OF_GPU) before calling the CREATE_QUEUE ioctl. A ring_base of 0 means that the memory allocation step of ROCm runtime failed and you need to check whether the GPU memory is sufficient (cat /sys/class/drm/card0/device/mem_info_vram_used). (2) Doorbell resource exhaustion: Each queue requires a doorbell slot, the GPU doorbell BAR size is limited (usually 2MB), 4 bytes per slot, up to about 512K doorbells. But the actual limit is smaller - KFD allocates doorbell pages (4KB/page) to each process, and each page can accommodate 1024 32-bit doorbells. If a process creates too many queues, doorbell pages can be exhausted. Solution: Destroy the queue that is no longer used (DESTROY_QUEUE ioctl), or reuse the queue in the application design. Production environments typically require only a few to dozens of queues per GPU.',
           },
           interviewQ: {
-            question: 'explain AQL 包and PM4 包difference. why KFD use AQL 而is notdirectlyuse PM4? user-spacequeue相比kernel态command submissionhaswhatperformance优势? ',
+            question: 'Explain the difference between AQL packages and PM4 packages. Why does KFD use AQL instead of PM4 directly? What are the performance advantages of user-mode queues compared to kernel-mode command submission?',
             difficulty: 'hard',
-            hint: 'fromstandard化(HSA vs hardware私has), commitlatency(user-space doorbell vs kernel ioctl), security性(user-spacequeue隔离)三个方面answer. ',
-            answer: 'AQL vs PM4: (1)AQL is HSA standarddefineformat(64 bytes固定size), 跨平台can移植 — 同a AQL 包理论oncanin AMD andother HSA 兼容hardwareonrun. PM4 is AMD GPU 私hascommandformat, directlymappingto CP 微码instruction, format因 GPU 代次而异. (2)AQL is面向compute — contain grid/workgroup 维度information, 适合 kernel dispatch. PM4 is面向graphics/general — containstateset, draw call, DMA operate等. (3)GPU  MEC(Micro Engine Compute)原生supportparse AQL 包, notneed额outsidecommandconvert. user-spacequeueperformance优势: 传统 DRM patheach timecommitcommandneed ioctl system call(~2μs 开销)+ kernel态commandverify + copyto Ring Buffer. KFD user-spacequeue只needuser spacememorywrite + once doorbell MMIO write(~100ns), latency降低acount级above. for AI 训练in每秒数万次小 kernel launch, this差异directlyimpact GPU 利用率. security性: eachuser-spacequeuehasindependent PASID and GPUVM page table, GPU hardware保证processbetweenmemory隔离, even ifuser spacedirectlyoperatequeuealsowill notimpactotherprocess. ',
-            amdContext: 'AMD interviewinif你can清楚explain AQL user-spacequeuelatency优势and PASID 隔离mechanism, indicate你understand KFD designcore动机 — 这比记住 API parameterhas用得多. ',
+            hint: 'Answer from three aspects: standardization (HSA vs hardware private), submission delay (user mode doorbell vs kernel ioctl), and security (user mode queue isolation).',
+            answer: 'AQL vs PM4: (1) AQL is a format defined by the HSA standard (64 bytes fixed size), cross-platform portable - the same AQL package can theoretically run on AMD and other HSA-compatible hardware. PM4 is a proprietary command format for AMD GPUs that maps directly to CP microcode instructions. The format varies by GPU generation. (2) AQL is calculation-oriented - contains grid/workgroup dimension information and is suitable for kernel dispatch. PM4 is graphics oriented/general purpose - includes state settings, draw calls, DMA operations, etc. (3) The MEC (Micro Engine Compute) of the GPU natively supports parsing AQL packages without requiring additional command conversion. Performance advantages of user-mode queues: Each time a command is submitted via the traditional DRM path, an ioctl system call (~2μs overhead) + kernel-mode command verification + copying to the Ring Buffer is required. The KFD user-mode queue only requires user space memory writing + one doorbell MMIO writing (~100ns), reducing latency by more than an order of magnitude. For small kernel launches of tens of thousands per second in AI training, this difference directly affects GPU utilization. Security: Each user-space queue has an independent PASID and GPUVM page table. The GPU hardware ensures memory isolation between processes. Even if the user space directly operates the queue, it will not affect other processes.',
+            amdContext: 'If you can clearly explain the latency advantages of AQL user-space queues and the PASID isolation mechanism during the AMD interview, it means that you understand the core motivation of KFD design - this is much more useful than remembering API parameters.',
           },
         },
       ],
     },
 
     // ════════════════════════════════════════════════════════════
-    // Group 7.2: GPU memoryandsynchronization
+    // Group 7.2: GPU Memory and Synchronization
     // ════════════════════════════════════════════════════════════
     {
       id: '7-2',
       number: '7.2',
-      title: 'GPU memoryandsynchronization',
+      title: 'GPU memory and synchronization',
       titleEn: 'GPU Memory & Synchronization',
       icon: 'Link',
-      description: 'SVM 统一virtualaddress spacelet CPU and GPU sharedpointer, GPU page fault andpagemigrationimplementation按需datamove. HSA semaphoreand KFD eventmechanismimplementation高效 CPU-GPU synchronization. ',
+      description: 'The SVM unified virtual address space allows the CPU and GPU to share pointers, and GPU page faults and page migrations enable on-demand data movement. HSA semaphores and KFD event mechanisms enable efficient CPU-GPU synchronization.',
       lessons: [
         // ── Lesson 7.2.1 ──────────────────────────────────────
         {
           id: '7-2-1',
           number: '7.2.1',
-          title: 'SVM 统一virtualaddress space',
+          title: 'SVM unified virtual address space',
           titleEn: 'SVM Unified Virtual Address Space',
           duration: 20,
           difficulty: 'advanced',
           tags: ['SVM', 'GPUVM', 'PASID', 'page-fault', 'page-migration', 'coherency'],
           concept: {
-            summary: 'SVM(Shared Virtual Memory)let CPU and GPU shared同avirtualaddress space — CPU onpointercandirectlyin GPU kernel inuse, 无需explicitcopy. KFD through GPUVM page table, PASID process隔离and GPU page fault handleimplementation这一mechanism, svm_migrate_to_vram/ram functionresponsible forpagein CPU and GPU memory之between按需migration. ',
+            summary: 'SVM (Shared Virtual Memory) allows the CPU and GPU to share the same virtual address space - pointers on the CPU can be used directly in the GPU kernel without explicit copying. KFD implements this mechanism through GPUVM page tables, PASID process isolation and GPU page fault handling. The svm_migrate_to_vram/ram function is responsible for on-demand migration of pages between CPU and GPU memory.',
             explanation: [
-              '传统 GPU programming(CUDA 早期pattern)to求program员explicitmanagementdatatransfer: cudaMalloc in GPU onallocationmemory, cudaMemcpy in CPU and GPU 之betweencopydata. 这not仅繁琐, still容易出错 — 忘记synchronization, 重复copy, memoryleak. SVM goalis消除these手动step: in CPU on用 malloc or mmap allocationmemory, GPU candirectlythroughsamevirtual addressaccess; 反之亦然. ',
-              'SVM implementationdependencyseveralkeymechanism: (1)GPUVM page table — eachprocessin GPU onhasindependentpage table(similar CPU  MMU page table), willvirtual addressmappingtophysicalpage(VRAM orsystem memory). KFD through amdgpu  VM subsystemmanagementthesepage table. (2)PASID(Process Address Space ID) — eachprocessallocationaunique PASID, GPU in发出memoryaccess时携带 PASID, IOMMU and GPUVM 用它selectcorrectpage table. 这implementationprocess级 GPU memory隔离. (3)GPU page fault — when GPU accessvirtual addressin GPUVM page tableinnovalidmapping时, GPU generate page fault interrupt. KFD  fault handler 捕获thisinterrupt, 按需建立mapping(maytriggerpagemigration). ',
-              'pagemigrationis SVM performancekey. when GPU 频繁accesssystem memoryinpage时, KFD canwillpagemigrationto VRAM 以获得更高bandwidth. svm_migrate_to_vram() execute RAM → VRAM migration: (a)in VRAM inallocationgoalpage; (b)through SDMA enginecopydata; (c)update CPU and GPU page table; (d)in CPU page tableininstalla migration entry, if CPU afteraccessthispage, trigger CPU page fault thepage迁回 RAM. svm_migrate_to_ram() is反方向migration. 这种按需migrationmechanismsimilar于operatesystem swap, 但in CPU and GPU memory之between进行. ',
-              'CPU-GPU memorycoherence(coherency)is SVM 最complex部分. RDNA3  Navi33 supportthrough PCIe  cache coherency protocol(如 CCIX before身or CXL relatedmechanism), 但in实践in, KFD providedifferentlevelcoherence保证: (a)Coarse-grained: GPU in kernel execute期between看to一致快照, 但not保证real-timecoherence — 适合大多数computescenario. (b)Fine-grained: CPU and GPU 对同一address读写遵循某种order保证 — needhardwarelevel cache snoop, performance开销更大. ROCm usercanthrough hsa_amd_memory_pool_allocate  flags selectcoherencelevel. ',
+              'Traditional GPU programming (an early model of CUDA) requires programmers to explicitly manage data transfers: cudaMalloc allocates memory on the GPU, and cudaMemcpy copies data between the CPU and GPU. Not only is this tedious, it\'s also error-prone—forgetting to synchronize, duplicating copies, memory leaks. The goal of SVM is to eliminate these manual steps: memory allocated with malloc or mmap on the CPU can be directly accessed by the GPU through the same virtual address; and vice versa.',
+              'The implementation of SVM relies on several key mechanisms: (1) GPUVM page table - each process has an independent page table on the GPU (similar to the CPU\'s MMU page table), which maps virtual addresses to physical pages (VRAM or system memory). KFD manages these page tables through amdgpu\'s VM subsystem. (2) PASID (Process Address Space ID) - Each process is assigned a unique PASID. The GPU carries the PASID when issuing memory access. IOMMU and GPUVM use it to select the correct page table. This enables process-level GPU memory isolation. (3) GPU page fault - When the virtual address accessed by the GPU is not effectively mapped in the GPUVM page table, the GPU generates a page fault interrupt. KFD\'s fault handler captures this interrupt and establishes mappings as needed (possibly triggering page migration).',
+              'Page migration is key to the performance of SVM. When the GPU frequently accesses pages in system memory, KFD can migrate the pages to VRAM for higher bandwidth. svm_migrate_to_vram() performs RAM → VRAM migration: (a) allocates the target page in VRAM; (b) copies the data through the SDMA engine; (c) updates the CPU and GPU page tables; (d) installs a migration entry in the CPU page table. If the CPU later accesses this page, it triggers a CPU page fault to move the page back to RAM. svm_migrate_to_ram() is a migration in the opposite direction. This on-demand migration mechanism is similar to the operating system\'s swap, but occurs between CPU and GPU memory.',
+              'CPU-GPU memory coherency is the most complex part of SVM. RDNA3\'s Navi33 supports cache coherency protocols over PCIe (like CCIX\'s predecessor or CXL-related mechanisms), but in practice, KFD provides different levels of consistency guarantees: (a) Coarse-grained: The GPU sees consistent snapshots during kernel execution, but no real-time consistency is guaranteed - suitable for most computing scenarios. (b) Fine-grained: CPU and GPU read and write to the same address follow a certain order guarantee - hardware-level cache snoop is required and the performance overhead is greater. ROCm users can select the consistency level through the flags of hsa_amd_memory_pool_allocate.',
             ],
             keyPoints: [
-              'SVM let CPU/GPU sharedvirtualaddress space — CPU pointercanin GPU kernel indirectlyuse, 消除explicitdatacopy',
-              'GPUVM page tableaseachprocess维护independent GPU addressmapping, PASID implementationprocess隔离',
-              'GPU page fault trigger按需pagemapping — similar CPU  demand paging mechanism',
-              'svm_migrate_to_vram() will热pagemigrationto VRAM 提升 GPU accessbandwidth(SDMA engineexecuteactualcopy)',
-              'svm_migrate_to_ram() in CPU needaccessalreadymigrationpage时trigger回迁',
-              'KFD through MMU notifier 监听processpage table变化, 保持 GPUVM page tableand CPU page tablesynchronization',
+              'SVM allows CPU/GPU to share virtual address space - CPU pointers can be used directly in the GPU kernel, eliminating explicit data copying',
+              'The GPUVM page table maintains an independent GPU address mapping for each process, and PASID implements process isolation.',
+              'GPU page fault triggers on-demand page mapping - similar to CPU\'s demand paging mechanism',
+              'svm_migrate_to_vram() Migrate hot pages to VRAM to improve GPU access bandwidth (SDMA engine performs the actual copy)',
+              'svm_migrate_to_ram() triggers a fetch when the CPU needs to access a migrated page',
+              'KFD monitors process page table changes through MMU notifier and keeps the GPUVM page table synchronized with the CPU page table.',
             ],
           },
           diagram: {
-            title: 'SVM 统一virtualaddress spaceandpagemigration',
-            content: `SVM 统一virtualaddress space: CPU and GPU sharedpointer
+            title: 'SVM unifies virtual address space and page migration',
+            content: `SVM unified virtual address space: CPU and GPU shared pointers
 
-processvirtualaddress space (64-bit)
+Process virtual address space (64-bit)
 ┌────────────────────────────────────────────────────────┐
-│  0x0000'7f00'0000'0000   ← malloc allocationbuffer        │
-│  0x0000'7f00'0001'0000   ← GPU kernel parameter          │
-│  0x0000'7f00'0002'0000   ← computeresult                   │
+│  0x0000'7f00'0000'0000   ←Buffer allocated by malloc │
+│  0x0000'7f00'0001'0000   ←GPU kernel parameters │
+│  0x0000'7f00'0002'0000   ←Calculation results │
 │  ...                                                   │
-│  CPU and GPU usesamevirtual addressaccessthesedata             │
+│CPU and GPU use the same virtual address to access this data│
 └──────────┬────────────────────────────┬────────────────┘
            │                            │
-     CPU MMU page table                 GPUVM page table
+CPU MMU page table GPUVM page table
      (per-process)                (per-PASID)
            │                            │
            ▼                            ▼
 ┌──────────────────┐          ┌──────────────────┐
-│  CPU physical memory     │          │  GPU VRAM        │
+│ CPU physical memory │ │ GPU VRAM │
 │  (DDR5 RAM)      │          │  (GDDR6 8GB)     │
 │                  │          │                  │
-│  Page A [热data] │ ──migration──→│  Page A (副本)   │
-│  (migration      │          │  高bandwidth GPU access  │
-│   entry mark)    │          │                  │
+│ Page A [Hot Data] │ ──Migration──→│ Page A (Copy) │
+│ (migration │ │ High-bandwidth GPU access │
+│ entry tag) │ │ │
 │                  │          │                  │
-│  Page B          │←──回迁── │  Page B          │
-│  (CPU accesstrigger)  │          │  (evicted)       │
+│  Page B          │←──Relocation── │ Page B │
+│ (CPU access trigger) │ │ (evicted) │
 └──────────────────┘          └──────────────────┘
 
-pagemigrationprocess (svm_migrate_to_vram):
+Page migration process (svm_migrate_to_vram):
 ──────────────────────────────────────
-  1. GPU 频繁access Page A → triggermigration决策
-  2. VRAM allocationgoalpage
-  3. SDMA engine: memcpy(vram_page, ram_page)
-  4. update GPUVM page table: VA → VRAM physical address
-  5. update CPU page table: install migration entry
-     (CPU againaccess时trigger fault → svm_migrate_to_ram)
+1. GPU frequently accesses Page A → triggers migration decision
+2. VRAM allocation target page
+3. SDMA engine: memcpy(vram_page, ram_page)
+4. Update GPUVM page table: VA → VRAM physical address
+5. Update CPU page table: install migration entry
+(fault triggered when CPU accesses again → svm_migrate_to_ram)
 
-GPU Page Fault handle:
+GPU Page Fault processing:
 ──────────────────────────────────────
-  GPU accessvirtual address 0x7f0000010000
+GPU access virtual address 0x7f0000010000
        │
-       ▼ (GPUVM page table无mapping)
-  GPU generate page fault interrupt
+▼ (GPUVM page table has no mapping)
+GPU generates page fault interrupt
        │
        ▼
   KFD fault handler (kfd_svm_page_fault)
        │
-       ├─ address属于alreadyregistration SVM range? 
-       │   is → 建立 GPUVM mapping(maytriggermigration)
-       │   否 → report GPU fault error
+├─ Does the address belong to a registered SVM range?
+│ Yes → Establish GPUVM mapping (may trigger migration)
+│ No → Report GPU fault error
        │
        ▼
-  recover GPU execute`,
-            caption: 'SVM let CPU and GPU throughsamevirtual addressaccessdata. pagecaninsystem memoryand VRAM 之between按需migration — GPU 热dataautomatic迁入 VRAM 以获得高bandwidth, CPU access时automatic迁回. 这corresponding用program透明, 由 KFD andhardware page fault mechanismautomaticmanagement. ',
+Resume GPU execution`,
+            caption: 'SVM lets the CPU and GPU access data through the same virtual address. Pages can be migrated between system memory and VRAM on demand - GPU hot data is automatically moved into VRAM for high bandwidth, and CPU access is automatically moved back. This is transparent to the application and is managed automatically by KFD and hardware page fault mechanisms.',
           },
           codeWalk: {
-            title: 'svm_range_add — registration SVM virtual addressrange',
+            title: 'svm_range_add — Register SVM virtual address range',
             file: 'drivers/gpu/drm/amd/amdkfd/kfd_svm.c',
             language: 'c',
-            code: `/* kfd_svm.c — SVM rangemanagementcorefunction */
+            code: `/*kfd_svm.c — SVM range management core function */
 
-/* svm_range represent一段受 SVM managementvirtual address区between */
+/*svm_range represents a virtual address range managed by SVM */
 struct svm_range {
-    struct interval_tree_node it_node; /* 区between树node, 按 VA 索引 */
-    struct list_head list;             /* process SVM range linked list */
-    uint64_t start;                    /* 起始page编号 (VA >> PAGE_SHIFT) */
-    uint64_t last;                     /* endpage编号 */
-    uint64_t npages;                   /* pagecount */
-    uint32_t flags;                    /* accessflag */
-    uint32_t preferred_loc;            /* 首选location: CPU or GPU_ID */
-    uint32_t actual_loc;               /* currentactuallocation */
-    uint32_t granularity;              /* migration粒度 */
-    struct list_head deferred_list;    /* latencyupdatelist */
-    struct mutex migrate_mutex;        /* migrationoperatemutex */
-    atomic_t queue_refcount;           /* 引用此 range queue数 */
-    /* ... 更多字段 */
+    struct interval_tree_node it_node; /*Interval tree node, indexed by VA*/
+    struct list_head list;             /*SVM range linked list of process*/
+    uint64_t start;                    /*Starting page number (VA >> PAGE_SHIFT)*/
+    uint64_t last;                     /*end page number*/
+    uint64_t npages;                   /*Number of pages*/
+    uint32_t flags;                    /*access flag*/
+    uint32_t preferred_loc;            /*Preferred location: CPU or GPU_ID*/
+    uint32_t actual_loc;               /*Current actual location*/
+    uint32_t granularity;              /*Migration granularity*/
+    struct list_head deferred_list;    /*Delayed update list*/
+    struct mutex migrate_mutex;        /*Migration operation mutex lock*/
+    atomic_t queue_refcount;           /*The number of queues referencing this range*/
+    /*... more fields */
 };
 
-/* registration一段virtual addressas SVM managementregion */
+/*Register a virtual address as the SVM management area */
 int svm_range_add(struct kfd_process *p,
                   uint64_t start, uint64_t size,
                   uint32_t nattr,
@@ -569,35 +569,35 @@ int svm_range_add(struct kfd_process *p,
     uint64_t last = start + size - 1;
     int r;
 
-    /* 锁定 SVM range list */
+    /*Lock SVM range list */
     mutex_lock(&svms->lock);
 
-    /* checkwhetherandalreadyhas SVM range 重叠
-     * use interval_tree 高效lookup重叠区between
+    /*Check whether it overlaps with existing SVM range
+     *Use interval_tree to efficiently find overlapping intervals
      */
     prange = svm_range_find(svms, start, last);
     if (prange) {
-        /* alreadyhas range overwrite此region: updateproperty */
+        /*There is already a range covering this area: update attributes */
         r = svm_range_split_adjust(svms, prange,
                                    start, last, nattr, attrs);
         goto out;
     }
 
-    /* allocation新 svm_range structure体 */
+    /*Allocate new svm_range structure */
     prange = svm_range_new(svms, start, size, true);
     if (!prange) {
         r = -ENOMEM;
         goto out;
     }
 
-    /* set SVM property(preferred_loc, flags 等)
-     * preferred_loc 决定page首选存放location: 
-     *   KFD_IOCTL_SVM_LOCATION_SYSMEM — system memory
-     *   KFD_IOCTL_SVM_LOCATION_VRAM   — GPU VRAM
+    /*Set SVM properties (preferred_loc, flags, etc.)
+     *preferred_loc determines the preferred storage location of the page:
+     *KFD_IOCTL_SVM_LOCATION_SYSMEM — System memory
+     *KFD_IOCTL_SVM_LOCATION_VRAM — GPU memory
      */
     svm_range_set_attr(p, start, size, nattr, attrs);
 
-    /* will新 range add区between树andlinked list */
+    /*Add the new range to the interval tree and linked list */
     svm_range_add_to_svms(prange);
     svm_range_add_notifier_locked(svms, prange);
 
@@ -607,28 +607,28 @@ out:
     return r;
 }`,
             annotations: [
-              'svm_range is SVM coredata structure, each实例代表一段受managementvirtual address区between',
-              'interval_tree allow高效lookupand给定addressrange重叠 SVM range(O(log n) complex度)',
-              'preferred_loc 指示page应优先放in CPU stillis GPU memory — impactmigrationstrategy',
-              'actual_loc recordpagecurrentactuallocation, and preferred_loc different时maytriggermigration',
-              'migrate_mutex protectmigrationoperate — 同一时between只allowamigrationoperate进行',
-              'svm_range_add_notifier_locked registration MMU notifier, when CPU page table变化时notify KFD update GPUVM',
+              'svm_range is the core data structure of SVM. Each instance represents a managed virtual address range.',
+              'interval_tree allows efficient finding of SVM ranges that overlap a given address range (O(log n) complexity)',
+              'preferred_loc indicates whether the page should be placed first in CPU or GPU memory - affecting migration strategy',
+              'actual_loc records the current actual location of the page, which may trigger migration if it is different from preferred_loc',
+              'migrate_mutex protects migration operations - only one migration operation is allowed at a time',
+              'svm_range_add_notifier_locked registers MMU notifier and notifies KFD to update GPUVM when the CPU page table changes.',
             ],
-            explanation: 'svm_range_add is ROCm run时向 KFD registration SVM managementregionentry point. whenuser spacecall hsaKmtSetMemoryPolicy or hipMallocManaged 时, finalwillthrough ioctl call此function. 它in KFD increatea svm_range structure体跟踪thisvirtual address, after续when GPU access此range内address时, KFD  page fault handler canlookuptocorresponding svm_range 并按需建立mappingortriggermigration. 这is SVM "按需allocation, 按需migration" mechanism起点. ',
+            explanation: 'svm_range_add is the entry point for ROCm runtime to register the SVM management area with KFD. This function is ultimately called via ioctl when userspace calls hsaKmtSetMemoryPolicy or hipMallocManaged. It creates a svm_range structure in KFD to track this virtual address. When the GPU accesses an address within this range, KFD\'s page fault handler can find the corresponding svm_range and establish mapping or trigger migration as needed. This is the starting point of SVM\'s "allocate on demand, migrate on demand" mechanism.',
           },
           miniLab: {
-            title: 'observe SVM pagemigrationand GPU page fault',
-            objective: 'through ftrace and sysfs observe KFD  SVM pagemigration行as, understand按需migrationworkapproach. ',
-            setup: `# need root permissionuse ftrace
-# needinstall ROCm andause managed memory  HIP program
+            title: 'Observe SVM page migration and GPU page fault',
+            objective: 'Observe KFD\'s SVM page migration behavior through ftrace and sysfs to understand how on-demand migration works.',
+            setup: `#Requires root privileges to use ftrace
+#Requires installation of ROCm and a HIP program using managed memory
 sudo su`,
             steps: [
-              'enable KFD SVM related ftrace 跟踪点: echo 1 > /sys/kernel/debug/tracing/events/amdgpu/svm_migrate_start/enable',
-              'meanwhileenable GPU fault event: echo 1 > /sys/kernel/debug/tracing/events/amdgpu/amdgpu_vm_bo_cs/enable',
-              'runause hipMallocManaged  HIP program',
-              'view ftrace log: cat /sys/kernel/debug/tracing/trace | grep svm',
-              'observemigrationstatistics: cat /sys/class/drm/card0/device/kfd/proc/*/svm_stats(ifavailable)',
-              'cleanup ftrace: echo 0 > /sys/kernel/debug/tracing/events/amdgpu/svm_migrate_start/enable',
+              'Enable KFD SVM related ftrace tracing points: echo 1 > /sys/kernel/debug/tracing/events/amdgpu/svm_migrate_start/enable',
+              'Also enable GPU fault events: echo 1 > /sys/kernel/debug/tracing/events/amdgpu/amdgpu_vm_bo_cs/enable',
+              'Running a HIP program using hipMallocManaged',
+              'View the ftrace log: cat /sys/kernel/debug/tracing/trace | grep svm',
+              'Observe migration statistics: cat /sys/class/drm/card0/device/kfd/proc/*/svm_stats (if available)',
+              'Clean ftrace: echo 0 > /sys/kernel/debug/tracing/events/amdgpu/svm_migrate_start/enable',
             ],
             expectedOutput: `$ cat /sys/kernel/debug/tracing/trace | grep svm
 vectorAdd-12345 [003]  svm_migrate_start: pid=12345
@@ -636,50 +636,50 @@ vectorAdd-12345 [003]  svm_migrate_start: pid=12345
 vectorAdd-12345 [003]  svm_migrate_end: pid=12345
   src=RAM dst=VRAM migrated=64 failed=0
 
-indicate: 64 个page(256KB)from RAM migrationto VRAM
-这发生in GPU kernel 首次access managed memory 时`,
-            hint: 'if ftrace event点notexist, mayiskernelversion较旧. can改用 dmesg observe: echo 0x40 > /sys/module/amdgpu/parameters/debug_mask enable KFD debugginglog. ',
+Description: Migrate 64 pages (256KB) from RAM to VRAM
+This happens when the GPU kernel first accesses managed memory`,
+            hint: 'If the ftrace event point does not exist, the kernel version may be older. You can use dmesg to observe instead: echo 0x40 > /sys/module/amdgpu/parameters/debug_mask Enable KFD debug logging.',
           },
           debugExercise: {
-            title: 'diagnose GPU page fault cause kernel crash',
+            title: 'Diagnosing kernel crashes caused by GPU page faults',
             language: 'c',
-            description: 'a HIP programin GPU kernel execute时crash, dmesg display GPU VM fault. analyzeerrorinformation并确定根本cause. ',
-            question: 'GPU VM fault 根本causeiswhat? howin HIP codeinavoid这类issue? ',
-            buggyCode: `/* dmesg output */
+            description: 'A HIP program crashes during GPU kernel execution and dmesg shows GPU VM fault. Analyze the error message and determine the root cause.',
+            question: 'What is the root cause of GPU VM fault? How to avoid this kind of problem in HIP code?',
+            buggyCode: `/*dmesg output */
 [  89.3] amdgpu 0000:03:00.0: [gfxhub0]
   GPU fault detected: src_id:0, ring:0, vmid:3, pasid:32769
 [  89.3] amdgpu 0000:03:00.0:
   VM_L2_PROTECTION_FAULT_STATUS: 0x00301050
 [  89.3] amdgpu 0000:03:00.0:
-  addr: 0x00007f0000DEAD00  ← byaccessvirtual address
+  addr: 0x00007f0000DEAD00  ←The virtual address being accessed
   status: read, protection fault
   client: TCP (Texture Cache Per Pipe)
 [  89.3] kfd: Process 12345 GPU fault on gpu 1002:7480
 
-/* correspondinghasissue HIP code */
+/*Corresponding problematic HIP code */
 __global__ void kernel(int *data, int n) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    /* BUG: nocheck idx < n access data[idx] */
-    data[idx] = data[idx] * 2;  /* out of boundsaccess! */
+    /*BUG: Access data[idx] without checking idx < n */
+    data[idx] = data[idx] * 2;  /*Cross-border access!*/
 }
 
 int main() {
     int *d_data;
     int n = 1024;
     hipMalloc(&d_data, n * sizeof(int));
-    /* startup过多thread: 2048 > 1024 */
+    /*Too many threads started: 2048 > 1024 */
     kernel<<<4, 512>>>(d_data, n);
     hipDeviceSynchronize();
 }`,
-            hint: 'note addr in 0xDEAD00 pattern, andthreadcount(4 * 512 = 2048)anddatasize(1024 个 int)notmatch. ',
-            answer: '根本cause: GPU kernel out of boundsmemoryaccess. programallocation 1024 个 int(4KB), 但startup 4 * 512 = 2048 个thread, thread 1024-2047 access data[1024]-data[2047], 超出allocationmemoryrange. GPU  GPUVM intheseout of boundsaddressonnovalidmapping, cause VM_L2_PROTECTION_FAULT. dmesg inkeyinformation: (1)pasid:32769 identifier出错process; (2)addr: 0x7f0000DEAD00 isout of boundsaccessvirtual address(0xDEAD pattern表明这mayisnot yetinitializationoralreadyreleasememoryregion); (3)client: TCP representis Texture Cache 发起读operate(compute shader memoryreadalsothrough TCP); (4)protection fault representpage tableinno此addressmapping. fixmethod: in kernel inaddboundarycheck if (idx < n), or调整 grid sizematchdata量: kernel<<<(n+255)/256, 256>>>(d_data, n). 这is GPU programmingin最common bug type之一. ',
+            hint: 'Note the 0xDEAD00 pattern in addr, and the mismatch in the number of threads (4 * 512 = 2048) and data size (1024 ints).',
+            answer: 'Root cause: GPU kernel out-of-bounds memory access. The program allocates 1024 ints (4KB), but starts 4 * 512 = 2048 threads. Threads 1024-2047 access data[1024]-data[2047], which exceeds the allocated memory range. The GPU\'s GPUVM does not have a valid mapping on these out-of-bounds addresses, resulting in VM_L2_PROTECTION_FAULT. Key information in dmesg: (1) pasid:32769 identifies the error process; (2) addr: 0x7f0000DEAD00 is the virtual address of out-of-bounds access (0xDEAD mode indicates that this may be an uninitialized or released memory area); (3) client: TCP indicates a read operation initiated by Texture Cache (the memory read of the calculation shader is also through TCP); (4) protection fault Indicates that there is no mapping for this address in the page table. Fix: Add bounds check if (idx < n) in the kernel, or adjust the grid size to match the amount of data: kernel<<<(n+255)/256, 256>>>(d_data, n). This is one of the most common types of bugs in GPU programming.',
           },
           interviewQ: {
-            question: 'explain KFD  SVM(Shared Virtual Memory)ishowimplementation. include GPUVM page table, PASID, GPU page fault andpagemigrationworkmechanism. ',
+            question: 'Explain how KFD\'s SVM (Shared Virtual Memory) is implemented. Including the working mechanism of GPUVM page table, PASID, GPU page fault and page migration.',
             difficulty: 'hard',
-            hint: 'fromdata structure(svm_range)→ hardwaremechanism(GPUVM, PASID, page fault)→ migrationprocess(svm_migrate_to_vram/ram)→ coherence保证(MMU notifier)orderanswer. ',
-            answer: 'KFD SVM implementation: (1)data structure: 每段受 SVM managementvirtual address区between用 svm_range represent, storagein interval tree in以高效lookup. svm_range recordaddressrange, 首选location(CPU/GPU), actuallocationandmigrationstate. (2)GPUVM page table: eachprocess GPU hasindependentpage table(similar CPU  4 级page table), willvirtual addressmappingto VRAM orsystem memoryphysical address. PASID isprocessaddress spaceidentifier, GPU accessmemory时携带 PASID, hardware用它selectcorrectpage table. (3)GPU page fault: when GPU accessnot yetmappingvirtual address时, GPU generate page fault interrupt. KFD  kfd_svm_page_fault handler lookupcorresponding svm_range, ifpageinsystem memory且needmigrationto VRAM, trigger svm_migrate_to_vram(): in VRAM allocationpage → SDMA copydata → update GPU page table → in CPU page tableinstall migration entry. (4)反向migration: CPU accessalreadymigrationto VRAM page时, CPU page fault handler trigger svm_migrate_to_ram() willpage迁回. (5)coherence: KFD registration MMU notifier, when CPU 侧page table变化(如 munmap, mremap)时, KFD synchronizationupdateor invalidate corresponding GPUVM mapping, 保证 CPU and GPU 看to一致address space. entiremechanism对user space透明 — hipMallocManaged allocationmemoryautomaticinneed时migrationtocorrectlocation. ',
-            amdContext: '这is AMD ROCm interviewinadvancedissue. demonstrate你understand SVM not只is"sharedaddress"那么simple, 背afteris GPUVM page table, PASID hardwaresupport, page fault handleand双向migrationcomplexsystem. 提to MMU notifier is加分项 — 它体现你understand CPU and GPU page tablesynchronizationkeymechanism. ',
+            hint: 'Answer in sequence from data structure (svm_range) → hardware mechanism (GPUVM, PASID, page fault) → migration process (svm_migrate_to_vram/ram) → consistency guarantee (MMU notifier).',
+            answer: 'KFD SVM implementation: (1) Data structure: Each virtual address range managed by SVM is represented by svm_range and stored in the interval tree for efficient search. svm_range records the address range, preferred location (CPU/GPU), actual location, and migration status. (2) GPUVM page table: The GPU of each process has an independent page table (similar to the CPU\'s 4-level page table), which maps virtual addresses to physical addresses in VRAM or system memory. PASID is the address space identifier of the process. The GPU carries PASID when accessing memory, and the hardware uses it to select the correct page table. (3) GPU page fault: When the GPU accesses an unmapped virtual address, the GPU generates a page fault interrupt. KFD\'s kfd_svm_page_fault handler finds the corresponding svm_range. If the page is in system memory and needs to be migrated to VRAM, trigger svm_migrate_to_vram(): allocate the page in VRAM → copy data to SDMA → update the GPU page table → install migration entry in the CPU page table. (4) Reverse migration: When the CPU accesses a page that has been migrated to VRAM, the CPU page fault handler triggers svm_migrate_to_ram() to migrate the page back. (5) Consistency: KFD registers the MMU notifier. When the CPU side page table changes (such as munmap, mremap), KFD synchronously updates or invalidates the corresponding GPUVM mapping to ensure that the CPU and GPU see the same address space. The entire mechanism is transparent to user space - memory allocated by hipMallocManaged is automatically migrated to the correct location when needed.',
+            amdContext: 'This is an advanced question in AMD ROCm interview. Show that you understand that SVM is more than just "shared addresses". Behind it is a complex system of GPUVM page tables, PASID hardware support, page fault handling, and bidirectional migration. The mention of the MMU notifier is a plus - it reflects your understanding of the key mechanism of CPU and GPU page table synchronization.',
           },
         },
 
@@ -687,103 +687,103 @@ int main() {
         {
           id: '7-2-2',
           number: '7.2.2',
-          title: 'semaphoreandevent: CPU-GPU synchronization',
+          title: 'Semaphores and events: CPU-GPU synchronization',
           titleEn: 'Signals & Events: CPU-GPU Synchronization',
           duration: 18,
           difficulty: 'advanced',
           tags: ['HSA-signal', 'KFD-event', 'doorbell', 'interrupt', 'polling', 'synchronization'],
           concept: {
-            summary: 'CPU-GPU synchronizationis异构computeincorechallenge. KFD provide两种mechanism: HSA semaphore(64 位atomiccount器, support GPU directlyupdate)and KFD event(interruptdriverwakeupmechanism). semaphoreused for GPU-GPU and CPU-GPU 之between细粒度synchronization, eventused for CPU wait GPU complete高效block. ',
+            summary: 'CPU-GPU synchronization is a core challenge in heterogeneous computing. KFD provides two mechanisms: HSA semaphores (64-bit atomic counters that support direct GPU updates) and KFD events (interrupt-driven wake-up mechanisms). Semaphores are used for fine-grained synchronization between GPU-GPU and CPU-GPU, and events are used for efficient blocking of the CPU waiting for the GPU to complete.',
             explanation: [
-              'HSA semaphore(HSA Signal)isa 64 位atomic值, storagein CPU and GPU allcanaccessmemorylocation. GPU canthroughatomic operationupdatesemaphore值(for examplecompletea kernel afterwill其递减as 0), CPU canpollingorwaitsemaphore达tospecific值. semaphore本质isasharedatomiccount器, 但它特殊之处in于: 它关联a KFD event, whensemaphore值满足condition时, cantriggerinterruptwakeupwait CPU thread, 而is not浪费 CPU 周期polling. ',
-              'in AQL 包in, each kernel dispatch containa completion_signal 字段. when GPU complete此 dispatch after, 它will对 completion_signal 指向 64 位值executeatomic递减operate. if递减after值等于 0, GPU stillwill向 CPU sendainterrupt(throughwrite IH Ring). KFD interrupt handlingprogram收tointerruptafter, lookupcorresponding KFD event, wakeupwaitin该eventon CPU thread. 这is hipDeviceSynchronize() or hipStreamSynchronize() 底layerimplementation. ',
-              'KFD event(KFD Event)iskernel侧synchronization原语. user spacethrough AMDKFD_IOC_CREATE_EVENT ioctl createevent, through AMDKFD_IOC_WAIT_EVENTS waiteventtrigger. eventhas多种type: SIGNAL event(and HSA semaphore关联, GPU completeoperateaftertrigger), HW_EXCEPTION(GPU hardware异常, 如 page fault), DEBUG(debuggingevent). kfd_wait_on_event functionimplementationwaitlogic: willcurrentthreadaddwait queue, settimeout, wheneventbytrigger时wakeupthread. ',
-              'synchronizationpatternhas两种select: polling(polling)andinterrupt(interrupt). pollingpatternbelow, CPU 持续readsemaphore值直to满足condition — latency最低(~100ns level), 但浪费 CPU 周期. interruptpatternbelow, CPU thread休眠, GPU completeafterthroughinterruptwakeup — not浪费 CPU, 但interrupt handlinghas额outsidelatency(~1-10μs). ROCm run时usually采用blendingstrategy: 先polling一小段时between(~1000 次循环), ifsemaphore仍not yetready, 切换tointerruptwait. 这in短 kernel(微秒级complete)时获得polling低latency, in长 kernel(毫秒级above)时avoid浪费 CPU. ',
-              'Doorbell insynchronizationmechanisminalso扮演important角色. 除used fornotify GPU has新 AQL 包(queue doorbell), doorbell stillused for HSA semaphore快速path — user spacecanthrough写 doorbell trigger GPU checksemaphore值. 这种 doorbell-based signaling mechanismletsemaphoreoperatelatency降to最低. KFD aseachprocessallocation doorbell page, user spacethrough mmap /dev/kfd 获得 doorbell virtual address. ',
+              'The HSA Signal is a 64-bit atomic value stored in a memory location accessible to both the CPU and GPU. The GPU can update the semaphore\'s value through atomic operations (such as decrementing it to 0 after completing a kernel), and the CPU can poll or wait for the semaphore to reach a specific value. The essence of a semaphore is a shared atomic counter, but its special feature is that it is associated with a KFD event. When the value of the semaphore meets the condition, an interrupt can be triggered to wake up the waiting CPU thread instead of wasting CPU cycles for polling.',
+              'In the AQL package, each kernel dispatch contains a completion_signal field. When the GPU completes this dispatch, it performs an atomic decrement operation on the 64-bit value pointed to by completion_signal. If the decremented value equals 0, the GPU also sends an interrupt to the CPU (by writing to the IH Ring). After receiving the interrupt, the KFD interrupt handler looks for the corresponding KFD event and wakes up the CPU thread waiting for the event. This is the underlying implementation of hipDeviceSynchronize() or hipStreamSynchronize().',
+              'KFD Event is a synchronization primitive on the kernel side. User space creates events through AMDKFD_IOC_CREATE_EVENT ioctl and waits for event triggers through AMDKFD_IOC_WAIT_EVENTS. There are many types of events: SIGNAL event (associated with the HSA semaphore, triggered after the GPU completes the operation), HW_EXCEPTION (GPU hardware exception, such as page fault), DEBUG (debugging event). The kfd_wait_on_event function implements waiting logic: adds the current thread to the waiting queue, sets the timeout, and wakes up the thread when the event is triggered.',
+              'There are two options for synchronous mode: polling and interrupt. In polling mode, the CPU continues to read the value of the semaphore until the condition is met - minimal latency (~100ns level), but a waste of CPU cycles. In interrupt mode, the CPU thread sleeps and wakes up via interrupt when the GPU is finished - no CPU waste, but there is an additional delay in interrupt processing (~1-10μs). The ROCm runtime usually adopts a mixed strategy: poll for a short period of time (~1000 cycles), and if the semaphore is not ready yet, switch to interrupt waiting. This achieves low latency for polling in short kernels (completion in microseconds) and avoids wasting CPU in long kernels (milliseconds or more).',
+              'Doorbell also plays an important role in the synchronization mechanism. In addition to being used to notify the GPU of new AQL packets (queue doorbell), doorbell is also used as a fast path to the HSA semaphore - userspace can trigger the GPU to check the semaphore value by writing doorbell. This doorbell-based signaling mechanism minimizes the latency of semaphore operations. KFD allocates a doorbell page to each process, and the user space obtains the virtual address of the doorbell through mmap /dev/kfd.',
             ],
             keyPoints: [
-              'HSA Signal is 64 位atomiccount器, GPU throughatomic operationupdate, CPU pollingorinterruptwait',
-              'AQL 包 completion_signal 字段 — GPU complete dispatch after递减, 值as 0 时triggerinterrupt',
-              'KFD Event iskernelsynchronization原语 — SIGNAL, HW_EXCEPTION, DEBUG 等type',
-              'kfd_wait_on_event implementationblockwait: thread休眠 → GPU interrupt → kfd_signal_event_handler wakeup',
-              'blendingsynchronizationstrategy: 先polling(低latency)→ timeoutafter切换tointerruptwait(节省 CPU)',
-              'doorbell used forqueuenotifyandsemaphore快速path — 单次 4 bytes MMIO write',
+              'HSA Signal is a 64-bit atomic counter that the GPU updates through atomic operations and the CPU polls or interrupts to wait.',
+              'The completion_signal field of the AQL package—decrements after the GPU completes dispatch, and triggers an interrupt when the value is 0',
+              'KFD Event is a kernel synchronization primitive - SIGNAL, HW_EXCEPTION, DEBUG and other types',
+              'kfd_wait_on_event implements blocking waiting: thread sleep → GPU interrupt → kfd_signal_event_handler wake up',
+              'Hybrid synchronization strategy: poll first (low latency) → switch to interrupt waiting after timeout (save CPU)',
+              'doorbell for queue notifications and semaphore fast path - single 4-byte MMIO write',
             ],
           },
           diagram: {
-            title: 'CPU-GPU synchronization: semaphoreandeventmechanism',
-            content: `CPU-GPU synchronization三条path
+            title: 'CPU-GPU synchronization: semaphore and event mechanism',
+            content: `Three paths for CPU-GPU synchronization
 
-path 1: pollingpattern (最低latency, 消耗 CPU)
+Path 1: Polling mode (lowest latency, CPU consumption)
 ══════════════════════════════════════════════
   CPU                                GPU
   ────                               ────
   dispatch kernel (write AQL + doorbell)
-                                     ──→ execute kernel
+──→ Execute kernel
   while (*signal != 0)               ...
-    pause();         ← CPU busy wait       ...
-                                     complete
+    pause();         ←CPU busy waiting...
+Finish
                                      atomic_dec(signal)
   *signal == 0  ✓                    ──→ signal = 0
-  latency: ~100ns (最快)
+Latency: ~100ns (fastest)
 
-path 2: interruptpattern (节省 CPU, haslatency)
+Path 2: Interrupt mode (saves CPU, has latency)
 ══════════════════════════════════════════════
   CPU                                GPU
   ────                               ────
   dispatch kernel
-  kfd_wait_on_event()                ──→ execute kernel
+kfd_wait_on_event() ──→ execute kernel
     │                                ...
     ▼                                ...
-  thread_sleep()    ← CPU 休眠       ...
-    zzz...                           complete
+  thread_sleep()    ←CPU sleep...
+zzz... Done
                                      atomic_dec(signal)
                                      if signal == 0:
   ┌────────────────────────────────    write IH Ring ←─┐
-  │                                   (interrupt)           │
+│ (interrupt) │
   ▼                                                    │
-  IH Ring handle                                         │
+IH Ring Processing │
   kfd_signal_event_handler()                           │
     │                                                  │
-    ├─ lookupevent: event_id → kfd_event                  │
-    ├─ set event->signaled = true                     │
-    └─ wake_up(&event->wq)  ← wakeupwaitthread            │
+├─ Find events: event_id → kfd_event │
+├─ Set event->signaled = true │
+    └─ wake_up(&event->wq)  ←Wake up the waiting thread │
                                                        │
-  thread bywakeup ✓                                      │
-  latency: ~1-10μs                                        │
+thread is awakened ✓ │
+Delay: ~1-10μs │
                                                        │
-path 3: blendingpattern (ROCm default)                           │
+Path 3: Mixed Mode (ROCm Default) │
 ══════════════════════════════════════════════          │
   CPU                                                  │
   ────                                                 │
-  for (i = 0; i < 1000; i++)    ← 先polling              │
+  for (i = 0; i < 1000; i++)    ←Poll first │
     if (*signal == 0) goto done;                       │
-  kfd_wait_on_event()           ← theninterruptwait         │
+  kfd_wait_on_event()           ←Then interrupt and wait │
                                                        │
                                                        │
 IH Ring (Interrupt Handler Ring):                      │
 ┌────────────────────────────────────────┐             │
-│  GPU generateinterrupteventring buffer          │             │
+│ GPU generated interrupt event ring buffer │ │
 │  ┌──────┬──────┬──────┬──────┐         │             │
 │  │ src  │ src  │ src  │      │         │             │
 │  │ =146 │ =146 │ =0   │      │         │             │
 │  │signal│signal│fault │      │         │             │
 │  │event1│event2│      │      │  ←──────┘
 │  └──────┴──────┴──────┴──────┘
-│  kfd_interrupt_isr() 逐个handle
+│ kfd_interrupt_isr() Process one by one
 └────────────────────────────────────────┘`,
-            caption: 'CPU-GPU synchronization三种pattern. pollinglatency最低但浪费 CPU; interruptwait节省 CPU 但hasinterrupt handlinglatency; blendingpattern结合两者优点 — ROCm defaultuse. GPU through IH Ring(interrupt handlingring buffer)notify CPU semaphore变化. ',
+            caption: 'Three modes of CPU-GPU synchronization. Polling has the lowest latency but wastes CPU; interrupt waiting saves CPU but has interrupt processing latency; mixed mode combines the advantages of both - ROCm is used by default. The GPU notifies the CPU of semaphore changes through the IH Ring (interrupt handling ring buffer).',
           },
           codeWalk: {
-            title: 'kfd_signal_event_handler — GPU interrupttriggereventwakeup',
+            title: 'kfd_signal_event_handler — GPU interrupt trigger event wake-up',
             file: 'drivers/gpu/drm/amd/amdkfd/kfd_events.c',
             language: 'c',
-            code: `/* kfd_events.c — KFD event信号handle */
+            code: `/*kfd_events.c — KFD event signal processing */
 
-/* when GPU completeoperate并generateinterrupt时call此function
- * 由 IH Ring handleprogram (kfd_interrupt_isr) 分发
+/*This function is called when the GPU completes the operation and generates an interrupt
+ *Distributed by the IH Ring handler (kfd_interrupt_isr)
  *
- * data: interrupt源information (signal event ID)
+ *data: interrupt source information (signal event ID)
  */
 void kfd_signal_event_handler(unsigned int client_id,
                               uint32_t event_id,
@@ -792,15 +792,15 @@ void kfd_signal_event_handler(unsigned int client_id,
     struct kfd_process *p;
     struct kfd_event *ev;
 
-    /* through client_id (PASID) lookupcorrespondingprocess */
+    /*Find the corresponding process by client_id (PASID) */
     p = kfd_lookup_process_by_pasid(client_id);
     if (!p)
         return;
 
     rcu_read_lock();
 
-    /* inprocessevent表inlookupevent
-     * event表is IDR (ID Radix tree), O(1) lookup
+    /*Find events in a process's event table
+     *The event table is IDR (ID Radix tree), O(1) lookup
      */
     ev = idr_find(&p->event_idr, event_id);
     if (!ev) {
@@ -811,13 +811,13 @@ void kfd_signal_event_handler(unsigned int client_id,
 
     spin_lock(&ev->lock);
 
-    /* markeventasalreadytrigger */
+    /*Mark event as triggered */
     ev->signaled = true;
     ev->event_age++;
 
-    /* wakeupallwaitin此eventonthread
-     * kfd_wait_on_event() in wait_event_interruptible_timeout
-     * willcheck ev->signaled 并return
+    /*Wake up all threads waiting on this event
+     *wait_event_interruptible_timeout in kfd_wait_on_event()
+     *will check ev->signaled and return
      */
     wake_up_all(&ev->wq);
 
@@ -826,7 +826,7 @@ void kfd_signal_event_handler(unsigned int client_id,
     kfd_unref_process(p);
 }
 
-/* CPU 侧waiteventcorefunction */
+/*Core function of CPU side waiting event */
 static int kfd_wait_on_event(struct kfd_process *p,
                              struct kfd_event *ev,
                              uint64_t timeout_ms)
@@ -836,24 +836,24 @@ static int kfd_wait_on_event(struct kfd_process *p,
 
     timeout_jiffies = msecs_to_jiffies(timeout_ms);
 
-    /* wait直toeventbytriggerortimeout
-     * wait_event_interruptible_timeout internal: 
-     *   1. willcurrentthreadadd ev->wq wait queue
-     *   2. setthreadstateas TASK_INTERRUPTIBLE
-     *   3. call schedule() let出 CPU
-     *   4. by wake_up_all wakeupaftercheckcondition
+    /*Wait until event is triggered or times out
+     *wait_event_interruptible_timeout Internal:
+     *1. Add the current thread to the ev->wq waiting queue
+     *2. Set the thread status to TASK_INTERRUPTIBLE
+     *3. Call schedule() to release the CPU
+     *4. Check conditions after being woken up by wake_up_all
      */
     ret = wait_event_interruptible_timeout(
         ev->wq,
-        ev->signaled,    /* wakeupcondition: eventalreadytrigger */
+        ev->signaled,    /*Wake-up condition: event has been triggered*/
         timeout_jiffies);
 
     if (ret == 0)
-        return -ETIME;   /* timeout */
+        return -ETIME;   /*time out*/
     if (ret < 0)
-        return ret;       /* by信号打断 */
+        return ret;       /*interrupted by signal*/
 
-    /* reseteventstate(one-shot 语义)*/
+    /*Reset event state (one-shot semantics) */
     spin_lock(&ev->lock);
     ev->signaled = false;
     spin_unlock(&ev->lock);
@@ -861,92 +861,92 @@ static int kfd_wait_on_event(struct kfd_process *p,
     return 0;
 }`,
             annotations: [
-              'kfd_signal_event_handler 由 IH Ring handleprogram分发call — when GPU write IH Ring representoperatecomplete时',
-              'client_id is PASID — GPU ininterruptdatain携带 PASID identifieris哪个processevent',
-              'idr_find is O(1)  ID lookup, event表用 IDR(ID Radix tree)implementation以support快速lookup',
-              'wake_up_all wakeupallwaitthread — multiple CPU threadcanwait同aevent',
-              'wait_event_interruptible_timeout iskernelstandardconditionwait原语 — thread休眠直tocondition满足',
-              'one-shot 语义: eventtriggerafterreset signaled=false, below次waitneed新 GPU complete信号',
+              'kfd_signal_event_handler is dispatched by the IH Ring handler - when the GPU writes to the IH Ring indicating that the operation is complete',
+              'client_id is PASID - GPU carries PASID in interrupt data to identify which process the event is from',
+              'idr_find is an O(1) ID search, and the event table is implemented using IDR (ID Radix tree) to support fast search.',
+              'wake_up_all wakes up all waiting threads - multiple CPU threads can wait for the same event',
+              'wait_event_interruptible_timeout is the kernel\'s standard conditional waiting primitive - the thread sleeps until the condition is met',
+              'One-shot semantics: reset signaled=false after the event is triggered, and wait for a new GPU completion signal next time',
             ],
-            explanation: 'GPU complete kernel executeafterinterrupt handling链: GPU willinterruptinformationwrite IH Ring → amdgpu  IH Ring handleprogramreadinterrupt → 识别出is KFD 信号event → call kfd_signal_event_handler → lookupprocessandevent → wakeupwaitthread. kfd_wait_on_event correspondinguser space hsaKmtWaitOnEvent or hipDeviceSynchronize 底layerimplementation. understandthisinterrupt-wakeuppathisunderstand CPU-GPU synchronizationlatencykey. ',
+            explanation: 'The interrupt processing chain after the GPU completes kernel execution: GPU writes the interrupt information to the IH Ring → amdgpu\'s IH Ring handler reads the interrupt → recognizes that it is a KFD signal event → calls kfd_signal_event_handler → finds the process and event → wakes up the waiting thread. kfd_wait_on_event corresponds to the underlying implementation of hsaKmtWaitOnEvent or hipDeviceSynchronize in user space. Understanding this interrupt-wake path is key to understanding CPU-GPU synchronization latency.',
           },
           miniLab: {
-            title: 'measure CPU-GPU synchronizationlatency',
-            objective: 'writeasimple HIP programmeasurefrom GPU kernel completeto CPU bywakeuplatency, comparepollingandinterruptpattern. ',
-            setup: `# need ROCm and HIP compiler
-# ifno ROCm, canthrough ftrace observe kfd_signal_event_handler`,
+            title: 'Measuring CPU-GPU synchronization latency',
+            objective: 'Write a simple HIP program to measure the latency from when the GPU kernel completes to when the CPU wakes up, comparing polling and interrupt modes.',
+            setup: `#Requires ROCm and HIP compilers
+#If there is no ROCm, you can observe kfd_signal_event_handler through ftrace`,
             steps: [
-              'write HIP program: startupa空 kernel, then用 hipEventElapsedTime measuresynchronizationlatency',
-              'run 100 次取平均: record hipDeviceSynchronize 耗时',
-              'use ftrace tracing kfd_signal_event_handler: echo kfd_signal_event_handler > /sys/kernel/debug/tracing/set_ftrace_filter',
-              'enablefunction跟踪: echo function > /sys/kernel/debug/tracing/current_tracer',
-              'run HIP programafterview trace: cat /sys/kernel/debug/tracing/trace | grep kfd_signal',
-              'observeinterrupttowakeup时between差(timestamp 列)',
+              'Write a HIP program: start an empty kernel, and then use hipEventElapsedTime to measure the synchronization delay',
+              'Run 100 times and average: record the time taken by hipDeviceSynchronize',
+              'Use ftrace to trace kfd_signal_event_handler: echo kfd_signal_event_handler > /sys/kernel/debug/tracing/set_ftrace_filter',
+              'Enable function tracing: echo function > /sys/kernel/debug/tracing/current_tracer',
+              'Check the trace after running the HIP program: cat /sys/kernel/debug/tracing/trace | grep kfd_signal',
+              'Observe the time difference from interrupt to wake-up (timestamp column)',
             ],
-            expectedOutput: `# HIP synchronizationlatencymeasure
-hipDeviceSynchronize average latency: ~5-15 μs (interruptpattern)
+            expectedOutput: `#HIP sync delay measurement
+hipDeviceSynchronize average latency: ~5-15 μs (interrupt mode)
 
-# ftrace output
+#ftrace output
 $ cat /sys/kernel/debug/tracing/trace | grep kfd_signal
  amdgpu-12345  [002] 89.123456: kfd_signal_event_handler
-               ← frominterrupt发生to handler execute ~2-5μs
+               ←From interrupt occurrence to handler execution ~2-5μs
 
-compare hipStreamQuery (pollingpattern):
-average latency: ~1-3 μs (更低latency但消耗 CPU)`,
-            hint: 'ifunable toinstall ROCm, canthroughread kfd_events.c source codein wait_event_interruptible_timeout 用法understandsynchronizationmechanism. 关注 ev->signaled setandcheck时机. ',
+Compare hipStreamQuery (polling mode):
+average latency: ~1-3 μs (lower latency but consumes CPU)`,
+            hint: 'If you cannot install ROCm, you can understand the synchronization mechanism by reading the usage of wait_event_interruptible_timeout in the kfd_events.c source code. Pay attention to the setting and checking timing of ev->signaled.',
           },
           debugExercise: {
-            title: 'diagnose CPU-GPU synchronizationdeadlock',
+            title: 'Diagnosing CPU-GPU synchronization deadlock',
             language: 'c',
-            description: 'a多流 HIP programhang — hipDeviceSynchronize 永远notreturn. analyzebelowscenariofindcause. ',
-            question: 'why hipDeviceSynchronize 永远notreturn? 这isdeadlock吗? howfix? ',
-            buggyCode: `/* hasissue多流 HIP program */
+            description: 'A multi-stream HIP program hangs - hipDeviceSynchronize never returns. Analyze the following scenarios to find out why.',
+            question: 'Why does hipDeviceSynchronize never return? Is this a deadlock? How to fix it?',
+            buggyCode: `/*Problematic multi-stream HIP program */
 hipStream_t stream1, stream2;
 hipStreamCreate(&stream1);
 hipStreamCreate(&stream2);
 
-/* in stream1 onstartup kernel A */
+/*Start kernel A on stream1 */
 kernelA<<<grid, block, 0, stream1>>>(data);
 
-/* in CPU onwait stream1 complete(block!) */
+/*Wait for stream1 to complete on CPU (blocking!) */
 hipStreamSynchronize(stream1);
 
-/* BUG: kernelA internalinwait stream2 on kernelB complete
- * 但 kernelB stillnobystartup! 
+/*BUG: kernelA is internally waiting for kernelB on stream2 to complete
+ *But kernelB has not been started yet!
  */
 
-/* 这行code永远will notexecuteto */
+/*This line of code will never be executed until */
 kernelB<<<grid, block, 0, stream2>>>(data);
 hipStreamSynchronize(stream2);
 
-/* ----- dmesg output ----- */
+/*----- dmesg output ----- */
 /* [120.5] [drm:amdgpu_job_timedout] *ERROR*
  *   ring comp_1.0.0 timeout,
  *   signaled seq=100, emitted seq=101
  * [120.5] amdgpu: GPU reset begin!
  */`,
-            hint: 'kernelA inwaita永远will nottrigger信号 — becausegenerate该信号 kernelB byblockin CPU 侧(CPU in hipStreamSynchronize inwait kernelA). ',
-            answer: '这isa经典 CPU-GPU deadlockscenario: (1)CPU in hipStreamSynchronize(stream1) inwait kernelA complete; (2)kernelA in GPU onexecute时, internalthrough HSA semaphorewait stream2 on kernelB complete; (3)但 kernelB startupcodein CPU on, 位于 hipStreamSynchronize after — CPU byblockcause kernelB 永远will notbycommitto GPU. 形成ringwait: CPU 等 kernelA → kernelA 等 kernelB → kernelB need CPU commit. final GPU  amdgpu_job_timedout detecttotimeout, trigger GPU reset. fixmethod: (a)先commitall kernel to各自 stream, thenagainsynchronization: kernelA<<<...stream1>>>; kernelB<<<...stream2>>>; hipStreamSynchronize(stream1); hipStreamSynchronize(stream2);(b)use hipStreamWaitEvent implementation GPU 侧 stream betweendependency, 而is not CPU 侧synchronization; (c)avoidin GPU kernel internalwaitother stream 信号 — 这种pattern容易causedeadlock. ',
+            hint: 'kernelA is waiting for a signal that will never fire - because kernelB, which generates the signal, is blocked on the CPU side (CPU is waiting for kernelA in hipStreamSynchronize).',
+            answer: 'This is a classic CPU-GPU deadlock scenario: (1) The CPU waits for kernelA to complete in hipStreamSynchronize(stream1); (2) When kernelA is executed on the GPU, it internally waits for kernelB on stream2 to complete through the HSA semaphore; (3) But the startup code of kernelB is on the CPU, located after hipStreamSynchronize - the CPU is blocked causing kernelB to never be submitted to the GPU. Forming a circular wait: CPU waits for kernelA → kernelA and waits for kernelB → kernelB, which requires CPU submission. Finally, the amdgpu_job_timedout of the GPU detects a timeout and triggers a GPU reset. Repair method: (a) First submit all kernels to their respective streams, and then synchronize: kernelA<<<...stream1>>>; kernelB<<<...stream2>>>; hipStreamSynchronize(stream1); hipStreamSynchronize(stream2); (b) Use hipStreamWaitEvent to implement inter-stream dependency on the GPU side instead of synchronization on the CPU side; (c) Avoid waiting for signals from other streams inside the GPU kernel - this mode can easily lead to deadlocks.',
           },
           interviewQ: {
-            question: 'describe KFD in CPU-GPU synchronizationcompletepath: from GPU completea kernel to CPU threadbywakeup. include HSA semaphore, IH Ring, KFD eventmechanismandwakeupprocess. ',
+            question: 'Describes the complete path of CPU-GPU synchronization in KFD: from when the GPU completes a kernel to when the CPU thread wakes up. Including HSA semaphore, IH Ring, KFD event mechanism and wake-up process.',
             difficulty: 'hard',
-            hint: '按照event链: GPU atomic写 signal → GPU 写 IH Ring → CPU interrupt → IH handler → kfd_signal_event_handler → wake_up_all → userthreadreturn. ',
-            answer: 'completesynchronizationpath: (1)GPU  Shader Engine execute完 kernel finallya workgroup; (2)GPU  CP 对 AQL 包in completion_signal addressexecute atomic_dec operate(64 位atomic递减), willsemaphorefrom 1 递减as 0; (3)if递减after值as 0 且该semaphore关联interruptevent, GPU 向 IH Ring(Interrupt Handler Ring)write一条interrupt条目, contain source_id(146 = signal completion), PASID(processidentifier)and event_id; (4)amdgpu  IH Ring handleprogram(amdgpu_irq_handler)in IRQ contextinread IH Ring, 识别出这is KFD 信号event, call kfd_interrupt_isr willeventadd KFD interruptwork queue; (5)KFD interruptworker threadcall kfd_signal_event_handler, through PASID findprocess kfd_process, through event_id in IDR infind kfd_event; (6)set ev->signaled = true, call wake_up_all(&ev->wq) wakeupwait queueonallthread; (7)userthreadfrom wait_event_interruptible_timeout return, kfd_wait_on_event return 0 representsuccess; (8)user space hipDeviceSynchronize return. entirepathlatency约 5-15μs, main开销ininterrupt handlingandthreadscheduling. comparepollingpattern: CPU directlyreadsemaphorememorylocation, latency ~100ns-1μs, 但占用 CPU core. ROCm defaultuseblendingstrategy — 先短暂polling, then切换tointerruptwait. ',
-            amdContext: 'candetaileddescribe这条interrupt-wakeuppathindicate你深入understand KFD implementationdetail. AMD interviewin提to IH Ring, PASID lookupand wake_up_all thesespecificmechanismwilldemonstrate你not仅understand概念, stillread过actualcode. 额outside加分项: 提to ROCm blendingpolling/interruptstrategy体现工程实践意识. ',
+            hint: 'According to the event chain: GPU atomic write signal → GPU write IH Ring → CPU interrupt → IH handler → kfd_signal_event_handler → wake_up_all → user thread returns.',
+            answer: 'Complete synchronization path: (1) The GPU\'s Shader Engine finishes executing the last workgroup of the kernel; (2) The GPU\'s CP performs an atomic_dec operation (64-bit atomic decrement) on the completion_signal address in the AQL package, decrementing the semaphore from 1 to 0; (3) If the decremented value is 0 and the semaphore is associated with an interrupt event, the GPU sends a message to the IH Ring (Interrupt Handler) Ring) writes an interrupt entry, including source_id (146 = signal completion), PASID (process identification) and event_id; (4) amdgpu\'s IH Ring handler (amdgpu_irq_handler) reads the IH Ring in the IRQ context, recognizes that this is a KFD signal event, and calls kfd_interrupt_isr to add the event to KFD\'s interrupt work queue; (5) KFD\'s interrupt worker thread calls kfd_signal_event_handler, find the kfd_process of the process through PASID, and find kfd_event in the IDR through event_id; (6) Set ev->signaled = true, call wake_up_all(&ev->wq) to wake up all threads on the waiting queue; (7) The user thread returns from wait_event_interruptible_timeout, kfd_wait_on_event returns 0 Indicates success; (8) hipDeviceSynchronize in user space returns. The entire path delay is about 5-15μs, and the main overhead is interrupt processing and thread scheduling. Compare polling mode: the CPU directly reads the semaphore memory location, with a latency of ~100ns-1μs, but consumes CPU cores. ROCm uses a mixed strategy by default - polling briefly, then switching to interrupt waiting.',
+            amdContext: 'Being able to describe this interrupt-wakeup path in detail shows that you have a deep understanding of the implementation details of KFD. Mentioning specific mechanisms like IH Ring, PASID lookup, and wake_up_all in AMD interviews will demonstrate that you not only understand the concepts but have also read actual code. Bonus points: Mention that ROCm\'s hybrid polling/interrupt strategy demonstrates a sense of engineering practice.',
           },
         },
       ],
     },
   ],
   completionChecklist: [
-    'understand HSA architecturecore理念 — CPU/GPU 作as平等compute代理sharedvirtualaddress space',
-    'canexplain KFD and DRM interfacedifference(commandformat, queue模型, memory模型)',
-    'understand AQL 包 64 bytesstructureanduser-spacequeue零kernelcommitpath',
-    'candescribe MQD/HQD mappingmechanismand doorbell driverqueuenotify',
-    'understand SVM implementation: GPUVM page table, PASID, GPU page fault, pagemigration',
-    'canexplain svm_range data structureand svm_migrate_to_vram/ram migrationprocess',
-    'understand HSA semaphore(64 位atomiccount器)and KFD event(interruptdriverwakeup)workmechanism',
-    'candescribefrom GPU kernel completeto CPU threadwakeupcompleteinterruptpath',
+    'Understand the core concept of HSA architecture - CPU/GPU share virtual address space as equal computing agents',
+    'Can explain the difference between KFD and DRM interfaces (command format, queue model, memory model)',
+    'Understand the 64-byte structure of AQL packets and the zero-kernel submission path for user-mode queues',
+    'Can describe MQD/HQD mapping mechanism and doorbell driver queue notification',
+    'Understand the implementation of SVM: GPUVM page table, PASID, GPU page fault, page migration',
+    'Can explain the svm_range data structure and the migration process of svm_migrate_to_vram/ram',
+    'Understand how HSA semaphores (64-bit atomic counters) and KFD events (interrupt-driven wake-up) work',
+    'Can describe the complete interrupt path from GPU kernel completion to CPU thread wake-up',
   ],
 };
