@@ -1,6 +1,6 @@
 // ============================================================
 // AMD Linux Driver Learning Platform - Module 6 Micro-Lessons (English)
-// Module 6: Debugging & Profiling (debuggingandperformanceanalyze)
+// Module 6: Debugging & Profiling
 // 5 lessons in 2 groups, ~15-20 min each, total ~50h curriculum
 // ============================================================
 import type { MicroLessonModule } from './micro_lesson_types';
@@ -9,159 +9,159 @@ export const module6MicroLessonsEn: MicroLessonModule = {
   moduleId: 'debugging',
   groups: [
     // ════════════════════════════════════════════════════════════
-    // Group 6.1: Kernel Debugging Tools (kerneldebuggingtoolchain)
+    // Group 6.1: Kernel Debugging Tools (kernel debugging tool chain)
     // ════════════════════════════════════════════════════════════
     {
       id: '6-1',
       number: '6.1',
-      title: 'kerneldebuggingtoolchain',
+      title: 'Kernel debugging toolchain',
       titleEn: 'Kernel Debugging Tools',
       icon: 'Wrench',
-      description: 'master Linux kerneland amdgpu drivercoredebugging手段: printk logsystem, dynamicdebugging, ftrace kerneltracing, perf and rocprof performanceanalyze. thesetoolis AMD driverengineer每天use"武器库". ',
+      description: 'Master the core debugging methods of the Linux kernel and amdgpu driver: printk logging system, dynamic debugging, ftrace kernel tracing, perf and rocprof performance analysis. These tools are the "arsenal" that AMD driver engineers use every day.',
       lessons: [
         // ── Lesson 6.1.1 ──────────────────────────────────────
         {
           id: '6-1-1',
           number: '6.1.1',
-          title: 'printk, dynamicdebuggingand debugfs',
+          title: 'printk, dynamic debugging and debugfs',
           titleEn: 'printk, Dynamic Debug & debugfs',
           duration: 20,
           difficulty: 'advanced',
           tags: ['printk', 'dynamic-debug', 'debugfs', 'DRM_DEBUG', 'dmesg'],
           concept: {
-            summary: 'printk iskernelin最basicdebugging手段 — 它willmessagewritekernelring buffer, through dmesg canread. amdgpu driveruse DRM_DEBUG macro族anddynamicdebugging(dynamic debug)implementation精细logcontrol, 而 debugfs providerun时check GPU internalstatefilesysteminterface. ',
+            summary: 'printk is the most basic debugging method in the kernel - it writes messages to the kernel ring buffer, which can be read through dmesg. The amdgpu driver uses the DRM_DEBUG macro family and dynamic debug to implement fine log control, while debugfs provides a file system interface for inspecting the internal state of the GPU at runtime.',
             explanation: [
-              'printk iskernel printf, 但它notoutputto终端, but ratherwritea固定sizering buffer(default 128KB-1MB). 每条messagehasaloglevel(0-7): KERN_EMERG(0) 最高priority, KERN_DEBUG(7) 最低. kernel console_loglevel parameter决定whichlevelmessagewilloutputtocontrol台. amdgpu driveruse pr_info(), pr_err(), pr_debug() 等便捷macro, theywillautomaticaddmodule名before缀. ',
-              'DRM subsystemhasselflog体系: DRM_DEBUG_DRIVER(), DRM_DEBUG_KMS(), DRM_DEBUG_ATOMIC() 等macro. thesemacrooutput受 drm.debug moduleparametercontrol — 这isa位mask: bit 1 = CORE, bit 2 = DRIVER, bit 4 = KMS, bit 5 = PRIME, bit 6 = ATOMIC, bit 8 = LEASE. for exampleset drm.debug=0x1e will开启 DRIVER + KMS + ATOMIC debuggingoutput. in amdgpu codein, DRM_DEBUG_DRIVER() is最常用debuggingmacro, used for打印driverinternallogicinformation. ',
-              'dynamicdebugging(dynamic debug)is Linux kernel强大feature, allowinrun时按module, file, functionor行号精确开关 pr_debug() and dev_dbg() output. throughwrite /sys/kernel/debug/dynamic_debug/control control: echo "module amdgpu +p" 开启 amdgpu all pr_debug output, echo "file amdgpu_device.c +p" 只开启specificfile. 这比re-compilationkernel高效得多. ',
-              'debugfs isamemoryfilesystem(挂载in /sys/kernel/debug/), amdgpu driverinwhereregistration大量debugginginterface. path /sys/kernel/debug/dri/0/ belowhas: amdgpu_fence_info(fence state — tracing GPU 任务complete情况), amdgpu_gpu_recover(手动trigger GPU reset), amdgpu_ring_gfx(GFX ring buffer 内容), amdgpu_pm_info(power managementstate)等. thesefileisreal-timeread GPU internalstate窗口, 比 dmesg log更directly. ',
+              'printk is the kernel\'s printf, but instead of outputting to the terminal, it writes to a fixed-size ring buffer (default 128KB-1MB). Each message has a log level (0-7): KERN_EMERG(0) is the highest priority, KERN_DEBUG(7) is the lowest. The kernel\'s console_loglevel parameter determines which levels of messages will be output to the console. The amdgpu driver uses convenience macros such as pr_info(), pr_err(), pr_debug(), etc., which automatically add module name prefixes.',
+              'The DRM subsystem has its own log system: DRM_DEBUG_DRIVER(), DRM_DEBUG_KMS(), DRM_DEBUG_ATOMIC() and other macros. The output of these macros is controlled by the drm.debug module parameters - which is a bitmask: bit 1 = CORE, bit 2 = DRIVER, bit 4 = KMS, bit 5 = PRIME, bit 6 = ATOMIC, bit 8 = LEASE. For example, setting drm.debug=0x1e will enable the debug output of DRIVER + KMS + ATOMIC. In amdgpu code, DRM_DEBUG_DRIVER() is the most commonly used debugging macro, used to print driver internal logic information.',
+              'Dynamic debugging is a powerful feature of the Linux kernel that allows pr_debug() and dev_dbg() output to be precisely switched by module, file, function or line number at runtime. Control by writing /sys/kernel/debug/dynamic_debug/control: echo "module amdgpu +p" turns on all pr_debug output of amdgpu, echo "file amdgpu_device.c +p" turns on only specific files. This is much more efficient than recompiling the kernel.',
+              'debugfs is a memory file system (mounted at /sys/kernel/debug/), in which the amdgpu driver registers a large number of debugging interfaces. The path /sys/kernel/debug/dri/0/ contains: amdgpu_fence_info (fence status - tracking GPU task completion), amdgpu_gpu_recover (manually triggering GPU reset), amdgpu_ring_gfx (GFX ring buffer content), amdgpu_pm_info (power management status), etc. These files are a real-time window into the internal state of the GPU and are more direct than dmesg logs.',
             ],
             keyPoints: [
-              'printk loglevel 0-7: KERN_EMERG(0) > ERR(3) > WARN(4) > INFO(6) > DEBUG(7)',
-              'pr_info/pr_err/pr_debug is带modulebefore缀 printk 便捷macro',
-              'DRM_DEBUG_DRIVER() output受 drm.debug 位maskcontrol, bit 2 = DRIVER',
-              'dynamicdebugging: echo "module amdgpu +p" > /sys/kernel/debug/dynamic_debug/control',
-              'debugfs path /sys/kernel/debug/dri/0/ provide GPU run时stateinterface',
-              'amdgpu_fence_info display各 ring  fence 序列号 — 判断 GPU whether卡住key',
+              'printk log level 0-7: KERN_EMERG(0) > ERR(3) > WARN(4) > INFO(6) > DEBUG(7)',
+              'pr_info/pr_err/pr_debug are printk convenience macros with module prefixes',
+              'DRM_DEBUG_DRIVER() output is controlled by drm.debug bitmask, bit 2 = DRIVER',
+              'Dynamic debugging: echo "module amdgpu +p" > /sys/kernel/debug/dynamic_debug/control',
+              'debugfs path /sys/kernel/debug/dri/0/ provides GPU runtime status interface',
+              'amdgpu_fence_info displays the fence serial number of each ring - the key to determining whether the GPU is stuck.',
             ],
           },
           diagram: {
-            title: 'amdgpu loganddebugginginterface全景',
-            content: `amdgpu debugginginformation流 — fromkerneltouser space
+            title: 'Panorama of amdgpu log and debugging interface',
+            content: `amdgpu debug information flow - from kernel to user space
 
-kernel space (amdgpu driver)                    user space
+Kernel space (amdgpu driver) user space
 ─────────────────────                    ─────────
 
-  pr_err("amdgpu: ...")          ──→  dmesg (level 3, 始终output)
-  pr_warn("amdgpu: ...")         ──→  dmesg (level 4, 始终output)
-  pr_info("amdgpu: ...")         ──→  dmesg (level 6, 始终output)
-  pr_debug("amdgpu: ...")        ──→  dmesg (level 7, needdynamicdebugging开启)
+pr_err("amdgpu: ...") ──→ dmesg (level 3, always output)
+pr_warn("amdgpu: ...") ──→ dmesg (level 4, always output)
+pr_info("amdgpu: ...") ──→ dmesg (level 6, always output)
+pr_debug("amdgpu: ...") ──→ dmesg (level 7, dynamic debugging needs to be enabled)
        │                                       │
-       │  controlapproach:                              │
+│Control method: │
        │  echo "module amdgpu +p"              │
        │  > /sys/kernel/debug/                 ▼
        │    dynamic_debug/control          dmesg -w | grep amdgpu
        │
-  DRM_DEBUG_DRIVER(...)          ──→  dmesg (need drm.debug 位mask)
+DRM_DEBUG_DRIVER(...) ──→ dmesg (requires drm.debug bitmask)
   DRM_DEBUG_KMS(...)                   │
-  DRM_DEBUG_ATOMIC(...)                │  controlapproach:
+DRM_DEBUG_ATOMIC(...) │ Control method:
        │                                │  echo 0x1e > /sys/module/drm/
        │                                │              parameters/debug
        │                                │
-       │                                │  drm.debug 位mask:
+│ │ drm.debug bitmask:
        │                                │  0x02 = DRIVER
        │                                │  0x04 = KMS
        │                                │  0x10 = ATOMIC
-       │                                │  0x1e = entire常用
+│ │ 0x1e = All commonly used
        │
-  debugfs registration                   ──→  /sys/kernel/debug/dri/0/
+debugfs registration ──→ /sys/kernel/debug/dri/0/
        │                                ├── amdgpu_fence_info
        │                                │   emitted=1234 signaled=1233
-       │                                │   → seq 差值 = not yetcomplete任务数
+│ │ → seq difference = number of unfinished tasks
        │                                ├── amdgpu_gpu_recover
-       │                                │   echo 1 > trigger手动 reset
+│ │ echo 1 > trigger manual reset
        │                                ├── amdgpu_ring_gfx
-       │                                │   ring buffer raw内容
+│ │ ring buffer original content
        │                                ├── amdgpu_pm_info
-       │                                │   frequency/电压/温度
+│ │ Frequency/Voltage/Temperature
        │                                ├── amdgpu_sa_info
-       │                                │   子allocation器state
+│ │ Sub-allocator status
        │                                └── amdgpu_vm_info
-       │                                    virtualmemory mappinginformation
+│Virtual memory mapping information
 
-  sysfs property                     ──→  /sys/class/drm/card0/device/
-                                       ├── pp_dpm_sclk  (GPU frequency)
+sysfs properties ──→ /sys/class/drm/card0/device/
+├── pp_dpm_sclk (GPU frequency)
                                        ├── gpu_busy_percent
                                        └── mem_info_vram_used`,
-            caption: 'amdgpu driver三条debugginginformationchannel: printk/DRM_DEBUG → dmesg, debugfs → run时statefile, sysfs → hardwareproperty. master这三个channelisdebugging GPU issuebasics. ',
+            caption: 'Three debugging information channels of the amdgpu driver: printk/DRM_DEBUG → dmesg, debugfs → runtime status file, sysfs → hardware properties. Mastering these three channels is fundamental to debugging GPU issues.',
           },
           codeWalk: {
-            title: 'DRM_DEBUG_DRIVER macrointernalimplementation',
+            title: 'Internal implementation of DRM_DEBUG_DRIVER macro',
             file: 'include/drm/drm_print.h + drivers/gpu/drm/amd/amdgpu/amdgpu_cs.c',
             language: 'c',
-            code: `/* drm_print.h — DRM debuggingmacrodefine */
+            code: `/*drm_print.h — DRM debugging macro definition */
 
-/* drm.debug parameter位define */
+/*Bit definition of drm.debug parameter */
 #define DRM_UT_NONE   0x00
-#define DRM_UT_CORE   0x01  /* DRM core */
-#define DRM_UT_DRIVER 0x02  /* driverspecific */
-#define DRM_UT_KMS    0x04  /* KMS patternset */
-#define DRM_UT_PRIME  0x08  /* PRIME buffershared */
-#define DRM_UT_ATOMIC 0x10  /* Atomic patternset */
+#define DRM_UT_CORE 0x01 /* DRM core */
+#define DRM_UT_DRIVER 0x02 /* Driver specific */
+#define DRM_UT_KMS 0x04 /* KMS mode setting */
+#define DRM_UT_PRIME 0x08 /* PRIME buffer sharing */
+#define DRM_UT_ATOMIC 0x10 /* Atomic mode setting */
 #define DRM_UT_VBL    0x20  /* VBlank */
-#define DRM_UT_STATE  0x40  /* statecheck */
-#define DRM_UT_LEASE  0x80  /* DRM 租约 */
+#define DRM_UT_STATE 0x40 /* status check */
+#define DRM_UT_LEASE 0x80 /* DRM lease */
 
-/* DRM_DEBUG_DRIVER macro — amdgpu in最常用debuggingoutput */
+/*DRM_DEBUG_DRIVER macro — the most commonly used debug output in amdgpu */
 #define DRM_DEBUG_DRIVER(fmt, ...)                       \\
     drm_dbg(DRM_UT_DRIVER, fmt, ##__VA_ARGS__)
 
-/* 展开afterfinalcallpath:
+/*The final call path after expansion:
  * DRM_DEBUG_DRIVER("ring %s timeout", ring->name)
  *   → drm_dbg(DRM_UT_DRIVER, "ring %s timeout", ring->name)
  *     → __drm_dbg(DRM_UT_DRIVER, ...)
  *       → if (__drm_debug & DRM_UT_DRIVER)
  *             printk(KERN_DEBUG "[drm:func_name] ring gfx timeout")
  *
- * onlywhen drm.debug parameter bit 1 (0x02) byset时only thenoutput
+ *Output only when bit 1 (0x02) of the drm.debug parameter is set
  */
 
-/* amdgpu_cs.c inactualuseexample */
+/*Actual usage example in amdgpu_cs.c */
 int amdgpu_cs_ioctl(struct drm_device *dev, void *data,
                      struct drm_file *filp)
 {
-    /* 这条log只in drm.debug & DRM_UT_DRIVER 时output */
+    /*This log is only output when drm.debug & DRM_UT_DRIVER */
     DRM_DEBUG_DRIVER("cs ioctl: num_chunks=%u",
                      cs->in.num_chunks);
 
-    /* error用 DRM_ERROR — 始终output, not受 drm.debug control */
+    /*DRM_ERROR for errors - always output, not controlled by drm.debug */
     if (r) {
         DRM_ERROR("Failed to initialize parser: %d", r);
         return r;
     }
 }`,
             annotations: [
-              'DRM_UT_DRIVER = 0x02: DRM_DEBUG_DRIVER outputcontrol位, need drm.debug contain此位',
-              'drm.debug isrun时can调parameter: echo 0x02 > /sys/module/drm/parameters/debug',
-              'DRM_DEBUG_DRIVER finalcall printk(KERN_DEBUG ...) 但加 [drm:function名] before缀',
-              'DRM_ERROR use KERN_ERR level, 始终outputto dmesg, not受 drm.debug control',
-              '__drm_debug isglobalvariable, storagecurrent drm.debug 位mask值',
-              'amdgpu codeinhas数千处 DRM_DEBUG_DRIVER call — entire开启willgenerate大量log',
+              'DRM_UT_DRIVER = 0x02: DRM_DEBUG_DRIVER output control bit, drm.debug needs to contain this bit',
+              'drm.debug is a runtime tunable parameter: echo 0x02 > /sys/module/drm/parameters/debug',
+              'DRM_DEBUG_DRIVER finally calls printk(KERN_DEBUG ...) but adds [drm: function name] prefix',
+              'DRM_ERROR uses KERN_ERR level, always output to dmesg, not controlled by drm.debug',
+              '__drm_debug is a global variable that stores the current drm.debug bitmask value',
+              'There are thousands of DRM_DEBUG_DRIVER calls in amdgpu code - turning them all on will generate a lot of logs',
             ],
-            explanation: 'understand DRM_DEBUG_DRIVER implementation很important: 它is notsimple printk, but rather经过位maskcheckconditionoutput. this meansin生产environmentin, thesedebugging语句开销几乎as零(只isa位andoperate), 但indebugging时canthroughmodify drm.debug parameter按需开启. amdgpu 大量debugginginformation隐藏inthesemacroafter面 — 你只needknowhow打开they. ',
+            explanation: 'It\'s important to understand the implementation of DRM_DEBUG_DRIVER: it\'s not a simple printk, but a conditional output checked by a bitmask. This means that in a production environment, the overhead of these debugging statements is almost zero (just a bit-AND operation), but they can be enabled on demand during debugging by modifying the drm.debug parameter. A lot of amdgpu\'s debugging information is hidden behind these macros - you just need to know how to turn them on.',
           },
           miniLab: {
-            title: 'enable amdgpu dynamicdebugging并read debugfs',
-            objective: 'actualoperate开启 amdgpu dynamicdebuggingoutput, set drm.debug parameter, 并through debugfs read GPU runstate. ',
+            title: 'Enable amdgpu dynamic debugging and read debugfs',
+            objective: 'The actual operation is to enable the dynamic debugging output of amdgpu, set the drm.debug parameters, and read the GPU running status through debugfs.',
             steps: [
-              'viewcurrent drm.debug level: cat /sys/module/drm/parameters/debug(defaultas 0)',
-              '开启 DRIVER leveldebugging: sudo sh -c \'echo 0x02 > /sys/module/drm/parameters/debug\'',
-              '打开a新终端real-time监控: sudo dmesg -w | grep "\\[drm\\]"',
-              'triggersome GPU 活动(如move窗口, run glxgears), observe DRM_DEBUG_DRIVER output',
-              '开启 amdgpu dynamicdebugging: sudo sh -c \'echo "module amdgpu +p" > /sys/kernel/debug/dynamic_debug/control\'',
-              'read fence state: sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info',
-              'read GPU 电源information: sudo cat /sys/kernel/debug/dri/0/amdgpu_pm_info',
-              'completeafter关闭debuggingoutput: sudo sh -c \'echo 0 > /sys/module/drm/parameters/debug\' && sudo sh -c \'echo "module amdgpu -p" > /sys/kernel/debug/dynamic_debug/control\'',
+              'View the current drm.debug level: cat /sys/module/drm/parameters/debug (default is 0)',
+              'Enable DRIVER level debugging: sudo sh -c \'echo 0x02 > /sys/module/drm/parameters/debug\'',
+              'Open a new terminal for real-time monitoring: sudo dmesg -w | grep "\\[drm\\]"',
+              'Trigger some GPU activity (such as moving windows, running glxgears) and observe the DRM_DEBUG_DRIVER output',
+              'Enable amdgpu dynamic debugging: sudo sh -c \'echo "module amdgpu +p" > /sys/kernel/debug/dynamic_debug/control\'',
+              'Read fence status: sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info',
+              'Read GPU power information: sudo cat /sys/kernel/debug/dri/0/amdgpu_pm_info',
+              'Turn off debug output when finished: sudo sh -c \'echo 0 > /sys/module/drm/parameters/debug\' && sudo sh -c \'echo "module amdgpu -p" > /sys/kernel/debug/dynamic_debug/control\'',
             ],
             expectedOutput: `$ cat /sys/module/drm/parameters/debug
 0x0
@@ -170,50 +170,50 @@ $ sudo sh -c 'echo 0x02 > /sys/module/drm/parameters/debug'
 $ dmesg -w | grep "\\[drm\\]"
 [12345.678] [drm:amdgpu_cs_ioctl] cs ioctl: num_chunks=2
 [12345.679] [drm:amdgpu_cs_parser_init] parser init: ring=gfx
-...大量debuggingoutput...
+...Lots of debug output...
 
 $ sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info
 --- ring gfx_0.0.0 ---
 Last signaled fence          0x0000000000001a3f
 Last emitted                 0x0000000000001a40
-  ← emitted - signaled = 1, indicatehas 1 个任务in GPU onexecutein`,
-            hint: 'if /sys/kernel/debug/ as空, need挂载 debugfs: sudo mount -t debugfs debugfs /sys/kernel/debug. ifpermissionnot足, alloperateallneed sudo. 记得experimentendafter关闭debuggingoutput, otherwisewillgenerate大量logimpactperformance. ',
+  ←emitted - signaled = 1, indicating that there is 1 task being executed on the GPU`,
+            hint: 'If /sys/kernel/debug/ is empty, debugfs needs to be mounted: sudo mount -t debugfs debugfs /sys/kernel/debug. Without sufficient permissions, all operations require sudo. Remember to turn off debugging output after the experiment, otherwise a large number of logs will be generated and affect performance.',
           },
           debugExercise: {
-            title: 'debuggingoutput消失之谜',
+            title: 'The mystery of disappearing debug output',
             language: 'bash',
-            description: '一位development者in amdgpu codeinadd DRM_DEBUG_DRIVER() debugging语句, 但in dmesg in看notto任何output. belowis他operatestep, findwhy看nottodebugginginformation. ',
-            question: 'why dmesg inno出现debugginginformation? needmodifywhat? ',
-            buggyCode: `# development者in amdgpu_fence.c inadd:
+            description: 'A developer added a DRM_DEBUG_DRIVER() debug statement to the amdgpu code but saw no output in dmesg. Here are his steps to find out why you can\'t see debugging information.',
+            question: 'Why doesn\'t debugging information appear in dmesg? What needs to be modified?',
+            buggyCode: `#The developer added: to amdgpu_fence.c:
 # DRM_DEBUG_DRIVER("fence signaled: seq=%llu", fence->seq);
 
-# re-compilation并loadingmoduleafter:
+#After recompiling and loading the module:
 $ sudo rmmod amdgpu && sudo modprobe amdgpu
 $ dmesg | grep "fence signaled"
-(无output)
+(no output)
 
-# development者checkloglevel:
+#The developer checked the log levels:
 $ cat /proc/sys/kernel/printk
 4    4    1    7
-# (console_loglevel=4, i.e.只display WARN 及above)
+#(console_loglevel=4, that is, only WARN and above are displayed)
 
-# development者认asis console_loglevel issue, 调高:
+#The developer thought it was a problem with console_loglevel and raised it:
 $ sudo sysctl kernel.printk="8 4 1 7"
 $ dmesg | grep "fence signaled"
-(still无output!)
+(Still no output!)
 
-# drm.debug parameterstate:
+#drm.debug parameter status:
 $ cat /sys/module/drm/parameters/debug
 0x0`,
-            hint: 'DRM_DEBUG_DRIVER not只受 console_loglevel control — 它stillhasself开关. ',
-            answer: 'issue出in drm.debug parameteras 0x0. DRM_DEBUG_DRIVER() macrointernalfirstcheck __drm_debug & DRM_UT_DRIVER (0x02), ifas 0 则directlyreturn, 根本will notcall printk. soeven ifthe console_loglevel 调to最高also没用 — printk 压根没byexecute. fixmethod: echo 0x02 > /sys/module/drm/parameters/debug 开启 DRIVER level DRM debugging. orinstartupparameterinadd drm.debug=0x02. 这is新手常犯error — DRM debuggingoutputhas两layer门控: 第一layeris drm.debug 位mask(DRM layer), 第二layeris console_loglevel(printk layer), 两layerallmustthroughonly thencan看tooutput. ',
+            hint: 'DRM_DEBUG_DRIVER is not only controlled by console_loglevel - it also has its own switch.',
+            answer: 'The problem is that the drm.debug parameter is 0x0. The DRM_DEBUG_DRIVER() macro internally checks __drm_debug & DRM_UT_DRIVER (0x02) first. If it is 0, it returns directly and printk is not called at all. So even raising the console_loglevel to the highest level has no effect - printk is not executed at all. Fix: echo 0x02 > /sys/module/drm/parameters/debug Enable DRIVER-level DRM debugging. Or add drm.debug=0x02 in the startup parameters. This is a common mistake made by newbies - DRM\'s debug output has two layers of gating: the first layer is the drm.debug bitmask (DRM layer), and the second layer is console_loglevel (printk layer), both layers must be passed to see the output.',
           },
           interviewQ: {
-            question: 'describe你in amdgpu driverdevelopmentindebuggingmethod论. when遇toa难以复现 bug 时, 你willusewhichtoolandstrategy? ',
+            question: 'Describe your debugging methodology in amdgpu driver development. What tools and strategies do you use when you encounter a hard-to-reproduce bug?',
             difficulty: 'medium',
-            hint: '按layer次answer: first dmesg + printk(basiclog), thendynamicdebugging(精细control), then debugfs(run时state), then ftrace(functiontracing), finallyhardware级tool(umr registerread). ',
-            answer: '我debuggingmethod论分layer递进: (1)第一layer — loganalyze: dmesg | grep -i "amdgpu\\|error\\|timeout\\|fault" geterrorinformation全貌. checkwhetherhas GPU hang/reset/fault 明确提示. (2)第二layer — 增加log粒度: echo 0x1e > /sys/module/drm/parameters/debug 开启all DRM debuggingoutput, echo "module amdgpu +p" 开启 amdgpu  pr_debug. inkeycodepathadd DRM_DEBUG_DRIVER() 并重compilationmodule. (3)第三layer — debugfs statecheck: cat amdgpu_fence_info 看 fence whether停滞, cat amdgpu_ring_gfx check ring buffer state. forbetween歇性 bug, 写脚本定期sampling debugfs state. (4)第四layer — ftrace functiontracing: trace-cmd record -p function_graph -l "amdgpu_*" tracingfunctioncall链and耗时, find异常path. (5)第五layer — hardwarediagnose: use umr read GRBM_STATUS 等keyregister, analyze GPU hardwarestate. for难以复现 bug, keystrategyis: 增加lognot降低performance(用 trace_printk rather than printk), 写automatic化testing脚本循环trigger, anduse kdump/crash incrash时savekernelstate. ',
-            amdContext: 'AMD interview非常看重system化debuggingability. demonstrate你canfrom最simpletool(dmesg)逐步升级to最complextool(umr/ftrace), 而is not一on用最重手段. ',
+            hint: 'Hierarchical answer: first dmesg + printk (basic logging), then dynamic debugging (fine control), then debugfs (runtime status), then ftrace (function tracing), and finally hardware level tools (umr register reading).',
+            answer: 'My debugging methodology is layered and progressive: (1) The first layer - log analysis: dmesg | grep -i "amdgpu\\|error\\|timeout\\|fault" to obtain the full picture of the error information. Check for explicit hints of GPU hang/reset/fault. (2) Second layer - increase log granularity: echo 0x1e > /sys/module/drm/parameters/debug turns on all DRM debug output, echo "module amdgpu +p" turns on pr_debug of amdgpu. Add DRM_DEBUG_DRIVER() to the critical code path and recompile the module. (3) The third layer - debugfs status check: cat amdgpu_fence_info to see if the fence is stagnant, cat amdgpu_ring_gfx to check the ring buffer status. For intermittent bugs, write a script to periodically sample the debugfs status. (4) The fourth layer - ftrace function tracing: trace-cmd record -p function_graph -l "amdgpu_*" traces the function call chain and time consumption, and finds out the abnormal path. (5) Layer 5 - Hardware diagnosis: Use umr to read key registers such as GRBM_STATUS and analyze the GPU hardware status. For bugs that are difficult to reproduce, the key strategies are: increase logging without reducing performance (use trace_printk instead of printk), write automated test scripts to trigger loops, and use kdump/crash to save the kernel state in the event of a crash.',
+            amdContext: 'AMD interviews attach great importance to systematic debugging skills. Show that you can gradually upgrade from the simplest tool (dmesg) to the most complex tool (umr/ftrace), rather than using the heaviest method from the beginning.',
           },
         },
 
@@ -221,36 +221,36 @@ $ cat /sys/module/drm/parameters/debug
         {
           id: '6-1-2',
           number: '6.1.2',
-          title: 'ftrace andkerneltracing点',
+          title: 'ftrace and kernel tracepoints',
           titleEn: 'ftrace & Kernel Tracepoints',
           duration: 20,
           difficulty: 'advanced',
           tags: ['ftrace', 'tracepoints', 'TRACE_EVENT', 'trace-cmd', 'ring-buffer'],
           concept: {
-            summary: 'ftrace is Linux kernel内建tracingframework, throughinfunctionentry point/exit pointinsert探针recordfunctioncalland耗时. 结合 TRACE_EVENT macrodefinetracing点(tracepoints), 你can精确tracing amdgpu command submission, 作业scheduling等keypathlatencyand行as. ',
+            summary: 'ftrace is the built-in tracing framework of the Linux kernel. It records function calls and time consumption by inserting probes at function entry/exit. Combined with the tracepoints defined by the TRACE_EVENT macro, you can accurately track the delays and behaviors of key paths such as amdgpu command submission and job scheduling.',
             explanation: [
-              'ftrace coreisa高效ring buffer(per-CPU ring buffer), kernelin探针willeventwritebuffer, user spacethrough tracefs(/sys/kernel/tracing/)or trace-cmd toolread. ftrace 开销极低 — not yet激活tracing点只is一条 NOP instruction(5 bytes), inrun时through code patching 替换as跳转totracinghandlefunctioninstruction. ',
-              'ftrace provide多种tracing器(tracer): function tracer recordeach timefunctioncall(function名 + call者), function_graph tracer recordfunction进入and退出(can看tocall树andeachfunction耗时), irqsoff tracer record最长interruptdisable时between, preemptoff tracer record最长抢占disable时between. for amdgpu debugging, function_graph 最常用 — 它can直观demonstratecommand submissioncompletecall链and每步耗时. ',
-              'TRACE_EVENT isdefinekerneltracing点standardmacro. amdgpu in amdgpu_trace.h indefinemultipletracing点: amdgpu_cs_ioctl(command submissionentry point), amdgpu_sched_run_job(schedulerrun作业), amdgpu_vm_bo_map(virtualmemory mapping), amdgpu_bo_create(buffer objectcreate)等. thesetracing点recordstructure化data(如 ring name, fence sequence, job size), 比 printk 更高效且can用 perf/trace-cmd automaticanalyze. ',
-              'trace-cmd is ftrace user spacefrontend, 极大简化operate. trace-cmd record -e amdgpu -p function_graph 一条commandcanrecordall amdgpu tracing点eventandfunction图tracing. trace-cmd report parse二进制dataascan读output. forperformanceanalyze, trace-cmd outputcan导入 KernelShark(GUI tool)进行can视化时between线analyze. ',
+              'The core of ftrace is an efficient ring buffer (per-CPU ring buffer). The probe in the kernel writes events to the buffer, and the user space reads them through tracefs (/sys/kernel/tracing/) or the trace-cmd tool. ftrace has extremely low overhead - an inactive trace point is just a NOP instruction (5 bytes), which is replaced at runtime by code patching with a jump to the trace handler function.',
+              'ftrace provides a variety of tracers: function tracer records each function call (function name + caller), function_graph tracer records function entry and exit (you can see the call tree and the time consumption of each function), irqsoff tracer records the longest interrupt disable time, and preemptoff tracer records the longest preemption disable time. For amdgpu debugging, function_graph is the most commonly used - it can visually display the complete call chain of command submission and the time taken for each step.',
+              'TRACE_EVENT is a standard macro that defines kernel trace points. amdgpu defines multiple tracing points in amdgpu_trace.h: amdgpu_cs_ioctl (command submission entry), amdgpu_sched_run_job (scheduler running job), amdgpu_vm_bo_map (virtual memory mapping), amdgpu_bo_create (buffer object creation), etc. These trace points record structured data (such as ring name, fence sequence, job size), are more efficient than printk and can be automatically analyzed with perf/trace-cmd.',
+              'trace-cmd is a userspace frontend for ftrace that greatly simplifies operation. trace-cmd record -e amdgpu -p function_graph can record all amdgpu trace point events and function graph traces with one command. trace-cmd report parses binary data into readable output. For performance analysis, trace-cmd output can be imported into KernelShark (GUI tool) for visual timeline analysis.',
             ],
             keyPoints: [
-              'ftrace use per-CPU ring buffer, not yet激活tracing点只is NOP instruction, 开销极低',
-              'function_graph tracer displayfunctioncall树and耗时 — diagnoselatencyissue利器',
-              'amdgpu tracing点: amdgpu_cs_ioctl, amdgpu_sched_run_job, amdgpu_vm_bo_map',
-              'TRACE_EVENT macroin amdgpu_trace.h indefine, recordstructure化data',
-              'trace-cmd record/report is ftrace 简便frontend, recommended日常use',
-              'KernelShark cancan视化 trace-cmd output, 直观demonstrate时between线onevent',
+              'ftrace uses per-CPU ring buffer. Inactive trace points are just NOP instructions, which has extremely low overhead.',
+              'function_graph tracer shows function call tree and time consumption - a powerful tool for diagnosing latency problems',
+              'amdgpu trace points: amdgpu_cs_ioctl, amdgpu_sched_run_job, amdgpu_vm_bo_map',
+              'The TRACE_EVENT macro is defined in amdgpu_trace.h and records structured data',
+              'trace-cmd record/report is a simple front-end for ftrace, recommended for daily use',
+              'KernelShark can visualize trace-cmd output and visually display events on the timeline',
             ],
           },
           diagram: {
-            title: 'ftrace architectureand amdgpu tracing点',
-            content: `ftrace architecture — fromtracing点touser spaceanalyze
+            title: 'ftrace architecture and amdgpu tracepoints',
+            content: `ftrace architecture - from trace points to user space analysis
 
-                      kernel space
+kernel space
     ┌──────────────────────────────────────────────┐
     │                                              │
-    │  amdgpu codeintracing点                        │
+│ Trace points in amdgpu code │
     │                                              │
     │  amdgpu_cs_ioctl() {                         │
     │      trace_amdgpu_cs_ioctl(job);  ──────┐    │
@@ -262,7 +262,7 @@ $ cat /sys/module/drm/parameters/debug
     │      ...                                │    │
     │  }                                      │    │
     │                                         ▼    │
-    │  ┌─────────── ftrace framework ───────────────┐   │
+│ ┌─────────── ftrace framework ────────────────┐ │
     │  │                                       │   │
     │  │  function tracer (mcount/fentry hook)  │   │
     │  │  ┌─ amdgpu_cs_ioctl                   │   │
@@ -270,7 +270,7 @@ $ cat /sys/module/drm/parameters/debug
     │  │  ├─ amdgpu_cs_submit                  │   │
     │  │  └─ ...                               │   │
     │  │                                       │   │
-    │  │  TRACE_EVENT tracing点                    │   │
+│ │ TRACE_EVENT tracking point │ │
     │  │  ┌─ amdgpu:amdgpu_cs_ioctl           │   │
     │  │  ├─ amdgpu:amdgpu_sched_run_job      │   │
     │  │  ├─ amdgpu:amdgpu_vm_bo_map          │   │
@@ -287,39 +287,39 @@ $ cat /sys/module/drm/parameters/debug
     └──────────────────┼───────────────────────────┘
                        │
     ┌──────────────────▼───────────────────────────┐
-    │                user space                        │
+│ User Space │
     │                                              │
     │  tracefs: /sys/kernel/tracing/               │
-    │  ├── trace              ← directlyread文本       │
-    │  ├── trace_pipe         ← real-time流式read       │
-    │  ├── current_tracer     ← settracing器type     │
-    │  ├── set_ftrace_filter  ← 过滤function           │
-    │  └── events/amdgpu/     ← amdgpu tracing点     │
+    │  ├── trace              ←Read text directly │
+    │  ├── trace_pipe         ←Live streaming reading │
+    │  ├── current_tracer     ←Set tracker type │
+    │  ├── set_ftrace_filter  ←Filter function │
+    │  └── events/amdgpu/     ←amdgpu trace point │
     │      ├── amdgpu_cs_ioctl/enable              │
     │      └── amdgpu_sched_run_job/enable         │
     │                                              │
     │  trace-cmd record -e amdgpu → trace.dat      │
-    │  trace-cmd report trace.dat → 文本output        │
-    │  kernelshark trace.dat      → GUI 时between线      │
+│ trace-cmd report trace.dat → text output │
+│ kernelshark trace.dat → GUI timeline │
     └──────────────────────────────────────────────┘`,
-            caption: 'ftrace completedata流: amdgpu codeintracing点andfunction探针willeventwrite per-CPU ring buffer, user spacethrough tracefs or trace-cmd readanalyze. ',
+            caption: 'The complete data flow of ftrace: trace points and function probes in amdgpu code write events to the per-CPU ring buffer, and user space reads and analyzes via tracefs or trace-cmd.',
           },
           codeWalk: {
-            title: 'amdgpu_trace.h in TRACE_EVENT define',
+            title: 'TRACE_EVENT definition in amdgpu_trace.h',
             file: 'drivers/gpu/drm/amd/amdgpu/amdgpu_trace.h',
             language: 'c',
-            code: `/* amdgpu_trace.h — amdgpu tracing点define */
+            code: `/*amdgpu_trace.h — amdgpu trace point definition */
 
 #include <linux/tracepoint.h>
 
-/* tracing CS (Command Submission) ioctl call */
+/*Trace CS (Command Submission) ioctl calls */
 TRACE_EVENT(amdgpu_cs_ioctl,
-    /* tracing点trigger时传入parameter */
+    /*Parameters passed in when the tracking point is triggered */
     TP_PROTO(struct amdgpu_job *job),
 
     TP_ARGS(job),
 
-    /* recordto ring buffer in字段 */
+    /*Record fields in ring buffer */
     TP_STRUCT__entry(
         __field(uint64_t, sched_job_id)
         __field(u32, ring)
@@ -327,7 +327,7 @@ TRACE_EVENT(amdgpu_cs_ioctl,
         __string(timeline, AMDGPU_JOB_GET_TIMELINE_NAME(job))
     ),
 
-    /* howfromparameter填充字段 */
+    /*How to populate fields from parameters */
     TP_fast_assign(
         __entry->sched_job_id = job->base.id;
         __entry->ring = job->ring->idx;
@@ -336,7 +336,7 @@ TRACE_EVENT(amdgpu_cs_ioctl,
                      AMDGPU_JOB_GET_TIMELINE_NAME(job));
     ),
 
-    /* outputformat(trace-cmd report and /sys/kernel/tracing/trace use)*/
+    /*Output format (used by trace-cmd report and /sys/kernel/tracing/trace)*/
     TP_printk("sched_job=%llu, timeline=%s, ring=%u, num_ibs=%u",
               __entry->sched_job_id,
               __get_str(timeline),
@@ -344,7 +344,7 @@ TRACE_EVENT(amdgpu_cs_ioctl,
               __entry->num_ibs)
 );
 
-/* tracingschedulerexecute作业 */
+/*Track scheduler execution jobs */
 TRACE_EVENT(amdgpu_sched_run_job,
     TP_PROTO(struct amdgpu_job *job),
     TP_ARGS(job),
@@ -362,45 +362,45 @@ TRACE_EVENT(amdgpu_sched_run_job,
               __get_str(timeline))
 );
 
-/* in amdgpu_cs.c inuse:
- * trace_amdgpu_cs_ioctl(job);       ← cs ioctl entry point
- * trace_amdgpu_sched_run_job(job);  ← 作业startexecute
+/*Usage in amdgpu_cs.c:
+ *trace_amdgpu_cs_ioctl(job); ← cs ioctl entry
+ *trace_amdgpu_sched_run_job(job); ← job starts execution
  *
- * tracinglatency = sched_run_job.timestamp - cs_ioctl.timestamp
- * 这is command submission → GPU executeschedulinglatency
+ *Trace delay = sched_run_job.timestamp - cs_ioctl.timestamp
+ *This is the scheduling delay of command submission → GPU execution
  */`,
             annotations: [
-              'TRACE_EVENT macrogeneratecompletetracingbasics设施: registration/deregistration, format化, 过滤等',
-              'TP_STRUCT__entry definewrite ring buffer compact二进制format, 比 printk 高效',
-              'TP_fast_assign intracing点trigger时execute, must尽量快 — avoidcomplexcompute',
-              'TP_printk define人can读format, 只inuser spaceread时only thenexecuteformat化',
-              '__string and __assign_str handle变长字符串, in ring buffer incompactstorage',
-              'trace_amdgpu_cs_ioctl(job) is由macroautomaticgeneratecallfunction',
+              'TRACE_EVENT macro generates complete tracing infrastructure: registration/logout, formatting, filtering, etc.',
+              'TP_STRUCT__entry defines a compact binary format for writing to ring buffer, which is more efficient than printk',
+              'TP_fast_assign is executed when the tracking point is triggered and must be as fast as possible - to avoid complex calculations',
+              'TP_printk defines a human-readable format and only performs formatting when reading in user space',
+              '__string and __assign_str handle variable-length strings and store them compactly in the ring buffer',
+              'trace_amdgpu_cs_ioctl(job) is a calling function automatically generated by the macro',
             ],
-            explanation: '这twotracing点is amdgpu performanceanalyzecore. amdgpu_cs_ioctl inuser spacecommitcommand时trigger, amdgpu_sched_run_job in GPU scheduleractualexecute作业时trigger. twoevent时between差isschedulinglatency — ifthislatency异常大, indicateschedulerhasbottleneckor GPU inhandleother任务. through trace-cmd canautomaticcomputethislatency. ',
+            explanation: 'These two trace points are the core of amdgpu performance analysis. amdgpu_cs_ioctl is triggered when user space submits a command, and amdgpu_sched_run_job is triggered when the GPU scheduler actually executes the job. The time difference between the two events is the scheduling delay - if this delay is unusually large, it means there is a bottleneck in the scheduler or the GPU is processing other tasks. This delay can be automatically calculated through trace-cmd.',
           },
           miniLab: {
-            title: 'use trace-cmd tracing amdgpu command submissionlatency',
-            objective: 'use trace-cmd record amdgpu tracing点event, analyzecommand submissionto GPU executeschedulinglatency. ',
-            setup: `# install trace-cmd
+            title: 'Trace amdgpu command commit delays using trace-cmd',
+            objective: 'Use trace-cmd to record amdgpu trace point events and analyze the scheduling delay of command submission to GPU execution.',
+            setup: `#Install trace-cmd
 sudo apt install trace-cmd
 
-# confirm amdgpu tracing点available
+#Confirm that amdgpu tracepoints are available
 ls /sys/kernel/tracing/events/amdgpu/
-# should看to amdgpu_cs_ioctl/ amdgpu_sched_run_job/ 等directory`,
+#You should see directories such as amdgpu_cs_ioctl/ amdgpu_sched_run_job/`,
             steps: [
-              '列出all amdgpu tracing点: trace-cmd list -e amdgpu',
-              'startrecord amdgpu tracing点: sudo trace-cmd record -e amdgpu -o /tmp/amdgpu_trace.dat',
-              'in另a终端run glxgears or任意 GPU program约 5 秒',
-              '回to trace-cmd 终端按 Ctrl+C stoprecord',
-              'viewreport: trace-cmd report /tmp/amdgpu_trace.dat | head -50',
-              'tracingfunction图: sudo trace-cmd record -p function_graph -l "amdgpu_cs_*" -o /tmp/amdgpu_cs.dat, run glxgears 5 秒after Ctrl+C',
-              'viewfunction图: trace-cmd report /tmp/amdgpu_cs.dat | head -80',
+              'List all amdgpu trace points: trace-cmd list -e amdgpu',
+              'Start recording the amdgpu trace point: sudo trace-cmd record -e amdgpu -o /tmp/amdgpu_trace.dat',
+              'Run glxgears or any GPU program in another terminal for about 5 seconds',
+              'Return to the trace-cmd terminal and press Ctrl+C to stop recording.',
+              'View the report: trace-cmd report /tmp/amdgpu_trace.dat | head -50',
+              'Trace the function graph: sudo trace-cmd record -p function_graph -l "amdgpu_cs_*" -o /tmp/amdgpu_cs.dat, Ctrl+C after 5 seconds of running glxgears',
+              'View the function graph: trace-cmd report /tmp/amdgpu_cs.dat | head -80',
             ],
             expectedOutput: `$ trace-cmd report /tmp/amdgpu_trace.dat | head -20
   glxgears-5234 [002] 12345.678: amdgpu_cs_ioctl:  sched_job=4567, timeline=gfx_0.0.0, ring=0, num_ibs=1
   kworker-58    [001] 12345.679: amdgpu_sched_run_job: sched_job=4567, timeline=gfx_0.0.0
-                                                        ← committoexecutelatency约 1ms
+                                                        ←The delay from submission to execution is about 1ms
 
 $ trace-cmd report /tmp/amdgpu_cs.dat | head -20
   glxgears-5234 [002] 12345.678:
@@ -408,48 +408,48 @@ $ trace-cmd report /tmp/amdgpu_cs.dat | head -20
     |   amdgpu_cs_parser_init() {    0.854 us
     |   amdgpu_cs_parser_bos() {     2.341 us
     |   amdgpu_cs_submit() {         1.120 us
-    | }                              5.234 us  ← 总耗时`,
-            hint: 'if trace-cmd list -e amdgpu outputas空, confirmkernelcompilation时enable CONFIG_FTRACE and CONFIG_TRACEPOINTS. 大多数distributionkerneldefaultenablethese选项. ',
+    | }                              5.234 us  ←Total time spent`,
+            hint: 'If the trace-cmd list -e amdgpu output is empty, verify that the kernel was compiled with CONFIG_FTRACE and CONFIG_TRACEPOINTS enabled. Most distribution kernels enable these options by default.',
           },
           debugExercise: {
-            title: 'from ftrace outputlocateschedulinglatency',
+            title: 'Locating scheduling delays from ftrace output',
             language: 'text',
-            description: 'belowis一段 trace-cmd output, display GPU command submissionandexecute时between戳. hasoncecommitschedulinglatency异常高. findissue. ',
-            question: '哪次command submissionschedulinglatency异常? maycauseiswhat? ',
-            buggyCode: `# trace-cmd report output (简化)
+            description: 'The following is a piece of trace-cmd output showing the timestamps of GPU command submission and execution. One commit had unusually high scheduling latency. Find out the problem.',
+            question: 'Which command submission resulted in an abnormal scheduling delay? What are the possible reasons?',
+            buggyCode: `#trace-cmd report output (simplified)
 
-# 正常command submission (latency ~0.5ms)
+#Normal command submission (delay ~0.5ms)
 glxgears-5234 [002] 10000.100: amdgpu_cs_ioctl: sched_job=100, ring=0
 kworker-58    [001] 10000.100: amdgpu_sched_run_job: sched_job=100
-  → latency: 0.5ms ✓
+→ Delay: 0.5ms ✓
 
 glxgears-5234 [002] 10000.117: amdgpu_cs_ioctl: sched_job=101, ring=0
 kworker-58    [001] 10000.117: amdgpu_sched_run_job: sched_job=101
-  → latency: 0.4ms ✓
+→ Delay: 0.4ms ✓
 
-# 异常command submission
+#Unusual command submission
 glxgears-5234 [002] 10000.134: amdgpu_cs_ioctl: sched_job=102, ring=0
 kworker-58    [001] 10000.284: amdgpu_sched_run_job: sched_job=102
-  → latency: 150ms ✗ ← 比正常慢 300 倍!
+  → Delay: 150ms ✗ ←300 times slower than normal!
 
 glxgears-5234 [002] 10000.301: amdgpu_cs_ioctl: sched_job=103, ring=0
 kworker-58    [001] 10000.301: amdgpu_sched_run_job: sched_job=103
-  → latency: 0.6ms ✓  (recover正常)
+→ Delay: 0.6ms ✓ (Return to normal)
 
-# 同一时between段othertracing:
+#Other traces from the same time period:
 blender-8901  [003] 10000.135: amdgpu_cs_ioctl: sched_job=5000, ring=0
 blender-8901  [003] 10000.136: amdgpu_cs_ioctl: sched_job=5001, ring=0
-...  (blender contiguouscommit ~200 个 job)
+... (blender submitted ~200 jobs continuously)
 blender-8901  [003] 10000.280: amdgpu_sched_run_job: sched_job=5199`,
-            hint: 'job 102 and blender 大量commit发生in同一时between窗口, theyuse同a ring...',
-            answer: 'job 102 schedulinglatency 150ms 异常高. cause: blender processin 10000.135-10000.280 之between向同a GFX ring (ring=0) contiguouscommit约 200 个 job. amdgpu  GPU scheduleruse先进先出(FIFO)queue(drm_sched), glxgears  job 102 in 10000.134 commit, 但排in blender  200 个 job after面. GPU need先handle完 blender all job afteronly thencanexecute job 102. 这istypicalschedulerqueue饱andissue. resolveplan: (1)usedifferent ring/context 隔离differentapplication GPU work负载; (2)调整 GPU scheduler时between片(drm_sched  timeout parameter); (3)usepriorityscheduling(ifdriversupport)letinteraction式application获得更高priority. ',
+            hint: 'A large number of commits for job 102 and blender occur in the same time window, and they use the same ring...',
+            answer: 'The scheduling delay of job 102 is unusually high at 150ms. Reason: The blender process continuously submitted about 200 jobs to the same GFX ring (ring=0) between 10000.135-10000.280. amdgpu\'s GPU scheduler uses a first-in-first-out (FIFO) queue (drm_sched), glxgears\' job 102 was submitted at 10000.134, but was queued behind blender\'s 200 jobs. The GPU needs to process all blender jobs before it can execute job 102. This is a typical scheduler queue saturation problem. Solutions: (1) Use different rings/contexts to isolate GPU workloads of different applications; (2) Adjust the time slice of the GPU scheduler (timeout parameter of drm_sched); (3) Use priority scheduling (if the driver supports it) to give interactive applications higher priority.',
           },
           interviewQ: {
-            question: 'explain ftrace  function_graph tracer workprinciple. 它howinnotmodifysource code情况belowtracingfunctioncallandreturn? ',
+            question: 'Explain how ftrace\'s function_graph tracer works. How does it trace function calls and returns without modifying the source code?',
             difficulty: 'hard',
-            hint: 'key词: mcount/fentry, return trampoline, gcc -pg, run时 code patching, NOP 替换. ',
-            answer: 'function_graph tracer principle: (1)compilation时: GCC use -pg parametercompilationkernel, ineachfunctionentry pointinsert一条对 mcount(or __fentry__)call. 初始时thesecallby NOP instruction替换, notgeneraterun时开销. (2)激活tracing时: ftrace userun时 code patching(through stop_machine or text_poke_bp)will NOP 替换as跳转to ftrace_caller instruction. (3)functionentry pointhandle: ftrace_caller callregistrationcallback function(function_graph  trace_graph_entry), recordfunction名, 时between戳, CPU ID to per-CPU ring buffer. (4)returntracing(key技巧): function_graph modifystackonreturnaddress — willrawreturnaddresssaveto task_struct in ret_stack 数组in, 用 return_to_handler 蹦床function替换. functionreturn时先execute return_to_handler, recordreturn时between戳(can算出execute时between), then跳转torealreturnaddress. (5)performanceimpact: eachbytracingfunction增加约 100-500ns 开销(save/recovercontext + ring buffer write), global开启时mayhas 10-30% performanceimpact, sousually用 set_ftrace_filter 只tracing感兴趣function. ',
-            amdContext: 'thisissue考查你对kernel底layermechanismunderstand深度. if你canexplain return trampoline mechanismand NOP patching, indicate你对kernelinternalhas深入认识. ',
+            hint: 'Keywords: mcount/fentry, return trampoline, gcc -pg, runtime code patching, NOP replacement.',
+            answer: 'The principle of function_graph tracer: (1) Compilation time: GCC uses the -pg parameter to compile the kernel and insert a call to mcount (or __fentry__) at each function entry. Initially these calls are replaced by NOP instructions, incurring no runtime overhead. (2) When tracing is activated: ftrace uses runtime code patching (via stop_machine or text_poke_bp) to replace NOPs with instructions to jump to ftrace_caller. (3) Function entry processing: ftrace_caller calls the registered callback function (trace_graph_entry of function_graph), and records the function name, timestamp, and CPU ID to the per-CPU ring buffer. (4) Return tracking (key skills): function_graph modifies the return address on the stack - save the original return address to the ret_stack array in task_struct and replace it with the return_to_handler trampoline function. When the function returns, it first executes return_to_handler, records the return timestamp (the execution time can be calculated), and then jumps to the real return address. (5) Performance impact: Each traced function adds about 100-500ns overhead (saving/restoring context + ring buffer writing), and may have a 10-30% performance impact when globally enabled, so set_ftrace_filter is usually used to only trace the functions of interest.',
+            amdContext: 'This question tests your depth of understanding of the underlying mechanisms of the kernel. If you can explain the return trampoline mechanism and NOP patching, it shows that you have a deep understanding of the kernel internals.',
           },
         },
 
@@ -457,86 +457,86 @@ blender-8901  [003] 10000.280: amdgpu_sched_run_job: sched_job=5199`,
         {
           id: '6-1-3',
           number: '6.1.3',
-          title: 'perf and rocprof performanceanalyze',
+          title: 'perf and rocprof performance analysis',
           titleEn: 'perf & rocprof Profiling',
           duration: 20,
           difficulty: 'advanced',
           tags: ['perf', 'rocprof', 'flame-graph', 'PMU', 'profiling'],
           concept: {
-            summary: 'perf is Linux kernelperformanceanalyzetool, throughhardwareperformancecount器(PMU)and软件eventsampling CPU 侧hotspot. rocprof is AMD  GPU 侧analyzetool, cancollect GPU hardwarecount器, HSA tracingand kernel 时between线. 两者结合can全面analyze CPU+GPU blendingwork负载performancebottleneck. ',
+            summary: 'perf is a performance analysis tool for the Linux kernel that samples CPU-side hotspots through hardware performance counters (PMU) and software events. rocprof is AMD\'s GPU-side profiling tool that collects GPU hardware counters, HSA traces, and kernel timelines. The combination of the two can comprehensively analyze the performance bottlenecks of CPU+GPU mixed workloads.',
             explanation: [
-              'perf 利用 CPU  Performance Monitoring Unit(PMU)hardwarecount器进行sampling. PMU cancountevent如 CPU cycles, cache misses, branch mispredictions 等. perf workprinciple: 每 N 个event发生onceinterrupt(NMI), recordwhen时instructionpointer(IP), statisticsaftergenerateeachfunctionbysamplingto次数 — sampling次数越多represent该function消耗 CPU 时between越多. ',
-              'perf 常用子command: perf top(real-timedisplay CPU hotspotfunction, similar top 但精确tofunction), perf stat(statisticsprogramexecutehardwareevent总量, 如 cycles/instructions/cache-misses), perf record(sampling并saveto perf.data file), perf report(interaction式analyze perf.data). for amdgpu kernel moduleanalyze, perf candirectly看tokernelfunction CPU 消耗. ',
-              'rocprof is AMD ROCm 生态 GPU performanceanalyzetool. 它has三种mainpattern: --stats pattern(statisticseach GPU kernel execute时betweenandcall次数), --hsa-trace pattern(tracing HSA run时 API call, memorycopy, kernel dispatch complete时between线), hardwarecount器pattern(through input.txt 指定tocollect GPU PMU count器, 如 SQ_WAVES, SQ_INSTS_VALU, TA_BUFFER_WAVEFRONTS_SUM). ',
-              'Flame Graph(火焰图)is perf datacan视化approach — x 轴isfunctioncallstack(宽度representsampling百分比), y 轴iscall深度. Brendan Gregg  FlameGraph 脚本(github.com/brendangregg/FlameGraph)canwill perf script outputconvertasinteraction式 SVG 火焰图. for amdgpu debugging, 火焰图can直观demonstratekernelinwhichfunction消耗最多 CPU 时between — commonhotspotinclude fence polling, register read/write, memory allocation. ',
+              'perf utilizes the CPU\'s Performance Monitoring Unit (PMU) hardware counters for sampling. The PMU can count events such as CPU cycles, cache misses, branch mispredictions, etc. The working principle of perf: An interrupt (NMI) occurs every N events, the instruction pointer (IP) at that time is recorded, and the number of times each function is sampled is generated after statistics - the greater the number of samples, the more CPU time the function consumes.',
+              'Commonly used subcommands of perf: perf top (real-time display of CPU hotspot functions, similar to top but accurate to functions), perf stat (statistics of the total number of hardware events executed by the program, such as cycles/instructions/cache-misses), perf record (sampling and saving to the perf.data file), perf report (interactive analysis of perf.data). For the analysis of amdgpu kernel module, perf can directly see the CPU consumption of kernel functions.',
+              'rocprof is a GPU performance analysis tool from the AMD ROCm ecosystem. It has three main modes: --stats mode (counts the execution time and number of calls of each GPU kernel), --hsa-trace mode (traces the complete timeline of API calls, memory copies, and kernel dispatch during HSA runtime), and hardware counter mode (specifies the GPU PMU counters to be collected through input.txt, such as SQ_WAVES, SQ_INSTS_VALU, TA_BUFFER_WAVEFRONTS_SUM).',
+              'Flame Graph is a way to visualize perf data - the x-axis is the function call stack (width represents the sampling percentage), and the y-axis is the call depth. Brendan Gregg\'s FlameGraph script (github.com/brendangregg/FlameGraph) can convert perf script output into an interactive SVG flame graph. For amdgpu debugging, the flame graph can visually show which functions in the kernel consume the most CPU time - common hot spots include fence polling, register read/write, and memory allocation.',
             ],
             keyPoints: [
-              'perf top/stat/record/report: CPU 侧performanceanalyze四件套',
-              'perf through PMU hardwarecount器sampling, 开销 < 5%, canused for生产environment',
-              'rocprof --stats: GPU kernel execute时betweenstatistics',
-              'rocprof --hsa-trace: HSA API + memorycopy + kernel dispatch 时between线',
-              'rocprof hardwarecount器: SQ_WAVES, SQ_INSTS_VALU 等 GPU 微architectureevent',
-              'Flame Graph: perf datacan视化, x 轴宽度 = CPU 时between占比',
+              'perf top/stat/record/report: CPU-side performance analysis four-piece set',
+              'perf samples via PMU hardware counter, overhead < 5%, can be used in production environments',
+              'rocprof --stats: GPU kernel execution time statistics',
+              'rocprof --hsa-trace: HSA API + memory copy + kernel dispatch timeline',
+              'rocprof hardware counters: SQ_WAVES, SQ_INSTS_VALU and other GPU microarchitecture events',
+              'Flame Graph: Visualization of perf data, x-axis width = CPU time ratio',
             ],
           },
           diagram: {
-            title: 'CPU (perf) + GPU (rocprof) 联合analyzearchitecture',
-            content: `CPU + GPU 联合performanceanalyzework流
+            title: 'CPU (perf) + GPU (rocprof) joint analysis architecture',
+            content: `CPU + GPU joint performance analysis workflow
 
-┌─────────── applicationprogram (如 AI 训练) ──────────┐
+┌────────── Applications (such as AI training) ──────────┐
 │                                              │
-│  CPU code         GPU code (HIP kernel)      │
-│  data预handle        矩阵乘法                   │
-│  memory allocation          卷积运算                   │
-│  GPU scheduling          ...                        │
+│CPU code GPU code (HIP kernel) │
+│ Data preprocessing matrix multiplication │
+│ Memory allocation Convolution operation │
+│GPU Scheduling... │
 │       │                    │                  │
 └───────┼────────────────────┼──────────────────┘
         │                    │
   ┌─────▼──────┐      ┌─────▼──────┐
   │   perf     │      │  rocprof   │
-  │  (CPU 侧)  │      │  (GPU 侧)  │
+│ (CPU side) │ │ (GPU side) │
   │            │      │            │
   │ perf stat  │      │ --stats    │
-  │  cycles    │      │ kernel时between  │
-  │  cache-miss│      │ call次数    │
+│ cycles │ │ kernel time │
+│ cache-miss│ │ Number of calls │
   │  IPC       │      │            │
   │            │      │ --hsa-trace│
-  │ perf record│      │ APIcall     │
-  │  sampling      │      │ memorycopy    │
-  │  callstack    │      │ dispatch   │
+│ perf record│ │ API call │
+│ Sampling │ │ Memory Copy │
+│ call stack │ │ dispatch │
   │            │      │            │
-  │ perf report│      │ hardwarecount器  │
-  │  hotspotfunction  │      │ SQ_WAVES   │
+│ perf report│ │ Hardware counters │
+│ Hotspot functions │ │ SQ_WAVES │
   │            │      │ SQ_INSTS   │
-  │  → 火焰图  │      │ L2 cache   │
+│ → Flame graph │ │ L2 cache │
   └─────┬──────┘      └─────┬──────┘
         │                    │
         ▼                    ▼
   ┌──────────────────────────────────────┐
-  │         analyzeresult整合                   │
+│ Integration of analysis results │
   │                                      │
-  │  typicalfind:                            │
-  │  ├─ CPU hotspot: amdgpu_fence_wait_any  │
-  │  │   → fence polling 占 CPU 30%      │
-  │  │   → plan: 改用interruptwaitpattern         │
+│ Typical findings: │
+│ ├─ CPU Hotspot: amdgpu_fence_wait_any │
+│ │ → fence polling accounts for 30% of CPU │
+│ │ → Solution: Switch to interrupt waiting mode │
   │  │                                    │
-  │  ├─ GPU hotspot: matmul_kernel          │
-  │  │   → SQ_WAVES 利用率only 40%       │
-  │  │   → plan: 增大 workgroup size     │
+│ ├─ GPU Hotspot: matmul_kernel │
+│ │ → SQ_WAVES utilization is only 40% │
+│ │ → Solution: Increase workgroup size │
   │  │                                    │
-  │  └─ CPU-GPU interaction:                    │
-  │      → datacopy占总时between 60%           │
-  │      → plan: use pinned memory      │
+│ └─ CPU-GPU interaction: │
+│ → Data copying accounts for 60% of the total time │
+│ → Solution: Use pinned memory │
   └──────────────────────────────────────┘`,
-            caption: 'perf analyze CPU 侧hotspot(drivercode, scheduling, fence wait), rocprof analyze GPU 侧hotspot(kernel execute, memorybandwidth). 两者结合cancompletelocate CPU+GPU work负载bottleneck. ',
+            caption: 'perf analyzes CPU-side hot spots (driver code, scheduling, fence wait), and rocprof analyzes GPU-side hot spots (kernel execution, memory bandwidth). The combination of the two can completely locate the bottleneck of CPU+GPU workloads.',
           },
           codeWalk: {
-            title: 'use perf locate amdgpu kernelhotspotfunction',
+            title: 'Use perf to locate amdgpu kernel hotspot functions',
             file: 'terminal',
             language: 'bash',
-            code: `# === perf analyze amdgpu kernel module CPU 消耗 ===
+            code: `#=== perf analyzes the CPU consumption of amdgpu kernel module ===
 
-# 1. perf top: real-timeview全system CPU hotspot
+#1. perf top: View system-wide CPU hot spots in real time
 sudo perf top -g
 #  Overhead  Shared Object     Symbol
 #  --------  ----------------  --------
@@ -545,7 +545,7 @@ sudo perf top -g
 #     5.67%  [kernel.vmlinux]  _raw_spin_lock_irqsave
 #     3.45%  [amdgpu]          amdgpu_bo_move
 
-# 2. perf stat: statistics GPU programhardwareevent
+#2. perf stat: Statistics of hardware events of GPU programs
 sudo perf stat -e cycles,instructions,cache-misses,\\
     context-switches -- glxgears -info
 
@@ -555,67 +555,67 @@ sudo perf stat -e cycles,instructions,cache-misses,\\
 #       12,345,678  cache-misses
 #            3,456  context-switches
 
-# 3. perf record: sampling并generate火焰图
+#3. perf record: Sampling and generating flame graph
 sudo perf record -g -a -- sleep 10
-# (run期between跑 GPU work负载)
+#(running GPU workload during runtime)
 sudo perf script > /tmp/perf_out.txt
 
-# generate火焰图 (need FlameGraph tool)
+#Generate flame graph (requires FlameGraph tool)
 # git clone https://github.com/brendangregg/FlameGraph
 cat /tmp/perf_out.txt | \\
     FlameGraph/stackcollapse-perf.pl | \\
     FlameGraph/flamegraph.pl > /tmp/amdgpu_flamegraph.svg
 
-# 4. perf analyzespecific amdgpu function
+#4. perf analyzes specific amdgpu functions
 sudo perf probe -m amdgpu -a amdgpu_cs_ioctl
 sudo perf record -e probe:amdgpu_cs_ioctl -aR -- sleep 5
 sudo perf report
 
-# === rocprof GPU 侧analyze ===
+#=== rocprof GPU side analysis ===
 
-# 5. rocprof --stats: GPU kernel execute时between
+#5. rocprof --stats: GPU kernel execution time
 rocprof --stats ./my_hip_app
 # kernel-name     calls  avg-time  total-time
 # matmul_kernel     100   1.23ms    123.0ms
 # relu_kernel       100   0.05ms      5.0ms
 
-# 6. rocprof --hsa-trace: complete时between线
+#6. rocprof --hsa-trace: complete timeline
 rocprof --hsa-trace ./my_hip_app
-# generate results.json, available chrome://tracing view
+#Generate results.json, which can be viewed using chrome://tracing
 
-# 7. rocprof hardwarecount器
+#7. rocprof hardware counter
 echo 'pmc: SQ_WAVES SQ_INSTS_VALU TA_BUSY_avr' > input.txt
 rocprof -i input.txt ./my_hip_app`,
             annotations: [
-              'perf top -g: -g displaycall图(call graph), can看tohotspotfunctionisby谁call',
-              'IPC (Instructions Per Cycle) < 1.0 usuallyrepresenthasmemorybottleneckorbranchpredictionfailure',
-              'perf record -g -a: -g recordcallstack, -a samplingall CPU(includekernel态)',
-              'perf probe caninkernelfunctionondynamiccreatetracing点, 无需re-compilation',
-              'rocprof --stats  avg-time is GPU kernel 平均execute时between, notinclude dispatch latency',
-              'rocprof hardwarecount器 SQ_WAVES isemitto CU  wave count, 反映 GPU 利用率',
+              'perf top -g: -g displays the call graph (call graph), you can see who is calling the hot function',
+              'IPC (Instructions Per Cycle) < 1.0 usually indicates a memory bottleneck or branch prediction failure',
+              'perf record -g -a: -g records the call stack, -a samples all CPUs (including kernel mode)',
+              'perf probe can dynamically create trace points on kernel functions without recompiling',
+              'avg-time of rocprof --stats is the average execution time of GPU kernel, excluding dispatch delay',
+              'The rocprof hardware counter SQ_WAVES is the number of waves emitted to the CU, reflecting GPU utilization',
             ],
-            explanation: 'thiscodedemonstrate CPU+GPU 联合analyzecompletework流. inactual amdgpu developmentin, perf top is最常用"快速view"tool — if你看to amdgpu_fence_process 占大量 CPU, indicate fence polling isbottleneck. rocprof 则used foranalyze GPU kernel 本身效率. 火焰图is向teamdemonstrateanalyzeresult最佳approach. ',
+            explanation: 'This code shows the complete workflow of CPU+GPU joint analysis. In actual amdgpu development, perf top is the most commonly used "quick view" tool - if you see amdgpu_fence_process taking up a lot of CPU, fence polling is the bottleneck. rocprof is used to analyze the efficiency of the GPU kernel itself. Flame graphs are the best way to present analysis results to your team.',
           },
           miniLab: {
-            title: 'use perf + rocprof analyze GPU applicationperformance',
-            objective: '综合use perf and rocprof analyzea GPU application, find CPU 侧and GPU 侧performancebottleneck. ',
-            setup: `# install perf and FlameGraph
+            title: 'Use perf + rocprof to analyze GPU application performance',
+            objective: 'Use perf and rocprof combined to analyze a GPU application and find performance bottlenecks on the CPU and GPU sides.',
+            setup: `#Install perf and FlameGraph
 sudo apt install linux-tools-$(uname -r) linux-tools-common
 git clone https://github.com/brendangregg/FlameGraph ~/FlameGraph
 
-# rocprof need ROCm environment
+#rocprof requires ROCm environment
 # sudo apt install rocprofiler`,
             steps: [
-              'run perf top -g observe GPU 活动时 CPU hotspot(run glxgears or任意 GPU program)',
-              'use perf stat collect glxgears hardwarecount器: sudo perf stat glxgears(run 10 秒after Ctrl+C)',
-              'record全systemsampling: sudo perf record -g -a -- sleep 10(期betweenrun GPU program)',
-              'view perf report: sudo perf report(find [amdgpu] 开头function)',
-              'generate火焰图: sudo perf script | ~/FlameGraph/stackcollapse-perf.pl | ~/FlameGraph/flamegraph.pl > /tmp/gpu_flame.svg',
-              '用浏览器打开 /tmp/gpu_flame.svg, find amdgpu relatedfunctionstack',
-              'ifhas ROCm: run rocprof --stats ./your_hip_app view GPU kernel 时between',
+              'Run perf top -g to observe CPU hotspots during GPU activity (running glxgears or any GPU program)',
+              'Use perf stat to collect hardware counters of glxgears: sudo perf stat glxgears (Ctrl+C after running for 10 seconds)',
+              'Record system-wide samples: sudo perf record -g -a -- sleep 10 (running GPU program during this period)',
+              'View the perf report: sudo perf report (find the function starting with [amdgpu])',
+              'Generate a flame graph: sudo perf script | ~/FlameGraph/stackcollapse-perf.pl | ~/FlameGraph/flamegraph.pl > /tmp/gpu_flame.svg',
+              'Open /tmp/gpu_flame.svg with a browser and find the amdgpu related function stack',
+              'If you have ROCm: run rocprof --stats ./your_hip_app to view GPU kernel time',
             ],
             expectedOutput: `$ sudo perf stat glxgears
-# run 10 秒after Ctrl+C
+#After running for 10 seconds Ctrl+C
 
  Performance counter stats for 'glxgears':
      3,456,789,012      cycles
@@ -630,13 +630,13 @@ $ sudo perf report | head -20
      8.45%  glxgears  libc.so.6          __memcpy_avx2
      6.78%  glxgears  radeonsi_dri.so    si_draw_vbo
      4.56%  glxgears  [amdgpu]           amdgpu_ring_commit`,
-            hint: 'if perf record 报permissionerror, can临时放开limit: sudo sysctl kernel.perf_event_paranoid=-1. generate火焰图need root permissioncollect perf.data, becauseneedkernel符号. ',
+            hint: 'If perf record reports a permission error, you can temporarily release the restrictions: sudo sysctl kernel.perf_event_paranoid=-1. Generating a flame graph requires perf.data collected with root permissions because kernel symbols are required.',
           },
           debugExercise: {
-            title: 'from perf datalocate过度 fence polling',
+            title: 'Excessive fence polling from perf data location',
             language: 'text',
-            description: 'below perf report outputdisplaya GPU application CPU use率异常高(100% 单核). analyzedatafindcause. ',
-            question: 'whythis GPU application占满a CPU core? 提出optimizationplan. ',
+            description: 'The following perf report output shows a GPU application with unusually high CPU usage (100% single core). Analyze the data to find out why.',
+            question: 'Why is this GPU application taking up one CPU core? Propose optimization plans.',
             buggyCode: `$ sudo perf report --stdio
 
 # Overhead  Command     Shared Object    Symbol
@@ -648,80 +648,80 @@ $ sudo perf report | head -20
      5.11%  my_gpu_app  my_gpu_app       main
      3.89%  my_gpu_app  libdrm_amdgpu    amdgpu_cs_query_fence_status
 
-# callstack (amdgpu_fence_wait_any):
+#Call stack (amdgpu_fence_wait_any):
 # amdgpu_fence_wait_any
 #   └─ amdgpu_fence_process
 #       └─ amdgpu_device_rreg
-#           └─ readl  ← MMIO registerread
+#└─ readl ← MMIO register reading
 
-# top output:
+#top output:
 # PID   %CPU  COMMAND
 # 5678  99.8  my_gpu_app`,
-            hint: '42% 时between花in fence_wait_any, 而它子function amdgpu_device_rreg (readl) is MMIO registerread...',
-            answer: 'issue: applicationusebusy wait待(busy-wait / spin polling)wait GPU complete. perf datadisplay 42%  CPU 时betweenin amdgpu_fence_wait_any, call链is fence_wait → fence_process → rreg → readl. 这indicatedriverinnot断polling GPU  fence registercheck任务whethercomplete, 而is notuseinterruptwait. each time readl() isonce MMIO read, 跨 PCIe 总线latency约 500ns-1μs, contiguouspollingwill占满 CPU core. optimizationplan: (1)use DRM_IOCTL_AMDGPU_WAIT_CS 带timeoutparameterwait — 它willletprocesssleep并through GPU interruptwakeup, CPU use率接近 0; (2)ifisdrivercodeinternalwait, use dma_fence_wait_timeout() 替代 busy-wait, 它利用 GPU interrupt(由 amdgpu_fence_driver_irq_type generate)notify fence complete; (3)ifneed低latency, can先 spin 一小段时betweenagain切换tointerruptwait(hybrid polling). 这is GPU applicationdevelopmentin最commonperformanceissue之一. ',
+            hint: '42% of the time is spent in fence_wait_any, while its subfunction amdgpu_device_rreg (readl) is the MMIO register read...',
+            answer: 'Problem: The application uses busy-wait/spin polling to wait for the GPU to complete. The perf data shows that 42% of the CPU time is in amdgpu_fence_wait_any, and the call chain is fence_wait → fence_process → rreg → readl. This shows that the driver is constantly polling the GPU\'s fence register to check whether the task is completed, rather than waiting for an interrupt. Each readl() is an MMIO read, with a latency of about 500ns-1μs across the PCIe bus, and continuous polling will occupy the CPU core. Optimization solution: (1) Use DRM_IOCTL_AMDGPU_WAIT_CS to wait with timeout parameters - it will make the process sleep and wake up through GPU interrupt, and the CPU usage is close to 0; (2) If it is waiting inside the driver code, use dma_fence_wait_timeout() instead of busy-wait, which uses GPU interrupt (generated by amdgpu_fence_driver_irq_type) to notify fence Completed; (3) If low latency is required, you can spin for a short period of time and then switch to interrupt waiting (hybrid polling). This is one of the most common performance issues in GPU application development.',
           },
           interviewQ: {
-            question: '你howanalyzea GPU computeapplication端to端performance? describe你usetoolandmethod论. ',
+            question: 'How do you analyze the end-to-end performance of a GPU computing application? Describe the tools and methodologies you used.',
             difficulty: 'hard',
-            hint: '分layeranalyze: 先macro观(总时between分解as CPU/GPU/datatransfer), again微观(CPU 侧用 perf, GPU 侧用 rocprof, datatransfer用 HSA trace). ',
-            answer: '端to端performanceanalyzemethod论: (1)macro观时between分解: first用 rocprof --hsa-trace getcomplete时between线, will总时between分解as三部分 — CPU compute, GPU kernel execute, CPU↔GPU datatransfer. 这一步确定bottleneckin哪一侧. (2)CPU 侧analyze: perf stat get IPC, cache-miss 等hardware指标. perf record -g samplinggenerate火焰图, find CPU hotspotfunction. commonissue: fence polling 占 CPU(改用interruptwait), memory allocation频繁(use buffer pool), 锁竞争(减小critical section). (3)GPU 侧analyze: rocprof --stats find最耗时 kernel. 对hotspot kernel use rocprof hardwarecount器analyze: SQ_WAVES(wave 利用率), SQ_INSTS_VALU(ALU 利用率), TCP_TCC_READ_REQ(L2 cache request). commonissue: occupancy not足(增大 workgroup size), memorybandwidthbottleneck(optimization访存pattern). (4)datatransferanalyze: HSA trace displayeach time H2D/D2H copysizeand时between. optimization: use pinned memory avoid额outsidecopy, use hipMemcpyAsync and kernel 重叠, use unified memory 减少explicitcopy. (5)整合optimization: according to Amdahl 定律, 先optimization占比最大部分. use chrome://tracing can视化 HSA trace JSON, confirmoptimization效果. ',
-            amdContext: 'AMD 特别看重你whethercanfrom全system视角analyzeperformance — not只is"GPU kernel 慢", but ratherunderstand CPU, GPU, PCIe 总线三者之betweeninteractionhowimpact整体performance. ',
+            hint: 'Hierarchical analysis: first macroscopically (the total time is broken down into CPU/GPU/data transfer), then microscopically (use perf on the CPU side, rocprof on the GPU side, and HSA trace for data transfer).',
+            answer: 'End-to-end performance analysis methodology: (1) Macro time decomposition: First use rocprof --hsa-trace to obtain the complete timeline, and decompose the total time into three parts - CPU calculation, GPU kernel execution, and CPU↔GPU data transmission. This step determines which side the bottleneck is on. (2) CPU side analysis: perf stat obtains hardware indicators such as IPC and cache-miss. perf record -g samples and generates flame graphs to find CPU hotspot functions. Common problems: fence polling occupies CPU (use interrupt waiting instead), frequent memory allocation (use buffer pool), lock competition (reduce critical section). (3) GPU side analysis: rocprof --stats finds the most time-consuming kernel. Use rocprof hardware counter analysis on the hot kernel: SQ_WAVES (wave utilization), SQ_INSTS_VALU (ALU utilization), TCP_TCC_READ_REQ (L2 cache request). Common problems: insufficient occupancy (increase workgroup size), memory bandwidth bottleneck (optimize memory access mode). (4) Data transmission analysis: HSA trace displays the size and time of each H2D/D2H copy. Optimization: Use pinned memory to avoid extra copies, use hipMemcpyAsync to overlap with the kernel, and use unified memory to reduce explicit copies. (5) Integrated optimization: According to Amdahl\'s law, optimize the part with the largest proportion first. Use chrome://tracing to visualize the HSA trace JSON to confirm the optimization effect.',
+            amdContext: 'AMD particularly values ​​​​whether you can analyze performance from a system-wide perspective - not just "GPU kernel is slow", but understanding how the interaction between the CPU, GPU, and PCIe bus affects overall performance.',
           },
         },
       ],
     },
 
     // ════════════════════════════════════════════════════════════
-    // Group 6.2: GPU Issue Analysis (GPU issueanalyze)
+    // Group 6.2: GPU Issue Analysis (GPU issue analysis)
     // ════════════════════════════════════════════════════════════
     {
       id: '6-2',
       number: '6.2',
-      title: 'GPU issueanalyze',
+      title: 'GPU problem analysis',
       titleEn: 'GPU Issue Analysis',
       icon: 'Flame',
-      description: '深入 GPU hang analyzemethod论and AMD 专用debuggingtool umr. learnfrom dmesg log, registerstate, ring buffer 内容三个维度diagnose GPU hardwareissue — 这is AMD driverengineercoreskill. ',
+      description: 'In-depth GPU hang analysis methodology and AMD-specific debugging tool umr. Learn to diagnose GPU hardware problems from the three dimensions of dmesg logs, register status, and ring buffer content - this is the core skill of AMD driver engineers.',
       lessons: [
         // ── Lesson 6.2.1 ──────────────────────────────────────
         {
           id: '6-2-1',
           number: '6.2.1',
-          title: 'GPU Hang analyzemethod论',
+          title: 'GPU Hang Analysis Methodology',
           titleEn: 'GPU Hang Analysis Methodology',
           duration: 20,
           difficulty: 'advanced',
           tags: ['GPU-hang', 'GRBM_STATUS', 'CP_RB_RPTR', 'gpu-recover', 'timeout'],
           concept: {
-            summary: 'GPU Hang isdriverdevelopmentin最commonalso最棘手issue — GPU stopresponse, ring buffer incommandnotagainbyexecute. amdgpu through job timeout detect hang, through GRBM_STATUS/CP_RB_RPTR/WPTR registerdiagnosecause, through GPU reset recover. system化 hang analyzemethod论is AMD driverengineercoreskill. ',
+            summary: 'GPU Hang is the most common and thorny problem in driver development - the GPU stops responding and commands in the ring buffer are no longer executed. amdgpu detects hang through job timeout, diagnoses the cause through GRBM_STATUS/CP_RB_RPTR/WPTR register, and recovers through GPU reset. Systematic hang analysis methodology is the core skill of AMD driver engineers.',
             explanation: [
-              'GPU Hang define: GPU commandhandle器(CP)stopfrom ring buffer in取出andexecutecommand. fromdriver视角, 表现ascommit给 GPU  job exceed timeout 时between仍not yetcomplete(fence noby signal). amdgpu default timeout is 10 秒(canthrough amdgpu.lockup_timeout moduleparameter调整). when timeout 发生时, drm_sched call amdgpu_job_timedout() startdiagnoseandrecoverprocess. ',
-              'amdgpu_job_timedout() is hang handleentry pointfunction. 它process: (1)read GRBM_STATUS register — 这is GPU globalstateregister, 其in位指示哪个engine正inbusy(GUI_ACTIVE, CP_BUSY, SPI_BUSY 等). (2)read CP_RB_RPTR(Ring Buffer Read Pointer)and CP_RB_WPTR(Write Pointer) — if RPTR == WPTR, ring is空(GPU alreadyhandle完allcommand); if RPTR < WPTR 且not变化, CP 卡in某条commandon. (3)try IB test(向 ring writeasimple NOP command并waitcomplete) — if IB test through, indicate ring 本身no hang, issuemayinspecificcommandon. ',
-              'GRBM_STATUS(Graphics Register Bus Manager Status)isdiagnose hang 最importantregister. key位: bit 31 GUI_ACTIVE(graphicsenginewhetheractive), bit 30 CP_BUSY(commandhandle器whetherbusy), bit 22-23 SPI_BUSY(shaderhandle器whetherbusy), bit 17 TA_BUSY(纹理address单元), bit 14 DB_BUSY(深度缓冲), bit 12 CB_BUSY(颜色缓冲). if CP_BUSY=1 且 RPTR not变化, indicate CP inexecutecurrentcommand时卡住 — mayisshader死循环, memoryaccess违规, orhardware缺陷. ',
-              'GPU Reset is hang finallyrecover手段. amdgpu_device_gpu_recover() process: (1)notifyall客户端(DRM, KFD, display)GPU i.e.will reset; (2)stopall ring scheduling; (3)execute Mode 1 Reset(write GRBM_SOFT_RST register)or Mode 2 Reset(through PSP executecomplete GPU reset); (4)re-initializationall IP Block(GFX, SDMA, VCN 等); (5)recover ring buffer andre-commitqueuedin job. entireprocess约需 1-5 秒, 期between屏幕maywill闪烁. ',
+              'Definition of GPU Hang: The GPU\'s command processor (CP) stops fetching and executing commands from the ring buffer. From the driver\'s perspective, it appears that the job submitted to the GPU has exceeded the timeout and has not been completed (the fence has not been signaled). The default timeout for amdgpu is 10 seconds (adjustable via the amdgpu.lockup_timeout module parameter). When timeout occurs, drm_sched calls amdgpu_job_timedout() to start the diagnostic and recovery process.',
+              'amdgpu_job_timedout() is the entry function for hang processing. Its flow: (1) Read the GRBM_STATUS register - this is the GPU global status register, the bits in it indicate which engine is busy (GUI_ACTIVE, CP_BUSY, SPI_BUSY, etc.). (2) Read CP_RB_RPTR (Ring Buffer Read Pointer) and CP_RB_WPTR (Write Pointer) - if RPTR == WPTR, the ring is empty (GPU has processed all commands); if RPTR < WPTR and does not change, CP is stuck on a certain command. (3) Try IB test (write a simple NOP command to the ring and wait for completion) - if the IB test passes, it means that the ring itself does not hang, and the problem may be with a specific command.',
+              'GRBM_STATUS (Graphics Register Bus Manager Status) is the most important register for diagnosing hang. Key bits: bit 31 GUI_ACTIVE (whether the graphics engine is active), bit 30 CP_BUSY (whether the command processor is busy), bit 22-23 SPI_BUSY (whether the shader processor is busy), bit 17 TA_BUSY (texture address unit), bit 14 DB_BUSY (depth buffer), bit 12 CB_BUSY (color buffer). If CP_BUSY=1 and RPTR does not change, CP is stuck executing the current command - possibly a shader infinite loop, a memory access violation, or a hardware defect.',
+              'GPU Reset is the last resort to recover from hang. The process of amdgpu_device_gpu_recover(): (1) Notify all clients (DRM, KFD, display) that the GPU is about to reset; (2) Stop the scheduling of all rings; (3) Execute Mode 1 Reset (write to the GRBM_SOFT_RST register) or Mode 2 Reset (perform a complete GPU reset through PSP); (4) Reinitialize all IP Blocks (GFX, SDMA, VCN etc.); (5) Restore the ring buffer and resubmit the queued job. The entire process takes about 1-5 seconds, and the screen may flicker during this time.',
             ],
             keyPoints: [
-              'GPU Hang = CP stopfrom ring buffer 取command, 表现as job timeout(default 10 秒)',
-              'amdgpu_job_timedout(): hang handleentry point, read GRBM_STATUS and CP_RB_RPTR/WPTR',
-              'GRBM_STATUS key位: GUI_ACTIVE(31), CP_BUSY(30), SPI_BUSY(22-23)',
-              'CP_RB_RPTR == WPTR → ring 空(alreadyhandle完); RPTR < WPTR 且not变 → CP 卡住',
-              'IB test: 向 ring 发 NOP commandtesting — throughindicate ring 本身没issue',
+              'GPU Hang = CP stops taking commands from the ring buffer, expressed as job timeout (default 10 seconds)',
+              'amdgpu_job_timedout(): hang processing entry, read GRBM_STATUS and CP_RB_RPTR/WPTR',
+              'GRBM_STATUS key bits: GUI_ACTIVE(31), CP_BUSY(30), SPI_BUSY(22-23)',
+              'CP_RB_RPTR == WPTR → ring empty (processed); RPTR < WPTR and unchanged → CP stuck',
+              'IB test: Send NOP command to the ring to test - passing means there is no problem with the ring itself',
               'GPU Reset: soft reset (GRBM_SOFT_RST) or full reset (PSP mode2)',
             ],
           },
           diagram: {
-            title: 'GPU Hang detectandrecoverprocess',
-            content: `GPU Hang fromdetecttorecovercompleteprocess
+            title: 'GPU Hang detection and recovery process',
+            content: `The complete process of GPU Hang from detection to recovery
 
-┌─────────── 正常run ───────────┐
+┌─────────── Normal operation ────────────┐
 │                                │
-│  applicationcommit job → ring buffer    │
-│  CP executecommand → fence signal    │
-│  drm_sched mark job complete       │
+│ Application submission job → ring buffer │
+│ CP execution command → fence signal │
+│ drm_sched marks job completion │
 │                                │
 └──────────────┬─────────────────┘
-               │ fence not yetin 10s 内 signal
+│ fence signal not sent within 10s
                ▼
-┌─────────── Timeout detect ───────┐
+┌─────────── Timeout detection ────────┐
 │                                │
 │  drm_sched_job_timedout()      │
 │       │                        │
@@ -731,27 +731,27 @@ $ sudo perf report | head -20
 └──────────────┬─────────────────┘
                │
                ▼
-┌─────────── statecollect ───────────┐
+┌─────────── Status collection ────────────┐
 │                                │
 │  1. GRBM_STATUS = 0xEE008002  │
-│     parse:                      │
+│ Analysis: │
 │     bit 31: GUI_ACTIVE = 1     │
 │     bit 30: CP_BUSY    = 1     │
 │     bit 23: SPI_BUSY   = 1     │
-│     → graphicsengine+CP+SPI 全忙!    │
+│ → Graphics engine+CP+SPI are all busy! │
 │                                │
 │  2. CP_RB_RPTR = 0x00001200   │
 │     CP_RB_WPTR = 0x00001234   │
-│     → RPTR < WPTR, ring not空   │
-│     → CP 卡in offset 0x1200   │
+│ → RPTR < WPTR, ring is not empty │
+│ → CP stuck at offset 0x1200 │
 │                                │
 │  3. IB test: TIMEOUT           │
-│     → ring confirm hang           │
+│ → ring confirm hang │
 │                                │
 └──────────────┬─────────────────┘
                │
                ▼
-┌─────────── dmesg output ─────────┐
+┌─────────── dmesg output ──────────┐
 │                                │
 │  [drm:amdgpu_job_timedout]     │
 │  *ERROR* ring gfx_0.0.0       │
@@ -768,25 +768,25 @@ $ sudo perf report | head -20
 ┌─────────── GPU Reset ──────────┐
 │                                │
 │  amdgpu_device_gpu_recover()   │
-│  ├─ notifyall客户端              │
-│  ├─ stopall ring scheduling          │
+│ ├─ Notify all clients │
+│ ├─ Stop all ring scheduling │
 │  ├─ Mode 1: GRBM_SOFT_RST     │
-│  │  └─ iffailure →              │
+│ │ └─ If failed → │
 │  │     Mode 2: PSP full reset  │
-│  ├─ re-initialization IP Blocks       │
-│  ├─ recover ring buffers          │
-│  └─ re-schedulingqueued jobs         │
+│ ├─ Reinitialize IP Blocks │
+│ ├─ Restore ring buffers │
+│ └─ Rescheduling queued jobs │
 │                                │
 │  [drm] GPU reset succeeded     │
 │                                │
 └────────────────────────────────┘`,
-            caption: 'GPU Hang completehandleprocess: timeout detect → statecollect(GRBM_STATUS, RPTR/WPTR)→ dmesg record → GPU reset recover. eachstageinformationall对diagnose hang cause至关important. ',
+            caption: 'The complete processing flow of GPU Hang: timeout detection → status collection (GRBM_STATUS, RPTR/WPTR) → dmesg recording → GPU reset recovery. Information at each stage is critical to diagnosing the cause of the hang.',
           },
           codeWalk: {
-            title: 'amdgpu_job_timedout functionanalyze',
+            title: 'amdgpu_job_timedout function analysis',
             file: 'drivers/gpu/drm/amd/amdgpu/amdgpu_job.c',
             language: 'c',
-            code: `/* amdgpu_job.c — GPU job timeout handle */
+            code: `/*amdgpu_job.c — GPU job timeout processing */
 
 static enum drm_gpu_sched_stat
 amdgpu_job_timedout(struct drm_sched_job *s_job)
@@ -796,92 +796,100 @@ amdgpu_job_timedout(struct drm_sched_job *s_job)
     struct amdgpu_device *adev = ring->adev;
     uint32_t grbm_status, rptr, wptr;
 
-    /* 1. read GPU stateregister */
+    /*1. Read GPU status register */
     grbm_status = RREG32(mmGRBM_STATUS);
-    DRM_ERROR("GRBM_STATUS=0x%08X\n", grbm_status);
+    DRM_ERROR("GRBM_STATUS=0x%08X
+", grbm_status);
 
-    /* parse GRBM_STATUS key位 */
+    /*Parse the key bits of GRBM_STATUS */
     if (grbm_status & GRBM_STATUS__GUI_ACTIVE_MASK)
-        DRM_ERROR("  GUI_ACTIVE: graphics engine active\n");
+        DRM_ERROR("  GUI_ACTIVE: graphics engine active
+");
     if (grbm_status & GRBM_STATUS__CP_BUSY_MASK)
-        DRM_ERROR("  CP_BUSY: command processor busy\n");
+        DRM_ERROR("  CP_BUSY: command processor busy
+");
 
-    /* 2. read Ring Buffer pointer */
+    /*2. Read the Ring Buffer pointer */
     rptr = RREG32(ring->rptr_reg);
     wptr = RREG32(ring->wptr_reg);
-    DRM_ERROR("ring %s: rptr=0x%08X wptr=0x%08X\n",
+    DRM_ERROR("ring %s: rptr=0x%08X wptr=0x%08X
+",
               ring->name, rptr, wptr);
 
     if (rptr == wptr)
         DRM_ERROR("  ring is empty — job may have completed"
-                  " but fence not signaled\n");
+                  " but fence not signaled
+");
 
-    /* 3. try IB test (send NOP to ring) */
+    /*3. Try IB test (send NOP to ring) */
     if (amdgpu_ring_test_ib(ring, 1000) == 0) {
-        DRM_INFO("ring %s IB test passed — soft hang\n",
+        DRM_INFO("ring %s IB test passed — soft hang
+",
                  ring->name);
-        /* IB test through: mayis fence 丢失, notneed reset */
+        /*IB test passed: The fence may be missing and no reset is required */
         return DRM_GPU_SCHED_STAT_NOMINAL;
     }
 
-    /* 4. IB test failure: 真正 GPU hang, trigger reset */
-    DRM_ERROR("ring %s IB test failed — hard hang!\n",
+    /*4. IB test failed: real GPU hang, triggering reset */
+    DRM_ERROR("ring %s IB test failed — hard hang!
+",
               ring->name);
 
-    /* record fence state */
-    DRM_ERROR("signaled fence=%llu, emitted fence=%llu\n",
+    /*Record fence status */
+    DRM_ERROR("signaled fence=%llu, emitted fence=%llu
+",
               atomic64_read(&ring->fence_drv.last_seq),
               ring->fence_drv.sync_seq);
 
-    /* trigger GPU recover */
+    /*Trigger GPU recovery */
     amdgpu_device_gpu_recover(adev, job, false);
 
     return DRM_GPU_SCHED_STAT_NOMINAL;
 }
 
-/* GPU recovercorefunction */
+/*GPU recovery core function */
 int amdgpu_device_gpu_recover(struct amdgpu_device *adev,
                                struct amdgpu_job *job,
                                bool force)
 {
-    /* 第一步: try soft reset */
+    /*Step 1: Try soft reset */
     r = amdgpu_asic_reset(adev);
     if (r) {
-        /* soft reset failure, try mode2 (PSP) reset */
+        /*soft reset failed, try mode2 (PSP) reset */
         r = amdgpu_dpm_mode2_reset(adev);
     }
 
-    /* re-initializationall IP block */
+    /*Reinitialize all IP blocks */
     amdgpu_device_ip_reinit_early(adev);
     amdgpu_device_ip_reinit_late(adev);
 
-    /* recoverall ring state */
+    /*Restore the status of all rings */
     amdgpu_fence_driver_hw_init(adev);
 
     return r;
 }`,
             annotations: [
-              'RREG32(mmGRBM_STATUS): read GPU globalstate, 判断whichenginein忙',
-              'rptr == wptr: ring 空但 fence 没 signal — mayisinterrupt丢失or fence handle bug',
-              'amdgpu_ring_test_ib(): 向 ring 写 NOP commandtesting — 区分 soft hang and hard hang',
-              'soft hang: IB test through, GPU canexecute新command, issueisspecific job timeoutor fence 丢失',
-              'hard hang: IB test failure, GPU completelystopresponse, need reset',
-              'amdgpu_device_gpu_recover: 先 soft reset → failureagain mode2 reset → 重initialization IP',
+              'RREG32(mmGRBM_STATUS): Read the GPU global status and determine which engines are busy',
+              'rptr == wptr: The ring is empty but the fence has no signal - possibly a missing interrupt or a fence processing bug',
+              'amdgpu_ring_test_ib(): Write NOP command test to ring - distinguish between soft hang and hard hang',
+              'soft hang: IB test passed, the GPU can execute new commands, the problem is that the specific job times out or the fence is lost',
+              'hard hang: IB test failed, GPU stopped responding completely, need to reset',
+              'amdgpu_device_gpu_recover: first soft reset → fail and then mode2 reset → reinitialize IP',
             ],
-            explanation: 'amdgpu_job_timedout is你in dmesg in看to "ring gfx_0.0.0 timeout" 时bycallfunction. understand它logicforanalyze GPU hang 至关important — 它告诉你 GPU when时精确state(whichenginein忙, ring pointer in哪inside, IB test whetherthrough). when你commit GPU hang related bug report 时, theseinformationisdevelopment者locateissuekey线索. ',
+            explanation: 'amdgpu_job_timedout is the function that is called when you see "ring gfx_0.0.0 timeout" in dmesg. Understanding its logic is crucial to analyzing GPU hangs - it tells you the precise state of the GPU at that time (which engines are busy, where the ring pointer is, whether the IB test passed). When you submit a bug report related to GPU hang, this information is a key clue for developers to locate the problem.',
           },
           miniLab: {
-            title: 'analyze一段real GPU hang dmesg dump',
-            objective: 'practicefrom dmesg outputinextract GPU hang keyinformation, 判断 hang typeandmaycause. ',
+            title: 'Analyze a real GPU hang dmesg dump',
+            objective: 'Practice extracting key information of GPU hang from dmesg output and determine the type and possible causes of hang.',
             steps: [
-              'readbelowsimulate GPU hang dmesg output(based onreal amdgpu hang logformat)',
-              '识别key字段: ring 名称, GRBM_STATUS 值, RPTR/WPTR, fence state',
-              'parse GRBM_STATUS 位字段, 判断which GPU enginein忙',
-              'according to RPTR and WPTR relationship判断 ring state',
-              'according to signaled/emitted fence 差值判断丢失 job count',
-              '判断这is soft hang stillis hard hang',
+              'Read the following simulated GPU hang dmesg output (based on real amdgpu hang log format)',
+              'Identify key fields: ring name, GRBM_STATUS value, RPTR/WPTR, fence status',
+              'Parse the bit field of GRBM_STATUS to determine which GPU engines are busy',
+              'Determine the ring status based on the relationship between RPTR and WPTR',
+              'Determine the number of lost jobs based on the signaled/emitted fence difference',
+              'Determine whether this is a soft hang or a hard hang',
             ],
-            expectedOutput: `practice用simulate dmesg output:
+            expectedOutput: `Simulated dmesg output for practice:
 
 [  345.678] [drm:amdgpu_job_timedout [amdgpu]] *ERROR*
   ring gfx_0.0.0 timeout, signaled seq=5678, emitted seq=5680
@@ -892,21 +900,21 @@ int amdgpu_device_gpu_recover(struct amdgpu_device *adev,
 [  345.680] [drm] ring gfx_0.0.0 IB test timed out
 [  345.681] [drm] GPU reset initiated
 
-analyzeto点:
-1. emitted - signaled = 5680 - 5678 = 2 → 2 个 job not yetcomplete
+Analysis points:
+1. emitted - signaled = 5680 - 5678 = 2 → 2 jobs unfinished
 2. GRBM_STATUS=0xEE008002:
    bit 31 (GUI_ACTIVE) = 1, bit 30 (CP_BUSY) = 1
-   bit 23 (SPI_BUSY) = 1 → shaderinexecute
-3. RPTR(0xA100) < WPTR(0xA180) → ring hasnot yethandlecommand
-4. IB test timeout → hard hang, need reset`,
-            hint: 'the GRBM_STATUS 十六进制值转成二进制看各个位. 0xEE008002 = 1110_1110_0000_0000_1000_0000_0000_0010. bit 31=1(GUI), bit 30=1(CP), bit 29=1(某engine), bit 23=1(SPI). ',
+bit 23 (SPI_BUSY) = 1 → shader is executing
+3. RPTR(0xA100) < WPTR(0xA180) → ring has unprocessed commands
+4. IB test times out → hard hang, requires reset`,
+            hint: 'Convert the hexadecimal value of GRBM_STATUS to binary to look at each bit. 0xEE008002 = 1110_1110_0000_0000_1000_0000_0000_0010. bit 31=1(GUI), bit 30=1(CP), bit 29=1(an engine), bit 23=1(SPI).',
           },
           debugExercise: {
-            title: 'fromregister值判断 GPU hang cause',
+            title: 'Determining the cause of GPU hang based on register values',
             language: 'text',
-            description: 'belowistwodifferent GPU hang scenarioregisterstate. 判断eachscenario hang cause. ',
-            question: 'analyzetwoscenarioregisterstate, 判断各自 hang causeandrecommendedfix方向. ',
-            buggyCode: `scenario A:
+            description: 'Below are the register states for two different GPU hang scenarios. Determine the hang reason for each scenario.',
+            question: 'Analyze the register status of the two scenarios to determine the respective hang causes and recommended repair directions.',
+            buggyCode: `Scenario A:
   GRBM_STATUS    = 0x00000000
   CP_RB_RPTR     = 0x0000F000
   CP_RB_WPTR     = 0x0000F000
@@ -914,25 +922,25 @@ analyzeto点:
   emitted fence  = 1235
   IB test        = PASSED
 
-scenario B:
+Scenario B:
   GRBM_STATUS    = 0xEE00FFFF
   CP_RB_RPTR     = 0x00003400
   CP_RB_WPTR     = 0x00003480
   signaled fence = 8900
   emitted fence  = 8901
   IB test        = TIMED OUT
-  最近commitcommand: acontain compute shader  job
-  dmesg 额outsideinformation: amdgpu: GPU fault detected: src_id:146
+Most recently submitted command: a job containing a compute shader
+dmesg additional information: amdgpu: GPU fault detected: src_id:146
                   vmid:3 pasid:32772`,
-            hint: 'scenario A  GRBM_STATUS 全 0 意味着 GPU 并not忙. scenario B has GPU fault (src_id:146 = VMC page fault). ',
-            answer: 'scenario A analyze: GRBM_STATUS=0x00000000(GPU completelyidle), RPTR==WPTR(ring 空), IB test through — GPU hardwarenoissue. 但 signaled(1234) < emitted(1235), has 1 个 job  fence noby signal. 这isa soft hang/fence 丢失issue, 最maycauseisinterrupt丢失(GPU complete任务但 fence interruptnoto达 CPU)or fence handlecode bug(fence_process nocheckto新complete seq). fix方向: checkinterrupt handlingcode, add fence polling fallback. scenario B analyze: GRBM_STATUS=0xEE00FFFF(几乎allengineallin忙), IB test timeout — hard hang. key线索is "GPU fault detected: src_id:146", src_id 146 is VMC (Virtual Memory Controller) page fault, indicate compute shader accessnot yetmapping GPU virtual address. GPU inhandle page fault 时陷入deadlock(GRBM 全忙). fix方向: checkapplicationprogram buffer mapping whethercorrect, whetherhas use-after-free(buffer alreadybyrelease但 shader stillinaccess). ',
+            hint: 'Scenario A\'s GRBM_STATUS is all 0\'s meaning the GPU is not busy. Scenario B has GPU fault (src_id:146 = VMC page fault).',
+            answer: 'Scenario A analysis: GRBM_STATUS=0x00000000 (GPU is completely idle), RPTR==WPTR (ring is empty), IB test passed - there is no problem with the GPU hardware. But signaled(1234) < emitted(1235), there is 1 job of fence that is not signaled. This is a soft hang/fence loss problem, and the most likely cause is an interrupt loss (GPU completed the task but the fence interrupt did not reach the CPU) or a bug in the fence processing code (fence_process did not check the newly completed seq). Fix direction: Check interrupt handling code, add fence polling fallback. Scenario B analysis: GRBM_STATUS=0xEE00FFFF (almost all engines are busy), IB test times out - hard hang. The key clue is "GPU fault detected: src_id:146", src_id 146 is a VMC (Virtual Memory Controller) page fault, indicating that the compute shader accessed an unmapped GPU virtual address. GPU deadlocks (GRBM all busy) while processing page fault. Repair direction: Check whether the application\'s buffer mapping is correct and whether there is use-after-free (the buffer has been released but the shader is still accessing it).',
           },
           interviewQ: {
-            question: 'describe你analyzea GPU hang completemethod论. fromuserreport "屏幕freeze" tolocate根因process. ',
+            question: 'Describe your complete methodology for analyzing a GPU hang. The journey from user reporting "screen freeze" to locating the root cause.',
             difficulty: 'hard',
-            hint: '按layer次: 收集information(dmesg)→ 分类 hang type(soft/hard)→ analyzeregister(GRBM_STATUS)→ analyze ring(RPTR/WPTR)→ analyzecommand流(ring content)→ locate根因. ',
-            answer: '我 GPU hang analyzemethod论: (1)information收集: firstgetcomplete dmesg(dmesg > hang_log.txt), 搜索 "timeout\\|hang\\|reset\\|fault\\|ERROR". meanwhile收集 /sys/kernel/debug/dri/0/amdgpu_fence_info and GPU state(pp_dpm_sclk, gpu_busy_percent). (2)Hang 分类: according to IB test result区分 soft hang(IB test through, usuallyis fence 丢失orspecific job 异常)and hard hang(IB test failure, GPU completelystopresponse). (3)GRBM_STATUS analyze: parsewhichenginein忙 — if SPI_BUSY=1 mayis shader 死循环; if DB_BUSY/CB_BUSY=1 mayisrenderingpipelineblock; ifonly CP_BUSY=1 mayis CP 微码 bug. (4)Ring Pointer analyze: RPTR and WPTR 差值告诉你 ring inhashow muchnot yethandlecommand. if RPTR in多次samplinginnot变, CP 确实卡住. compute RPTR 指向 ring offset, find卡住command. (5)Ring Content analyze: 用 umr --ring-stream or debugfs read ring buffer 内容, find RPTR location PM4 command packet — 这iscause hang command. analyzecommandtype(draw/dispatch/DMA)andparameter. (6)根因locate: 结合commandtype, GRBM_STATUS, whetherhas GPU fault(VMC page fault  src_id:146), whethercan复现, 判断isapplication bug(error buffer mapping), driver bug(command构造error)stillishardware bug(specificconditiontriggerhardware缺陷). (7)verifyfix: 提出fixafter, 用同样 workload verify hang notagain发生, meanwhilerun IGT gpu-hang testingensureno回归. ',
-            amdContext: '这is AMD GPU driverteaminterviewin高频题. demonstrate你hassystem化analyzeprocess, 而is not"看to hang  reset". 特别to提to GRBM_STATUS 位parseand ring content analyze — 这indicate你understand GPU hardwarelayer面debugging. ',
+            hint: 'By level: Collect information (dmesg) → Classify hang type (soft/hard) → Analyze register (GRBM_STATUS) → Analyze ring (RPTR/WPTR) → Analyze command flow (ring content) → Locate the root cause.',
+            answer: 'My GPU hang analysis methodology: (1) Information collection: First obtain the complete dmesg (dmesg > hang_log.txt) and search for "timeout\\|hang\\|reset\\|fault\\|ERROR". Also collects /sys/kernel/debug/dri/0/amdgpu_fence_info and GPU status (pp_dpm_sclk, gpu_busy_percent). (2) Hang classification: According to the IB test results, soft hang (IB test passed, usually due to fence loss or specific job exception) and hard hang (IB test failed, GPU stopped responding completely). (3) GRBM_STATUS analysis: Analyze which engines are busy - if SPI_BUSY=1, it may be a shader infinite loop; if DB_BUSY/CB_BUSY=1, it may be rendering pipeline blocking; if only CP_BUSY=1, it may be a CP microcode bug. (4) Ring Pointer analysis: The difference between RPTR and WPTR tells you how many unprocessed commands there are in the ring. If RPTR does not change over multiple samples, CP is indeed stuck. Calculate the ring offset pointed by RPTR and find the stuck command. (5) Ring Content analysis: Use umr --ring-stream or debugfs to read the ring buffer content and find the PM4 command package at the RPTR location - this is the command that causes hang. Analyze command type (draw/dispatch/DMA) and parameters. (6) Root cause location: Combined with the command type, GRBM_STATUS, whether there is a GPU fault (VMC page fault\'s src_id: 146), and whether it is reproducible, determine whether it is an application bug (wrong buffer mapping), a driver bug (command construction error), or a hardware bug (hardware defect triggered by specific conditions). (7) Verify the fix: After proposing the fix, use the same workload to verify that the hang no longer occurs, and run the IGT gpu-hang test to ensure there is no regression.',
+            amdContext: 'This is a frequently asked question in AMD GPU driver team interviews. Show that you have a systematic analysis process, rather than "reset when you see hang". Special mention goes to GRBM_STATUS bit parsing and ring content analysis - this shows that you understand GPU hardware level debugging.',
           },
         },
 
@@ -940,31 +948,31 @@ scenario B:
         {
           id: '6-2-2',
           number: '6.2.2',
-          title: 'umr: AMD GPU registerdebuggingtool',
+          title: 'umr: AMD GPU register debugging tool',
           titleEn: 'umr: AMD GPU Register Debug Tool',
           duration: 20,
           difficulty: 'advanced',
           tags: ['umr', 'register', 'GRBM_STATUS', 'ring-stream', 'VRAM', 'wave-status'],
           concept: {
-            summary: 'umr(User Mode Register reader)is AMD 官方 GPU registerdebuggingtool, caninuser space读写 GPU register, 解码register位字段, analyze ring buffer command流, read VRAM 内容, view wave(thread组)state. 它is AMD driverengineer最常用hardware级debuggingtool. ',
+            summary: 'umr (User Mode Register reader) is AMD\'s official GPU register debugging tool. It can read and write GPU registers in user space, decode register bit fields, analyze the ring buffer command stream, read VRAM content, and view wave (thread group) status. It is the most commonly used hardware-level debugging tool by AMD driver engineers.',
             explanation: [
-              'umr through debugfs interface(/sys/kernel/debug/dri/0/)and MMIO mappingaccess GPU register. 它内置complete AMD GPU registerdata库 — from GCN to RDNA4 每一代 GPU eachregister名称, offsetaddress, 位字段defineallbycontainin内. this means你notneed查阅hardware手册can解读register含义. ',
-              'registerreadis umr 最basicfunction. umr -O bits -r commandreadaregister并解码each位字段含义. for example umr -O bits -r gfx1100.grbm.mmGRBM_STATUS willoutput GRBM_STATUS 值andeach位名称andstate(GUI_ACTIVE=1, CP_BUSY=0 等). -O bits 选项let umr display位leveldetailed解码. ',
-              'ring stream analyzeis umr in GPU hang debuggingin最has价值function. umr --ring-stream gfx[0] read GFX ring buffer 内容并willraw PM4 command packet解码as人can读format. 你can看to ring in每条command — SET_SH_REG(setshaderregister), DRAW_INDEX(绘制command), DMA_COPY(datatransfer)等. 结合 RPTR location, 你can精确locatecause hang command. ',
-              'umr otheradvancedfunction: 读写 VRAM 内容(umr --read-vram 0x0 4096 导出 VRAM data), view wave state(umr --waves displayallactive shader wave  PC, EXEC mask, VGPR/SGPR state), view VM(virtual memory)page tablemapping(umr --vm-decode parse GPU page table). thesefunctioninanalyzecomplex GPU hang andshader bug 时非常has用. ',
+              'umr accesses GPU registers through the debugfs interface (/sys/kernel/debug/dri/0/) and MMIO mapping. It has a complete AMD GPU register database built-in - every register name, offset address, bit field definition for every generation of GPU from GCN to RDNA4 is included. This means you don\'t need to consult the hardware manual to interpret the register meaning.',
+              'Register reading is the most basic function of umr. The umr -O bits -r command reads a register and decodes the meaning of each bit field. For example, umr -O bits -r gfx1100.grbm.mmGRBM_STATUS will output the value of GRBM_STATUS and the name and status of each bit (GUI_ACTIVE=1, CP_BUSY=0, etc.). The -O bits option causes umr to display bit-level detailed decoding.',
+              'Ring stream analysis is umr\'s most valuable feature in GPU hang debugging. umr --ring-stream gfx[0] Read the contents of the GFX ring buffer and decode the raw PM4 command packet into a human-readable format. You can see every command in the ring - SET_SH_REG (set shader registers), DRAW_INDEX (draw command), DMA_COPY (data transfer), etc. Combined with the RPTR location, you can pinpoint the command that caused the hang.',
+              'Other advanced functions of umr: read and write VRAM content (umr --read-vram 0x0 4096 exports VRAM data), view wave status (umr --waves displays the PC, EXEC mask, VGPR/SGPR status of all active shader waves), view VM (virtual memory) page table mapping (umr --vm-decode parses GPU page table). These features are useful when analyzing complex GPU hangs and shader bugs.',
             ],
             keyPoints: [
-              'umr through debugfs/MMIO access GPU register, 内置complete AMD registerdata库',
-              'umr -O bits -r: readregister并解码位字段(最常用command)',
-              'umr --ring-stream gfx[0]: 解码 ring buffer in PM4 command packet',
-              'umr --waves: viewactive shader wave  PC andregisterstate',
-              'umr --read-vram: read GPU VRAM 内容(debuggingframebuffer/纹理data)',
-              'umr --vm-decode: parse GPU virtual memorypage tablemapping',
+              'umr accesses GPU registers through debugfs/MMIO and has a complete AMD register database built-in',
+              'umr -O bits -r: read registers and decode bit fields (most commonly used commands)',
+              'umr --ring-stream gfx[0]: Decode PM4 command packets in ring buffer',
+              'umr --waves: View the PC and register status of active shader waves',
+              'umr --read-vram: Read GPU VRAM contents (debug framebuffer/texture data)',
+              'umr --vm-decode: Parse GPU virtual memory page table mapping',
             ],
           },
           diagram: {
-            title: 'umr toolability全景图',
-            content: `umr — AMD GPU registerdebuggingtoolability图
+            title: 'Panorama of umr tool capabilities',
+            content: `umr — AMD GPU register debugging tool capability map
 
                     umr (User Mode Register reader)
                     ──────────────────────────────
@@ -973,8 +981,8 @@ scenario B:
         │         │           │           │          │
         ▼         ▼           ▼           ▼          ▼
    ┌─────────┐ ┌─────────┐ ┌──────────┐ ┌────────┐ ┌────────┐
-   │register读写│ │Ring analyze│ │VRAM 读写 │ │Wave    │ │VM page table │
-   │         │ │         │ │          │ │state    │ │parse    │
+│Register reading and writing│ │Ring analysis│ │VRAM reading and writing │ │Wave │ │VM page table │
+│ │ │ │ │ │ │Status │ │Analysis │
    └────┬────┘ └────┬────┘ └────┬─────┘ └───┬────┘ └───┬────┘
         │         │         │          │         │
         ▼         ▼         ▼          ▼         ▼
@@ -984,7 +992,7 @@ scenario B:
   grbm.mmGRBM   gfx[0]     size                 -decode
   _STATUS                                vmid
 
-  outputexample:    outputexample:    outputexample:  outputexample:  outputexample:
+Output example: Output example: Output example: Output example: Output example:
   ┌──────────┐ ┌──────────┐ ┌────────┐ ┌────────┐ ┌────────┐
   │GRBM_STAT │ │PKT3_SET_ │ │00: FF  │ │wave[0] │ │PDE[0]: │
   │=0xEE0080 │ │SH_REG    │ │01: 00  │ │ PC=0x80│ │VA=0x0  │
@@ -995,52 +1003,52 @@ scenario B:
   │DB_BUSY =0│ │ count=36 │ │        │ │        │ │        │
   │CB_BUSY =1│ │PKT3_NOP  │ │        │ │        │ │        │
   └──────────┘ └──────────┘ └────────┘ └────────┘ └────────┘
-  → diagnosewhich   → findcause   → debugging帧   → find卡  → diagnose GPU
-    engine卡住     hangcommand   缓冲内容   住shader  page fault
+→ Diagnose which → Find the cause → Debug frames → Find the card → Diagnose the GPU
+The engine is stuck, hang command, buffer content, shader page fault.
 
-常用 5 个keyregister:
+5 commonly used key registers:
 ┌────────────────────────────────────────────────────────┐
-│  1. GRBM_STATUS    — GPU globalenginebusystate              │
-│  2. CP_RB_RPTR     — Ring Buffer 读pointer(CP currentlocation)  │
-│  3. CP_RB_WPTR     — Ring Buffer 写pointer(latestcommandlocation)  │
-│  4. SRBM_STATUS    — System Register Bus Manager state  │
-│  5. CP_STALLED_STAT— CP blockcause详情                   │
+│ 1. GRBM_STATUS — GPU global engine busy status │
+│ 2. CP_RB_RPTR — Ring Buffer read pointer (CP current position) │
+│ 3. CP_RB_WPTR — Ring Buffer write pointer (latest command position) │
+│ 4. SRBM_STATUS — System Register Bus Manager status │
+│ 5. CP_STALLED_STAT—CP blocking reason details │
 └────────────────────────────────────────────────────────┘`,
-            caption: 'umr provide五种coredebuggingability: register读写, ring buffer command流analyze, VRAM 内容access, shader wave stateview, GPU virtual memorypage tableparse. theseoverwrite GPU hardwaredebuggingall维度. ',
+            caption: 'umr provides five core debugging capabilities: register reading and writing, ring buffer command flow analysis, VRAM content access, shader wave status viewing, and GPU virtual memory page table analysis. These cover all dimensions of GPU hardware debugging.',
           },
           codeWalk: {
-            title: 'use umr read GRBM_STATUS 并解码',
+            title: 'Use umr to read GRBM_STATUS and decode',
             file: 'terminal (umr commands)',
             language: 'bash',
-            code: `# === umr basic用法: readand解码 GPU register ===
+            code: `#=== Basic usage of umr: reading and decoding GPU registers ===
 
-# 1. 列出current GPU support ASIC
+#1. List the ASICs currently supported by the GPU
 umr --enumerate
 # Output: --- amdgpu device 0 ---
 #         pci: 0000:03:00.0
-#         asic: gfx1100    ← RDNA3 (your GPU 代号)
+#asic: gfx1100 ← RDNA3 (your GPU codename)
 
-# 2. read GRBM_STATUS 并解码each位字段
+#2. Read GRBM_STATUS and decode each bit field
 umr -O bits -r gfx1100.grbm.mmGRBM_STATUS
 # Output:
 # gfx1100.grbm.mmGRBM_STATUS == 0x00000200
-#   GUI_ACTIVE           [31] = 0  ← graphicsengineidle
-#   CP_BUSY              [30] = 0  ← commandhandle器idle
+#GUI_ACTIVE [31] = 0 ← Graphics engine idle
+#CP_BUSY [30] = 0 ← Command processor idle
 #   CP_COHERENCY_BUSY    [28] = 0
-#   SPI_BUSY          [23:22] = 0  ← shaderhandle器idle
-#   TA_BUSY              [17] = 0  ← 纹理单元idle
-#   DB_BUSY              [14] = 0  ← 深度缓冲idle
-#   CB_BUSY              [12] = 0  ← 颜色缓冲idle
-#   GDS_BUSY              [9] = 1  ← Global Data Share active
+#SPI_BUSY [23:22] = 0 ← Shader processor idle
+#TA_BUSY [17] = 0 ← Texture unit is idle
+#DB_BUSY [14] = 0 ← depth buffer free
+#CB_BUSY [12] = 0 ← color buffer free
+#GDS_BUSY [9] = 1 ← Global Data Share active
 
-# 3. read Ring Buffer pointer
+#3. Read the Ring Buffer pointer
 umr -O bits -r gfx1100.gfx.mmCP_RB0_RPTR
 umr -O bits -r gfx1100.gfx.mmCP_RB0_WPTR
 
-# 4. read SRBM_STATUS (systemlayer面state)
+#4. Read SRBM_STATUS (system level status)
 umr -O bits -r gfx1100.grbm.mmSRBM_STATUS
 
-# 5. analyze GFX ring stream (解码 PM4 command)
+#5. Analyze GFX ring stream (decode PM4 commands)
 umr --ring-stream gfx[0]
 # Output:
 # Ring[gfx0]: wptr: 0x00001234 rptr: 0x00001200
@@ -1056,7 +1064,7 @@ umr --ring-stream gfx[0]
 #     draw_initiator: 0x00000002
 # ...
 
-# 6. viewactive shader waves
+#6. View active shader waves
 umr --waves
 # Output:
 # se0.sh0.cu0:
@@ -1065,39 +1073,39 @@ umr --waves
 #     hw_id: queue=0, pipe=0, me=0
 #   wave[1]: status=ACTIVE pc=0x800100B0
 
-# 7. read VRAM data (before 256 bytes)
+#7. Read VRAM data (first 256 bytes)
 umr --read-vram 0x0 256`,
             annotations: [
-              'umr --enumerate: detectsystemin AMD GPU 并display ASIC 代号(gfx1100=RDNA3)',
-              '-O bits: key选项 — let umr displayeach位字段名称and值, 而not只israw十六进制',
-              'ring-stream gfx[0]: 解码 GFX ring 0  PM4 command, hang 时这islocate卡住commandkey',
-              '--waves: displayallactive shader wave — if PC pointernot变化, shader may死循环',
-              'PKT3 is PM4 commandformatidentifier — PKT3_DRAW_INDEX_AUTO is绘制command',
-              'GRBM_STATUS 全 0(除 GDS_BUSY)represent GPU 正常idlestate',
+              'umr --enumerate: Detect AMD GPU in the system and display ASIC codename (gfx1100=RDNA3)',
+              '-O bits: Key option - makes umr display the name and value of each bit field, not just the raw hex',
+              'ring-stream gfx[0]: Decode the PM4 command of GFX ring 0. This is the key to locating the stuck command when hanging.',
+              '--waves: Display all active shader waves - if the PC pointer does not change, the shader may loop endlessly',
+              'PKT3 is the identifier of the PM4 command format - PKT3_DRAW_INDEX_AUTO is the drawing command',
+              'GRBM_STATUS all 0 (except GDS_BUSY) indicates the normal idle state of the GPU',
             ],
-            explanation: 'umr is AMD driverteaminternal日常usedebuggingtool. -O bits -r is你用得最多command — in GPU hang 时快速read GRBM_STATUS 判断whichengine卡住, then用 --ring-stream analyze卡in哪条commandon. masterthistoolchaincanletyour hang analyze效率提升 10 倍above. ',
+            explanation: 'umr is a debugging tool used daily within the AMD driver team. -O bits -r is the command you use most - quickly read GRBM_STATUS when the GPU hangs to determine which engines are stuck, and then use --ring-stream to analyze which command is stuck. Mastering this tool chain can increase your hang analysis efficiency by more than 10 times.',
           },
           miniLab: {
-            title: 'install umr 并read 5 个keyregister',
-            objective: 'install umr tool, readyour GPU  5 个keyregister并解读they含义. ',
-            setup: `# from AMD 官方repositoryinstall umr
-# method 1: through包manager(ifhas)
+            title: 'Install umr and read 5 key registers',
+            objective: 'Install the umr tool to read your GPU\'s 5 key registers and decipher their meaning.',
+            setup: `#Install umr from AMD official repository
+#Method 1: Through the package manager (if you have one)
 sudo apt install umr
 
-# method 2: fromsource codecompilation
+#Method 2: Compile from source
 git clone https://gitlab.freedesktop.org/tomstdenis/umr.git
 cd umr
 mkdir build && cd build
 cmake .. && make -j$(nproc)
 sudo make install`,
             steps: [
-              'confirm umr alreadyinstall并detectto GPU: sudo umr --enumerate',
-              'read GRBM_STATUS(globalstate): sudo umr -O bits -r <asic>.grbm.mmGRBM_STATUS(用 enumerate output asic 名称替换 <asic>)',
-              'read SRBM_STATUS(systemstate): sudo umr -O bits -r <asic>.grbm.mmSRBM_STATUS',
-              'read GFX ring  RPTR and WPTR: sudo umr -O bits -r <asic>.gfx.mmCP_RB0_RPTR && sudo umr -O bits -r <asic>.gfx.mmCP_RB0_WPTR',
-              'read GPU 时钟state: sudo umr -O bits -r <asic>.smu.mmSMC_IND_DATA(or等效register)',
-              'run glxgears afteragain次read GRBM_STATUS, compareidleand负载时差异',
-              'try ring stream analyze: sudo umr --ring-stream gfx[0] | head -30',
+              'Confirm that umr is installed and detects the GPU: sudo umr --enumerate',
+              'Read GRBM_STATUS (global status): sudo umr -O bits -r <asic>.grbm.mmGRBM_STATUS (replace <asic> with the asic name output by enumerate)',
+              'Read SRBM_STATUS (system status): sudo umr -O bits -r <asic>.grbm.mmSRBM_STATUS',
+              'Read the RPTR and WPTR of the GFX ring: sudo umr -O bits -r <asic>.gfx.mmCP_RB0_RPTR && sudo umr -O bits -r <asic>.gfx.mmCP_RB0_WPTR',
+              'Read GPU clock status: sudo umr -O bits -r <asic>.smu.mmSMC_IND_DATA (or equivalent register)',
+              'Read GRBM_STATUS again after running glxgears and compare the difference between idle and load',
+              'Try ring stream analysis: sudo umr --ring-stream gfx[0] | head -30',
             ],
             expectedOutput: `$ sudo umr --enumerate
 --- amdgpu device 0 ---
@@ -1109,28 +1117,28 @@ $ sudo umr -O bits -r gfx1100.grbm.mmGRBM_STATUS
 gfx1100.grbm.mmGRBM_STATUS == 0x00000200
   GUI_ACTIVE           [31] = 0
   CP_BUSY              [30] = 0
-  ...                             ← GPU idlestate
+  ...                             ←GPU idle state
 
-(run glxgears after)
+(after running glxgears)
 gfx1100.grbm.mmGRBM_STATUS == 0xC6008002
-  GUI_ACTIVE           [31] = 1   ← graphicsengineactive!
-  CP_BUSY              [30] = 1   ← CP inhandlecommand!
-  SPI_BUSY          [23:22] = 1   ← shaderinwork!`,
-            hint: 'umr need root permission(through debugfs access GPU). if报 "cannot find ASIC", confirm amdgpu driveralreadyloading. ASIC 名称(如 gfx1100)取决于your GPU 型号 — RX 7600 XT mayis gfx1100 or gfx1102. ',
+  GUI_ACTIVE           [31] = 1   ←Graphics engine active!
+  CP_BUSY              [30] = 1   ←CP is processing the command!
+  SPI_BUSY          [23:22] = 1   ←Shaders working!`,
+            hint: 'umr requires root privileges (GPU access via debugfs). If "cannot find ASIC" is reported, confirm that the amdgpu driver has been loaded. The ASIC name (e.g. gfx1100) depends on your GPU model - for the RX 7600 XT it might be gfx1100 or gfx1102.',
           },
           debugExercise: {
-            title: 'from umr outputdiagnose GPU hang state',
+            title: 'Diagnosing GPU hang status from umr output',
             language: 'text',
-            description: 'belowis GPU hang 时through umr collectregisterand ring stream output. analyzedatafind hang cause. ',
-            question: 'according to umr output判断: (1) GPU 哪个engine卡住? (2) 卡inwhatcommandon? (3) 最may根因iswhat? ',
-            buggyCode: `# umr in GPU hang 时collectdata
+            description: 'The following are the registers and ring stream output collected through umr when the GPU hangs. Analyze the data to find the cause of the hang.',
+            question: 'Judging based on umr output: (1) Which engine of the GPU is stuck? (2) What command is stuck on? (3) What is the most likely root cause?',
+            buggyCode: `#umr collected data during GPU hang
 
 $ sudo umr -O bits -r gfx1100.grbm.mmGRBM_STATUS
 gfx1100.grbm.mmGRBM_STATUS == 0xEC008002
   GUI_ACTIVE           [31] = 1
   CP_BUSY              [30] = 1
   CP_COHERENCY_BUSY    [28] = 1
-  SPI_BUSY          [23:22] = 3  ← two SPI all忙!
+  SPI_BUSY          [23:22] = 3  ←Both SPIs are busy!
   TA_BUSY              [17] = 0
   DB_BUSY              [14] = 0
   CB_BUSY              [12] = 0
@@ -1152,31 +1160,31 @@ se0.sh0.cu0:
   wave[1]: status=ACTIVE pc=0x800200A0
   wave[2]: status=ACTIVE pc=0x800200A0
   wave[3]: status=ACTIVE pc=0x800200A0
-  ← all wave  PC 指向同一address!`,
-            hint: 'all wave  PC (Program Counter) all指向同一address 0x800200A0, SPI_BUSY=3(two SPI all忙), ring 停in DISPATCH_DIRECT(compute shader dispatch)...',
-            answer: 'analyze: (1)卡住engine: SPI_BUSY=3(two Shader Processor Input all忙)+ GUI_ACTIVE=1 + CP_BUSY=1, 但 TA/DB/CB allidle. 这indicateisshaderengine(Shader Engine)本身卡住, is not纹理, 深度or颜色operateissue. (2)卡incommand: ring stream in RPTR=0x2080 处is PKT3_DISPATCH_DIRECT, 这isa compute shader dispatch command, dim_x=65536, dim_y=65536, 总共 65536×65536=4,294,967,296 个thread组 — 这isa极大 dispatch. (3)最may根因: all wave  PC all指向同一address 0x800200A0, indicate compute shader in该address处死循环(如 while(true) orwaita永远not满足condition). 这mayisshadercode bug(无限循环)orisshaderwaitglobal memoryaddresscontainerror值(cause spin-wait 永远not退出). fix方向: (1)check 0x800200A0 address处 shader ISA instruction(用 umr --waves --decode 解码); (2)check shader whetherhas barrier/spin-lock logic, confirm终止conditionwhethercan达; (3)减小 dispatch 维度testingwhetherstillwill hang. ',
+  ←All wave PCs point to the same address!`,
+            hint: 'The PC (Program Counter) of all waves points to the same address 0x800200A0, SPI_BUSY=3 (both SPIs are busy), and the ring stops at DISPATCH_DIRECT (compute shader dispatch)...',
+            answer: 'Analysis: (1) Stuck engine: SPI_BUSY=3 (both Shader Processor Input are busy) + GUI_ACTIVE=1 + CP_BUSY=1, but TA/DB/CB are all idle. This means that the shader engine itself is stuck, not the texture, depth or color operations. (2) The stuck command: ring stream is PKT3_DISPATCH_DIRECT at RPTR=0x2080, which is a compute shader dispatch command, dim_x=65536, dim_y=65536, a total of 65536×65536=4,294,967,296 thread groups - this is a huge dispatch. (3) The most likely root cause: The PCs of all waves point to the same address 0x800200A0, indicating that the compute shader loops endlessly at this address (such as while(true) or waiting for a condition that is never satisfied). This could be a bug in the shader code (infinite loop) or the global memory address the shader is waiting on contains the wrong value (causing spin-wait to never exit). Repair direction: (1) Check the shader ISA instruction at the address 0x800200A0 (decode with umr --waves --decode); (2) Check whether the shader has barrier/spin-lock logic and confirm whether the termination condition is reachable; (3) Reduce the dispatch dimension to test whether it still hangs.',
           },
           interviewQ: {
-            question: '你hasainspecific GPU workload belowcan 100% 复现 hang. describe你howuse umr tool一步步locate根因. ',
+            question: 'You have a hang that is 100% reproducible under a specific GPU workload. Describe how you use the umr tool to locate the root cause step by step.',
             difficulty: 'hard',
-            hint: '利用can复现优势: 先正常statecollect基线, again hang statecollectcompare. use umr registerread, ring stream, wave status 三个维度逐步缩小range. ',
-            answer: '利用 100% can复现优势, 我will按belowstepuse umr: (1)基线collect: intrigger hang  workload runbefore, collect GRBM_STATUS, SRBM_STATUS, CP_RB_RPTR/WPTR 作as正常state基线. (2)trigger hang: run workload, when dmesg 出现 timeout 警告时(但in GPU reset before), use脚本快速collect: umr -O bits -r gfx1100.grbm.mmGRBM_STATUS > hang_regs.txt, umr --ring-stream gfx[0] > hang_ring.txt, umr --waves > hang_waves.txt. (3)registercompare: compare基线and hang 时 GRBM_STATUS, findwhichenginefromidle变asbusy — 这locateissue所inhardwaremodule(GFX? SPI? TA? DB?). (4)Ring Stream analyze: in hang_ring.txt infind RPTR locationcommand — 这is CP 卡住精确location. 解码 PM4 commandtypeandparameter, 确定is draw call, compute dispatch stillis DMA operate. (5)Wave analyze: ifis shader hang, check --waves outputinallactive wave  PC. if PC gatherin同一address — shader 死循环. if PC scatter但 EXEC mask 异常 — mayis divergence bug. 用 umr --waves --decode 解码 PC 处 ISA instruction. (6)VM analyze: if dmesg has GPU fault, 用 umr --vm-decode check fault addresspage tablemapping — confirmispage table缺失(unmapped)stillispermissionerror. (7)二分locate: 利用can复现性, modify workload 逐步缩小triggercondition(减少 dispatch size, disablespecific shader feature), 直tofind最小复现案例. entireprocessusuallyneed 2-4 小时. ',
-            amdContext: 'thisissuetestingyourhardware级debuggingability. AMD interviewinif你can流畅describe umr usescenarioandspecificcommand, indicate你hasactual GPU debuggingexperience — 这is区分理论learnand实战experiencekey. ',
+            hint: 'Take advantage of reproducibility: first collect the baseline in the normal state, and then collect and compare in the hang state. Use the three dimensions of umr\'s register reading, ring stream, and wave status to gradually narrow the scope.',
+            answer: 'Taking advantage of 100% reproducibility, I will use umr as follows: (1) Baseline collection: Before the workload that triggers the hang is run, collect GRBM_STATUS, SRBM_STATUS, CP_RB_RPTR/WPTR as the normal status baseline. (2) Trigger hang: Run workload, when dmesg displays a timeout warning (but before GPU reset), use the script to quickly collect: umr -O bits -r gfx1100.grbm.mmGRBM_STATUS > hang_regs.txt, umr --ring-stream gfx[0] > hang_ring.txt, umr --waves > hang_waves.txt. (3) Register comparison: Compare the baseline and GRBM_STATUS during hang to find out which engines changed from idle to busy - this locates the hardware module where the problem lies (GFX? SPI? TA? DB?). (4) Ring Stream analysis: Find the command for the RPTR location in hang_ring.txt - this is the precise location where the CP is stuck. Decode the PM4 command type and parameters to determine whether it is a draw call, compute dispatch, or DMA operation. (5) Wave analysis: If it is a shader hang, check all active wave PCs in the --waves output. If PCs gather at the same address - shader infinite loop. If the PC is diverged but the EXEC mask is abnormal - it may be a divergence bug. Use umr --waves --decode to decode ISA instructions at the PC. (6) VM analysis: If dmesg has a GPU fault, use umr --vm-decode to check the page table mapping of the fault address - confirm whether the page table is missing (unmapped) or a permission error. (7) Binary positioning: Take advantage of reproducibility and modify the workload to gradually narrow down the trigger conditions (reduce dispatch size, disable specific shader features) until the smallest reproducible case is found. The entire process usually takes 2-4 hours.',
+            amdContext: 'This question tests your hardware-level debugging skills. If you can fluently describe the usage scenarios and specific commands of umr during the AMD interview, it means that you have actual GPU debugging experience - this is the key to distinguishing theoretical learning from practical experience.',
           },
         },
       ],
     },
   ],
   completionChecklist: [
-    'understand printk loglevel体系and DRM_DEBUG macro位maskcontrolmechanism',
-    'canusedynamicdebugging (echo "module amdgpu +p") 按需开启/关闭debuggingoutput',
-    'canthrough debugfs (/sys/kernel/debug/dri/0/) read GPU run时state',
-    'understand ftrace architecture(ring buffer, function/function_graph tracer, TRACE_EVENT)',
-    'canuse trace-cmd tracing amdgpu tracing点并analyzecommand submissionlatency',
-    'canuse perf top/stat/record analyze CPU 侧hotspot并generate火焰图',
-    '解 rocprof --stats/--hsa-trace and GPU hardwarecount器usemethod',
-    'master GPU hang analyzemethod论: GRBM_STATUS parse + RPTR/WPTR analyze + IB test',
-    'understand amdgpu_job_timedout and amdgpu_device_gpu_recover process',
-    'caninstallanduse umr read GPU register, analyze ring stream, view wave state',
+    'Understand the printk log level system and the bit mask control mechanism of the DRM_DEBUG macro',
+    'Ability to use dynamic debugging (echo "module amdgpu +p") to turn on/off debugging output as needed',
+    'Ability to read GPU runtime status through debugfs (/sys/kernel/debug/dri/0/)',
+    'Understand the ftrace architecture (ring buffer, function/function_graph tracer, TRACE_EVENT)',
+    'Can use trace-cmd to trace amdgpu trace points and analyze command submission delays',
+    'Can use perf top/stat/record to analyze CPU side hotspots and generate flame graphs',
+    'Learn how to use rocprof --stats/--hsa-trace and GPU hardware counters',
+    'Master GPU hang analysis methodology: GRBM_STATUS analysis + RPTR/WPTR analysis + IB test',
+    'Understand the processes of amdgpu_job_timedout and amdgpu_device_gpu_recover',
+    'Able to install and use umr to read GPU registers, analyze ring streams, and view wave status',
   ],
 };
