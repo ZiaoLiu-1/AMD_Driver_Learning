@@ -1068,5 +1068,6 @@ make[4]: *** [scripts/Makefile.build:257:
     '搭建了完整的内核开发环境，能编译 amdgpu 模块',
     '使用 cscope/ctags 或 clangd 导航内核源码',
     '理解 AMD 开源策略的优势，以及 amd-gfx 邮件列表的作用',
+    '能够不看笔记，用自己的话完整讲清从应用调用到 GPU 执行的端到端路径',
   ],
 };

@@ -948,5 +948,6 @@ hipStreamSynchronize(stream2);
     '能解释 svm_range 数据结构和 svm_migrate_to_vram/ram 的迁移流程',
     '理解 HSA 信号量（64 位原子计数器）和 KFD 事件（中断驱动唤醒）的工作机制',
     '能描述从 GPU kernel 完成到 CPU 线程唤醒的完整中断路径',
+    '能够向只做图形开发的人解释：为什么 ROCm 计算还需要 KFD/HSA，而不仅仅是传统 DRM 渲染路径',
   ],
 };

@@ -874,7 +874,7 @@ corners — colors smoothly interpolated across the surface
         'Compare with lspci -v output',
       ],
       expectedOutput:
-        'Kernel log showing RX 7600 XT BARs, including MMIO (BAR0, ~256MB) and VRAM (BAR2, ~8GB).',
+        'Kernel log showing RX 7600 XT BARs, including MMIO apertures and a VRAM-related BAR; the exact VRAM BAR size depends on the platform and BAR/Resizable BAR configuration.',
     },
     interviewQuestions: [
       {

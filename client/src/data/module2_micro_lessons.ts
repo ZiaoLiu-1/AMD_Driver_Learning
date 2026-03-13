@@ -39,5 +39,6 @@ export const module2MicroLessons: MicroLessonModule = {
     '能用 sysfs 查询 GPU 内存使用情况',
     '理解 Command Ring Buffer 的工作原理',
     '能解释 GPU 固件加载流程',
+    '能够把 PCIe 发现、BAR 映射、DMA、VRAM/GTT 放置、Ring 提交和固件加载串成一个完整的驱动 bring-up 故事',
   ],
 };

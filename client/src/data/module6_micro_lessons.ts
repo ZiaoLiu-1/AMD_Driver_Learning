@@ -1178,5 +1178,6 @@ se0.sh0.cu0:
     '掌握 GPU hang 分析方法论：GRBM_STATUS 解析 + RPTR/WPTR 分析 + IB test',
     '理解 amdgpu_job_timedout 和 amdgpu_device_gpu_recover 的流程',
     '能安装和使用 umr 读取 GPU 寄存器、分析 ring stream、查看 wave 状态',
+    '能够为一个新 bug 说明应该先用哪种观测工具，而不是一开始就把所有 trace 全部打开',
   ],
 };
