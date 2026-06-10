@@ -24,8 +24,8 @@ import {
   lessonDifficultyTones,
 } from "@/components/ui/difficulty-badge";
 import { useSearchHighlight } from "@/lib/highlight";
-import { getCurriculum } from "@/data/curriculum_index";
-import { getMicroLessonsByModule, isMicroLessonLocalized } from "@/data/micro_lessons_index";
+import { isMicroLessonLocalized } from "@/data/micro_lessons_index";
+import { useCurriculum, useMicroLessonModule } from "@/lib/useContent";
 import type { MicroLesson, MicroLessonGroup, MicroLessonModule } from "@/data/micro_lesson_types";
 import {
   BookOpen, Code2, Cpu, Target, ChevronLeft, ChevronRight,
@@ -324,12 +324,11 @@ export default function MicroLessonPage() {
   const { t } = useTranslation();
   const { isLessonComplete, markLessonComplete, unmarkLessonComplete } = useProgress();
 
-  const curriculum = getCurriculum(locale);
-  const microLessonsByModule = getMicroLessonsByModule(locale);
+  const curriculum = useCurriculum(locale);
   const moduleId = params.moduleId || "prerequisites";
 
   const lessonId = params.lessonId || "";
-  const mod = microLessonsByModule[moduleId];
+  const mod = useMicroLessonModule(moduleId, locale);
   const curriculumModule = curriculum.find(m => m.id === moduleId);
 
   // Scroll to top when lesson changes

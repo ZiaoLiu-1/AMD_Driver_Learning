@@ -12,9 +12,9 @@ import { useLocale } from "@/contexts/LocaleContext";
 import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { useTranslation } from "react-i18next";
 import { Link, useParams, useLocation } from "wouter";
-import { difficultyColors, type Module, type GlossaryTerm } from "@/data/curriculum";
-import { getCurriculum, getDifficultyLabels, getGlossaryByModule } from "@/data/curriculum_index";
-import { getMicroLessonsByModule } from "@/data/micro_lessons_index";
+import { difficultyColors, type Module, type GlossaryTerm } from "@/data/curriculum_types";
+import { getDifficultyLabels } from "@/data/curriculum_index";
+import { useCurriculum, useGlossaryByModule, useMicroLessonModule } from "@/lib/useContent";
 import { CopyCodeBlock } from "@/components/shared/CopyCodeBlock";
 import { Button } from "@/components/ui/button";
 import {
@@ -496,12 +496,12 @@ export default function ModulePage() {
   const { theme, toggleTheme } = useTheme();
   useSearchShortcut(setSearchOpen);
 
-  const curriculum = getCurriculum(locale);
-  const glossaryByModule = getGlossaryByModule(locale);
-  const difficultyLabels = getDifficultyLabels(locale);
-  const microLessonsByModule = getMicroLessonsByModule(locale);
-
   const moduleId = params.moduleId;
+  const curriculum = useCurriculum(locale);
+  const glossaryByModule = useGlossaryByModule(locale);
+  const difficultyLabels = getDifficultyLabels(locale);
+  const microLessonModule = useMicroLessonModule(moduleId ?? "", locale);
+
   const module = curriculum.find(m => m.id === moduleId);
   const moduleIndex = curriculum.findIndex(m => m.id === moduleId);
   const prevModule = moduleIndex > 0 ? curriculum[moduleIndex - 1] : null;
@@ -668,7 +668,7 @@ export default function ModulePage() {
             </div>
 
             {/* Deep Dive button for modules with micro-lessons */}
-            {microLessonsByModule[module.id] && (
+            {microLessonModule && (
               <div className="mt-12 pt-8 border-t border-border/50">
                 <h2 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-primary" />
@@ -676,10 +676,10 @@ export default function ModulePage() {
                 </h2>
                 <div className="rounded-xl p-6 border border-border/50 bg-card/50">
                   <p className="text-sm text-muted-foreground/80 mb-4">
-                    {t("module.deepDiveDesc", { count: microLessonsByModule[module.id].groups?.reduce((sum, g) => sum + g.lessons.length, 0) || 0 })}
+                    {t("module.deepDiveDesc", { count: microLessonModule.groups?.reduce((sum, g) => sum + g.lessons.length, 0) || 0 })}
                   </p>
                   <Button asChild variant="brand" className="h-auto w-full rounded-xl py-3 text-sm font-semibold">
-                    <Link href={`/module/${module.id}/lesson/${microLessonsByModule[module.id].groups?.[0]?.lessons?.[0]?.id || ''}`}>
+                    <Link href={`/module/${module.id}/lesson/${microLessonModule.groups?.[0]?.lessons?.[0]?.id || ''}`}>
                       <BookOpen className="w-4 h-4" aria-hidden="true" />
                       {t("module.enterDeepDive")}
                     </Link>

@@ -1,76 +1,123 @@
 /* ============================================================
    Micro-lessons index — resolves micro-lessons by locale
+   Each module's lessons are loaded via dynamic import() keyed
+   by moduleId + locale, so a lesson page only fetches its own
+   module's data in the active language. Loads are memoized.
    ============================================================ */
 
 import type { MicroLessonModule } from "./micro_lesson_types";
-import { module0MicroLessons } from "./module0_micro_lessons";
-import { module05MicroLessons } from "./module05_micro_lessons";
-import { module1MicroLessons } from "./module1_micro_lessons";
-import { module2MicroLessons } from "./module2_micro_lessons";
-import { module3MicroLessons } from "./module3_micro_lessons";
-import { module4MicroLessons } from "./module4_micro_lessons";
-import { module5MicroLessons } from "./module5_micro_lessons";
-import { module6MicroLessons } from "./module6_micro_lessons";
-import { module7MicroLessons } from "./module7_micro_lessons";
-import { module8MicroLessons } from "./module8_micro_lessons";
-import { module9MicroLessons } from "./module9_micro_lessons";
-import { module10MicroLessons } from "./module10_micro_lessons";
-import { module11MicroLessons } from "./module11_micro_lessons";
-
-// English micro-lesson imports
-import { module0MicroLessonsEn } from "./module0_micro_lessons_en";
-import { module05MicroLessonsEn } from "./module05_micro_lessons_en";
-import { module1MicroLessonsEn } from "./module1_micro_lessons_en";
-import { module2MicroLessonsEn } from "./module2_micro_lessons_en";
-import { module3MicroLessonsEn } from "./module3_micro_lessons_en";
-import { module4MicroLessonsEn } from "./module4_micro_lessons_en";
-import { module5MicroLessonsEn } from "./module5_micro_lessons_en";
-import { module6MicroLessonsEn } from "./module6_micro_lessons_en";
-import { module7MicroLessonsEn } from "./module7_micro_lessons_en";
-import { module8MicroLessonsEn } from "./module8_micro_lessons_en";
-import { module9MicroLessonsEn } from "./module9_micro_lessons_en";
-import { module10MicroLessonsEn } from "./module10_micro_lessons_en";
-import { module11MicroLessonsEn } from "./module11_micro_lessons_en";
-
-const microLessonsZh: Record<string, MicroLessonModule> = {
-  intro: module0MicroLessons,
-  ecosystem: module05MicroLessons,
-  prerequisites: module1MicroLessons,
-  hardware: module2MicroLessons,
-  kernel: module3MicroLessons,
-  drm: module4MicroLessons,
-  amdgpu: module5MicroLessons,
-  debugging: module6MicroLessons,
-  "rocm-kernel": module7MicroLessons,
-  "rocm-compute": module8MicroLessons,
-  llvm: module9MicroLessons,
-  testing: module10MicroLessons,
-  career: module11MicroLessons,
-};
-
-const microLessonsEn: Record<string, MicroLessonModule> = {
-  intro: module0MicroLessonsEn,
-  ecosystem: module05MicroLessonsEn,
-  prerequisites: module1MicroLessonsEn,
-  hardware: module2MicroLessonsEn,
-  kernel: module3MicroLessonsEn,
-  drm: module4MicroLessonsEn,
-  amdgpu: module5MicroLessonsEn,
-  debugging: module6MicroLessonsEn,
-  "rocm-kernel": module7MicroLessonsEn,
-  "rocm-compute": module8MicroLessonsEn,
-  llvm: module9MicroLessonsEn,
-  testing: module10MicroLessonsEn,
-  career: module11MicroLessonsEn,
-};
 
 export type Locale = "zh" | "en";
 
+type ModuleLoader = () => Promise<MicroLessonModule>;
+
+const lessonLoaders: Record<string, Record<Locale, ModuleLoader>> = {
+  intro: {
+    zh: () => import("./module0_micro_lessons").then((m) => m.module0MicroLessons),
+    en: () => import("./module0_micro_lessons_en").then((m) => m.module0MicroLessonsEn),
+  },
+  ecosystem: {
+    zh: () => import("./module05_micro_lessons").then((m) => m.module05MicroLessons),
+    en: () => import("./module05_micro_lessons_en").then((m) => m.module05MicroLessonsEn),
+  },
+  prerequisites: {
+    zh: () => import("./module1_micro_lessons").then((m) => m.module1MicroLessons),
+    en: () => import("./module1_micro_lessons_en").then((m) => m.module1MicroLessonsEn),
+  },
+  hardware: {
+    zh: () => import("./module2_micro_lessons").then((m) => m.module2MicroLessons),
+    en: () => import("./module2_micro_lessons_en").then((m) => m.module2MicroLessonsEn),
+  },
+  kernel: {
+    zh: () => import("./module3_micro_lessons").then((m) => m.module3MicroLessons),
+    en: () => import("./module3_micro_lessons_en").then((m) => m.module3MicroLessonsEn),
+  },
+  drm: {
+    zh: () => import("./module4_micro_lessons").then((m) => m.module4MicroLessons),
+    en: () => import("./module4_micro_lessons_en").then((m) => m.module4MicroLessonsEn),
+  },
+  amdgpu: {
+    zh: () => import("./module5_micro_lessons").then((m) => m.module5MicroLessons),
+    en: () => import("./module5_micro_lessons_en").then((m) => m.module5MicroLessonsEn),
+  },
+  debugging: {
+    zh: () => import("./module6_micro_lessons").then((m) => m.module6MicroLessons),
+    en: () => import("./module6_micro_lessons_en").then((m) => m.module6MicroLessonsEn),
+  },
+  "rocm-kernel": {
+    zh: () => import("./module7_micro_lessons").then((m) => m.module7MicroLessons),
+    en: () => import("./module7_micro_lessons_en").then((m) => m.module7MicroLessonsEn),
+  },
+  "rocm-compute": {
+    zh: () => import("./module8_micro_lessons").then((m) => m.module8MicroLessons),
+    en: () => import("./module8_micro_lessons_en").then((m) => m.module8MicroLessonsEn),
+  },
+  llvm: {
+    zh: () => import("./module9_micro_lessons").then((m) => m.module9MicroLessons),
+    en: () => import("./module9_micro_lessons_en").then((m) => m.module9MicroLessonsEn),
+  },
+  testing: {
+    zh: () => import("./module10_micro_lessons").then((m) => m.module10MicroLessons),
+    en: () => import("./module10_micro_lessons_en").then((m) => m.module10MicroLessonsEn),
+  },
+  career: {
+    zh: () => import("./module11_micro_lessons").then((m) => m.module11MicroLessons),
+    en: () => import("./module11_micro_lessons_en").then((m) => m.module11MicroLessonsEn),
+  },
+};
+
+export const microLessonModuleIds: string[] = Object.keys(lessonLoaders);
+
+const moduleCache = new Map<string, Promise<MicroLessonModule | undefined>>();
+const allCache = new Map<Locale, Promise<Record<string, MicroLessonModule>>>();
+const resolvedAll = new Map<Locale, Record<string, MicroLessonModule>>();
+
+function memoized<K, T>(cache: Map<K, Promise<T>>, key: K, load: () => Promise<T>): Promise<T> {
+  let promise = cache.get(key);
+  if (!promise) {
+    promise = load().catch((err) => {
+      cache.delete(key);
+      throw err;
+    });
+    cache.set(key, promise);
+  }
+  return promise;
+}
+
 /**
- * Returns micro-lessons for the given locale.
+ * Loads one module's micro-lessons in the given locale.
+ * Resolves to undefined for unknown module ids.
  */
-export function getMicroLessonsByModule(locale: Locale): Record<string, MicroLessonModule> {
-  return locale === "en" ? microLessonsEn : microLessonsZh;
+export function loadMicroLessonModule(
+  moduleId: string,
+  locale: Locale,
+): Promise<MicroLessonModule | undefined> {
+  return memoized(moduleCache, `${locale}:${moduleId}`, () => {
+    const loader = lessonLoaders[moduleId]?.[locale];
+    return loader ? loader() : Promise.resolve(undefined);
+  });
+}
+
+/** Loads every module's micro-lessons for the given locale. */
+export function loadAllMicroLessons(locale: Locale): Promise<Record<string, MicroLessonModule>> {
+  return memoized(allCache, locale, async () => {
+    const entries = await Promise.all(
+      microLessonModuleIds.map(
+        async (id) => [id, await loadMicroLessonModule(id, locale)] as const,
+      ),
+    );
+    const all: Record<string, MicroLessonModule> = {};
+    for (const [id, mod] of entries) {
+      if (mod) all[id] = mod;
+    }
+    resolvedAll.set(locale, all);
+    return all;
+  });
+}
+
+/** Synchronous view of already-loaded data; undefined until loadAllMicroLessons resolves. */
+export function peekAllMicroLessons(locale: Locale): Record<string, MicroLessonModule> | undefined {
+  return resolvedAll.get(locale);
 }
 
 export function isMicroLessonLocalized(locale: Locale): boolean {

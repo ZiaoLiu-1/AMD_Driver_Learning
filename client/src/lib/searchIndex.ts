@@ -2,8 +2,8 @@
 // Search Index — builds a flat, searchable list from all content
 // ============================================================
 import type { Locale } from "@/data/curriculum_index";
-import { getCurriculum, getGlossaryByModule } from "@/data/curriculum_index";
-import { getMicroLessonsByModule } from "@/data/micro_lessons_index";
+import { loadCurriculum, loadGlossaryByModule } from "@/data/curriculum_index";
+import { loadAllMicroLessons } from "@/data/micro_lessons_index";
 
 export type SearchResultKind = "lesson" | "module" | "glossary";
 
@@ -20,12 +20,14 @@ export interface SearchResult {
 
 const _cache: Record<Locale, SearchResult[]> = { zh: [], en: [] };
 
-export function buildSearchIndex(locale: Locale = "zh"): SearchResult[] {
+export async function buildSearchIndex(locale: Locale = "zh"): Promise<SearchResult[]> {
   if (_cache[locale]?.length) return _cache[locale];
 
-  const curriculum = getCurriculum(locale);
-  const glossaryByModule = getGlossaryByModule(locale);
-  const microLessonsByModule = getMicroLessonsByModule(locale);
+  const [curriculum, glossaryByModule, microLessonsByModule] = await Promise.all([
+    loadCurriculum(locale),
+    loadGlossaryByModule(locale),
+    loadAllMicroLessons(locale),
+  ]);
 
   const results: SearchResult[] = [];
 
@@ -113,9 +115,13 @@ function scoreResult(r: SearchResult, q: string, words: string[]): number {
 }
 
 /** Search within a single locale */
-export function searchContent(query: string, limit = 12, locale: Locale = "zh"): SearchResult[] {
+export async function searchContent(
+  query: string,
+  limit = 12,
+  locale: Locale = "zh",
+): Promise<SearchResult[]> {
   if (!query.trim()) return [];
-  const index = buildSearchIndex(locale);
+  const index = await buildSearchIndex(locale);
   const q = query.toLowerCase().trim();
   const words = q.split(/\s+/);
 
@@ -128,13 +134,12 @@ export function searchContent(query: string, limit = 12, locale: Locale = "zh"):
 }
 
 /** Search across both zh and en, returning merged results from both languages */
-export function searchContentBilingual(query: string, limit = 16): SearchResult[] {
+export async function searchContentBilingual(query: string, limit = 16): Promise<SearchResult[]> {
   if (!query.trim()) return [];
   const q = query.toLowerCase().trim();
   const words = q.split(/\s+/);
 
-  const zhIndex = buildSearchIndex("zh");
-  const enIndex = buildSearchIndex("en");
+  const [zhIndex, enIndex] = await Promise.all([buildSearchIndex("zh"), buildSearchIndex("en")]);
 
   const scored: { result: SearchResult; score: number }[] = [];
 

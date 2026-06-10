@@ -5,8 +5,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useLocale } from "@/contexts/LocaleContext";
-import { getCurriculum } from "@/data/curriculum_index";
-import { getMicroLessonsByModule } from "@/data/micro_lessons_index";
+import { useCurriculum, useAllMicroLessons } from "@/lib/useContent";
 import type { Module } from "@/data/curriculum";
 import type { MicroLessonModule } from "@/data/micro_lesson_types";
 import { PageShell } from "@/components/layout/PageShell";
@@ -78,8 +77,8 @@ function shuffle<T>(arr: T[]): T[] {
 export default function PracticePage() {
   const { locale } = useLocale();
   const { t } = useTranslation();
-  const curriculum = getCurriculum(locale);
-  const microLessonsByModule = getMicroLessonsByModule(locale);
+  const curriculum = useCurriculum(locale);
+  const microLessonsByModule = useAllMicroLessons(locale);
   const allQs = useMemo(
     () => buildQuestionBank(curriculum, microLessonsByModule),
     [curriculum, microLessonsByModule]

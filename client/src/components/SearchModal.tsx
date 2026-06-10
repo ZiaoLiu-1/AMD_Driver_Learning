@@ -45,9 +45,13 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
 
   useEffect(() => {
     if (!query.trim()) { setResults([]); return; }
-    const r = searchContentBilingual(query, 16);
-    setResults(r);
-    setActiveIdx(0);
+    let cancelled = false;
+    searchContentBilingual(query, 16).then(r => {
+      if (cancelled) return;
+      setResults(r);
+      setActiveIdx(0);
+    });
+    return () => { cancelled = true; };
   }, [query]);
 
   const go = useCallback((result: SearchResult) => {

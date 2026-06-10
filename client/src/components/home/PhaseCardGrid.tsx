@@ -3,8 +3,9 @@ import { Link } from 'wouter';
 import { ChevronDown, ChevronUp, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { difficultyColors } from '@/data/curriculum';
-import { getCurriculum, getDifficultyLabels, type Locale } from '@/data/curriculum_index';
+import { difficultyColors } from '@/data/curriculum_types';
+import { getDifficultyLabels, type Locale } from '@/data/curriculum_index';
+import { useCurriculum } from '@/lib/useContent';
 import { DynamicIcon } from '@/components/DynamicIcon';
 
 interface PhaseCardGridProps {
@@ -16,7 +17,7 @@ interface PhaseCardGridProps {
 }
 
 export function PhaseCardGrid({ phases, getPhaseProgress, getModuleStatus, locale, microLessonsByModule }: PhaseCardGridProps) {
-    const curriculum = getCurriculum(locale as Locale);
+    const curriculum = useCurriculum(locale as Locale);
     const difficultyLabels = getDifficultyLabels(locale as Locale);
 
     // By default, the first incomplete phase is expanded

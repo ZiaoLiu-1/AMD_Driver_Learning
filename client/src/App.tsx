@@ -1,73 +1,77 @@
-import { useState } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch, Router } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { ProgressProvider } from "./contexts/ProgressContext";
 import { LocaleProvider } from "./contexts/LocaleContext";
-import Home from "./pages/Home";
-import ModulePage from "./pages/ModulePage";
-import MicroLessonPage from "./pages/MicroLessonPage";
-import SetupGuide from "./pages/SetupGuide";
-import GlossaryPage from "./pages/GlossaryPage";
-import PracticePage from "./pages/PracticePage";
-import LabsListPage from "./pages/LabsListPage";
-import LabDetailPage from "./pages/LabDetailPage";
-import AssessmentPage from "./pages/AssessmentPage";
-import SourceGuidePage from "./pages/SourceGuidePage";
-import { SearchModal, useSearchShortcut } from "./components/SearchModal";
 import LocaleRedirect from "./components/LocaleRedirect";
-import { useTranslation } from "react-i18next";
 import { changeLanguage } from "./lib/i18n";
-import { Search } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-function InnerRoutes() {
+// Route-level code splitting: each page (and the content data it
+// dynamically imports) loads on demand instead of in the entry chunk.
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const Home = lazy(() => import("./pages/Home"));
+const ModulePage = lazy(() => import("./pages/ModulePage"));
+const MicroLessonPage = lazy(() => import("./pages/MicroLessonPage"));
+const SetupGuide = lazy(() => import("./pages/SetupGuide"));
+const GlossaryPage = lazy(() => import("./pages/GlossaryPage"));
+const PracticePage = lazy(() => import("./pages/PracticePage"));
+const LabsListPage = lazy(() => import("./pages/LabsListPage"));
+const LabDetailPage = lazy(() => import("./pages/LabDetailPage"));
+const AssessmentPage = lazy(() => import("./pages/AssessmentPage"));
+const SourceGuidePage = lazy(() => import("./pages/SourceGuidePage"));
+const RadarPage = lazy(() => import("./pages/RadarPage"));
+// Lazy so the search dialog (and framer-motion) stays out of the entry chunk
+const GlobalSearch = lazy(() => import("./components/GlobalSearch"));
+
+function PageLoader() {
   return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/setup" component={SetupGuide} />
-      <Route path="/glossary" component={GlossaryPage} />
-      <Route path="/practice" component={PracticePage} />
-      <Route path="/labs" component={LabsListPage} />
-      <Route path="/labs/:labId" component={LabDetailPage} />
-      <Route path="/assessment" component={AssessmentPage} />
-      <Route path="/source-guide" component={SourceGuidePage} />
-      <Route path="/module/:moduleId" component={ModulePage} />
-      <Route path="/module/:moduleId/lesson/:lessonId" component={MicroLessonPage} />
-      <Route path="/404" component={NotFound} />
-      <Route component={NotFound} />
-    </Switch>
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground/60" aria-hidden="true" />
+      <span className="sr-only">Loading…</span>
+    </div>
   );
 }
 
-function SearchButton() {
-  const [searchOpen, setSearchOpen] = useState(false);
-  useSearchShortcut(setSearchOpen);
-  const { t } = useTranslation();
-
+function InnerRoutes() {
   return (
-    <>
-      <SearchModal open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <button
-        onClick={() => setSearchOpen(true)}
-        className="fixed bottom-5 right-5 z-50 flex items-center gap-2 px-3 py-2 rounded-full border border-border/60 bg-background shadow-lg text-xs text-muted-foreground/60 hover:text-foreground hover:border-border transition-colors sm:hidden"
-        aria-label={t("search.button") || "Search"}>
-        <Search className="w-3.5 h-3.5" aria-hidden="true" />
-        {t("search.button")}
-      </button>
-    </>
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/setup" component={SetupGuide} />
+        <Route path="/glossary" component={GlossaryPage} />
+        <Route path="/practice" component={PracticePage} />
+        <Route path="/labs" component={LabsListPage} />
+        <Route path="/labs/:labId" component={LabDetailPage} />
+        <Route path="/assessment" component={AssessmentPage} />
+        <Route path="/source-guide" component={SourceGuidePage} />
+        <Route path="/radar" component={RadarPage} />
+        <Route path="/module/:moduleId" component={ModulePage} />
+        <Route path="/module/:moduleId/lesson/:lessonId" component={MicroLessonPage} />
+        <Route path="/404" component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
 function LocaleRouter({ locale }: { locale: "zh" | "en" }) {
-  // Sync language immediately (not in useEffect) so first render uses correct locale
-  changeLanguage(locale);
+  // The first paint is already localized: lib/i18n.ts resolves the initial
+  // language from the URL before React mounts. Calling changeLanguage during
+  // render would setState useTranslation subscribers mid-render, so any
+  // later cross-locale transition syncs in an effect instead.
+  useEffect(() => {
+    changeLanguage(locale);
+  }, [locale]);
   return (
     <LocaleProvider locale={locale} onLocaleChange={(l) => changeLanguage(l)}>
       <InnerRoutes />
-      <SearchButton />
+      <Suspense fallback={null}>
+        <GlobalSearch />
+      </Suspense>
     </LocaleProvider>
   );
 }

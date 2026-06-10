@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearch } from "wouter";
 import { useLocale } from "@/contexts/LocaleContext";
-import { getCurriculum, getGlossaryByModule } from "@/data/curriculum_index";
+import { useCurriculum, useGlossaryByModule } from "@/lib/useContent";
 import type { GlossaryTerm } from "@/data/curriculum";
 import { useSearchHighlight } from "@/lib/highlight";
 import { Search, X } from "lucide-react";
@@ -57,8 +57,8 @@ export default function GlossaryPage() {
   const { t } = useTranslation();
   const searchString = useSearch();
 
-  const curriculum = getCurriculum(locale);
-  const glossaryByModule = getGlossaryByModule(locale);
+  const curriculum = useCurriculum(locale);
+  const glossaryByModule = useGlossaryByModule(locale);
   const allTerms = useMemo(
     () => buildTermList(glossaryByModule, curriculum),
     [glossaryByModule, curriculum]

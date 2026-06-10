@@ -9,15 +9,14 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "wouter";
-import { difficultyColors } from "@/data/curriculum";
-import { getCurriculum, getTotalHours, getDifficultyLabels } from "@/data/curriculum_index";
-import { getMicroLessonsByModule } from "@/data/micro_lessons_index";
+import { getTotalHours, getDifficultyLabels } from "@/data/curriculum_index";
+import { useCurriculum, useAllMicroLessonsDeferred } from "@/lib/useContent";
 import { useProgress } from "@/contexts/ProgressContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLocale } from "@/contexts/LocaleContext";
 import { useSwitchLocale } from "@/lib/useSwitchLocale";
 import { useTranslation } from "react-i18next";
-import { ArrowRight, Clock, BookOpen, Code2, Target, ChevronRight, Cpu, Zap, CheckCircle2, Circle, Loader2, BarChart3, Terminal, Sun, Moon, GraduationCap, BookMarked, Languages, ClipboardCheck, FlaskConical, FileCode, Menu, X, Play, RotateCcw } from "lucide-react";
+import { ArrowRight, Clock, BookOpen, Code2, Target, ChevronRight, Cpu, Zap, CheckCircle2, Circle, Loader2, BarChart3, Terminal, Sun, Moon, GraduationCap, BookMarked, Languages, ClipboardCheck, FlaskConical, FileCode, Menu, X, Play, RotateCcw, Radar } from "lucide-react";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { getPhases } from "@/data/engineering_phases";
 import { PhaseRoadmap } from "@/components/home/PhaseRoadmap";
@@ -39,11 +38,11 @@ export default function Home() {
   const [showQuickStart, setShowQuickStart] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const curriculum = getCurriculum(locale);
+  const curriculum = useCurriculum(locale);
   const phases = getPhases(locale as any);
-  const totalHours = getTotalHours(locale);
+  const totalHours = getTotalHours(curriculum);
   const difficultyLabels = getDifficultyLabels(locale);
-  const microLessonsByModule = getMicroLessonsByModule(locale);
+  const microLessonsByModule = useAllMicroLessonsDeferred(locale);
 
   const totalCompleted = getTotalCompleted();
   const progressPct = Math.round((totalCompleted / curriculum.length) * 100);
@@ -99,6 +98,7 @@ export default function Home() {
 
             <nav className="hidden xl:flex items-center gap-4 text-sm text-muted-foreground" aria-label="Main navigation">
               <Link href="/labs" className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><FlaskConical className="w-3.5 h-3.5" aria-hidden="true" />{t("nav.labs") || 'Labs'}</Link>
+              <Link href="/radar" className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><Radar className="w-3.5 h-3.5" aria-hidden="true" />{t("nav.radar") || 'Radar'}</Link>
               <Link href="/assessment" className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><ClipboardCheck className="w-3.5 h-3.5" aria-hidden="true" />{t("nav.assessment") || 'Assessment'}</Link>
               <Link href="/source-guide" className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><FileCode className="w-3.5 h-3.5" aria-hidden="true" />{t("nav.sourceGuide") || 'Source Code'}</Link>
               <Link href="/practice" className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><GraduationCap className="w-3.5 h-3.5" aria-hidden="true" />{t("nav.practice")}</Link>
@@ -174,6 +174,7 @@ export default function Home() {
           <nav className="flex flex-col py-3" aria-label="Mobile navigation">
             {[
               { href: "/labs", icon: FlaskConical, label: t("nav.labs") || "Labs" },
+              { href: "/radar", icon: Radar, label: t("nav.radar") || "Upstream Radar" },
               { href: "/assessment", icon: ClipboardCheck, label: t("nav.assessment") || "Assessment" },
               { href: "/source-guide", icon: FileCode, label: t("nav.sourceGuide") || "Source Code" },
               { href: "/practice", icon: GraduationCap, label: t("nav.practice") },
@@ -456,7 +457,7 @@ export default function Home() {
             getPhaseProgress={getPhaseProgress}
             getModuleStatus={getModuleStatus}
             locale={locale}
-            microLessonsByModule={microLessonsByModule}
+            microLessonsByModule={microLessonsByModule ?? {}}
           />
         </section>
 

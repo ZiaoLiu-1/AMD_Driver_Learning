@@ -3774,12 +3774,7 @@ export const curriculum = curriculumZh;
 
 export const totalHours = curriculum.reduce((sum, m) => sum + m.estimatedHours, 0);
 
-export const difficultyColors = {
-  beginner: 'text-success',
-  intermediate: 'text-info',
-  advanced: 'text-primary',
-  expert: 'text-destructive',
-};
+export { difficultyColors } from './curriculum_types';
 
 export const difficultyLabels = {
   beginner: '入门',

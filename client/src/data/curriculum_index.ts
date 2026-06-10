@@ -1,26 +1,48 @@
 /* ============================================================
    Curriculum index — resolves curriculum and glossary by locale
+   Heavy data modules are loaded via dynamic import() so each
+   locale's content is a separate chunk and never ships in the
+   main bundle. Loads are memoized per locale.
    ============================================================ */
 
-import type { Module } from "./curriculum";
-import type { GlossaryTerm } from "./curriculum";
-import { curriculumZh } from "./curriculum";
-import { curriculumEn } from "./curriculum_en";
-import { glossaryByModule as glossaryZh } from "./glossary_data";
-import { glossaryByModuleEn as glossaryEn } from "./glossary_data_en";
+import type { Module, GlossaryTerm } from "./curriculum_types";
 
 export type Locale = "zh" | "en";
 
-export function getCurriculum(locale: Locale): Module[] {
-  return locale === "en" ? curriculumEn : curriculumZh;
+function memoized<K, T>(cache: Map<K, Promise<T>>, key: K, load: () => Promise<T>): Promise<T> {
+  let promise = cache.get(key);
+  if (!promise) {
+    promise = load().catch((err) => {
+      // Drop failed loads (e.g. a chunk fetch that lost connectivity) so a retry can succeed
+      cache.delete(key);
+      throw err;
+    });
+    cache.set(key, promise);
+  }
+  return promise;
 }
 
-export function getGlossaryByModule(locale: Locale): Record<string, GlossaryTerm[]> {
-  return locale === "en" ? glossaryEn : glossaryZh;
+const curriculumCache = new Map<Locale, Promise<Module[]>>();
+const glossaryCache = new Map<Locale, Promise<Record<string, GlossaryTerm[]>>>();
+
+export function loadCurriculum(locale: Locale): Promise<Module[]> {
+  return memoized(curriculumCache, locale, () =>
+    locale === "en"
+      ? import("./curriculum_en").then((m) => m.curriculumEn)
+      : import("./curriculum").then((m) => m.curriculumZh),
+  );
 }
 
-export function getTotalHours(locale: Locale): number {
-  return getCurriculum(locale).reduce((sum, m) => sum + m.estimatedHours, 0);
+export function loadGlossaryByModule(locale: Locale): Promise<Record<string, GlossaryTerm[]>> {
+  return memoized(glossaryCache, locale, () =>
+    locale === "en"
+      ? import("./glossary_data_en").then((m) => m.glossaryByModuleEn)
+      : import("./glossary_data").then((m) => m.glossaryByModule),
+  );
+}
+
+export function getTotalHours(curriculum: Module[]): number {
+  return curriculum.reduce((sum, m) => sum + m.estimatedHours, 0);
 }
 
 export function getDifficultyLabels(locale: Locale): Record<string, string> {
