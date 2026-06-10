@@ -167,11 +167,16 @@ sudo apt update && sudo apt install -y \\
     gawk  # required for CONFIG_BUILTIN_MODULE_RANGES (enabled in Ubuntu's config)
 
 # amdgpu-specific development deps
-# Note: libprocps-dev was renamed to libproc2-dev in Ubuntu 24.04
 sudo apt install -y \\
-    libdrm-dev libkmod-dev libproc2-dev \\
+    libdrm-dev libkmod-dev \\
     libudev-dev libcairo2-dev libpixman-1-dev \\
     libjson-c-dev meson ninja-build cmake
+
+# procps dev headers — the package name differs by Ubuntu release:
+#   Ubuntu 22.04 (jammy):   libprocps-dev
+#   Ubuntu 24.04 (noble)+:  libproc2-dev   (procps was renamed to libproc2)
+# Install whichever your release ships (the first that resolves wins):
+sudo apt install -y libproc2-dev || sudo apt install -y libprocps-dev
 
 # GPU monitoring & debug tools
 sudo apt install -y \\
@@ -205,12 +210,24 @@ pip install --user virtme-ng`} />
             <div className="rounded-xl p-4 border border-warning/30 bg-warning/5">
               <p className="text-xs font-semibold text-warning mb-1">Important: GPU firmware</p>
               <p className="text-xs text-muted-foreground/80">
-                If you're running a very new GPU (RDNA4 / gfx12), you may need the latest firmware.
-                Install <code className="text-primary">linux-firmware</code> from git if your distro's package is old:
+                Prefer your distro's <code className="text-primary">linux-firmware</code> package first
+                (<code>sudo apt install linux-firmware</code> / <code>dnf</code> / <code>pacman</code>) — it places blobs
+                correctly and regenerates the initramfs for you. Only if you're running a very new GPU
+                (e.g. RDNA4 / gfx12) and your distro's package is too old, pull the upstream tree.
+                First find the exact blob the kernel is asking for:
               </p>
-              <CopyBlock code={`# Only if your GPU firmware is missing
-git clone --depth=1 https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git
-cd linux-firmware && sudo make install`} />
+              <CopyBlock code={`# 1. Find the exact missing firmware file the kernel requested
+dmesg | grep -i firmware        # e.g. "amdgpu/gc_11_0_0_rlc.bin failed to load"
+
+# 2. Only if the distro package is too old: install from the upstream tree
+git clone --depth=1 https://gitlab.com/kernel-firmware/linux-firmware.git
+cd linux-firmware
+sudo make install               # copies blobs into /lib/firmware/amdgpu/
+
+# 3. Manual install does NOT rebuild the initramfs — do it yourself so the
+#    blob is present at early boot:
+sudo update-initramfs -u        # Debian/Ubuntu
+# sudo dracut -f                 # Fedora/RHEL`} />
             </div>
           </Section>
 
@@ -473,17 +490,18 @@ python3 scripts/clang-tools/gen_compile_commands.py
 
             <CopyBlock title="Quick test: boot your kernel in a VM" code={`cd ~/kernel-dev
 
-# Boot current kernel tree in a VM (no GPU passthrough)
+# Build the kernel in the current tree, then boot it in a VM (no GPU passthrough)
 # Good for: module loading tests, printk verification, KUnit tests
-vng --build --run
+vng --build      # compile the kernel from the current source tree
+vng              # boot the kernel you just built (run from the kernel tree)
 
 # Inside the VM:
 #   modprobe amdgpu         # test module loading
 #   dmesg | grep amdgpu     # check init messages
 #   exit                    # shut down VM
 
-# Boot with specific kernel command line
-vng --build --run -- "drm.debug=0x1f amdgpu.dpm=0"`} />
+# Boot with a specific kernel command line
+vng -- "drm.debug=0x1f amdgpu.dpm=0"`} />
 
             <CopyBlock title="For display/GPU testing: use a real spare machine or GPU passthrough" code={`# virtme-ng can't test display output or real GPU interaction.
 # For that you need one of:
@@ -531,8 +549,12 @@ cd igt-gpu-tools
 meson setup build
 ninja -C build
 
-# Run a quick amdgpu sanity test (needs root + real GPU)
-sudo ./build/tests/amdgpu/amd_basic --run-subtest cs-gfx`} />
+# Discover the real subtest names first — IGT subtest names change upstream
+./build/tests/amdgpu/amd_basic --list-subtests
+# Then run a quick amdgpu sanity test (needs root + real GPU).
+# Current command-submission subtest is "cs-gfx-with-IP-GFX" (with a dynamic
+# "@cs-gfx" sub-id); older guides used a plain "cs-gfx" name that no longer exists:
+sudo ./build/tests/amdgpu/amd_basic --run-subtest cs-gfx-with-IP-GFX`} />
 
             <CopyBlock title="Essential sysfs / debugfs paths for AMD GPUs" code={`# GPU identity
 cat /sys/class/drm/card*/device/vendor          # 0x1002 = AMD
@@ -548,10 +570,14 @@ cat /sys/class/drm/card*/device/gpu_busy_percent    # GPU utilization %
 cat /sys/class/drm/card*/device/hwmon/hwmon*/temp1_input  # milli-degrees C
 cat /sys/class/drm/card*/device/hwmon/hwmon*/power1_average  # micro-watts
 
-# Debug (requires debugfs mounted)
+# Debug (requires debugfs mounted; the exact card index and available files
+# depend on your kernel version/config — discover them first)
+ls /sys/kernel/debug/dri/*/                      # list what your kernel exposes
 sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info
-sudo cat /sys/kernel/debug/dri/0/amdgpu_gpu_recover  # trigger manual GPU reset
-sudo cat /sys/kernel/debug/dri/0/amdgpu_sa_info`} />
+sudo cat /sys/kernel/debug/dri/0/amdgpu_sa_info
+# Reading amdgpu_gpu_recover triggers a full GPU reset (loses in-flight work).
+# The file is present only when amdgpu was built with debugfs reset support:
+sudo cat /sys/kernel/debug/dri/0/amdgpu_gpu_recover  # if present: manual GPU reset`} />
           </Section>
 
           {/* 7. Verify */}
@@ -601,7 +627,7 @@ vim drivers/gpu/drm/amd/amdgpu/amdgpu_device.c  # or use VS Code
 make M=drivers/gpu/drm/amd -j$(nproc)
 
 # 4. Quick test in virtme-ng (non-display changes)
-vng --build --run
+vng --build && vng
 
 # 5. Test on real hardware (display changes or full validation)
 sudo rmmod amdgpu && sudo insmod drivers/gpu/drm/amd/amdgpu/amdgpu.ko
@@ -616,12 +642,15 @@ scripts/checkpatch.pl --strict -g HEAD
 # 8. Commit with proper message format
 git commit -s  # -s adds Signed-off-by
 
-# 9. Generate patch for submission
-git format-patch HEAD~1 -o /tmp/patches/
-
-# 10. Send via b4 (modern) or git send-email (classic)
-# b4 send /tmp/patches/0001-*.patch           # modern way
-# git send-email --to=amd-gfx@lists.freedesktop.org /tmp/patches/0001-*.patch`} />
+# 9. Submit. Two paths:
+# (a) b4: prepare a tracked series on a branch, then send it (b4 operates on the
+#     prepared branch, NOT on loose .patch files):
+#       b4 prep -n fix/my-description
+#       b4 prep --check && b4 send -o /tmp/presend   # preview
+#       b4 send
+# (b) git send-email for loose patch files from git format-patch:
+#       git format-patch HEAD~1 -o /tmp/patches/
+#       git send-email --to=amd-gfx@lists.freedesktop.org /tmp/patches/0001-*.patch`} />
 
             <div className="rounded-xl p-5 border border-border/50 bg-card/50">
               <p className="text-sm font-semibold text-foreground mb-2">What's next?</p>
@@ -828,7 +857,7 @@ cd ~/kernel-dev
 vim drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
 
 # 2. Quick test with virtme-ng (safe, no reboot)
-make M=drivers/gpu/drm/amd -j$(nproc) && vng --build --run
+make M=drivers/gpu/drm/amd -j$(nproc) && vng --build && vng
 
 # 3. For GPU/display testing (requires reboot into dev kernel)
 make -j$(nproc) && sudo make modules_install && sudo make install
@@ -874,8 +903,10 @@ sudo ./igt-gpu-tools/build/tests/amdgpu/amd_basic
 sudo trace-cmd record -e amdgpu -e drm
 sudo trace-cmd report | head -50
 
-# Trigger a manual GPU reset (useful for testing recovery paths)
-sudo cat /sys/kernel/debug/dri/0/amdgpu_gpu_recover`} />
+# Trigger a manual GPU reset (useful for testing recovery paths).
+# Present only if amdgpu was built with debugfs reset support — check first:
+ls /sys/kernel/debug/dri/0/ | grep amdgpu_gpu_recover && \\
+  sudo cat /sys/kernel/debug/dri/0/amdgpu_gpu_recover`} />
 
           </Section>
 
@@ -893,8 +924,8 @@ sudo cat /sys/kernel/debug/dri/0/amdgpu_gpu_recover`} />
               </p>
               <p className="text-xs text-muted-foreground/80">
                 {locale === 'zh'
-                  ? <>安装前请确认：(1) 你的 AMD GPU 在 ROCm 支持列表中（RDNA / CDNA 系列）；(2) 内核版本符合要求。详见 <a href="https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ROCm 系统要求</a>。ROCm 不支持集成显卡——如有 AMD APU，请在 BIOS 中禁用 IGP。</>
-                  : <>Before installing, verify: (1) your AMD GPU is on the ROCm support list (RDNA / CDNA families); (2) your kernel version is compatible. See <a href="https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ROCm System Requirements</a>. ROCm does not support integrated graphics — disable AMD IGP in BIOS if present.</>}
+                  ? <>安装前请<strong>务必先核对官方兼容性矩阵</strong>——ROCm 并非"任何 AMD 显卡都支持"。消费级 Radeon 的支持范围有限，且按型号/ROCm 版本/操作系统逐一列出，详见 <a href="https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibility.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ROCm on Radeon 兼容性矩阵</a> 与 <a href="https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">系统要求</a>。<strong>注意：RX 7600 XT（Navi33 / gfx1102）目前不在官方 ROCm 支持列表中</strong>（截至 2026-05，受支持的消费级显卡为 RX 9070/9060 系列与 RX 7900/7800/7700 系列）。未列出的显卡可能可通过 <code>HSA_OVERRIDE_GFX_VERSION</code> 非官方运行，但不受支持、不保证可用。ROCm 不支持集成显卡——如有 AMD APU，请在 BIOS 中禁用 IGP。</>
+                  : <>Before installing, <strong>always check the official compatibility matrix first</strong> — ROCm is not "any AMD GPU works". Consumer Radeon support is limited and listed per model / ROCm release / OS. See the <a href="https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibility.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ROCm on Radeon compatibility matrix</a> and <a href="https://rocm.docs.amd.com/projects/install-on-linux/en/latest/reference/system-requirements.html" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">System Requirements</a>. <strong>Note: the RX 7600 XT (Navi33 / gfx1102) is NOT on the official ROCm supported-GPU list</strong> (as of 2026-05 the supported consumer cards are the RX 9070/9060 and RX 7900/7800/7700 series). Unlisted cards may run unofficially via <code>HSA_OVERRIDE_GFX_VERSION</code>, but this is unsupported and not guaranteed. ROCm does not support integrated graphics — disable AMD IGP in BIOS if present.</>}
               </p>
             </div>
 
@@ -937,7 +968,9 @@ sudo reboot
 
 # After reboot — verify GPU is detected
 rocminfo | head -30
-# Should list your AMD GPU agent(s)
+# Lists your AMD GPU as an HSA agent ONLY if the card is on the ROCm
+# compatibility matrix. Unsupported cards (e.g. RX 7600 XT / gfx1102) may not
+# appear, or may require HSA_OVERRIDE_GFX_VERSION (unofficial, unsupported).
 
 # Check GPU status
 rocm-smi
@@ -958,7 +991,9 @@ int main() {
     for (int i = 0; i < count; i++) {
         hipDeviceProp_t props;
         hipGetDeviceProperties(&props, i);
-        printf("  [%d] %s (gfx%d)\\n", i, props.name, props.gcnArch);
+        // gcnArchName is the current string field (e.g. "gfx1100");
+        // the old integer props.gcnArch was deprecated/removed in recent ROCm.
+        printf("  [%d] %s (%s)\\n", i, props.name, props.gcnArchName);
     }
     return 0;
 }

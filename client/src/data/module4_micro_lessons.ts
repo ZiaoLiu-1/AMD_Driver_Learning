@@ -812,7 +812,7 @@ void update_display(int fd, uint32_t crtc_id,
 
   ┌──────────────┐      eviction      ┌──────────────┐
   │   VRAM       │ ──────────────────▶ │     GTT      │
-  │  (8GB GDDR6) │ ◀────────────────── │(系统内存,可达│
+  │ (16GB GDDR6) │ ◀────────────────── │(系统内存,可达│
   │  最快,GPU专用│      validation     │ GPU通过GART) │
   │              │                     │              │
   │  BO_A (4MB)  │                     │  BO_C (2MB)  │
@@ -946,7 +946,7 @@ $ cat /sys/class/drm/card0/device/mem_info_vram_used
 310378496    ← ~296MB（增加了 ~24MB 用于 framebuffer 和顶点数据）
 
 $ cat /sys/class/drm/card0/device/mem_info_vram_total
-8573157376   ← ~8GB VRAM 总量
+17163091968  ← ~16GB VRAM 总量
 
 $ cat /sys/class/drm/card0/device/mem_info_gtt_used
 52428800     ← ~50MB GTT 使用中`,
@@ -999,7 +999,7 @@ err_work:
             question: '解释 GEM 和 TTM 在 DRM 内存管理中的角色和区别。为什么 amdgpu 需要 TTM 而不是只用 GEM？',
             difficulty: 'hard',
             hint: '关键区别在于 VRAM 管理：GEM 假设 GPU 使用系统内存（适合集成 GPU），TTM 支持独立 VRAM + 对象迁移 + eviction（适合离散 GPU）。amdgpu 作为离散 GPU 驱动需要管理 VRAM↔GTT 的数据搬运。',
-            answer: 'GEM 和 TTM 是 DRM 的两个内存管理框架，解决不同层次的问题：GEM（Graphics Execution Manager）提供 Buffer Object 的用户空间 API——通过 GEM handle 引用 BO、通过 mmap 让 CPU 访问、通过引用计数管理生命周期。GEM 最初为 Intel i915（集成 GPU，使用系统内存）设计，假设所有内存是同质的。TTM（Translation Table Manager）在 GEM 之上为离散 GPU 增加了三个关键能力：（1）内存域（Memory Placement）——BO 可以存在于 VRAM（GPU 专用，带宽最高）、GTT（系统内存中 GPU 可通过 GART 访问的部分）或 System（普通系统内存）。（2）对象迁移——当需要将 BO 从 System 移到 VRAM（GPU 即将使用）或从 VRAM 移到 GTT（VRAM 空间不足），TTM 协调 DMA 数据搬运。（3）内存压力处理（Eviction）——当 VRAM 满时，TTM 按 LRU 策略选择 BO 迁移到 GTT/System，类似虚拟内存的页面置换。amdgpu 必须使用 TTM 因为 AMD 离散 GPU 有独立 VRAM（8GB GDDR6），驱动需要在 VRAM 和系统内存之间高效搬运数据、处理 VRAM 压力、管理 GART 页表。GEM 层仍然用于向用户空间暴露统一的 API——用户不需要关心 BO 当前在 VRAM 还是 GTT，这由 TTM 透明管理。',
+            answer: 'GEM 和 TTM 是 DRM 的两个内存管理框架，解决不同层次的问题：GEM（Graphics Execution Manager）提供 Buffer Object 的用户空间 API——通过 GEM handle 引用 BO、通过 mmap 让 CPU 访问、通过引用计数管理生命周期。GEM 最初为 Intel i915（集成 GPU，使用系统内存）设计，假设所有内存是同质的。TTM（Translation Table Manager）在 GEM 之上为离散 GPU 增加了三个关键能力：（1）内存域（Memory Placement）——BO 可以存在于 VRAM（GPU 专用，带宽最高）、GTT（系统内存中 GPU 可通过 GART 访问的部分）或 System（普通系统内存）。（2）对象迁移——当需要将 BO 从 System 移到 VRAM（GPU 即将使用）或从 VRAM 移到 GTT（VRAM 空间不足），TTM 协调 DMA 数据搬运。（3）内存压力处理（Eviction）——当 VRAM 满时，TTM 按 LRU 策略选择 BO 迁移到 GTT/System，类似虚拟内存的页面置换。amdgpu 必须使用 TTM 因为 AMD 离散 GPU 有独立 VRAM（如 RX 7600 XT 的 16GB GDDR6），驱动需要在 VRAM 和系统内存之间高效搬运数据、处理 VRAM 压力、管理 GART 页表。GEM 层仍然用于向用户空间暴露统一的 API——用户不需要关心 BO 当前在 VRAM 还是 GTT，这由 TTM 透明管理。',
             amdContext: '这是 AMD 面试中常见的内存管理基础题。回答时强调 amdgpu 的 "GEM 做门面，TTM 做后端" 的架构设计，展示你理解为什么离散 GPU 需要比集成 GPU 更复杂的内存管理。',
           },
         },

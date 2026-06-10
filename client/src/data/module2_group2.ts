@@ -67,16 +67,16 @@ export const module2Group2: MicroLessonGroup = {
       "concept": {
         "summary": "GPU 有多个内存域（Memory Domain），每个域有不同的访问速度和用途。理解这些内存域是理解 GEM/TTM 内存管理的基础。amdgpu 主要使用三个域：VRAM（GPU 本地显存）、GTT（通过 PCIe 访问的系统内存）和 CPU（纯 CPU 访问）。",
         "keyPoints": [
-          "VRAM：GPU 本地显存，速度最快（>500 GB/s），CPU 访问慢（需要通过 PCIe）",
+          "VRAM：GPU 本地显存，带宽远高于 PCIe（RX 7600 XT 约 288 GB/s，高端型号可达 ~1 TB/s 级），CPU 访问慢（需要通过 PCIe）",
           "GTT（Graphics Translation Table）：系统 RAM 通过 IOMMU 映射给 GPU 使用",
-          "GTT 速度受 PCIe 带宽限制（~32 GB/s），但容量大（可达系统 RAM 大小）",
+          "GTT 速度受 PCIe 带宽限制（RX 7600 XT 的 PCIe 4.0 x8 链路单向约 ~16 GB/s），但容量大（可达系统 RAM 大小）",
           "驱动根据访问模式自动在 VRAM 和 GTT 之间迁移 Buffer Object",
           "内存压力时，不常用的 VRAM 内容会被驱逐（evict）到 GTT 或系统内存"
         ]
       },
       "diagram": {
         "title": "GPU 内存域架构",
-        "content": "\n┌─────────────────────────────────────────────────────┐\n│                    GPU (RX 7600 XT)                  │\n│                                                      │\n│  ┌──────────────────────────────────────────────┐   │\n│  │              VRAM (8 GB GDDR6)               │   │\n│  │  带宽: ~288 GB/s (GPU 本地访问)              │   │\n│  │  CPU 访问: ~8 GB/s (通过 PCIe BAR0)          │   │\n│  │                                              │   │\n│  │  用途:                                       │   │\n│  │  • 渲染目标 (Render Target)                  │   │\n│  │  • 纹理 (Texture)                            │   │\n│  │  • 顶点/索引缓冲区                           │   │\n│  │  • GPU 命令缓冲区                            │   │\n│  └──────────────────────────────────────────────┘   │\n│                                                      │\n│  ┌──────────────────────────────────────────────┐   │\n│  │         GTT (Graphics Translation Table)     │   │\n│  │  = 系统 RAM 通过 IOMMU 映射                  │   │\n│  │  带宽: ~32 GB/s (PCIe 4.0 x8)               │   │\n│  │                                              │   │\n│  │  用途:                                       │   │\n│  │  • CPU-GPU 共享缓冲区                        │   │\n│  │  • 命令提交缓冲区 (IB)                       │   │\n│  │  • VRAM 溢出时的备用空间                     │   │\n│  └──────────────────────────────────────────────┘   │\n└─────────────────────────────────────────────────────┘\n         |                    |\n         | PCIe 4.0 x8        | IOMMU\n         v                    v\n┌─────────────────────────────────────────────────────┐\n│              系统内存 (System RAM, 32 GB)            │\n│  CPU 访问: ~50 GB/s                                  │\n│  GPU 访问: ~32 GB/s (通过 PCIe + IOMMU)              │\n└─────────────────────────────────────────────────────┘\n",
+        "content": "\n┌─────────────────────────────────────────────────────┐\n│                    GPU (RX 7600 XT)                  │\n│                                                      │\n│  ┌──────────────────────────────────────────────┐   │\n│  │              VRAM (16 GB GDDR6)              │   │\n│  │  带宽: ~288 GB/s (GPU 本地访问)              │   │\n│  │  CPU 访问: 取决于平台 / BAR 配置             │   │\n│  │                                              │   │\n│  │  用途:                                       │   │\n│  │  • 渲染目标 (Render Target)                  │   │\n│  │  • 纹理 (Texture)                            │   │\n│  │  • 顶点/索引缓冲区                           │   │\n│  │  • GPU 命令缓冲区                            │   │\n│  └──────────────────────────────────────────────┘   │\n│                                                      │\n│  ┌──────────────────────────────────────────────┐   │\n│  │         GTT (Graphics Translation Table)     │   │\n│  │  = 系统 RAM 通过 IOMMU 映射                  │   │\n│  │  带宽: 受 PCIe 链路限制 (~16 GB/s)          │   │\n│  │                                              │   │\n│  │  用途:                                       │   │\n│  │  • CPU-GPU 共享缓冲区                        │   │\n│  │  • 命令提交缓冲区 (IB)                       │   │\n│  │  • VRAM 溢出时的备用空间                     │   │\n│  └──────────────────────────────────────────────┘   │\n└─────────────────────────────────────────────────────┘\n         |                    |\n         | PCIe 4.0 x8        | IOMMU\n         v                    v\n┌─────────────────────────────────────────────────────┐\n│              系统内存 (System RAM, 32 GB)            │\n│  CPU 访问: ~50 GB/s                                  │\n│  GPU 访问: 受 PCIe + IOMMU 限制                     │\n└─────────────────────────────────────────────────────┘\n",
         "caption": "GPU 内存域：VRAM 速度最快但容量有限，GTT 利用系统 RAM 扩展 GPU 可用内存"
       },
       "codeWalk": {
@@ -89,21 +89,21 @@ export const module2Group2: MicroLessonGroup = {
         "title": "观察 GPU 内存域使用情况",
         "language": "bash",
         "code": "#!/bin/bash\n# Lab 2.2.2: 观察 VRAM 和 GTT 内存使用情况\n\n# 步骤 1: 查看 VRAM 和 GTT 总量及使用量\necho \"=== GPU 内存域使用情况 ===\"\nGPU_CARD=$(ls /sys/class/drm/ | grep \"^card[0-9]$\" | head -1)\nCARD_PATH=\"/sys/class/drm/$GPU_CARD/device\"\n\necho \"VRAM 总量: $(( $(cat $CARD_PATH/mem_info_vram_total) / 1024 / 1024 )) MB\"\necho \"VRAM 已用: $(( $(cat $CARD_PATH/mem_info_vram_used) / 1024 / 1024 )) MB\"\necho \"GTT  总量: $(( $(cat $CARD_PATH/mem_info_gtt_total) / 1024 / 1024 )) MB\"\necho \"GTT  已用: $(( $(cat $CARD_PATH/mem_info_gtt_used) / 1024 / 1024 )) MB\"\n\n# 步骤 2: 通过 debugfs 查看详细的 BO 分配\necho \"\"\necho \"=== Buffer Object 分配详情 ===\"\nif [ -f /sys/kernel/debug/dri/0/amdgpu_gem_info ]; then\n    sudo cat /sys/kernel/debug/dri/0/amdgpu_gem_info | head -30\nfi\n\n# 步骤 3: 运行 GPU 负载，观察内存变化\necho \"\"\necho \"=== 运行 glxgears 并观察 VRAM 变化 ===\"\n# 在后台运行 glxgears（需要 mesa-utils）\nglxgears -fullscreen &\nGEARS_PID=$!\nsleep 2\n\necho \"运行中的 VRAM 使用:\"\necho \"VRAM 已用: $(( $(cat $CARD_PATH/mem_info_vram_used) / 1024 / 1024 )) MB\"\n\nkill $GEARS_PID 2>/dev/null\nsleep 1\necho \"停止后的 VRAM 使用:\"\necho \"VRAM 已用: $(( $(cat $CARD_PATH/mem_info_vram_used) / 1024 / 1024 )) MB\"\n\n# 步骤 4: 查看内存驱逐统计\necho \"\"\necho \"=== 内存驱逐统计 ===\"\nsudo cat /sys/kernel/debug/dri/0/amdgpu_eviction_stats 2>/dev/null || \\\n    echo \"驱逐统计不可用（需要较新的内核）\"\n\n# 步骤 5: 使用 radeontop 实时监控（需要安装）\necho \"\"\necho \"=== 实时 GPU 内存监控 ===\"\necho \"安装: sudo apt install radeontop\"\necho \"运行: radeontop -c -d - -l 1 | grep -E 'vram|gtt'\"\n",
-        "expectedOutput": "=== GPU 内存域使用情况 ===\nVRAM 总量: 8192 MB\nVRAM 已用: 487 MB\nGTT  总量: 8192 MB\nGTT  已用: 156 MB\n\n=== Buffer Object 分配详情 ===\npid    1234 command Xorg:\n    0x00000001: 4096 kB VRAM (渲染目标)\n    0x00000002: 1024 kB VRAM (纹理)\n    0x00000003:  256 kB GTT  (命令缓冲区)"
+        "expectedOutput": "=== GPU 内存域使用情况 ===\nVRAM 总量: 16384 MB\nVRAM 已用: 487 MB\nGTT  总量: 8192 MB\nGTT  已用: 156 MB\n\n=== Buffer Object 分配详情 ===\npid    1234 command Xorg:\n    0x00000001: 4096 kB VRAM (渲染目标)\n    0x00000002: 1024 kB VRAM (纹理)\n    0x00000003:  256 kB GTT  (命令缓冲区)"
       },
       "debugExercise": {
         "title": "VRAM 溢出导致性能骤降",
         "language": "bash",
         "question": "用户报告在运行大型游戏时 GPU 性能突然骤降 50%。如何诊断是否是 VRAM 溢出导致的？",
         "buggyCode": "# 用户的症状：\n# - 游戏开始时流畅（60 FPS）\n# - 加载大地图后帧率骤降到 30 FPS\n# - GPU 使用率显示 100%，但帧率很低\n# - 没有报错信息\n\n# 你会如何诊断？",
-        "hint": "当 VRAM 不足时，驱动会将部分 BO 驱逐到 GTT（系统内存），GPU 访问这些数据需要通过 PCIe，速度从 500 GB/s 降到 32 GB/s。",
-        "solution": "诊断步骤：1) `cat /sys/class/drm/card0/device/mem_info_vram_used` 查看 VRAM 使用量是否接近 8192 MB；2) `sudo cat /sys/kernel/debug/dri/0/amdgpu_eviction_stats` 查看驱逐次数；3) 使用 `radeontop` 观察 VRAM 和 GTT 使用量的变化。如果 VRAM 满了且 GTT 使用量激增，说明发生了大量驱逐。解决方案：降低游戏纹理质量设置，或升级到更大 VRAM 的 GPU。"
+        "hint": "当 VRAM 不足时，驱动会将部分 BO 驱逐到 GTT（系统内存），GPU 访问这些数据需要通过 PCIe，速度从 VRAM 本地带宽降到 PCIe 受限带宽（~16 GB/s）。",
+        "solution": "诊断步骤：1) `cat /sys/class/drm/card0/device/mem_info_vram_used` 查看 VRAM 使用量是否接近 16384 MB；2) `sudo cat /sys/kernel/debug/dri/0/amdgpu_eviction_stats` 查看驱逐次数；3) 使用 `radeontop` 观察 VRAM 和 GTT 使用量的变化。如果 VRAM 满了且 GTT 使用量激增，说明发生了大量驱逐。解决方案：降低游戏纹理质量设置，或升级到更大 VRAM 的 GPU。"
       },
       "interviewQuestion": {
         "question": "解释 VRAM 和 GTT 的区别，以及 amdgpu 驱动如何决定将一个 Buffer Object 放在 VRAM 还是 GTT？",
         "difficulty": "medium",
         "hint": "从带宽、延迟、CPU 访问需求和内存压力四个角度分析",
-        "answer": "VRAM 是 GPU 本地显存（GDDR6），带宽高（~288 GB/s）但 CPU 访问慢（需要通过 PCIe BAR）。GTT 是通过 IOMMU 映射的系统 RAM，GPU 访问速度受 PCIe 限制（~32 GB/s），但 CPU 可以快速访问。amdgpu 的放置策略：1) 渲染目标、纹理等 GPU 密集访问的 BO 首选 VRAM；2) CPU-GPU 共享的命令缓冲区（IB）首选 GTT；3) 内存压力时，最近最少使用（LRU）的 VRAM BO 被驱逐到 GTT；4) 用户可以通过 GEM 创建时的 domain 标志指定偏好。"
+        "answer": "VRAM 是 GPU 本地显存（GDDR6），带宽高（~288 GB/s）但 CPU 访问慢（需要通过 PCIe BAR）。GTT 是通过 IOMMU 映射的系统 RAM，GPU 访问速度受 PCIe 限制（RX 7600 XT 的 PCIe 4.0 x8 单向 ~16 GB/s），但 CPU 可以快速访问。amdgpu 的放置策略：1) 渲染目标、纹理等 GPU 密集访问的 BO 首选 VRAM；2) CPU-GPU 共享的命令缓冲区（IB）首选 GTT；3) 内存压力时，最近最少使用（LRU）的 VRAM BO 被驱逐到 GTT；4) 用户可以通过 GEM 创建时的 domain 标志指定偏好。"
       },
       "completionChecklist": [
         "理解 VRAM 和 GTT 的带宽和延迟差异",

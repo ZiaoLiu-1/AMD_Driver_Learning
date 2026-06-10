@@ -53,15 +53,19 @@ if [[ "$VERIFY_ONLY" == false ]]; then
   # Listing it separately is harmless but redundant — apt resolves it.
 
   header "2/5  AMD GPU / DRM userspace libs"
-  # libprocps-dev was renamed to libproc2-dev in Ubuntu 24.04
   sudo apt install -y \
     libdrm-dev libdrm-tests \
     libkmod-dev libudev-dev \
-    libproc2-dev libjson-c-dev \
+    libjson-c-dev \
     libcairo2-dev libpixman-1-dev \
     meson ninja-build cmake \
     mesa-utils vulkan-tools radeontop \
     linux-firmware
+
+  # procps dev headers: package renamed between Ubuntu releases.
+  #   Ubuntu 22.04 (jammy):  libprocps-dev   |   Ubuntu 24.04 (noble)+: libproc2-dev
+  # Install whichever the running release provides.
+  sudo apt install -y libproc2-dev || sudo apt install -y libprocps-dev
 
   # libcairo2-dev + libpixman-1-dev are needed to build IGT GPU Tools (intel-gpu-tools)
   # and some drm test harnesses — GPT's trimmed list drops these incorrectly.
@@ -94,8 +98,10 @@ if [[ "$VERIFY_ONLY" == false ]]; then
   pipx ensurepath
 
   # NOTE: virtme-ng >= 1.0 ships as the 'vng' command, NOT 'virtme-run'.
-  # Correct usage after this install:
-  #   vng --run --kdir /path/to/linux/source
+  # Documented usage (per upstream README):
+  #   cd /path/to/linux/source && vng --build   # compile the kernel in the tree
+  #   vng                                        # boot the kernel just built from cwd
+  #   vng -r                                     # boot the host's running kernel instead
   # If 'vng' is not found, open a new shell or: export PATH=$HOME/.local/bin:$PATH
 
   header "5/5  drm-tip kernel source (AMD's active dev branch)"
@@ -106,8 +112,10 @@ if [[ "$VERIFY_ONLY" == false ]]; then
     info "Applying minimal AMD debug config..."
     cd "$HOME/src/drm-tip"
     make defconfig
-    # Enable essential AMD debug options without a full menuconfig
-    scripts/config --enable CONFIG_DRM_AMDGPU
+    # Enable essential AMD debug options without a full menuconfig.
+    # Build amdgpu as a loadable MODULE (=m) so you can rmmod/insmod amdgpu.ko
+    # for fast iteration; --enable would set =y (built-in, no .ko, reboot each change).
+    scripts/config --module CONFIG_DRM_AMDGPU
     scripts/config --enable CONFIG_DRM_AMDGPU_USERPTR
     scripts/config --enable CONFIG_DEBUG_INFO
     scripts/config --enable CONFIG_DEBUG_INFO_BTF
@@ -249,11 +257,11 @@ fi
 echo ""
 echo -e "${BOLD}[H] Quick virtme-ng smoke test${RESET}"
 if command -v vng &>/dev/null && [[ -f "$HOME/src/drm-tip/vmlinux" || -f "$HOME/src/drm-tip/arch/x86/boot/bzImage" ]]; then
-  pass "virtme-ng + compiled kernel image found — ready to test with: vng --run --kdir \$HOME/src/drm-tip"
+  pass "virtme-ng + compiled kernel image found — ready to test with: cd \$HOME/src/drm-tip && vng"
 elif command -v vng &>/dev/null; then
   warn "virtme-ng installed but kernel not yet compiled"
-  info "Compile first:  cd \$HOME/src/drm-tip && make -j\$(nproc)"
-  info "Then test:      vng --run --kdir \$HOME/src/drm-tip"
+  info "Compile first:  cd \$HOME/src/drm-tip && vng --build   (or make -j\$(nproc))"
+  info "Then test:      cd \$HOME/src/drm-tip && vng"
 else
   fail "virtme-ng not usable — see item [B] above"
 fi

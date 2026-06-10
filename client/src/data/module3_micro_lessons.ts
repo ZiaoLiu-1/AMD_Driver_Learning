@@ -304,7 +304,7 @@ amdgpu_pci_probe(pdev, ent)          │  amdgpu_pci_remove(pdev)
  │                          │        │   │                          │
  │ ③ pci_ioremap_bar(0)     │        │   │ ③ pci_clear_master()     │
  │   映射 VRAM BAR          │        │   │   禁止 DMA              │
- │   pci_ioremap_bar(2)     │        │   │                          │
+ │   pci_ioremap_bar(5)     │        │   │                          │
  │   映射寄存器 BAR         │        │   │ ② pci_release_regions()  │
  │                          │        │   │   释放 PCI 资源          │
  │ ④ amdgpu_device_init()   │        │   │                          │

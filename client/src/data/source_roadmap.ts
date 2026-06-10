@@ -27,7 +27,12 @@ export interface SourceStage {
   files: SourceFile[];
 }
 
-const BOOTLIN_BASE = 'https://elixir.bootlin.com/linux/v6.8/source';
+// Source links are pinned to a maintained longterm (LTS) kernel so file paths and
+// reading notes stay stable. Audited against Linux 6.12 LTS (2026-05). The amdgpu
+// file layout below is also present in current stable/mainline; bump KERNEL_TAG when
+// you re-audit against a newer release.
+export const KERNEL_TAG = 'v6.12';
+const BOOTLIN_BASE = `https://elixir.bootlin.com/linux/${KERNEL_TAG}/source`;
 
 export const sourceStages: SourceStage[] = [
   {

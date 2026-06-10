@@ -1,7 +1,7 @@
 import { Link } from 'wouter';
 import { useLocale } from '@/contexts/LocaleContext';
 import { useTranslation } from 'react-i18next';
-import { getSourceStages } from '@/data/source_roadmap';
+import { getSourceStages, KERNEL_TAG } from '@/data/source_roadmap';
 import { ArrowLeft, FileCode, ExternalLink, CheckCircle2, Circle, GitBranch } from 'lucide-react';
 import { useSourceProgress } from '@/hooks/useSourceProgress';
 import type { Locale } from '@/data/curriculum_index';
@@ -53,6 +53,14 @@ export default function SourceGuidePage() {
           <p className="text-lg text-muted-foreground leading-relaxed">
             {t('sourceGuide.pageSubtitle') || 'A guided tour through the central components of the AMD Linux driver stack.'}
           </p>
+          <div className="mt-4 flex justify-center">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border/50">
+              <GitBranch className="w-3 h-3" />
+              {locale === 'zh'
+                ? `源码链接基于 Linux ${KERNEL_TAG} LTS（2026-05 校对）`
+                : `Source links pinned to Linux ${KERNEL_TAG} LTS (audited 2026-05)`}
+            </span>
+          </div>
         </div>
 
         <div className="relative">

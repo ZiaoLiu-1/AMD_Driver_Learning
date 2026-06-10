@@ -67,7 +67,7 @@ export const module2Group2En: MicroLessonGroup = {
       "concept": {
         "summary": "A GPU has multiple memory domains, each with different access speeds and use cases. Understanding these domains is essential for understanding GEM/TTM memory management. amdgpu primarily uses three domains: VRAM (GPU-local video memory), GTT (system memory mapped to the GPU via the IOMMU), and CPU (direct CPU access only).",
         "keyPoints": [
-          "VRAM: GPU-local video memory, the fastest domain (>500 GB/s); CPU access is slow (must traverse PCIe)",
+          "VRAM: GPU-local video memory with far higher bandwidth than PCIe (~288 GB/s on the RX 7600 XT; ~1 TB/s-class on high-end cards); CPU access is slow (must traverse PCIe)",
           "GTT (Graphics Translation Table): system RAM mapped for GPU use via the IOMMU",
           "GTT bandwidth is limited by the PCIe link (for example, roughly ~16 GB/s one-way on an RX 7600 XT's PCIe 4.0 x8 link), but capacity can be as large as system RAM",
           "The driver automatically migrates Buffer Objects between VRAM and GTT based on access patterns",

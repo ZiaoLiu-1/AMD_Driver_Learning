@@ -55,7 +55,7 @@ Performance/Price
     \u2502  \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510
     \u2502  \u2502  Instinct MI Series (Data Center)                       \u2502
     \u2502  \u2502                                                         \u2502
-    \u2502  \u2502  MI300X  \u2502 192GB HBM3 \u2502 1.3TB/s  \u2502 Pure compute (no display) \u2502
+    \u2502  \u2502  MI300X  \u2502 192GB HBM3 \u2502 5.3TB/s  \u2502 Pure compute (no display) \u2502
     \u2502  \u2502  MI250X  \u2502 128GB HBM2e\u2502 3.2TB/s  \u2502 CDNA2 architecture       \u2502
     \u2502  \u2502  MI100   \u2502  32GB HBM2 \u2502 1.2TB/s  \u2502 CDNA1 architecture       \u2502
     \u2502  \u2502                                                         \u2502
@@ -165,7 +165,7 @@ $ ls /sys/class/drm/card0-*
 $ ls /dev/kfd
 /dev/kfd
 \u2192 KFD interface available, can run ROCm programs`,
-            hint: 'If /dev/kfd doesn\'t exist, the KFD module may not be loaded. Try sudo modprobe amdkfd or check if HSA_AMD is enabled in kernel config.',
+            hint: 'If /dev/kfd doesn\'t exist, the KFD module may not be loaded. Try sudo modprobe amdkfd or check if HSA_AMD is enabled in kernel config. Note: /dev/kfd is created by the in-kernel amdgpu driver regardless of ROCm userspace support; gfx1102 / RX 7600 XT is NOT on AMD\'s official ROCm supported-GPU list, so running ROCm programs may require HSA_OVERRIDE_GFX_VERSION and is unofficial.',
           },
           debugExercise: {
             title: 'How GPU Type Affects Driver Behavior',

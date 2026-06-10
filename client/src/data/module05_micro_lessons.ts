@@ -55,7 +55,7 @@ export const module05MicroLessons: MicroLessonModule = {
     │  ┌─────────────────────────────────────────────────────────┐
     │  │  Instinct MI 系列 （数据中心）                          │
     │  │                                                         │
-    │  │  MI300X  │ 192GB HBM3 │ 1.3TB/s  │ 纯计算（无显示）   │
+    │  │  MI300X  │ 192GB HBM3 │ 5.3TB/s  │ 纯计算（无显示）   │
     │  │  MI250X  │ 128GB HBM2e│ 3.2TB/s  │ CDNA2 架构         │
     │  │  MI100   │  32GB HBM2 │ 1.2TB/s  │ CDNA1 架构         │
     │  │                                                         │
@@ -165,7 +165,7 @@ $ ls /sys/class/drm/card0-*
 $ ls /dev/kfd
 /dev/kfd
 → KFD 接口可用，可以运行 ROCm 程序`,
-            hint: '如果 /dev/kfd 不存在，可能是 KFD 模块没有加载。尝试 sudo modprobe amdkfd 或检查内核配置中 HSA_AMD 是否启用。',
+            hint: '如果 /dev/kfd 不存在，可能是 KFD 模块没有加载。尝试 sudo modprobe amdkfd 或检查内核配置中 HSA_AMD 是否启用。注意：/dev/kfd 由内核内的 amdgpu 驱动创建，与 ROCm 用户态是否官方支持无关；gfx1102 / RX 7600 XT 并不在 AMD 官方 ROCm 支持 GPU 列表中，可能需要 HSA_OVERRIDE_GFX_VERSION 才能非官方运行 ROCm 程序。',
           },
           debugExercise: {
             title: '判断 GPU 类型对驱动行为的影响',
@@ -329,7 +329,7 @@ static int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
 │ 架构        │ RDNA3                        │
 │ 制程        │ TSMC 6nm                     │
 │ CU 数量     │ 32 CU                        │
-│ VRAM        │ 8GB GDDR6                    │
+│ VRAM        │ 16GB GDDR6                   │
 └─────────────┴──────────────────────────────┘`,
             hint: '如果 dmesg 中没有显示 IP version，尝试 dmesg | grep -i "gfx\\|gc.*version" 或 cat /sys/class/drm/card0/device/gpu_metrics。',
           },
@@ -500,7 +500,7 @@ bool amdgpu_gfx_has_wmma(struct amdgpu_device *adev)
 - L0 Cache: 16KB per CU
 - L1 Cache: 128KB per Shader Array
 - L2 Cache: 32MB (Infinity Cache)
-- VRAM: 8GB GDDR6 @ 288 GB/s
+- VRAM: 16GB GDDR6 @ 288 GB/s
 - 支持 WMMA AI 指令
 - Navi33（RX 7600 XT）为单晶粒实现（非 Chiplet）`,
             hint: '如果 dmesg 信息不够详细，可以安装 rocminfo（ROCm 工具）：rocminfo 会输出非常详细的 GPU 架构信息。',

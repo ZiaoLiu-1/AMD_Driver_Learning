@@ -32,7 +32,7 @@ export const module6MicroLessons: MicroLessonModule = {
             summary: 'printk 是内核中最基本的调试手段——它将消息写入内核环形缓冲区，通过 dmesg 可以读取。amdgpu 驱动使用 DRM_DEBUG 宏族和动态调试（dynamic debug）实现精细的日志控制，而 debugfs 提供了运行时检查 GPU 内部状态的文件系统接口。',
             explanation: [
               'printk 是内核的 printf，但它不输出到终端，而是写入一个固定大小的环形缓冲区（默认 128KB-1MB）。每条消息有一个日志级别（0-7）：KERN_EMERG(0) 最高优先级，KERN_DEBUG(7) 最低。内核的 console_loglevel 参数决定哪些级别的消息会输出到控制台。amdgpu 驱动使用 pr_info()、pr_err()、pr_debug() 等便捷宏，它们会自动添加模块名前缀。',
-              'DRM 子系统有自己的日志体系：DRM_DEBUG_DRIVER()、DRM_DEBUG_KMS()、DRM_DEBUG_ATOMIC() 等宏。这些宏的输出受 drm.debug 模块参数控制——这是一个位掩码：bit 1 = CORE，bit 2 = DRIVER，bit 4 = KMS，bit 5 = PRIME，bit 6 = ATOMIC，bit 8 = LEASE。例如设置 drm.debug=0x1e 会开启 DRIVER + KMS + ATOMIC 的调试输出。在 amdgpu 代码中，DRM_DEBUG_DRIVER() 是最常用的调试宏，用于打印驱动内部逻辑信息。',
+              'DRM 子系统有自己的日志体系：DRM_DEBUG_DRIVER()、DRM_DEBUG_KMS()、DRM_DEBUG_ATOMIC() 等宏。这些宏的输出受 drm.debug 模块参数控制——这是一个位掩码（十六进制标志值）：CORE=0x01，DRIVER=0x02，KMS=0x04，PRIME=0x08，ATOMIC=0x10，LEASE=0x80。例如设置 drm.debug=0x1e（0x02|0x04|0x08|0x10）会开启 DRIVER + KMS + PRIME + ATOMIC 的调试输出。在 amdgpu 代码中，DRM_DEBUG_DRIVER() 是最常用的调试宏，用于打印驱动内部逻辑信息。',
               '动态调试（dynamic debug）是 Linux 内核的强大特性，允许在运行时按模块、文件、函数或行号精确开关 pr_debug() 和 dev_dbg() 输出。通过写入 /sys/kernel/debug/dynamic_debug/control 来控制：echo "module amdgpu +p" 开启 amdgpu 所有 pr_debug 输出，echo "file amdgpu_device.c +p" 只开启特定文件。这比重新编译内核高效得多。',
               'debugfs 是一个内存文件系统（挂载在 /sys/kernel/debug/），amdgpu 驱动在其中注册了大量调试接口。路径 /sys/kernel/debug/dri/0/ 下有：amdgpu_fence_info（fence 状态——追踪 GPU 任务完成情况）、amdgpu_gpu_recover（手动触发 GPU reset）、amdgpu_ring_gfx（GFX ring buffer 内容）、amdgpu_pm_info（电源管理状态）等。这些文件是实时读取 GPU 内部状态的窗口，比 dmesg 日志更直接。',
             ],

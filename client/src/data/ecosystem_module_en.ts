@@ -85,7 +85,7 @@ Performance/Price
     │  └──────────────────────────────────────────┘
     └──────────────────────────────────────────────→ Time`,
           caption:
-            'AMD GPU three-tier product line. Consumer RX (e.g., RX 7600 XT) shares the same amdgpu kernel code as Instinct MI300 (RDNA3).',
+            'AMD GPU three-tier product line. The amdgpu kernel driver supports both the Radeon (RDNA) and Instinct (CDNA) families, but their code paths differ — MI300 is a CDNA3 datacenter architecture, not an RDNA3 consumer graphics GPU; KFD/ROCm support is prioritized for Instinct.',
         },
       },
       {

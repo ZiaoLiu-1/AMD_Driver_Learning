@@ -183,11 +183,11 @@ $ dmesg | grep -i kfd
 
 $ rocminfo | grep -A2 "Agent"
 Agent 1: CPU (gfx000)
-Agent 2: GPU (gfx1102)          ← 你的 GPU 作为 HSA Agent
+Agent 2: GPU (gfx1102)          ← 示例：受 ROCm 支持的 gfx 目标
 
 $ grep HSA_AMD /boot/config-$(uname -r)
 CONFIG_HSA_AMD=y                ← KFD 已编译进内核`,
-            hint: '如果 /dev/kfd 不存在，检查内核配置中 CONFIG_HSA_AMD 是否启用。如果使用发行版内核，大多数现代发行版默认启用此选项。ROCm 安装不是必须的——/dev/kfd 由内核 amdgpu 模块创建。',
+            hint: '如果 /dev/kfd 不存在，检查内核配置中 CONFIG_HSA_AMD 是否启用。如果使用发行版内核，大多数现代发行版默认启用此选项。ROCm 安装不是必须的——/dev/kfd 由内核 amdgpu 模块创建，与显卡型号无关。注意：rocminfo 只有在显卡位于 AMD 官方 ROCm 兼容性列表上时才会把该 GPU 枚举为 HSA Agent；Navi33（gfx1102，RX 7600 XT）目前并不在该列表上（可能需要通过 HSA_OVERRIDE_GFX_VERSION 非官方地启用），因此上面的 rocminfo 输出仅为示例。',
           },
           debugExercise: {
             title: '诊断 KFD 设备打开失败',
@@ -468,7 +468,7 @@ ioctl(4, AMDKFD_IOC_CREATE_QUEUE, ...) = -1 ENOMEM
               '传统 GPU 编程（CUDA 的早期模式）要求程序员显式管理数据传输：cudaMalloc 在 GPU 上分配内存，cudaMemcpy 在 CPU 和 GPU 之间拷贝数据。这不仅繁琐，还容易出错——忘记同步、重复拷贝、内存泄漏。SVM 的目标是消除这些手动步骤：在 CPU 上用 malloc 或 mmap 分配的内存，GPU 可以直接通过相同的虚拟地址访问；反之亦然。',
               'SVM 的实现依赖几个关键机制：（1）GPUVM 页表——每个进程在 GPU 上有独立的页表（类似 CPU 的 MMU 页表），将虚拟地址映射到物理页面（VRAM 或系统内存）。KFD 通过 amdgpu 的 VM 子系统管理这些页表。（2）PASID（Process Address Space ID）——每个进程分配一个唯一的 PASID，GPU 在发出内存访问时携带 PASID，IOMMU 和 GPUVM 用它来选择正确的页表。这实现了进程级的 GPU 内存隔离。（3）GPU page fault——当 GPU 访问的虚拟地址在 GPUVM 页表中没有有效映射时，GPU 生成 page fault 中断。KFD 的 fault handler 捕获这个中断，按需建立映射（可能触发页面迁移）。',
               '页面迁移是 SVM 的性能关键。当 GPU 频繁访问系统内存中的页面时，KFD 可以将页面迁移到 VRAM 以获得更高带宽。svm_migrate_to_vram() 执行 RAM → VRAM 迁移：（a）在 VRAM 中分配目标页面；（b）通过 SDMA 引擎复制数据；（c）更新 CPU 和 GPU 页表；（d）在 CPU 页表中安装一个 migration entry，如果 CPU 之后访问这个页面，触发 CPU page fault 把页面迁回 RAM。svm_migrate_to_ram() 是反方向的迁移。这种按需迁移机制类似于操作系统的 swap，但在 CPU 和 GPU 内存之间进行。',
-              'CPU-GPU 内存一致性（coherency）是 SVM 最复杂的部分。RDNA3 的 Navi33 支持通过 PCIe 的 cache coherency 协议（如 CCIX 的前身或 CXL 相关机制），但在实践中，KFD 提供了不同级别的一致性保证：（a）Coarse-grained：GPU 在 kernel 执行期间看到一致的快照，但不保证实时一致性——适合大多数计算场景。（b）Fine-grained：CPU 和 GPU 对同一地址的读写遵循某种顺序保证——需要硬件级别的 cache snoop，性能开销更大。ROCm 用户可以通过 hsa_amd_memory_pool_allocate 的 flags 选择一致性级别。',
+              'CPU-GPU 内存一致性（coherency）是 SVM 最复杂的部分。需要澄清的是：像 Navi33 这样的独立消费级 GPU 并不实现 CPU–GPU 硬件级 cache coherency（不支持 CCIX/CXL）；在这类显卡上，细粒度一致性是通过不可缓存（uncacheable）内存加上跨 PCIe 总线的原子操作来实现的。真正的硬件级 cache coherence 只存在于 AMD APU 和 MI300A 一类的加速器上。在实践中，KFD 提供了不同级别的一致性保证：（a）Coarse-grained：GPU 在 kernel 执行期间看到一致的快照，但不保证实时一致性——适合大多数计算场景。（b）Fine-grained：CPU 和 GPU 对同一地址的读写遵循某种顺序保证——需要硬件级别的 cache snoop，性能开销更大。ROCm 用户可以通过 hsa_amd_memory_pool_allocate 的 flags 选择一致性级别。',
             ],
             keyPoints: [
               'SVM 让 CPU/GPU 共享虚拟地址空间——CPU 指针可在 GPU kernel 中直接使用，消除显式数据拷贝',
@@ -623,8 +623,9 @@ out:
 # 需要安装 ROCm 和一个使用 managed memory 的 HIP 程序
 sudo su`,
             steps: [
-              '启用 KFD SVM 相关的 ftrace 跟踪点：echo 1 > /sys/kernel/debug/tracing/events/amdgpu/svm_migrate_start/enable',
-              '同时启用 GPU fault 事件：echo 1 > /sys/kernel/debug/tracing/events/amdgpu/amdgpu_vm_bo_cs/enable',
+              '先发现你的内核实际暴露的跟踪点（跟踪点名称随内核版本不同而变化）：ls /sys/kernel/debug/tracing/events/ | grep -i "kfd\\|amdgpu" 和 cat /sys/kernel/debug/tracing/available_events | grep -i svm，然后启用你的内核确实提供的那些跟踪点',
+              '启用 KFD SVM 相关的 ftrace 跟踪点（以下名称为示例，以你内核实际存在的为准）：echo 1 > /sys/kernel/debug/tracing/events/amdgpu/svm_migrate_start/enable',
+              '同时启用 GPU fault 事件（同样视内核版本而定）：echo 1 > /sys/kernel/debug/tracing/events/amdgpu/amdgpu_vm_bo_cs/enable',
               '运行一个使用 hipMallocManaged 的 HIP 程序',
               '查看 ftrace 日志：cat /sys/kernel/debug/tracing/trace | grep svm',
               '观察迁移统计：cat /sys/class/drm/card0/device/kfd/proc/*/svm_stats（如果可用）',

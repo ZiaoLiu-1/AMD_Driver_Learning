@@ -90,7 +90,7 @@ int amdgpu_bo_create(struct amdgpu_device *adev,
           "Run radeontop for real-time monitoring: sudo radeontop -d -",
           "Observe how VRAM usage changes while running a 3D application"
         ],
-      expectedOutput: "mem_info_vram_used: 512000000 (~512 MB)\nmem_info_gtt_used: 128000000 (~128 MB)\nmem_info_vram_total: 8589934592 (8 GB for RX 7600 XT)"
+      expectedOutput: "mem_info_vram_used: 512000000 (~512 MB)\nmem_info_gtt_used: 128000000 (~128 MB)\nmem_info_vram_total: 17179869184 (16 GB for RX 7600 XT)"
     },
     debugExercise: {
       title: "Memory Domain Allocation Error",
@@ -260,8 +260,8 @@ void submit_commands(struct amdgpu_ring *ring, int count)
     duration: "15 min",
     summary: "In the AMDGPU driver, choosing the correct memory domain is critical for performance. VRAM is best for resources the GPU accesses frequently (textures, framebuffers); GTT is best for data shared between CPU and GPU (uniform buffers, staging buffers). This lesson analyzes the performance characteristics and appropriate use cases for each.",
     keyPoints: [
-          "VRAM bandwidth: GDDR6 ~288 GB/s (RX 7600 XT), HBM2e ~1.2 TB/s (MI300X)",
-          "GTT bandwidth: limited by PCIe, ~32 GB/s bidirectional on PCIe 4.0 x16",
+          "VRAM bandwidth: GDDR6 ~288 GB/s (RX 7600 XT), GDDR6 ~960 GB/s (RX 7900 XTX)",
+          "GTT bandwidth: limited by PCIe, ~16 GB/s one-way on PCIe 4.0 x8 (~32 GB/s aggregate)",
           "VRAM is ideal for: textures, render targets, depth buffers, shader buffers with frequent read/write",
           "GTT is ideal for: uniform buffers (frequently updated by the CPU), staging buffers (CPU-to-GPU data transfer)",
           "Resizable BAR (ReBAR): lets the CPU access all VRAM directly, eliminating the GTT relay"
@@ -606,7 +606,7 @@ int amdgpu_device_gpu_recover(struct amdgpu_device *adev,
     r = amdgpu_do_asic_reset(adev, reset_context);
 
     /* 4. Post-reset recovery */
-    amdgpu_reset_capture_coredumpm(adev);
+    amdgpu_reset_capture_coredump(adev);
 
     /* 5. Notify applications that the reset is complete */
     drm_sched_start(&ring->sched, true);

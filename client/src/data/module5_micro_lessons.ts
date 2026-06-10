@@ -1827,7 +1827,7 @@ sudo mount -t debugfs none /sys/kernel/debug 2>/dev/null
 # 准备 GPU 工作负载
 sudo apt install -y mesa-utils vulkan-tools`,
             steps: [
-              '查看调度器状态：sudo cat /sys/kernel/debug/dri/0/amdgpu_gpu_recover 2>/dev/null',
+              '列出调度器/Ring 相关的 debugfs 文件：ls /sys/kernel/debug/dri/0/  （警告：切勿 cat amdgpu_gpu_recover——读取它会强制触发一次完整的 GPU reset 并丢失所有在途任务，它是复位触发器而非状态文件）',
               '查看每个 Ring 的 fence 信息：sudo cat /sys/kernel/debug/dri/0/amdgpu_fence_info',
               '设置 ftrace 追踪调度器：echo amdgpu_job_run > /sys/kernel/tracing/set_ftrace_filter',
               '启用追踪并运行 GPU 负载：echo function_graph > /sys/kernel/tracing/current_tracer && echo 1 > /sys/kernel/tracing/tracing_on && glxgears & sleep 3 && kill %1',

@@ -224,7 +224,7 @@ __global__ void broken_kernel(float *out, int n) {
  * ScratchSize: 4096  ← spill to scratch memory
  */`,
             hint: '每个 CU 的 VGPR 总数有限，如果每个 Wavefront 使用太多 VGPR，GPU 只能同时运行很少的 Wavefront（低 Occupancy）。1024 个 float 的栈分配对 GPU 来说意味着什么？',
-            answer: '问题：在 GPU kernel 中分配了 1024 个 float 的本地数组（4KB），远超单个线程可用的寄存器空间。AMDGPU 每个 CU 有 256 个 VGPR（RDNA3），每个 VGPR 是 32 位。1024 个 float 需要 1024 个 VGPR，远超上限。编译器被迫将大部分数据 spill 到 scratch memory（GPU 的栈内存，位于 VRAM），导致：(1) ScratchSize 非零，表示发生了寄存器溢出；(2) 性能急剧下降——scratch 访问延迟是寄存器的 100 倍以上；(3) Occupancy 降至最低，因为 scratch buffer 也占用资源。这个问题在 LLVM AMDGPU 后端的 register allocation 阶段暴露。修复方法：用 __shared__（LDS）替代大数组，或用循环分块处理避免一次性分配大数组。在 GPU 编程中，私有数组应尽量小（<16 元素）以确保编译器能将其完全放入寄存器。',
+            answer: '问题：在 GPU kernel 中分配了 1024 个 float 的本地数组（4KB），远超单个线程可用的寄存器空间。在 RDNA3 上，单个 wave 最多只能寻址 256 个 VGPR（每个 VGPR 是 32 位）。一个 1024 元素的私有数组意味着每条 lane 需要约 1024 个 VGPR，远超 256 个/wave 的寻址上限。编译器被迫将大部分数据 spill 到 scratch memory（GPU 的栈内存，位于 VRAM），导致：(1) ScratchSize 非零，表示发生了寄存器溢出；(2) 性能急剧下降——scratch 访问延迟是寄存器的 100 倍以上；(3) Occupancy 降至最低，因为 scratch buffer 也占用资源。这个问题在 LLVM AMDGPU 后端的 register allocation 阶段暴露。修复方法：用 __shared__（LDS）替代大数组，或用循环分块处理避免一次性分配大数组。在 GPU 编程中，私有数组应尽量小（<16 元素）以确保编译器能将其完全放入寄存器。',
           },
           interviewQ: {
             question: '描述 LLVM 的三段式架构和其核心设计理念。为什么 AMD GPU 编译器选择基于 LLVM？',
@@ -692,7 +692,7 @@ s_endpgm`,
               'Uniformity Analysis 是编译器决定数据放 VGPR 还是 SGPR 的关键分析。如果一个值在 Wavefront 的所有线程中相同（uniform），它应该放在 SGPR 中。例如 kernel 参数、循环变量、blockDim.x 都是 uniform 的。如果一个值在不同线程中不同（divergent），它必须放在 VGPR 中。例如 threadIdx.x、a[threadIdx.x] 的加载结果都是 divergent 的。编译器的 Uniformity Analysis Pass 追踪每个值的 uniform/divergent 属性，并将结果传递给寄存器分配器。',
               'VGPR 使用量与 Occupancy（占用率）直接相关。Occupancy 是指 CU 上同时活跃的 Wavefront 数量与最大值的比率。RDNA3 每个 CU 最多同时运行 16 个 wave32。如果 kernel 使用 48 个 VGPR，那么 1536÷48=32 个 wave 可以共存，但由于上限是 16，所以 Occupancy=16/16=100%。如果使用 128 个 VGPR，则 1536÷128=12 个 wave，Occupancy=12/16=75%。如果使用 256 个 VGPR，只有 6 个 wave，Occupancy=6/16=37.5%。更低的 Occupancy 意味着更少的 Wavefront 可以隐藏内存延迟，通常导致性能下降。',
               '当 kernel 需要的寄存器超过可用量时，编译器被迫将部分寄存器值 spill（溢出）到 scratch memory。Scratch memory 是 VRAM 中为每个线程预留的栈空间，访问延迟比寄存器高 100 倍以上。Spill 的表现：编译输出中 .amdhsa_private_segment_fixed_size > 0（表示需要 scratch 空间）、汇编中出现 scratch_load/scratch_store 指令（将 VGPR 值保存到 scratch 并在需要时恢复）。寄存器压力是 GPU 编程中最重要的性能因素之一——减少 VGPR 使用（通过减少活跃变量、重组计算、使用 LDS 替代私有数组）是 GPU 性能优化的核心技巧。',
-              'The AMDGPU backend\'s wave size selection is controlled by the amdgpu-waves-per-eu attribute and target features. For RDNA GPUs (gfx10+), the compiler defaults to Wave32 for pixel shaders (better for small triangles with high divergence) and Wave64 for compute shaders (better throughput for uniform workloads). This is configured in AMDGPUSubtarget::getWavesPerEU() and affects register allocation pressure — Wave32 halves the VGPR file consumption compared to Wave64 for the same number of active waves. Game developers often force Wave32 for all shaders on RDNA, while HPC developers prefer Wave64 for maximum ALU throughput.',
+              'AMDGPU 后端的 wave size 选择由 amdgpu-waves-per-eu 属性和 target features 控制。对于 RDNA GPU（gfx10+），编译器对 pixel shader 默认使用 Wave32（更适合高发散度的小三角形），对 compute shader 默认使用 Wave64（对均匀负载有更好的吞吐）。这一选择在 AMDGPUSubtarget::getWavesPerEU() 中配置，并影响寄存器分配压力——在相同活跃 wave 数量下，Wave32 相比 Wave64 将 VGPR 文件消耗减半。游戏开发者在 RDNA 上常常强制所有 shader 使用 Wave32，而 HPC 开发者则更偏好 Wave64 以获得最大的 ALU 吞吐。',
             ],
             keyPoints: [
               'VGPR：每线程私有，RDNA3 每 CU 有 1536 个（wave32 分配单位），存储 divergent 数据',
@@ -813,7 +813,7 @@ _Z10vector_addPKfS0_Pfi:
               '编写 simple kernel（vector_add）和 complex kernel（使用大量局部变量），分别编译为汇编',
               '对 simple kernel：grep "amdhsa_next_free_vgpr" simple.s，记录 VGPR 数量',
               '对 complex kernel：故意创建 30+ 个局部 float 变量的 kernel，编译并查看 VGPR 使用量',
-              '使用 ROCm 工具计算 Occupancy：rocm-smi --showoccupancy 或手动计算 1536÷VGPR_count',
+              '计算 Occupancy：从编译器的 VGPR/SGPR 资源报告获取（.kd / ISA 元数据，或编译时加 --save-temps 查看），或用 profiler（rocprof / Omniperf），或手动计算 1536÷VGPR_count 得到每个 SIMD 的最大 wave 数',
               '编译时添加 -Rpass-analysis=regalloc 查看寄存器分配详情',
               '观察 .amdhsa_private_segment_fixed_size 是否 > 0（表示发生了 spill）',
             ],

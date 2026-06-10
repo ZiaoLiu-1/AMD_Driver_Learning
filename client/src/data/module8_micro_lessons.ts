@@ -177,9 +177,12 @@ int main()
           },
           miniLab: {
             title: '编译运行你的第一个 HIP 程序',
-            objective: '在 RX 7600 XT 上编译并运行 vector_add.hip，测量不同 Block 大小对性能的影响。',
-            setup: `# 安装 ROCm（如果尚未安装）
-# 参考 https://rocm.docs.amd.com/en/latest/deploy/linux/installer/install.html
+            objective: '在受 ROCm 支持的 GPU 上编译并运行 vector_add.hip，测量不同 Block 大小对性能的影响。注意：RX 7600 XT（Navi33/gfx1102）不在 AMD 官方 ROCm 支持列表中——请先核对 ROCm on Radeon 兼容性矩阵；在不受支持的显卡上，HIP/ROCm 可能无法运行，或需要 HSA_OVERRIDE_GFX_VERSION（非官方、不保证可用）。',
+            setup: `# 仅当你的 GPU 在官方兼容性矩阵中时再安装 ROCm：
+#   https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibility.html
+# 安装参考：https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html
+# 截至 ROCm 7.2，RX 7600 XT（gfx1102）并不在官方支持列表中——可能需要：
+#   export HSA_OVERRIDE_GFX_VERSION=11.0.0   （非官方，不保证可用）
 sudo apt install rocm-hip-sdk
 
 # 验证 HIP 环境
@@ -251,13 +254,13 @@ int main()
           concept: {
             summary: 'GPU 拥有深层的内存层次结构——从最快的寄存器到最慢的系统内存——每一层的延迟和带宽相差数十倍。理解这个层次结构并选择正确的内存分配策略（hipMalloc vs hipHostMalloc vs hipMallocManaged），是写出高性能 HIP 程序的关键。',
             explanation: [
-              'GPU 的内存层次结构从快到慢依次为：（1）寄存器（Register）：每个线程私有，访问延迟 ~1 cycle，RDNA3 每个 CU 有 192KB VGPR（向量通用寄存器）；（2）LDS（Local Data Share）：Block 内共享，延迟 ~4-10 cycles，每个 CU 64KB，等价于 CUDA 的 shared memory；（3）L1 缓存：每个 CU 独有，16-32KB，自动缓存全局内存访问；（4）L2/Infinity Cache：L2 本体约 2MB，外加 32MB Infinity Cache（作为末级缓存），二者共同减少对 VRAM 的访问（RDNA3 的 Infinity Cache 是带宽关键）；（5）VRAM（显存）：GPU 本地高带宽内存，8GB GDDR6，带宽 ~288 GB/s；（6）系统内存（System RAM）：通过 PCIe 总线访问，带宽仅 ~32 GB/s（PCIe 4.0 x16）。',
+              'GPU 的内存层次结构从快到慢依次为：（1）寄存器（Register）：每个线程私有，访问延迟 ~1 cycle，RDNA3 每个 CU 有 192KB VGPR（向量通用寄存器）；（2）LDS（Local Data Share）：Block 内共享，延迟 ~4-10 cycles，每个 CU 64KB，等价于 CUDA 的 shared memory；（3）L1 缓存：每个 CU 独有，16-32KB，自动缓存全局内存访问；（4）L2/Infinity Cache：L2 本体约 2MB，外加 32MB Infinity Cache（作为末级缓存），二者共同减少对 VRAM 的访问（RDNA3 的 Infinity Cache 是带宽关键）；（5）VRAM（显存）：GPU 本地高带宽内存，16GB GDDR6，带宽 ~288 GB/s；（6）系统内存（System RAM）：通过 PCIe 总线访问，RX 7600 XT 为 PCIe 4.0 x8，单向带宽仅 ~16 GB/s。',
               '选择正确的 HIP 内存分配函数至关重要：hipMalloc() 在 GPU VRAM 上分配内存，是最常用的方式，GPU 访问速度最快但 CPU 无法直接访问；hipHostMalloc() 在 CPU 端分配 pinned（page-locked）内存，可通过 hipHostMallocMapped 标志使其同时被 GPU 通过 PCIe 直接访问——这避免了显式的 hipMemcpy，但 GPU 访问速度受 PCIe 带宽限制；hipMallocManaged() 分配统一虚拟地址（Managed Memory），CPU 和 GPU 可以用同一个指针访问，运行时自动在 CPU/GPU 之间迁移数据（通过 page fault），开发简单但性能可能不如手动管理。',
               'Pinned memory（页锁定内存）对 DMA 传输至关重要。普通的 malloc 分配的内存可能被操作系统 swap 到磁盘，GPU 的 DMA 引擎无法直接访问这种内存。hipHostMalloc 分配的内存被锁定在物理 RAM 中（mlock），DMA 引擎可以直接在 PCIe 上传输，避免了操作系统的一次内存拷贝。这就是为什么 hipMemcpy 在使用 pinned 内存时比普通内存快 2-3 倍。',
               'HIP Stream 是实现异步执行和数据传输重叠的核心机制。一个 Stream 代表一个有序的操作序列（拷贝/核函数），不同 Stream 之间的操作可以并行执行。典型的双缓冲模式：Stream 0 执行当前批次的核函数时，Stream 1 同时传输下一批次的数据。hipMemcpyAsync() 发起异步数据传输（需要 pinned memory），hipStreamCreate/hipStreamSynchronize 管理 Stream 的生命周期。在底层，每个 Stream 对应 KFD 创建的一个 HSA 队列。',
             ],
             keyPoints: [
-              '内存层次：Register (~1cy) > LDS (~10cy) > L1 > L2 (32MB) > VRAM (288GB/s) > System (32GB/s)',
+              '内存层次：Register (~1cy) > LDS (~10cy) > L1 > L2 (~2MB) + Infinity Cache (32MB 末级) > VRAM (288GB/s) > System (PCIe 4.0 x8, ~16GB/s)',
               'hipMalloc → GPU VRAM，GPU 快速访问，CPU 不可直接访问',
               'hipHostMalloc → CPU pinned memory，可被 GPU 通过 PCIe 访问，DMA 传输效率最高',
               'hipMallocManaged → 统一虚拟地址，自动迁移，方便但性能开销较大',
@@ -287,17 +290,17 @@ int main()
 └────┬────┘
      │
 ┌────▼────┐
-│ L2 Cache│    ~100 cy      ~800 GB/s          32MB      全 GPU 共享
-│ (RDNA3) │    ← RDNA3 大 L2 是性能关键!       (大缓存!)
+│ Inf.Cache│   ~100 cy      ~800 GB/s          32MB      全 GPU 共享
+│ (RDNA3) │    ← Infinity Cache（末级缓存）是带宽关键! (L2 本体 ~2MB)
 └────┬────┘
      │
 ┌────▼────┐
-│  VRAM   │    ~300 cy      ~288 GB/s          8GB       GPU 全局
+│  VRAM   │    ~300 cy      ~288 GB/s          16GB      GPU 全局
 │ (GDDR6) │    hipMalloc 分配在此              GDDR6
 └────┬────┘
-     │  PCIe 4.0 x16 (~32 GB/s)  ← 传输瓶颈!
+     │  PCIe 4.0 x8 (~16 GB/s)  ← 传输瓶颈!
 ┌────▼────┐
-│ System  │    ~1000+ cy    ~32 GB/s           ≥16GB     CPU 全局
+│ System  │    ~1000+ cy    ~16 GB/s           ≥16GB     CPU 全局
 │  RAM    │    hipHostMalloc (pinned)          DDR5
 └─────────┘
 
@@ -381,13 +384,13 @@ __global__ void matmul_tiled(const float *A, const float *B,
               '方案 1: malloc + hipMalloc + hipMemcpy(H2D)，用 hipEventElapsedTime 计时',
               '方案 2: hipHostMalloc(flagDefault) + hipMalloc + hipMemcpy(H2D)',
               '方案 3: hipMallocManaged，直接在核函数中访问（触发自动迁移），测量核函数首次执行时间',
-              '计算每种方案的有效带宽（GB/s）并与 PCIe 4.0 x16 理论带宽 (~32 GB/s) 对比',
+              '计算每种方案的有效带宽（GB/s）并与 PCIe 4.0 x8 理论带宽 (~16 GB/s) 对比',
               '在方案 2 基础上使用 hipMemcpyAsync + 双 Stream 实现计算与传输重叠',
             ],
-            expectedOutput: `预期结果（RX 7600 XT, PCIe 4.0 x16）：
-方案 1 (普通 malloc):  ~12 GB/s   ← 有额外的 staging copy
-方案 2 (pinned):       ~25 GB/s   ← 接近 PCIe 理论带宽
-方案 3 (managed):      首次 ~8 GB/s ← page fault + migration 开销大
+            expectedOutput: `预期结果（RX 7600 XT, PCIe 4.0 x8）：
+方案 1 (普通 malloc):  ~6 GB/s    ← 有额外的 staging copy
+方案 2 (pinned):       ~13 GB/s   ← 接近 PCIe 4.0 x8 理论带宽 (~16 GB/s)
+方案 3 (managed):      首次 ~4 GB/s ← page fault + migration 开销大
 双 Stream 重叠:        吞吐提升 30-40%`,
             hint: '用 hipEventCreate/Record/ElapsedTime 计时比 clock() 更准确，因为它测量的是 GPU 端时间。hipMallocManaged 的性能很依赖访问模式——如果 CPU 和 GPU 交替访问同一页，性能会严重下降（ping-pong migration）。',
           },
@@ -422,8 +425,8 @@ hipStreamSynchronize(stream);
             question: '描述 GPU 的内存层次结构，以及如何选择 hipMalloc、hipHostMalloc 和 hipMallocManaged。',
             difficulty: 'medium',
             hint: '从延迟/带宽/大小/作用域描述每层内存，然后根据使用场景推荐分配策略。',
-            answer: 'GPU 内存层次（从快到慢）：（1）Register：线程私有，~1 cycle，编译器自动分配局部变量；（2）LDS/Shared Memory：Block 共享，~10 cycles，64KB/CU，__shared__ 显式管理，用于线程间数据复用（如 tiled matmul）；（3）L1 Cache：CU 私有，~20 cycles，硬件自动缓存；（4）L2 Cache：全 GPU 共享，~100 cycles，RDNA3 上 32MB，是全局内存访问的缓冲；（5）VRAM：~300 cycles，GPU 本地显存；（6）System RAM：~1000+ cycles，通过 PCIe 访问。分配策略选择：hipMalloc 分配 VRAM——适用于 GPU 密集计算的数据，访问最快，是默认选择；hipHostMalloc 分配 pinned host memory——适用于 DMA 传输缓冲区和 CPU-GPU 频繁交换的小数据，还可用 hipHostMallocMapped 使 GPU 通过 PCIe 零拷贝访问；hipMallocManaged 分配统一地址空间内存——适用于快速原型开发或数据访问模式不规则的场景，运行时通过 page fault 自动迁移，但有迁移延迟开销。生产代码中推荐 hipMalloc + hipHostMalloc 组合，用 stream 实现传输与计算重叠。',
-            amdContext: '这道题测试你对 GPU 内存系统的全面理解。面试时特别要提到 RDNA3 的大 L2（32MB），这是 AMD 相对于 NVIDIA 的设计差异之一。',
+            answer: 'GPU 内存层次（从快到慢）：（1）Register：线程私有，~1 cycle，编译器自动分配局部变量；（2）LDS/Shared Memory：Block 共享，~10 cycles，64KB/CU，__shared__ 显式管理，用于线程间数据复用（如 tiled matmul）；（3）L1 Cache：CU 私有，~20 cycles，硬件自动缓存；（4）L2 + Infinity Cache：全 GPU 共享，~100 cycles，Navi33 上 L2 本体约 2MB、其后是 32MB Infinity Cache 末级缓存，共同缓冲对 VRAM 的访问；（5）VRAM：~300 cycles，GPU 本地显存；（6）System RAM：~1000+ cycles，通过 PCIe 访问。分配策略选择：hipMalloc 分配 VRAM——适用于 GPU 密集计算的数据，访问最快，是默认选择；hipHostMalloc 分配 pinned host memory——适用于 DMA 传输缓冲区和 CPU-GPU 频繁交换的小数据，还可用 hipHostMallocMapped 使 GPU 通过 PCIe 零拷贝访问；hipMallocManaged 分配统一地址空间内存——适用于快速原型开发或数据访问模式不规则的场景，运行时通过 page fault 自动迁移，但有迁移延迟开销。生产代码中推荐 hipMalloc + hipHostMalloc 组合，用 stream 实现传输与计算重叠。',
+            amdContext: '这道题测试你对 GPU 内存系统的全面理解。面试时特别要提到 RDNA3 的大容量 Infinity Cache（32MB 末级缓存，L2 本体约 2MB），这是 AMD 相对于 NVIDIA 的设计差异之一。',
           },
         },
       ],

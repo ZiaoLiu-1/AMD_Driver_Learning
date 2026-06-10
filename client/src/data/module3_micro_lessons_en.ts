@@ -304,7 +304,7 @@ amdgpu_pci_probe(pdev, ent)          │  amdgpu_pci_remove(pdev)
  │                          │        │   │                          │
  │ ③ pci_ioremap_bar(0)     │        │   │ ③ pci_clear_master()     │
  │   Map VRAM BAR           │        │   │   Disable DMA            │
- │   pci_ioremap_bar(2)     │        │   │                          │
+ │   pci_ioremap_bar(5)     │        │   │                          │
  │   Map register BAR       │        │   │ ② pci_release_regions()  │
  │                          │        │   │   Release PCI resources  │
  │ ④ amdgpu_device_init()   │        │   │                          │

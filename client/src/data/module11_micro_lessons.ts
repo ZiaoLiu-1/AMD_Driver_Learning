@@ -33,11 +33,11 @@ export const module11MicroLessons: MicroLessonModule = {
             explanation: [
               'Linux 内核是世界上最大的协作开源项目之一，但它不使用 GitHub/GitLab 的 Pull Request 模式。所有补丁通过电子邮件提交和审查——这是 Linus Torvalds 从 2002 年至今坚持的方式。对于 amdgpu 驱动，补丁发送到 amd-gfx@lists.freedesktop.org 邮件列表，由 AMD 的维护者（Alex Deucher、Harry Wentland 等）审查。',
               'git format-patch 是生成补丁文件的标准命令。它将你的 git commit 转换为标准的邮件格式文件（.patch）。常用方式：git format-patch HEAD~1 生成最近一个提交的补丁，git format-patch -3 生成最近 3 个提交的补丁系列。对于补丁系列，git format-patch 会自动添加编号（[PATCH 1/3]、[PATCH 2/3]、[PATCH 3/3]）并生成一封封面邮件（cover letter）。',
-              'scripts/checkpatch.pl 是内核的代码风格检查脚本。在发送补丁之前，必须运行它来检查代码是否符合内核编码规范。运行方式：scripts/checkpatch.pl 0001-your-patch.patch。它会检查：缩进（必须用 Tab，8 字符宽）、行长度（不超过 100 字符）、空格使用（if 后面必须有空格）、commit message 格式（Subject 不超过 75 字符）等。目标是 0 errors, 0 warnings。少量 WARNING 在合理情况下可以接受（如超长的字符串常量），但 ERROR 必须修复。',
+              'scripts/checkpatch.pl 是内核的代码风格检查脚本。在发送补丁之前，应当运行它来检查常见的格式和风格问题。运行方式：scripts/checkpatch.pl 0001-your-patch.patch。它会检查缩进、空格使用以及常见的补丁格式问题等。官方内核文档仍将 80 列描述为推荐的代码风格上限，而补丁邮件正文一般在约 75 列处换行，Subject 摘要通常控制在 70-75 个字符以内。checkpatch 的输出应被视为一种参考，而非绝对可靠的规则引擎：ERROR 通常需要修复，而部分 WARNING 在合理情况下可以接受。',
               'scripts/get_maintainer.pl 帮你找到应该将补丁发送给谁。运行方式：scripts/get_maintainer.pl 0001-your-patch.patch。它分析补丁修改的文件，从 MAINTAINERS 文件中查找对应的维护者和邮件列表。对于 amdgpu 补丁，通常输出 Alex Deucher（维护者）、amd-gfx@lists.freedesktop.org（邮件列表）等。你需要将他们添加到 git send-email 的 To/Cc 列表中。',
               'git send-email 将补丁文件通过 SMTP 发送到邮件列表。首次使用需要配置 SMTP 服务器：git config --global sendemail.smtpserver smtp.gmail.com 等。发送补丁系列时：git send-email --to amd-gfx@lists.freedesktop.org --cc alex.deucher@amd.com 0001-*.patch。补丁发送后，维护者和社区成员会在邮件列表上回复 Review 意见。如果需要修改，发送 v2 版本：git format-patch --subject-prefix="PATCH v2" HEAD~1。',
               '补丁版本迭代（v2/v3...）是常见的流程。v2 补丁应该在 commit message 末尾（--- 分隔符之后）添加 changelog，说明 v1 到 v2 的变更。封面邮件也应该更新 changelog。保持耐心和专业——大多数补丁需要 2-3 轮迭代才能被接受。',
-              'Since 2023, the b4 tool (https://b4.docs.kernel.org/) has become the recommended way to send kernel patches, replacing the manual git send-email workflow. b4 automates: retrieving maintainer lists, formatting cover letters, threading patch series, and tracking versions. Key commands: b4 prep (prepare a patch series from commits), b4 send (send the series to the correct mailing lists), b4 trailers (collect Reviewed-by/Acked-by from replies). Many AMD engineers now use b4 as their daily tool. While git send-email still works and is widely documented, showing familiarity with b4 in an interview signals that your knowledge is current.',
+              'b4 工具（https://b4.docs.kernel.org/）如今已被广泛用作内核补丁工作流的辅助工具。它可以自动完成维护者查找、封面邮件准备、补丁线程处理以及 trailer 收集等工作。关键命令包括 b4 prep、b4 send 和 b4 trailers。不过，应该把它看作一个额外的工作流工具，而不是 git send-email 的通用替代品，因为官方的内核提交指南仍然直接记录了基于邮件的提交方式。',
             ],
             keyPoints: [
               'Linux 内核通过邮件列表提交补丁，不使用 Pull Request',
@@ -46,7 +46,7 @@ export const module11MicroLessons: MicroLessonModule = {
               'scripts/get_maintainer.pl 找到正确的维护者和邮件列表',
               'git send-email 发送到 amd-gfx@lists.freedesktop.org 邮件列表',
               'v2/v3 版本迭代：--subject-prefix="PATCH v2"，附加 changelog',
-              'b4 is the modern (2023+) patch sending tool — automates maintainer lookup, threading, and version tracking',
+              'b4 是一个补丁发送辅助工具——可自动完成维护者查找、线程处理和版本追踪',
             ],
           },
           diagram: {
@@ -523,7 +523,7 @@ old one was wrong. Also fixed a typo in the comment nearby.
 Signed-off-by: developer <dev@company.com>
 Fixes: some old commit`,
             hint: '检查 Subject 格式（前缀、大小写、长度）、Body 内容（what vs how）、Fixes 标签格式、以及是否应该将两个不同的修改放在同一个补丁中。',
-            answer: '问题清单：（1）Subject 缺少子系统前缀——应该是 "drm/amdgpu: fix SDMA register offset for ..."。（2）Subject 以大写字母开头——应该小写 "fix"。（3）Subject 太笼统——"bug that was causing issues" 没有描述具体问题。（4）Body 解释了 How（"changed the register offset from 0x1234 to 0x1238"）而非 Why——应该解释为什么旧偏移量是错的（如"硬件规格书勘误"或"RDNA3 改变了寄存器布局"）。（5）Fixes 标签格式完全错误——应该是 Fixes: <12位hash> ("原始 Subject")，而不是 "some old commit"。（6）将两个不同的修改（寄存器修复 + typo 修复）放在同一个补丁中——内核规范要求每个补丁只做一件事（One logical change per patch）。应该拆分为两个独立的补丁。正确版本：Subject: drm/amdgpu: fix SDMA doorbell offset on RDNA3。Body: "The SDMA doorbell register offset was incorrect for RDNA3 GPUs (gfx11). The hardware reference manual (v4.2, Table 3.7) specifies offset 0x1238 for SDMA0_DOORBELL, but the driver used 0x1234 which was the GCN5 offset. This caused SDMA ring timeouts on RX 7600 XT." + 独立的 typo 修复补丁。',
+            answer: '问题清单：（1）Subject 缺少子系统前缀——应该是 "drm/amdgpu: fix SDMA register offset for ..."。（2）Subject 以大写字母开头——应该小写 "fix"。（3）Subject 太笼统——"bug that was causing issues" 没有描述具体问题。（4）Body 解释了 How（"changed the register offset from 0x1234 to 0x1238"）而非 Why——应该解释支持这个修改的证据，例如相关的硬件代际差异、驱动回归，或能够证明旧值是错的代码路径。（5）Fixes 标签格式完全错误——应该是 Fixes: <12位hash> ("原始 Subject")，而不是 "some old commit"。（6）将两个不同的修改（寄存器修复 + typo 修复）放在同一个补丁中——内核规范要求每个补丁只做一件事（One logical change per patch）。应该拆分为两个独立的补丁。正确版本：Subject: drm/amdgpu: fix SDMA doorbell offset on RDNA3。Body: "The SDMA doorbell register offset used by this path is incorrect for the target RDNA3 hardware and can lead to SDMA ring timeouts. Use the RDNA3-specific value and leave the nearby typo cleanup as a separate patch." + 独立的 typo 修复补丁。',
           },
           interviewQ: {
             question: '一个内核 commit message 应该包含什么信息？解释 Signed-off-by、Reviewed-by 和 Fixes 标签的含义。',
@@ -779,17 +779,17 @@ Projects:
           difficulty: 'beginner',
           tags: ['AMD', 'interview', 'career', 'STAR', 'salary'],
           concept: {
-            summary: 'AMD 的 GPU 驱动工程师面试包含技术深度考察和行为面试两部分。不同团队（Display/3D/Compute/PM/Toolchain）的考察重点不同。本节详细分析 AMD 的团队结构、常见面试题型、STAR 行为面试法和薪资范围，帮助你做出有针对性的准备。',
+            summary: 'AMD 的 GPU 驱动面试通常将技术深度与行为评估结合在一起。Display、Graphics、Compute、Power Management、Infrastructure 等不同子领域往往各有侧重。本节应被视为方向性的备考指引，而不是关于组织架构或薪酬的官方事实来源。',
             explanation: [
-              'AMD 的 GPU 驱动开发主要集中在两个地点：加拿大 Markham（多伦多附近，AMD 总部之一）和中国上海（AMD 上海研发中心）。两个办公室都有完整的驱动团队。Markham 团队规模更大，是 amdgpu 驱动的核心开发基地。上海团队近年来快速扩张，特别是在显示（DC）和计算（KFD/ROCm）方向。',
-              '团队结构和面试重点：（1）Display Team（显示团队）— 负责 DC（Display Core）模块，处理模式设置（KMS）、HDMI/DP 输出、HDR、FreeSync/VRR。面试重点：DRM KMS API、atomic commit、CRTC/Plane/Connector 概念、色彩管理、VBlank 和 Page Flip。Alex Deucher 和 Harry Wentland 是这个团队的关键人物。（2）3D/Graphics Team（图形团队）— 负责 GFX 引擎相关代码：命令提交（CS）、Ring Buffer 管理、GPU 调度（scheduler）、VM（虚拟内存）管理。面试重点：PM4 命令包、Ring Buffer 工作原理、GPU 调度策略、TLB 管理。Christian König 是这个领域的专家。（3）Compute/KFD Team（计算团队）— 负责 KFD（Kernel Fusion Driver）和 ROCm 支持：HSA（Heterogeneous System Architecture）队列、GPU 计算调度、SVM（Shared Virtual Memory）。面试重点：GPU 计算模型、HSA 架构、GPUVM、进程间 GPU 隔离。（4）Power Management Team（电源管理团队）— 负责 SMU（System Management Unit）驱动、DVFS（动态调频调压）、电源状态管理。面试重点：GPU 电源状态（D0/D3）、频率/电压调节、thermal throttling。（5）Toolchain/Infra Team（工具链/基础设施团队）— 负责 CI 系统、测试框架、构建系统、固件工具。面试重点：CI 架构、IGT 框架、内核构建系统、自动化测试策略。',
+              'AMD 在多个地点都有公开的工程团队，但具体的团队分布、组织架构和职责边界会随时间变化，除非从当前公开的招聘信息或官方组织资料中得到确认，否则不应将其当作固定的事实来呈现。',
+              '一种更稳妥的备考思路是按技术领域而非精确的团队架构图来准备：显示方向的岗位侧重 DRM/KMS、atomic modesetting 和显示流水线；图形方向侧重命令提交、调度和内存管理；计算方向侧重 KFD、HSA、GPUVM 和 ROCm 相关概念；电源管理方向侧重 SMU、DVFS 以及热/电源状态；基础设施方向侧重 CI、测试、构建系统和自动化。',
               '技术面试通常包含：（1）基础知识——Linux 内核基础（内存管理、进程调度、中断处理、锁机制）、C 语言深度（指针运算、内存对齐、volatile/const 语义、位操作）。（2）GPU 驱动知识——DRM/KMS 框架、amdgpu 驱动架构、IP Block 概念、你在 Portfolio 中展示的项目的深度追问。（3）系统设计/调试——给你一个 GPU hang 的 dmesg 日志让你分析根因、设计一个新的驱动功能、分析一段有 bug 的内核代码。（4）编码——通常不是 LeetCode 算法题，而是内核风格的 C 代码：实现一个链表操作、写一个 ioctl handler、分析一段有竞态条件的代码。',
               '行为面试使用 STAR 方法（Situation-Task-Action-Result）：（1）Situation：描述背景和挑战；（2）Task：你的具体任务；（3）Action：你采取的行动；（4）Result：产生的结果和学到的教训。常见问题：描述一次你调试复杂 bug 的经历、你如何处理技术分歧、你如何学习新技术领域。即使你的例子不是来自 GPU 驱动（而是来自其他开发经历），展示系统化的思维过程比具体领域更重要。',
-              '薪资参考（2024-2025 年，仅供参考，实际因级别/经验/地点不同而异）：Markham（加拿大）— Junior/New Grad: CAD 80-100K，Mid-level (3-5 yrs): CAD 110-140K，Senior (5-10 yrs): CAD 140-180K+。上海（中国）— Junior: RMB 25-35W/年（含奖金），Mid-level: RMB 35-55W/年，Senior: RMB 55-80W/年。美国（如果有 Remote 或 US 岗位）— Junior: USD 100-130K，Mid-level: USD 130-170K，Senior: USD 170-220K+。这些数字不包含 RSU（股票奖励）和年终奖金。AMD 的股票激励近年来价值可观。',
+              '薪资、办公地点范围和面试流程都高度依赖时间和地点，变化很快。任何关于薪资或团队结构的参考都应当来自当前公开的招聘信息、招聘人员的沟通以及可信的薪酬数据，而不应被当作长期稳定的技术内容来对待。',
             ],
             keyPoints: [
-              'AMD 驱动团队：Display / 3D-Graphics / Compute-KFD / Power-Management / Toolchain',
-              '主要地点：加拿大 Markham（核心）和中国上海（快速扩张）',
+              'AMD 驱动工作通常涵盖显示、图形、计算、电源管理和基础设施/测试等领域',
+              '具体地点和汇报结构应以当前公开招聘信息为准核实，不应当作固定事实',
               '技术面试：内核基础 + GPU 驱动知识 + 系统设计/调试 + C 编码',
               '行为面试：STAR 方法（Situation-Task-Action-Result）',
               '编码考察是内核风格 C 代码，不是 LeetCode 算法题',
@@ -805,7 +805,7 @@ Projects:
 │                                                              │
 │  Markham (Canada)                Shanghai (China)            │
 │  ─────────────────               ────────────────            │
-│  主力开发团队                    快速扩张中                   │
+│ 主力开发团队持续扩张中 │
 │  Alex Deucher (Lead)             Display & Compute focus     │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
@@ -1021,6 +1021,361 @@ static int amdgpu_gem_create_ioctl(struct drm_device *dev,
         },
       ],
     },
+
+    // ════════════════════════════════════════════════════════════
+    // Group 11.3: 从补丁到 Offer：行动手册
+    // ════════════════════════════════════════════════════════════
+    {
+      id: '11-3',
+      number: '11.3',
+      title: '从补丁到 Offer：行动手册',
+      titleEn: 'From Patches to Offer: The Execution Playbook',
+      icon: 'Compass',
+      description: '前两组教了"怎么做"，这一组解决"从哪里开始、做完之后呢"——如何在真实代码里系统性地找到第一个补丁机会、补丁合并后会发生什么，以及如何把这一切翻译成招聘经理能在 30 秒内验证的简历语言和申请策略。',
+      lessons: [
+        // ── Lesson 11.3.1 ──────────────────────────────────────
+        {
+          id: '11-3-1',
+          number: '11.3.1',
+          title: '找到第一个补丁机会与合并后的旅程',
+          titleEn: 'Finding Your First Patch Opportunity & Life After Merge',
+          duration: 20,
+          difficulty: 'intermediate',
+          tags: ['kernel-doc', 'W=1', 'coccinelle', 'first-patch', 'stable', 'regression'],
+          concept: {
+            summary: '会走流程（Module 11.1）不等于有补丁可提——新手最大的障碍是"在 400 万行代码里我能修什么？"。本课给出一套可执行的机会雷达：kernel-doc 警告、W=1 编译警告、静态分析发现、bug 跟踪器分流，按合并概率排序；并讲清补丁合并之后的旅程——amd-staging-drm-next → drm-next → mainline → stable 回流，以及你的补丁引发回归时的正确应对。配套实操见实验七。',
+            explanation: [
+              '机会金字塔：合并概率从高到低依次是——文档/注释修复（kernel-doc、明确的 typo）> 真实编译警告（W=1）> 静态分析发现（coccinelle/smatch/sparse）> 需要硬件复现的 bug 修复 > 新功能（新人几乎不可能）。第一个补丁应该从塔尖开始：目标不是展示聪明，而是用最小的风险走通完整流程、在社区建立你的提交记录。同样重要的是反面清单：纯 checkpatch 风格修复（空格、括号位置、行宽折行）在 drm/amd 通常不受欢迎——大面积"美化"会制造 git blame 噪音，drivers/staging/ 才是风格清理的练习场。',
+              'kernel-doc 警告是公认的最佳起点。scripts/kernel-doc -none <file> 零成本扫描；警告的产生原因通常是某次提交修改了函数签名却忘了更新注释——这直接给了你 commit message 的素材（"commit X 修改了参数但注释未同步"，用 git log -S 函数名即可找到）。修复过程还会强迫你学习 kernel-doc 语法：@param: 参数描述、Returns:/Return: 返回值、struct 成员的 @member: 注释。display（DC）子树头文件密集、历史包袱多，是这类警告的高产区。',
+              'W=1 与静态分析是第二梯队。make W=1 M=drivers/gpu/drm/amd 打开比默认更严格的警告（未使用变量、缺 static、kernel-doc 等都包含在内）；make coccicheck MODE=report M=drivers/gpu/drm/amd 运行 Coccinelle 语义补丁；make C=1 调用 sparse 做类型/锁注解检查。三条纪律：①其中有误报和维护者明确容忍的类型——动手前先读目标文件的 git log，看最近合并过哪类清理；②静态分析建议的修复必须自己完全理解并验证，盲改会在 Review 中立刻露馅；③一次只修一个问题。',
+              '从警告到补丁要过四道闸门：①在 amd-staging-drm-next 的最新提交上复现该警告——基于过时树的修复毫无意义；②在 lore.kernel.org/amd-gfx 用文件名查重——如果已有人发了相同修复，换目标，或在对方补丁上回 Tested-by 也是贡献；③本地验证——kernel-doc -none 零输出（或警告消失）且模块编译通过；④checkpatch.pl --strict 零告警。四道闸门全过，才进入 Module 11.1 的发送流程。实验七把这套流程做成了逐步实操。',
+              '合并后的旅程值得讲给面试官听：amdgpu 补丁先被维护者收进 amd-staging-drm-next；随后批量进入 drm-next（DRM 子系统面向下个内核版本的集结分支）；在下一个 merge window 进入 Linus 的主线；如果补丁带 Fixes: 标签且适用于已发布内核，stable 维护者（以及 AUTOSEL 自动选取机制）会把它回流到 stable/LTS 系列——这意味着你的小修复可能出现在几个月后 Ubuntu/Fedora 的内核更新里。追踪自己补丁的位置：git log --author=你 在各分支查询，或在 lore 邮件线程里找维护者的 "Applied, thanks" 回复。',
+              '当你的补丁引发问题时，处理方式比补丁本身更能建立（或摧毁）社区信誉。内核的铁律是"不许引入回归"：如果有人报告你的补丁导致问题（Reported-by、bisect 指向你的提交），正确反应是 24-48 小时内回应、协助确认、要么快速提交修复（Fixes: 指向你自己的提交）要么同意 revert——先恢复用户，再慢慢做对。反过来，你也可以通过帮别人测试补丁、复现回归（Tested-by:）来积累公开贡献——在 gitlab.freedesktop.org/drm/amd 的 issue 列表认领你的硬件能复现的 bug 就是入口。',
+            ],
+            keyPoints: [
+              '机会金字塔：kernel-doc/typo > W=1 警告 > 静态分析 > bug 修复 > 新功能——第一个补丁从塔尖开始',
+              '纯 checkpatch 风格清理在 drm/amd 不受欢迎——kernel-doc 与真实警告才是安全区',
+              '四道闸门：最新分支复现 → lore 查重 → 本地验证（工具零输出 + 编译通过）→ checkpatch --strict',
+              '合并路径：amd-staging-drm-next → drm-next → mainline merge window →（带 Fixes:）stable 回流',
+              '补丁出回归时：快速回应 + 修复或同意 revert——处理回归的态度决定社区信誉',
+              '帮他人测试/复现（Tested-by、bug 分流）同样是可积累的公开贡献',
+            ],
+          },
+          diagram: {
+            title: '第一个补丁的机会雷达与生命周期',
+            content: `机会金字塔（合并概率 × 所需经验）
+
+           ▲ 难
+           │   ┌────────────────┐
+           │   │   新功能/重构   │ ← 新人勿入：需要维护者信任
+           │   ├────────────────┤
+           │   │    bug 修复     │ ← 需要硬件复现 + 根因分析
+           │   ├────────────────┤
+           │   │  静态分析发现   │ ← coccinelle/smatch；需甄别误报
+           │   ├────────────────┤
+           │   │  W=1 编译警告   │ ← 真实但要先看维护者口味
+           │   ├────────────────┤
+        易 │   │  kernel-doc /   │ ← ★ 从这里开始：
+           ▼   │  注释·typo 修复 │    小、明确、受欢迎
+               └────────────────┘
+
+四道闸门（实验七实操）
+──────────────────────
+① 最新 amd-staging-drm-next 上复现警告
+② lore.kernel.org/amd-gfx 查重（无在途修复）
+③ kernel-doc -none 零输出 + 模块编译通过
+④ checkpatch.pl --strict 零告警
+        │
+        ▼ 发送（Module 11.1 流程）
+
+合并后的旅程
+────────────
+amd-staging-drm-next ──→ drm-next ──→ Linus mainline
+   （维护者收下）       （子系统集结）  （merge window）
+                                          │
+                              带 Fixes: 标签的修复
+                                          ▼
+                                  stable / LTS 回流
+                          （出现在发行版内核更新中）
+
+补丁引发回归时
+──────────────
+用户报告 / bisect 指向你 → 24-48h 内回应
+   ├─ 能快速修复 → 发修复补丁（Fixes: 你自己的提交）
+   └─ 不能 → 同意 revert，先恢复用户，事后再做对`,
+            caption: '完整的决策图：从塔尖（kernel-doc）入手，过四道闸门再发送；理解合并后的旅程，你才能向面试官讲清楚"我的代码现在在哪里、怎么到那里的"。',
+          },
+          codeWalk: {
+            title: '一次完整的机会扫描会话',
+            file: 'terminal',
+            language: 'bash',
+            code: `# ============================================
+# 机会雷达：从扫描到锁定目标（真实会话示例）
+# ============================================
+
+# --- 雷达 1: kernel-doc 扫描 ---
+$ find drivers/gpu/drm/amd/display -name "*.h" | \\
+    xargs -r scripts/kernel-doc -none 2>&1 | head -8
+dc_stream.h:142: warning: Function parameter or struct member
+  'adjust' not described in 'dc_stream_adjust_vmin_vmax'
+dc_link.h:88: warning: Excess function parameter 'link'
+  description in 'dc_link_detect'
+...
+
+# --- 雷达 2: W=1 警告统计 ---
+$ make W=1 M=drivers/gpu/drm/amd -j$(nproc) 2>&1 | \\
+    grep -c "warning:"
+37
+
+# --- 闸门 ①: 警告在最新分支上仍存在 ---
+$ git fetch agd5f amd-staging-drm-next --depth=50
+$ git checkout -b kdoc-fix agd5f/amd-staging-drm-next
+$ scripts/kernel-doc -none \\
+    drivers/gpu/drm/amd/display/dc/dc_stream.h 2>&1 | grep adjust
+dc_stream.h:142: warning: ... 'adjust' not described ...   # 仍在 ✓
+
+# --- 闸门 ②: lore 查重 ---
+# 浏览器: https://lore.kernel.org/amd-gfx/?q=dc_stream_adjust_vmin_vmax
+# → 近期无人发过相同修复 ✓
+
+# --- 谁改了签名却没改注释？（commit message 素材）---
+$ git log --oneline -3 -- drivers/gpu/drm/amd/display/dc/dc_stream.h
+$ git log -S "dc_stream_adjust_vmin_vmax" --oneline | tail -3
+
+# --- 修复 + 闸门 ③/④ ---
+$ vim drivers/gpu/drm/amd/display/dc/dc_stream.h  # 补上 @adjust: 描述
+$ scripts/kernel-doc -none \\
+    drivers/gpu/drm/amd/display/dc/dc_stream.h
+（零输出 ✓）
+$ make M=drivers/gpu/drm/amd -j$(nproc)           # 编译通过 ✓
+$ git add -p && git commit -s
+$ scripts/checkpatch.pl --strict -g HEAD~1..HEAD
+total: 0 errors, 0 warnings ✓
+# → 进入 Module 11.1 / 实验七的发送流程`,
+            annotations: [
+              '两个雷达产出候选清单；四道闸门按顺序执行，任何一道不过就换下一个目标',
+              'git log -S "函数名" 找到改动该函数的提交——commit message 里就能写明"注释自 commit X 起未同步"',
+              'dc_stream.h 与 dc_stream_adjust_vmin_vmax 是真实存在的文件和函数；警告行号与内容为教学示例，以你的实际扫描结果为准',
+              '修复 kernel-doc 时顺便通读该函数的实现——这是"带着任务读代码"的最好机会',
+              '全部闸门通过后，接实验七第 7 步的 b4 演练与发送',
+            ],
+            explanation: '这个会话展示了从扫描到"随时可发"的完整决策过程，全程通常不超过一小时。注意每一步都有明确的通过/失败判据——这种工程化方法让你不依赖灵感，而是拥有一条可重复的贡献流水线。第一个补丁合并后，同样的雷达会继续产出第二个、第三个。',
+          },
+          miniLab: {
+            title: '运行你自己的机会扫描',
+            objective: '在 amd-staging-drm-next 上完成一次完整扫描，产出一份排好序的候选清单（本课不要求发送）。',
+            steps: [
+              '同步分支：git fetch agd5f amd-staging-drm-next --depth=200 && git checkout -b scan agd5f/amd-staging-drm-next',
+              '雷达 1：对 drivers/gpu/drm/amd/display 的全部 .h 运行 scripts/kernel-doc -none，结果存入 /tmp/kdoc.log',
+              '雷达 2：make W=1 M=drivers/gpu/drm/amd 2>&1 | grep "warning:" | sort | uniq -c | sort -rn，看警告类型分布',
+              '挑出 3 个候选，对每个执行：git log --oneline -5 -- <file>（看维护者最近收过什么样的清理）+ lore 查重',
+              '把 3 个候选按"理解难度 × 合并概率"排序，写成 candidates.md：警告原文、文件与函数、引入背景（git log 证据）、查重结论、修复思路',
+              '（可选）对排名第一的候选执行修复并走完闸门 ③/④——这就是实验七的入口',
+            ],
+            expectedOutput: `candidates.md 示例结构：
+
+## 候选 1（首选）
+- 警告: dc_stream.h:142 'adjust' not described
+- 函数: dc_stream_adjust_vmin_vmax（display/DC）
+- 背景: git log -S 显示 commit abc1234 增加了参数
+- 查重: lore 无在途修复（2026-06 检索）
+- 思路: 补 @adjust: 描述，引用 abc1234
+
+## 候选 2 / 候选 3 ...（同结构）`,
+            hint: '如果 display 子树的警告多到无从下手，按文件统计数量，挑警告最少的文件——一个文件只有 1-2 条警告，通常意味着一次提交就能修干净，是理想的第一补丁尺寸。',
+          },
+          debugExercise: {
+            title: '这个"第一补丁"计划为什么会被拒？',
+            language: 'text',
+            description: '以下是一位新手准备发往 amd-gfx 的补丁计划。找出所有会导致被拒绝或被忽略的问题。',
+            question: '逐条列出这个计划中的问题，并给出修正后的版本。',
+            buggyCode: `计划：
+1. 基础：Ubuntu 24.04 自带的 6.8 内核源码包
+2. 改动内容（放进同一个补丁）：
+   a. 用 checkpatch 扫出 drivers/gpu/drm/amd/amdgpu/ 下
+      所有 "line over 100 characters" 并全部折行
+   b. 顺手修掉 3 个注释 typo
+   c. 把一处 if (ret != 0) 改成 if (ret) ——"更地道"
+3. 不需要编译——"只是格式和注释，不可能编译失败"
+4. git commit -m "cleanup amdgpu code style"
+5. 直接发给维护者私人邮箱，避免在邮件列表上丢人
+6. 三天没回复就把补丁原样再发一遍`,
+            hint: '从基础分支、补丁拆分、改动类型的受欢迎程度、验证、commit message、收件人、跟进礼仪七个维度逐条检查。',
+            answer: '问题清单：（1）基础分支错误——发行版 6.8 源码包远落后于 amd-staging-drm-next：目标行可能早已变化，diff 无法干净应用。必须基于维护者的开发分支。（2）一个补丁混入三类改动——违反 one logical change per patch，必须拆分。（3）改动类型选错：a 的大面积行宽折行是纯风格清理，drm/amd 维护者通常不收（制造 git blame 噪音）；c 的 if (ret) 改写没有功能意义，同样会被拒。只有 b 的 typo 修复可发——且应单独成补丁，或干脆改做 kernel-doc 修复。（4）"不需要编译"是错的——折行可能切断字符串或宏定义，注释改动可能破坏 kernel-doc 格式；任何补丁都必须编译验证。（5）commit message 不合规：缺子系统前缀（应为 drm/amdgpu:）、缺 -s（无 Signed-off-by）、"cleanup code style" 没有说明 what/why。（6）私发维护者跳过邮件列表是反模式——补丁必须公开可审：To: amd-gfx 列表，Cc: get_maintainer 输出的维护者。在列表上"丢人"恰恰是建立公开记录的方式。（7）三天原样重发太急——正确做法是约一周后在原线程内礼貌 ping 一次。修正版计划：基于 amd-staging-drm-next；只保留 typo 修复并拆成最小补丁（或改做 kernel-doc 修复）；编译 + kernel-doc -none + checkpatch --strict 全部通过；规范 commit message + Signed-off-by；git send-email --to amd-gfx --cc 维护者；一周无回应再在原线程 ping。',
+          },
+          interviewQ: {
+            question: '给你一个 400 万行、你从未接触过的驱动代码库，要求你在一个月内做出第一个有意义的上游贡献。说说你的方法。',
+            difficulty: 'medium',
+            hint: '考察的是方法论：如何系统性地找到入口、如何验证、如何与社区互动——而不是技术天赋。',
+            answer: '我的四周计划：第 1 周——环境与地图：搭好可增量编译目标模块的开发环境；读 MAINTAINERS 与最近 200 条 git log，了解活跃区域、活跃维护者和他们最近接受的改动类型；订阅邮件列表观察 Review 风格。第 2 周——机会扫描：用零成本工具批量产出候选——scripts/kernel-doc -none、make W=1、make coccicheck，加上 bug 跟踪器里我的硬件能复现的入门级问题；对候选做三道筛选：最新开发分支上仍存在、邮件列表查重无在途修复、我能读懂周边代码。第 3 周——执行：挑最小最明确的一个（典型是 kernel-doc 或真实编译警告修复），修复并通过全部本地验证（工具零输出、编译通过、checkpatch --strict 干净）；commit message 用 git log -S 找到问题引入的提交并写明来龙去脉；get_maintainer 确定收件人后发送。第 4 周——迭代与扩展：逐点回应 Review、快速发 v2；同时启动第二个稍大的目标，并通过帮他人测试补丁（Tested-by:）增加社区存在感。关键原则：第一个贡献的目的是建立可信的提交记录和流程熟练度——小而完美胜过大而有险。',
+            amdContext: '面试官问这类问题时，想听到可复制的工程方法而非运气。如果你能当场打开 lore.kernel.org 展示自己正是这样拿到第一个补丁的，这道题就从假设题变成了你的主场。',
+          },
+        },
+
+        // ── Lesson 11.3.2 ──────────────────────────────────────
+        {
+          id: '11-3-2',
+          number: '11.3.2',
+          title: '简历落地手册：让 AMD 看见你的证据',
+          titleEn: 'The Resume Playbook: Making AMD See Your Evidence',
+          duration: 20,
+          difficulty: 'beginner',
+          tags: ['resume', 'bullet', 'careers', 'application', '12-week-plan'],
+          concept: {
+            summary: '简历不是经历的清单，而是证据的索引。本课提供一个可直接套用的翻译层：把本课程的每个实验产出翻译成"动词 + 具体系统 + 方法 + 可验证链接"格式的简历条目；按目标方向（显示/图形与内存/计算/编译器/测试）调整关键词；并给出 12 周证据积累计划和申请渠道分层。核心原则：每一条 bullet 都能被招聘经理在 30 秒内点开验证。',
+            explanation: [
+              '证据优先原则。GPU 驱动是一个很小的圈子，简历上的每个硬性声明都可能被面试官当场验证：写 "submitted patches" 会被要求给 lore 链接，写"分析过 VM 子系统"会被追问 amdgpu_vm.c 的细节。这对认真做事的人反而是优势——大多数候选人只有课程证书和 "familiar with"，而你有可点击的链接。三条规则：①每条 bullet 至少附一个可验证产物（lore 链接 / GitHub / 博客）；②动词与事实严格对应——submitted（已发出）≠ merged（已合并），"contributed to" 因含糊而禁用；③数字只写真实可数的（N 个补丁、M 个实验报告），宁小勿虚。',
+              'Bullet 翻译公式：动词 + 具体对象（子系统/工具名）+ 方法 + 产物与链接。课程产出的标准映射：实验一 → "Built and booted custom Linux kernels (v6.12 LTS) with amdgpu as a loadable module; iterated driver changes in virtme-ng VMs"；实验二 → "Triggered controlled GPU hangs with IGT amd_deadlock, captured devcoredumps, root-caused the hung ring and reset path via umr + dmesg"；实验三 → "Traced the dma_fence lifecycle through amdgpu command submission with ftrace"；实验六 → "Ran and extended the DRM core KUnit suites (drm_buddy — the allocator behind the amdgpu VRAM manager)"；实验七 → "Submitted <N> patches to the amd-gfx mailing list (kernel-doc/W=1 fixes in drivers/gpu/drm/amd); <M> merged into amd-staging-drm-next"；平台本身 → "Designed and shipped a bilingual (EN/ZH) AMDGPU-internals learning platform (React/TypeScript, 14 modules, 75+ micro-lessons, 7 guided labs)"。占位符必须替换成真实数字。',
+              '按方向调整关键词。Linux GPU 驱动相关岗位通常落在几个技术方向上，投递时按 JD 调整 bullet 顺序与关键词：显示方向——DRM/KMS、atomic commit、DC、DP/HDMI；图形与内存——TTM、GPUVM、drm_buddy、命令提交、dma_fence、drm_gpu_scheduler；计算——KFD、ROCm、HSA queues、SVM；编译器——LLVM AMDGPU backend、ISA、寄存器分配；测试与工具——IGT、KUnit、bisect、CI。岗位名称与地点随时间变化，一律以 careers.amd.com 的实时搜索（关键词 "Linux"、"GPU driver"、"kernel"）为准；历史上 Markham（多伦多地区）与上海长期出现 Linux GPU 驱动方向的公开招聘，但必须以当前职位列表为准。',
+              '申请渠道分层。①直接申请：careers.amd.com（学生与新毕业生关注 University/Early Career 类目）+ LinkedIn 上的 AMD 招聘者（用 11.2.1 的关键词优化让他们能搜到你）。②社区能见度：你在 amd-gfx 的补丁、Review 互动和 issue 分流本身就是给未来同事看的工作样品——许多驱动团队成员就活跃在列表上；保持 lore 记录与 freedesktop GitLab 活动的专业度。③毗邻雇主跳板：Igalia、Collabora、Red Hat、Canonical 以及 Valve 合作生态等长期从事 Linux 图形栈开源开发的公司，需要同样的技能、对新人也常更友好——先在毗邻雇主积累全职上游经验再进 GPU 厂商是社区里的常见路径。④学生通道：实习/co-op 项目对内核新人的门槛通常更友好（以当年实际开放为准）。',
+              '12 周证据积累计划（详见图表）。核心纪律只有一条：每周必须有一个可链接的产出。前 4 周打底（实验一至三 + 学习笔记上线）；中 4 周上游化（实验六的 KUnit 报告、实验七的扫描与第一个补丁发送、Review 迭代或第二个补丁）；后 4 周成型（深入一个子系统写长文分析、简历与 LinkedIn 全面链接化、开始投递并用 11.2.2 做模拟面试）。计划可以按个人节奏拉长——但"每周一个可链接产出"的节奏不能断：lore 和 GitHub 上的时间线本身就是简历里最有说服力的隐性信息，它证明的是持续交付能力。',
+              '诚实红线。不要把"发送过补丁"写成"合并"；不要把学习平台写成"生产级产品"或编造用户规模；不要暗示与 AMD 工程师存在私下关系。这个社区足够小，夸大被识破的代价远高于诚实小成果的"损失"。反过来说：诚实的小成果 + 公开可查的成长轨迹（lore 时间线、GitHub 提交史），恰恰构成招聘经理眼中"低风险、高潜力"的候选人画像——这是新人能打出的最强牌。',
+            ],
+            keyPoints: [
+              'Bullet 公式：动词 + 具体子系统 + 方法/工具 + 可验证产物链接',
+              'submitted ≠ merged——动词必须与事实严格对应，社区记录公开可查',
+              '按方向调整关键词：显示(KMS/DC)、图形与内存(TTM/GPUVM)、计算(KFD/ROCm)、编译器(LLVM)、测试(IGT/KUnit)',
+              '渠道分层：careers.amd.com + 社区能见度 + 毗邻雇主（Igalia/Collabora/Red Hat 等）+ 学生通道',
+              '12 周计划的唯一纪律：每周一个可链接的产出',
+              '诚实红线：小而真实 + 公开轨迹 = "低风险高潜力"画像',
+            ],
+          },
+          diagram: {
+            title: '12 周证据积累计划与 Bullet 翻译公式',
+            content: `12 周证据积累计划（每周一个可链接产出）
+
+周   行动                          产出（全部可链接）
+──   ────                          ──────────────────
+ 1   环境搭建 + 实验一              Portfolio 仓库 + 构建笔记
+ 2   实验三 ftrace 追踪             fence 追踪报告 .md
+ 3   实验二 GPU Hang 调试           devcoredump 分析报告 .md
+ 4   Module 5 源码精读              VM 或 Ring 子系统笔记
+ ────────────────────────────────────────────────────
+ 5   实验六 KUnit                   drm_buddy 测试报告 + 自写用例
+ 6   实验七 机会扫描                candidates.md
+ 7   实验七 第一个补丁发送 ★        lore 链接 #1
+ 8   Review 迭代 / 第二个目标       v2 线程 或 lore 链接 #2
+ ────────────────────────────────────────────────────
+ 9   深入一个子系统                 长文分析（博客）
+10   （可选）KUnit/IGT 测试贡献     测试补丁 lore 链接
+11   简历 + LinkedIn 链接化         一页简历，每条 bullet 带链接
+12   投递 + 模拟面试（11.2.2）      申请记录表
+
+ 节奏可以放慢，但"每周一个可链接产出"不能断。
+
+Bullet 翻译公式
+────────────────
+ [动词]       [具体对象]            [方法/工具]       [产物]
+ Submitted   N patches → amd-gfx   kernel-doc/W=1    lore 链接
+ Built       custom kernel v6.12   virtme-ng         构建笔记
+ Root-caused controlled GPU hangs  IGT + devcoredump 分析报告
+ Extended    DRM KUnit (drm_buddy) 新增边界用例       测试报告
+ Shipped     bilingual platform    React/TS          网站 + 仓库
+
+ ✗ "Familiar with GPU drivers"     ← 不可验证，删
+ ✗ "Contributed to Linux kernel"   ← 含糊，换 submitted/merged + 数字
+ ✓ "2 patches merged in drm/amd/display (kernel-doc fixes),
+    lore.kernel.org/amd-gfx/?q=f:you@mail.com"`,
+            caption: '上表是节奏，下表是翻译。简历审阅平均只有 30 秒——每条 bullet 必须独立可信、可点击验证。',
+          },
+          codeWalk: {
+            title: '弱简历条目 → 强简历条目（diff 视角）',
+            file: 'resume_bullets.diff',
+            language: 'diff',
+            code: `--- resume_weak.md
++++ resume_strong.md
+@@ 技能与项目 @@
+-- Familiar with Linux kernel and GPU drivers
++- Submitted 3 patches to the Linux kernel amd-gfx list
++  (kernel-doc & W=1 fixes in drivers/gpu/drm/amd);
++  2 merged into amd-staging-drm-next
++  [lore.kernel.org/amd-gfx/?q=f:you@mail.com]
+
+-- Studied GPU architecture and driver concepts
++- Root-caused controlled GPU hangs on RX 7600 XT (RDNA3):
++  triggered via IGT amd_deadlock, captured devcoredump,
++  identified hung ring & reset path from umr + dmesg
++  [github.com/you/portfolio/analysis/gpu-hang-report.md]
+
+-- Worked with kernel testing tools
++- Extended the DRM core KUnit suite (drm_buddy — the
++  allocator behind the amdgpu VRAM manager) with a
++  boundary-condition test; all suites pass under UML
++  [github.com/you/portfolio/tests/kunit-report.md]
+
+-- Built a website about GPU drivers
++- Designed & shipped a bilingual (EN/ZH) AMDGPU-internals
++  learning platform: 14 modules, 75+ micro-lessons,
++  7 hands-on labs (React/TypeScript)
++  [your-site.example] [github.com/you/repo]`,
+            annotations: [
+              '每个 "-" 行的共同病：不可验证、没有具体对象、没有产物',
+              '每个 "+" 行的结构：动词 + 具体系统 + 方法 + 方括号里的可点击证据',
+              '数字必须真实：3 个补丁就写 3，不写 "multiple"；没合并就只写 submitted',
+              'lore 的 f:（from）查询用一条 URL 列出你的全部公开贡献——放在简历最显眼处',
+              '最后一条把"做了个网站"升级为带规模指标的工程交付',
+            ],
+            explanation: 'diff 直观展示了翻译前后的差距：强版本没有一个形容词（passionate/expert/familiar），全部是动词、名词和链接——这就是工程师简历的语法，让证据自己说话。中文简历同理：把"熟悉 GPU 驱动"替换为"向 amd-gfx 提交 3 个补丁（2 个已合并，lore 链接）"。',
+          },
+          miniLab: {
+            title: '把你的进度翻译成五条 bullet',
+            objective: '用公式把你目前已完成的实验与产出写成 5 条可放进简历的 bullet（中英各一版），并验证每条都可点击。',
+            steps: [
+              '诚实盘点：列出你已完成的实验和已存在的产出（哪些做完了？哪些有可链接的产物？）',
+              '对每项套用公式：动词 + 具体对象 + 方法/工具 + 产物链接',
+              '检查动词与事实的对应：submitted / merged / built / analyzed / extended——删掉所有 familiar / passionate / expert',
+              '把 5 条里的每个链接真实点开一遍：404、私有仓库、空文档都算失败',
+              '请一个不懂内核的朋友读英文版——他应该能复述出"这个人做过什么"（具体性测试）',
+              '把 5 条加进 Portfolio README 顶部的 Highlights 区，中英简历各放一版',
+            ],
+            expectedOutput: `5 条 bullet（示例，替换为你的真实内容与链接）：
+
+• Submitted 2 kernel-doc fix patches to amd-gfx
+  (drivers/gpu/drm/amd/display); 1 merged —
+  lore.kernel.org/amd-gfx/?q=f:you@mail.com
+• Built & booted custom v6.12 kernels with amdgpu
+  as a module; documented the Ubuntu cert pitfall —
+  github.com/you/portfolio/notes/lab1.md
+• Root-caused a controlled GPU hang (IGT amd_deadlock
+  → devcoredump → umr) on RDNA3 —
+  github.com/you/portfolio/analysis/hang.md
+• Extended DRM KUnit drm_buddy suite with a
+  boundary test; suites pass under UML —
+  github.com/you/portfolio/tests/kunit.md
+• Shipped a bilingual AMDGPU learning platform
+  (14 modules, 7 labs, React/TS) — your-site.example
+
+检查：每条 ≤3 行、至少一个链接、零形容词。`,
+            hint: '写不出 5 条？那是行动信号而不是写作问题——回到 12 周计划表，看本周该补哪个产出。简历是结果，节奏才是原因。',
+          },
+          debugExercise: {
+            title: '审查一份"注水"的简历段落',
+            language: 'text',
+            description: '以下简历段落每一条都有问题——有的不可验证，有的夸大，有的会在面试中被当场戳穿。',
+            question: '逐条指出问题，并判断哪些该"删除"、哪些该"改写"、哪些该"诚实化降级"。',
+            buggyCode: `OPEN SOURCE & PROJECTS
+
+• Contributed extensively to the Linux kernel GPU subsystem
+• Expert in AMDGPU driver internals (VM, scheduler, display)
+• My patches are used by millions of Ubuntu users worldwide
+• Worked closely with AMD maintainers on driver improvements
+• Built a production-grade GPU driver education SaaS platform
+  serving the developer community
+• Deep experience with ROCm/HIP performance optimization
+  on data-center GPUs`,
+            hint: '对每条问两个问题：①面试官能在 30 秒内验证吗？②如果被追问三层细节会发生什么？',
+            answer: '逐条审查：（1）"Contributed extensively"——动词含糊 + extensively 无法量化。改写为精确事实："Submitted N patches (M merged) to amd-gfx — <lore 链接>"。（2）"Expert in ... internals"——expert 是面试官的结论，不是自封的头衔；被追问三层（GPUVM 页表层级、eviction 触发条件、scheduler 的 entity/rq 关系）任何一层卡住都会反噬。改写为证据："Wrote a 5k-word analysis of the amdgpu VM subsystem — <链接>"。（3）"used by millions"——即使补丁确实经 stable 进入了 Ubuntu 内核，这种归因也属危险夸大（合并 ≠ 你服务了百万用户）。诚实化降级："1 fix backported to stable 6.12.x via Fixes: tag"（如属实），否则删除。（4）"Worked closely with AMD maintainers"——一两轮邮件 Review 不是 working closely，追问细节时会非常尴尬。改写："Iterated patches through review with amdgpu maintainers (v2 accepted) — <线程链接>"。（5）"production-grade SaaS serving the community"——没有付费用户与 SLA 的学习平台不是 production SaaS，编造规模是诚信红线。改写为真实交付："Designed & shipped a bilingual AMDGPU learning platform (14 modules, 7 labs) — <链接>"。（6）"data-center GPUs"——如果你只有消费级 RX 7600 XT、且 ROCm 是按兼容矩阵跑的有限实验，这条是直接的事实错误。删除或降级："Ran HIP kernels and profiling exercises on RDNA3 (consumer ROCm path, compatibility-matrix gated)"。结论：6 条中 0 条可原样保留——但每条背后都存在一个更小的真实事实；写出那个事实就足够了。',
+          },
+          interviewQ: {
+            question: '你简历上写"向 amdgpu 提交过补丁"。挑一个讲讲：它改了什么、为什么需要、Review 过程教会了你什么？',
+            difficulty: 'medium',
+            hint: '用 STAR 收束：背景（怎么发现的）→ 任务 → 行动（验证与流程）→ 结果（链接 + 学到的东西）。主动如实说明补丁的大小。',
+            answer: '示范回答（kernel-doc 修复场景，按你的真实经历替换）：Situation——我用 scripts/kernel-doc -none 扫描 display 子树时，发现 dc_stream.h 一个函数的注释缺少新参数的描述；git log -S 显示几个月前一次提交修改了函数签名但没同步注释。Task——修复该警告并完整走一遍上游流程。Action——先过四道闸门：确认警告在 amd-staging-drm-next 最新提交上仍存在、lore 查重无在途修复；补上 @param 描述后 kernel-doc -none 零输出、模块编译通过、checkpatch --strict 干净；commit message 引用了引入不一致的提交；get_maintainer 确定收件人后用 git send-email 发到 amd-gfx 并 Cc 维护者。Result——维护者回复了一条措辞建议，我发了 v2（changelog 注明修改内容与建议人），随后补丁被收进 amd-staging-drm-next——这是 lore 线程链接。学到三件事：①上游对"小而正确"的尊重——10 行的修复也会被认真 Review；②commit message 是写给五年后维护者的信，不是自己的备忘；③Review 是协作不是考试——逐点回应并注明出处，比辩解高效得多。我会主动说明这是个小补丁：它的价值在于我对完整流程的每一步都有了肌肉记忆，第二个补丁的成本只有第一个的十分之一。',
+            amdContext: '面试官几乎一定会当场打开你给的 lore 链接。这道题的真正考点是：你能否对自己的工作做出准确、不夸大、细节经得起追问的叙述——这正是日常代码 Review 与跨团队协作所需要的能力。',
+          },
+        },
+      ],
+    },
   ],
   completionChecklist: [
     '掌握完整的内核补丁工作流：format-patch → checkpatch → get_maintainer → send-email',
@@ -1032,5 +1387,8 @@ static int amdgpu_gem_create_ioctl(struct drm_device *dev,
     '向 amd-gfx 邮件列表提交了至少一个补丁（即使是 typo 修复）',
     '准备好了 2-3 个具体的项目/贡献可以在面试中详细描述',
     '能够把自己的学习路径组织成“有证据的成长故事”，用补丁链接、文章和测试来支撑，而不只是简历口号',
+    '在 amd-staging-drm-next 上运行过一次完整的机会扫描（kernel-doc + W=1），产出了排序后的候选清单',
+    '简历中的每一条 bullet 都套用了"动词 + 对象 + 方法 + 链接"公式，且链接全部真实可点击',
+    '建立了"每周一个可链接产出"的 12 周节奏，并完成了至少第一周的产出',
   ],
 };

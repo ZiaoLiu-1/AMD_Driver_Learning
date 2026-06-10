@@ -90,7 +90,7 @@ int amdgpu_bo_create(struct amdgpu_device *adev,
           "\u8fd0\u884c radeontop \u5b9e\u65f6\u76d1\u63a7: sudo radeontop -d -",
           "\u89c2\u5bdf\u8fd0\u884c 3D \u5e94\u7528\u65f6 VRAM \u4f7f\u7528\u91cf\u7684\u53d8\u5316"
         ],
-      expectedOutput: "mem_info_vram_used: 512000000 (\u7ea6 512MB)\nmem_info_gtt_used: 128000000 (\u7ea6 128MB)\nmem_info_vram_total: 8589934592 (8GB for RX 7600 XT)"
+      expectedOutput: "mem_info_vram_used: 512000000 (\u7ea6 512MB)\nmem_info_gtt_used: 128000000 (\u7ea6 128MB)\nmem_info_vram_total: 17179869184 (16GB for RX 7600 XT)"
     },
     debugExercise: {
       title: "\u5185\u5b58\u57df\u5206\u914d\u9519\u8bef",
@@ -259,8 +259,8 @@ void submit_commands(struct amdgpu_ring *ring, int count)
     duration: "15 min",
     summary: "\u5728 AMDGPU \u9a71\u52a8\u4e2d\uff0c\u9009\u62e9\u6b63\u786e\u7684\u5185\u5b58\u57df\u5bf9\u6027\u80fd\u81f3\u5173\u91cd\u8981\u3002VRAM \u9002\u5408 GPU \u9891\u7e41\u8bbf\u95ee\u7684\u8d44\u6e90\uff08\u7eb9\u7406\u3001\u5e27\u7f13\u51b2\uff09\uff0cGTT \u9002\u5408 CPU-GPU \u5171\u4eab\u6570\u636e\uff08uniform buffer\u3001staging buffer\uff09\u3002\u672c\u8282\u6df1\u5165\u5206\u6790\u4e24\u8005\u7684\u6027\u80fd\u7279\u5f81\u548c\u4f7f\u7528\u573a\u666f\u3002",
     keyPoints: [
-          "VRAM \u5e26\u5bbd\uff1aGDDR6 \u7ea6 288 GB/s\uff08RX 7600 XT\uff09\uff0cHBM2e \u7ea6 1.2 TB/s\uff08MI300X\uff09",
-          "GTT \u5e26\u5bbd\uff1a\u53d7 PCIe \u5e26\u5bbd\u9650\u5236\uff0cPCIe 4.0 x16 \u7ea6 32 GB/s\uff08\u53cc\u5411\uff09",
+          "VRAM \u5e26\u5bbd\uff1aGDDR6 \u7ea6 288 GB/s\uff08RX 7600 XT\uff09\uff0cGDDR6 \u7ea6 960 GB/s\uff08RX 7900 XTX\uff09",
+          "GTT \u5e26\u5bbd\uff1a\u53d7 PCIe \u5e26\u5bbd\u9650\u5236\uff0cPCIe 4.0 x8 \u5355\u5411\u7ea6 16 GB/s\uff08\u805a\u5408\u7ea6 32 GB/s\uff09",
           "VRAM \u9002\u5408\uff1a\u7eb9\u7406\u3001\u6e32\u67d3\u76ee\u6807\u3001\u6df1\u5ea6\u7f13\u51b2\u3001\u9891\u7e41\u8bfb\u5199\u7684 shader buffer",
           "GTT \u9002\u5408\uff1auniform buffer\uff08CPU \u66f4\u65b0\u9891\u7e41\uff09\u3001staging buffer\uff08CPU\u2192GPU \u6570\u636e\u4f20\u8f93\uff09",
           "Resizable BAR (ReBAR)\uff1a\u5141\u8bb8 CPU \u76f4\u63a5\u8bbf\u95ee\u5168\u90e8 VRAM\uff0c\u6d88\u9664 GTT \u4e2d\u8f6c"
@@ -603,7 +603,7 @@ int amdgpu_device_gpu_recover(struct amdgpu_device *adev,
     r = amdgpu_do_asic_reset(adev, reset_context);
 
     /* 4. 重置后恢复 */
-    amdgpu_reset_capture_coredumpm(adev);
+    amdgpu_reset_capture_coredump(adev);
 
     /* 5. 通知应用程序重置完成 */
     drm_sched_start(&ring->sched, true);

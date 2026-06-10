@@ -81,13 +81,13 @@ export const labs: Lab[] = [
       {
         order: 3,
         title: '配置内核（含 Ubuntu/Debian 坑修复）',
-        titleEn: 'Configure the kernel (with Ubuntu/Debian pitfix fixes)',
+        titleEn: 'Configure the kernel (with Ubuntu/Debian pitfall fixes)',
         instruction:
           '使用当前运行内核的配置作为基础。⚠️ Ubuntu/Debian 用户必须额外执行两步修复：①清除 Canonical 私有签名证书路径（该文件只存在于 Canonical 构建环境中，在你的机器上不存在）；②清除 MODULE_SIG_KEY。否则编译会以 "No rule to make target debian/canonical-certs.pem" 错误失败。',
         instructionEn:
           'Use the running kernel config as a base. ⚠️ Ubuntu/Debian users must apply two extra fixes: ① clear Canonical\'s private signing cert path (that file only exists in Canonical\'s build infra, not on your machine); ② clear MODULE_SIG_KEY. Without this you\'ll get a hard failure: "No rule to make target debian/canonical-certs.pem".',
         command:
-          'cp /boot/config-$(uname -r) .config\n\n# --- Ubuntu/Debian 必须执行：清除 Canonical 私有证书路径 ---\nscripts/config --set-str SYSTEM_TRUSTED_KEYS ""\nscripts/config --set-str SYSTEM_REVOCATION_KEYS ""\nscripts/config --set-str MODULE_SIG_KEY ""\n\n# 用默认值填充所有新选项\nmake olddefconfig\n\n# 确认 amdgpu 已启用\ngrep CONFIG_DRM_AMDGPU .config\n# 应该看到 CONFIG_DRM_AMDGPU=m',
+          'cp /boot/config-$(uname -r) .config\n\n# --- Ubuntu/Debian 必须执行：清除 Canonical 私有证书路径 ---\nscripts/config --set-str SYSTEM_TRUSTED_KEYS ""\nscripts/config --set-str SYSTEM_REVOCATION_KEYS ""\nscripts/config --set-str MODULE_SIG_KEY ""\n\n# 强制 amdgpu 编译为可加载模块（=m）——发行版配置常为 =y（内置）。\n# --module 才能生成 amdgpu.ko，便于 rmmod/insmod 快速迭代。\nscripts/config --module CONFIG_DRM_AMDGPU\n\n# 用默认值填充所有新选项\nmake olddefconfig\n\n# 确认 amdgpu 已是模块\ngrep CONFIG_DRM_AMDGPU= .config\n# 应该看到 CONFIG_DRM_AMDGPU=m',
         hint: '如果不想逐条修复，也可以用 make localmodconfig 代替 cp /boot/config，这会生成一个只包含当前已加载模块的精简配置，完全避免证书问题，且编译速度更快。但需要在执行前确保 amdgpu 模块已加载（lsmod | grep amdgpu）。',
         hintEn: 'Alternatively, use make localmodconfig instead of cp /boot/config. It generates a minimal config from currently-loaded modules only — no cert issues and much faster builds. Requires amdgpu to already be loaded (lsmod | grep amdgpu) before running.',
         checkpoint: 'grep 输出显示 CONFIG_DRM_AMDGPU=m，且 grep SYSTEM_TRUSTED_KEYS .config 显示为空字符串。',
@@ -128,7 +128,7 @@ export const labs: Lab[] = [
           '不要直接重启物理机测试。使用 virtme-ng 在虚拟机中测试新内核，避免 brick 你的系统。',
         instructionEn:
           'Do not reboot your physical machine to test. Use virtme-ng to test the new kernel in a VM, avoiding bricking your system.',
-        command: 'pip install virtme-ng\nvng --build\n# 或者手动指定内核\nvng -k arch/x86/boot/bzImage',
+        command: 'pip install virtme-ng\n# 在内核源码树中编译，然后直接启动刚编译出的内核\nvng --build\nvng\n# vng（不带参数）会启动当前源码树中刚编译的内核；\n# vng -r 则启动宿主机正在运行的内核。',
         checkpoint: '虚拟机成功启动，运行 uname -r 显示你编译的内核版本。',
         checkpointEn: 'VM boots successfully, uname -r shows your compiled kernel version.',
       },
@@ -173,12 +173,16 @@ export const labs: Lab[] = [
         order: 1,
         title: '准备调试环境',
         titleEn: 'Prepare debug environment',
-        instruction: '启用 amdgpu 调试日志和 devcoredump 功能。',
-        instructionEn: 'Enable amdgpu debug logging and devcoredump.',
+        instruction:
+          '启用 drm 核心与 amdgpu 调试日志。注意：amdgpu.debug_mask 在多数内核上是只读模块参数（权限 0444），只能在模块加载时设置；drm.debug 则可以运行时修改。',
+        instructionEn:
+          'Enable drm core and amdgpu debug logging. Note: on most kernels amdgpu.debug_mask is a read-only module parameter (mode 0444) that can only be set at module load time; drm.debug is writable at runtime.',
         command:
-          'echo 0xf > /sys/module/amdgpu/parameters/debug_mask\necho 1 > /sys/module/drm/parameters/debug',
-        checkpoint: 'dmesg | grep amdgpu 开始显示详细的调试信息。',
-        checkpointEn: 'dmesg | grep amdgpu starts showing detailed debug info.',
+          '# drm 核心日志可运行时开启（日志量大，调试完记得写回 0）\necho 0x1ff | sudo tee /sys/module/drm/parameters/debug\n\n# 检查 amdgpu.debug_mask 是否可写（多数内核为只读 0444）\nls -l /sys/module/amdgpu/parameters/debug_mask\n\n# 只读时改为加载参数（重载 amdgpu 模块或重启后生效）\necho "options amdgpu debug_mask=0xf" | sudo tee /etc/modprobe.d/amdgpu-debug.conf',
+        hint: '如果直接 echo 到 debug_mask 报 Permission denied，这不是 sudo 的问题——该参数只在模块加载时读取。可改用内核启动参数 amdgpu.debug_mask=0xf 或上面的 modprobe.d 方式。各 bit 含义见 amdgpu.h 中的 AMDGPU_DEBUG_* 宏。',
+        hintEn: 'If echoing into debug_mask returns Permission denied, it is not a sudo problem — the parameter is read at module load only. Use the kernel cmdline amdgpu.debug_mask=0xf or the modprobe.d approach above. Bit meanings are in the AMDGPU_DEBUG_* macros in amdgpu.h.',
+        checkpoint: 'sudo dmesg -w 出现 [drm:...] 详细日志；若配置了 debug_mask，重载/重启后 cat /sys/module/amdgpu/parameters/debug_mask 显示 15（即 0xf）。',
+        checkpointEn: 'sudo dmesg -w shows verbose [drm:...] logs; if debug_mask was configured, after reload/reboot cat /sys/module/amdgpu/parameters/debug_mask prints 15 (i.e. 0xf).',
       },
       {
         order: 2,
@@ -189,9 +193,9 @@ export const labs: Lab[] = [
         instructionEn:
           'Use IGT GPU Tools hang tests to trigger a controlled GPU Hang. This is safe—the driver will auto-recover.',
         command:
-          '# 安装 IGT\ngit clone https://gitlab.freedesktop.org/drm/igt-gpu-tools.git\ncd igt-gpu-tools && meson build && ninja -C build\n\n# 触发 hang\nsudo ./build/tests/amdgpu/amd_deadlock --run-subtest hang-ring-gfx',
-        hint: '如果没有 IGT，可以使用 amdgpu_test 或写一个无限循环的 compute shader。',
-        hintEn: 'If IGT is not available, use amdgpu_test or write an infinite loop compute shader.',
+          '# 安装 IGT\ngit clone https://gitlab.freedesktop.org/drm/igt-gpu-tools.git\ncd igt-gpu-tools && meson setup build && ninja -C build\n\n# 子项名会随上游变化，先列出再运行（旧的 hang-ring-gfx 已不存在）：\n./build/tests/amdgpu/amd_deadlock --list-subtests\n# 触发一次可控的 gfx 引擎死锁/复位（当前子项名形如 amdgpu-deadlock-gfx）\nsudo ./build/tests/amdgpu/amd_deadlock --run-subtest amdgpu-deadlock-gfx',
+        hint: 'IGT 的 amdgpu 测试是一组独立二进制（amd_deadlock、amd_basic 等），没有单一的 amdgpu_test 程序。先用 --list-subtests 查看实际子项名；也可写一个无限循环的 compute shader 触发 hang。',
+        hintEn: 'IGT ships the amdgpu tests as separate binaries (amd_deadlock, amd_basic, ...), not a single amdgpu_test program. Use --list-subtests to see the real subtest names; alternatively write an infinite-loop compute shader to trigger a hang.',
         checkpoint: 'dmesg 显示 "amdgpu: GPU reset begin" 和 "amdgpu: GPU reset succeeded" 消息。',
         checkpointEn: 'dmesg shows "amdgpu: GPU reset begin" and "amdgpu: GPU reset succeeded" messages.',
       },
@@ -349,15 +353,15 @@ export const labs: Lab[] = [
         title: '启用调试日志',
         titleEn: 'Enable debug logging',
         instruction:
-          '通过 debug_mask 参数开启特定子系统的调试日志。不同的 bit 控制不同 IP Block 的日志输出。',
+          '通过 debug_mask 参数开启特定子系统的调试日志。不同的 bit 控制不同子系统的日志输出。注意：debug_mask 在多数内核上是加载时参数（只读 0444），运行时想立即看日志请用 drm.debug。',
         instructionEn:
-          'Enable debug logging for specific subsystems via debug_mask. Different bits control logging for different IP Blocks.',
+          'Enable debug logging for specific subsystems via debug_mask. Different bits control logging for different subsystems. Note: on most kernels debug_mask is a load-time parameter (read-only 0444); for immediate runtime logging use drm.debug instead.',
         command:
-          '# 启用所有调试日志（谨慎：日志量非常大）\necho 0xffffffff | sudo tee /sys/module/amdgpu/parameters/debug_mask\n\n# 只启用 VM（虚拟内存）调试日志\necho 0x4 | sudo tee /sys/module/amdgpu/parameters/debug_mask\n\n# 观察日志\nsudo dmesg -w | grep amdgpu',
-        hint: 'debug_mask 各 bit 的含义可在 amdgpu.h 中的 AMDGPU_DEBUG_* 宏查到。',
-        hintEn: 'Bit meanings of debug_mask are in AMDGPU_DEBUG_* macros in amdgpu.h.',
-        checkpoint: 'dmesg 中开始出现对应子系统的详细调试信息。',
-        checkpointEn: 'dmesg shows detailed debug info from the corresponding subsystem.',
+          '# 1) 查看权限——多数内核为 0444（只读，加载时参数）\nls -l /sys/module/amdgpu/parameters/debug_mask\n\n# 2) 加载时设置（重载 amdgpu 模块或重启后生效）\n#    例：0x4 = 只启用 VM（虚拟内存）调试日志\necho "options amdgpu debug_mask=0x4" | sudo tee /etc/modprobe.d/amdgpu-debug.conf\n# 或在 GRUB 内核命令行追加：amdgpu.debug_mask=0x4\n\n# 3) 运行时想立刻看详细日志？用 drm.debug（运行时可写）\necho 0x1ff | sudo tee /sys/module/drm/parameters/debug\nsudo dmesg -w | grep -i -E "drm|amdgpu"',
+        hint: 'debug_mask 各 bit 的含义可在 amdgpu.h 中的 AMDGPU_DEBUG_* 宏查到。drm.debug 的 bit 含义（CORE/DRIVER/KMS/ATOMIC 等）见 drm_print.h。',
+        hintEn: 'Bit meanings of debug_mask are in AMDGPU_DEBUG_* macros in amdgpu.h. drm.debug bit meanings (CORE/DRIVER/KMS/ATOMIC, ...) are in drm_print.h.',
+        checkpoint: '确认了 debug_mask 的权限；modprobe.d 配置就绪（重载后 cat 显示新值）；drm.debug 修改后 dmesg 立即出现详细日志。',
+        checkpointEn: 'Verified debug_mask permissions; modprobe.d config in place (cat shows the new value after reload); dmesg shows verbose logs immediately after changing drm.debug.',
       },
       {
         order: 3,
@@ -495,6 +499,260 @@ export const labs: Lab[] = [
       'Restore code after the lab: git checkout -- gfx_v11_0.c',
     ],
     tags: ['printk', 'ip-block', 'kernel-dev', 'initialization'],
+  },
+  {
+    id: 'lab-6-kunit-drm',
+    phaseId: 'phase-4',
+    title: '实验六：运行并扩展 DRM KUnit 单元测试（无需 GPU）',
+    titleEn: 'Lab 6: Run & Extend DRM KUnit Tests (No GPU Required)',
+    description:
+      'KUnit 是内核内置的单元测试框架。本实验在虚拟环境（UML/QEMU）中运行 DRM 核心的 KUnit 测试套件——重点是 drm_buddy，即 amdgpu VRAM 管理器实际使用的伙伴分配器——并练习阅读、修改和编写内核单元测试。全程不需要 AMD GPU，任何 Linux 开发机都能完成。',
+    descriptionEn:
+      'KUnit is the kernel\'s built-in unit-testing framework. In this lab you run the DRM core KUnit suites in a virtual environment (UML/QEMU) — focusing on drm_buddy, the buddy allocator the amdgpu VRAM manager actually uses — and practice reading, modifying, and writing kernel unit tests. No AMD GPU is needed; any Linux dev machine works.',
+    difficulty: 'beginner',
+    estimatedMinutes: 60,
+    prerequisites: ['已完成实验一（本地有内核源码树）', 'Python 3.7+（kunit.py 需要）', '无需 GPU——测试运行在虚拟内核中'],
+    prerequisitesEn: ['Lab 1 completed (kernel source tree available)', 'Python 3.7+ (required by kunit.py)', 'No GPU needed — tests run inside a virtual kernel'],
+    steps: [
+      {
+        order: 1,
+        title: '认识 KUnit 与 DRM 测试目录',
+        titleEn: 'Meet KUnit and the DRM test directory',
+        instruction:
+          'KUnit 把单元测试直接编译进一个特殊内核，并在用户态虚拟机（默认 User-Mode Linux）中运行，几十秒内得到结果。drivers/gpu/drm/tests/ 覆盖 DRM 核心的数据结构与算法——其中 drm_buddy_test.c 测试的伙伴分配器正是 amdgpu_vram_mgr 用来管理 VRAM 的。你测试的不是玩具代码，而是真实驱动路径依赖的组件。',
+        instructionEn:
+          'KUnit compiles unit tests directly into a special kernel and runs them in a userspace VM (User-Mode Linux by default), giving results in well under a minute. drivers/gpu/drm/tests/ covers DRM core data structures and algorithms — and the buddy allocator exercised by drm_buddy_test.c is exactly what amdgpu_vram_mgr uses to manage VRAM. You are testing a component real driver paths depend on, not toy code.',
+        command: 'cd ~/linux  # 你的内核源码树\nls tools/testing/kunit/\nls drivers/gpu/drm/tests/\ncat drivers/gpu/drm/tests/.kunitconfig',
+        checkpoint: '能看到 drm_buddy_test.c、drm_rect_test.c 等 20 余个测试文件，以及 .kunitconfig 配置文件。',
+        checkpointEn: 'You can see 20+ test files (drm_buddy_test.c, drm_rect_test.c, ...) plus the .kunitconfig file.',
+      },
+      {
+        order: 2,
+        title: '运行 DRM KUnit 测试套件',
+        titleEn: 'Run the DRM KUnit suites',
+        instruction:
+          '用 kunit.py 一条命令完成配置、编译和运行。--kunitconfig 指向 DRM 测试目录即可使用其自带的最小配置。',
+        instructionEn:
+          'kunit.py configures, builds, and runs in one command. Point --kunitconfig at the DRM tests directory to use its bundled minimal config.',
+        command: './tools/testing/kunit/kunit.py run --kunitconfig=drivers/gpu/drm/tests/',
+        hint: '首次运行会配置并编译 UML 内核（几分钟）。如果 UML 在你的发行版上编译失败，追加 --arch=x86_64 改用 QEMU 运行。',
+        hintEn: 'The first run configures and builds a UML kernel (a few minutes). If UML fails to build on your distro, append --arch=x86_64 to run under QEMU instead.',
+        checkpoint: '看到 TAP 风格的逐用例输出和 "Testing complete." 总结，所有套件通过。',
+        checkpointEn: 'TAP-style per-case output ends with a "Testing complete." summary and all suites pass.',
+      },
+      {
+        order: 3,
+        title: '只运行 drm_buddy 套件并保存日志',
+        titleEn: 'Run only the drm_buddy suite and save the log',
+        instruction:
+          '用过滤参数只跑 drm_buddy 套件——这是与 amdgpu VRAM 管理直接相关的部分，日志也是你最终报告的素材。',
+        instructionEn:
+          'Use the filter argument to run only the drm_buddy suite — the part directly relevant to amdgpu VRAM management. The log becomes raw material for your final report.',
+        command: './tools/testing/kunit/kunit.py run --kunitconfig=drivers/gpu/drm/tests/ \'drm_buddy\' | tee ~/kunit-drm-buddy.log',
+        checkpoint: '日志文件包含 drm_buddy 套件各用例（分配边界、特殊模式等）的逐项结果。',
+        checkpointEn: 'The log file contains per-case results for the drm_buddy suite (allocation bounds, pathological patterns, ...).',
+      },
+      {
+        order: 4,
+        title: '读懂一个测试用例',
+        titleEn: 'Read and understand one test case',
+        instruction:
+          '打开 drivers/gpu/drm/tests/drm_buddy_test.c，通读一个分配相关用例。重点理解两类宏：KUNIT_ASSERT_*（失败立即终止本用例——用于"继续执行没有意义"的前置条件）与 KUNIT_EXPECT_*（失败被记录但继续执行——便于一次看到所有问题）。',
+        instructionEn:
+          'Open drivers/gpu/drm/tests/drm_buddy_test.c and read through one allocation-related case. Focus on the two macro families: KUNIT_ASSERT_* (abort this case on failure — for preconditions where continuing is pointless) vs KUNIT_EXPECT_* (record the failure but keep going — so you see all problems in one run).',
+        codeSnippet:
+          '/* KUnit 测试的基本结构（示意，非逐行摘抄） */\nstatic void drm_test_buddy_alloc_example(struct kunit *test)\n{\n    struct drm_buddy mm;\n    LIST_HEAD(allocated);\n\n    /* ASSERT：初始化失败就没有继续的意义 */\n    KUNIT_ASSERT_EQ(test, drm_buddy_init(&mm, SZ_4M, SZ_4K), 0);\n\n    /* EXPECT：记录失败但继续，便于一次看到所有问题 */\n    KUNIT_EXPECT_EQ(test,\n        drm_buddy_alloc_blocks(&mm, 0, SZ_4M, SZ_1M, SZ_1M,\n                               &allocated, 0), 0);\n\n    drm_buddy_free_list(&mm, &allocated, 0);\n    drm_buddy_fini(&mm);\n}\n\n/* 用例通过 kunit_case 数组注册进 suite */\nstatic struct kunit_case drm_buddy_tests[] = {\n    KUNIT_CASE(drm_test_buddy_alloc_example),\n    {}\n};',
+        checkpoint: '能说出 ASSERT 与 EXPECT 的区别，以及你读的用例验证了 drm_buddy 的哪个行为。',
+        checkpointEn: 'You can explain ASSERT vs EXPECT and which drm_buddy behavior your chosen case verifies.',
+      },
+      {
+        order: 5,
+        title: '故意改坏一个断言，观察失败输出',
+        titleEn: 'Break an assertion on purpose and study the failure output',
+        instruction:
+          '把某个 KUNIT_EXPECT_EQ 的期望值改错，重新运行，观察失败报告的格式——这正是上游 CI 报告回归时你要读懂的输出。看完后还原修改。',
+        instructionEn:
+          'Change the expected value of one KUNIT_EXPECT_EQ to something wrong, re-run, and study the failure report format — this is exactly the output you will read when upstream CI reports a regression. Revert afterwards.',
+        command: '# 修改 drm_buddy_test.c 中某个期望值后：\n./tools/testing/kunit/kunit.py run --kunitconfig=drivers/gpu/drm/tests/ \'drm_buddy\'\n\n# 看懂失败格式后还原\ngit checkout -- drivers/gpu/drm/tests/drm_buddy_test.c',
+        hint: '失败输出包含 "Expected ... == ..." 与文件名行号。注意整个套件的退出状态也会变为失败——CI 就是靠它拦截回归的。',
+        hintEn: 'The failure output includes "Expected ... == ..." plus file and line. Note the suite exit status flips to failure too — that is how CI gates regressions.',
+        checkpoint: '看到 not ok 的用例与期望值/实际值对比，能读懂失败报告。',
+        checkpointEn: 'You see the not ok case with expected/actual values and can read the failure report.',
+      },
+      {
+        order: 6,
+        title: '编写你自己的最小用例（本地练习）',
+        titleEn: 'Write your own minimal test case (local exercise)',
+        instruction:
+          '模仿现有用例，新增一个覆盖你关心的边界的测试——例如请求大小为 0 的块，或 min_page_size 大于请求大小时的行为。把函数加进 kunit_case 数组后重新运行。',
+        instructionEn:
+          'Mimicking the existing cases, add a test covering a boundary you care about — e.g. requesting a zero-size block, or behavior when min_page_size exceeds the requested size. Add your function to the kunit_case array and re-run.',
+        hint: '不确定某行为是 bug 还是设计如此？先写测试记录实际行为，再读代码与提交历史确认——这正是上游开发者补测试覆盖的真实流程。DRM 维护者欢迎补充测试覆盖的补丁。',
+        hintEn: 'Not sure if a behavior is a bug or by design? Write the test to capture actual behavior first, then read the code and commit history — this is the real upstream workflow for adding coverage. DRM maintainers welcome test-coverage patches.',
+        checkpoint: '你的新用例出现在输出中并通过（或按预期失败，并促使你读懂了实际行为）。',
+        checkpointEn: 'Your new case shows up in the output and passes (or fails as expected, leading you to understand the actual behavior).',
+      },
+      {
+        order: 7,
+        title: '产出物：写一页测试报告',
+        titleEn: 'Artifact: write a one-page test report',
+        instruction:
+          '在 Portfolio 仓库的 tests/ 目录写 kunit-drm-buddy-report.md：环境（内核版本、UML 或 QEMU）、运行命令、通过统计、你新增用例覆盖的边界，以及一段说明 drm_buddy 与 amdgpu 的关系（amdgpu_vram_mgr.c 通过 drm_buddy_alloc_blocks 分配 VRAM）。',
+        instructionEn:
+          'In your portfolio repo under tests/, write kunit-drm-buddy-report.md: environment (kernel version, UML or QEMU), commands used, pass statistics, the boundary your new case covers, and a paragraph on how drm_buddy relates to amdgpu (amdgpu_vram_mgr.c allocates VRAM via drm_buddy_alloc_blocks).',
+        command: 'grep -rn "drm_buddy" drivers/gpu/drm/amd/amdgpu/amdgpu_vram_mgr.c | head -10',
+        checkpoint: '报告包含可复现的命令与日志摘录，Portfolio README 已链接它。',
+        checkpointEn: 'The report contains reproducible commands plus log excerpts, and your portfolio README links to it.',
+      },
+    ],
+    expectedOutput: 'kunit.py 报告 drm_buddy 等套件全部通过；产出一份可放进 Portfolio 的测试报告和一个你自己编写的 KUnit 用例。',
+    expectedOutputEn: 'kunit.py reports the drm_buddy (and other) suites passing; you produce a portfolio-ready test report and one KUnit case you wrote yourself.',
+    tips: [
+      'KUnit 测试运行在虚拟内核里，不会触碰你的真实系统或 GPU——可以放心实验',
+      '在 amdgpu_vram_mgr.c 中搜索 drm_buddy 可以看到这套分配器在真实驱动中的调用点',
+      '构建失败时给 kunit.py 追加 --raw_output 查看完整内核构建输出',
+      '向 DRM 核心补充 KUnit 用例（或向 IGT 补充测试）与驱动补丁一样是可验证的上游贡献，同样能写进简历',
+    ],
+    tipsEn: [
+      'KUnit tests run inside a virtual kernel and never touch your real system or GPU — experiment freely',
+      'Search for drm_buddy in amdgpu_vram_mgr.c to see where the real driver calls this allocator',
+      'On build failures, append --raw_output to kunit.py to see the full kernel build output',
+      'Contributing KUnit cases to DRM core (or tests to IGT) is verifiable upstream work, just like driver patches — and belongs on your resume',
+    ],
+    tags: ['kunit', 'testing', 'drm-buddy', 'no-gpu', 'unit-test'],
+  },
+  {
+    id: 'lab-7-first-upstream-patch',
+    phaseId: 'phase-1',
+    title: '实验七：找到并准备你的第一个上游补丁',
+    titleEn: 'Lab 7: Find & Prepare Your First Upstream Patch',
+    description:
+      '把 Module 11 学到的流程变成真实的、可写进简历的产出。用 kernel-doc 与 W=1 警告扫描在 drivers/gpu/drm/amd 中找到一个真实的小问题，修复、验证，并用 b4 或 git send-email 完成发送前的全部检查。是否真正发送由你决定——但本实验要走到"随时可发"为止。',
+    descriptionEn:
+      'Turn the Module 11 workflow into a real, resume-ready artifact. Use kernel-doc and W=1 warning scans to find a genuine small issue in drivers/gpu/drm/amd, fix it, validate it, and complete every pre-send check with b4 or git send-email. Whether you actually send is your call — but this lab takes you all the way to "ready to send".',
+    difficulty: 'intermediate',
+    estimatedMinutes: 120,
+    prerequisites: ['已完成实验一与 Module 11.1（补丁工作流）', '已配置 git send-email 或安装 b4', '网络可访问 gitlab.freedesktop.org 与 lore.kernel.org'],
+    prerequisitesEn: ['Lab 1 and Module 11.1 (patch workflow) completed', 'git send-email configured or b4 installed', 'Network access to gitlab.freedesktop.org and lore.kernel.org'],
+    steps: [
+      {
+        order: 1,
+        title: '基于维护者的真实开发分支工作',
+        titleEn: 'Work on the maintainer\'s actual development branch',
+        instruction:
+          'amdgpu 补丁应基于 AMD 维护者实际合并的分支 amd-staging-drm-next（agd5f 是维护者 Alex Deucher 的 freedesktop 仓库）。基于过时的发行版内核做的修复，很可能在上游早已被改掉或会产生冲突。',
+        instructionEn:
+          'amdgpu patches should be based on amd-staging-drm-next, the branch AMD maintainers actually merge into (agd5f is maintainer Alex Deucher\'s freedesktop repo). A fix made against an old distro kernel has likely already changed upstream or will conflict.',
+        command: 'cd ~/linux  # 你的内核树\ngit remote add agd5f https://gitlab.freedesktop.org/agd5f/linux.git 2>/dev/null\ngit fetch agd5f amd-staging-drm-next --depth=200\ngit checkout -b first-patch agd5f/amd-staging-drm-next\ngit log --oneline -5',
+        hint: '--depth=200 节省时间和磁盘；之后需要 git blame 深挖历史时再执行 git fetch --unshallow agd5f。',
+        hintEn: '--depth=200 saves time and disk; run git fetch --unshallow agd5f later if you need git blame to dig into history.',
+        checkpoint: 'git log 显示最近几周内的 drm/amd 提交。',
+        checkpointEn: 'git log shows drm/amd commits from within the last few weeks.',
+      },
+      {
+        order: 2,
+        title: '机会雷达 #1：扫描 kernel-doc 警告',
+        titleEn: 'Opportunity radar #1: scan for kernel-doc warnings',
+        instruction:
+          'kernel-doc 注释（/** ... */）必须与函数签名保持同步。参数改名、增删后注释经常没跟上，产生 "Function parameter ... not described" 或 "Excess function parameter" 警告。这类修复小而明确，是社区公认的入门贡献。display（DC）子树头文件多，是高产区。',
+        instructionEn:
+          'kernel-doc comments (/** ... */) must stay in sync with function signatures. After parameters are renamed, added, or removed, comments often lag behind, producing "Function parameter ... not described" or "Excess function parameter" warnings. These fixes are small, unambiguous, and a community-recognized entry contribution. The display (DC) subtree is header-heavy and fertile ground.',
+        command: 'find drivers/gpu/drm/amd/display -name "*.h" | \\\n  xargs -r scripts/kernel-doc -none 2>&1 | tee /tmp/kdoc.log | head -40\nwc -l /tmp/kdoc.log',
+        checkpoint: '得到一份警告清单，从中挑出 1-3 个你能读懂对应代码的候选。',
+        checkpointEn: 'You have a warning list and have picked 1-3 candidates whose surrounding code you can actually read.',
+      },
+      {
+        order: 3,
+        title: '机会雷达 #2：W=1 编译警告（可选）',
+        titleEn: 'Opportunity radar #2: W=1 build warnings (optional)',
+        instruction:
+          'W=1 打开比默认更严格的编译警告。注意其中有误报和维护者明确不收的类型——优先选 kernel-doc、未使用变量、明显笔误类；怀疑时先看目标文件的 git log，了解维护者最近接受过什么样的清理。',
+        instructionEn:
+          'W=1 enables stricter-than-default compiler warnings. Beware: some are false positives or categories maintainers explicitly do not take — prefer kernel-doc, unused-variable, and obvious-typo classes. When in doubt, read the target file\'s git log to see what kind of cleanups maintainers accepted recently.',
+        command: 'make W=1 M=drivers/gpu/drm/amd -j$(nproc) 2>&1 | \\\n  grep -E "warning:" | sort | uniq -c | sort -rn | head -20',
+        checkpoint: '候选清单合并完成，锁定一个最小、最明确的目标。',
+        checkpointEn: 'Candidate list merged; you have locked onto one minimal, unambiguous target.',
+      },
+      {
+        order: 4,
+        title: '查重：确认没人已经在修',
+        titleEn: 'Dedup: make sure nobody is already fixing it',
+        instruction:
+          '两个检查：（1）该警告在 amd-staging-drm-next 最新提交上仍然存在；（2）amd-gfx 归档近几周没有相同修复在审。重复补丁浪费维护者时间，是新手最常见的"第一印象失分"。',
+        instructionEn:
+          'Two checks: (1) the warning still exists at the tip of amd-staging-drm-next; (2) no identical fix is under review in the amd-gfx archive from recent weeks. Duplicate patches waste maintainer time and are the most common first-impression mistake.',
+        command: '# 浏览器打开（把 <file> 换成目标文件名）：\n#   https://lore.kernel.org/amd-gfx/?q=<file>\ngit log --oneline -10 -- <path/to/target/file>',
+        checkpoint: '确认目标唯一且没有在途的相同修复。',
+        checkpointEn: 'Confirmed the target is unique with no in-flight identical fix.',
+      },
+      {
+        order: 5,
+        title: '修复并自检',
+        titleEn: 'Fix and self-check',
+        instruction:
+          '一个补丁只做一件事。commit message 按 Module 11.1.2 的规范：display 文件用 "drm/amd/display:" 前缀；Body 说明警告内容与产生原因（例如某次提交改了函数签名但没更新注释——纯注释修复一般不需要 Fixes: 标签，把事实写清楚即可）。',
+        instructionEn:
+          'One logical change per patch. Follow the Module 11.1.2 commit-message rules: use the "drm/amd/display:" prefix for display files; the body states the warning and its cause (e.g. a commit changed the function signature without updating the comment — pure comment fixes generally do not need a Fixes: tag, just state the facts).',
+        command: '# 编辑目标文件，修复 kernel-doc 注释\nscripts/kernel-doc -none <修改的文件>      # 应当零输出\nmake M=drivers/gpu/drm/amd -j$(nproc)      # 编译仍须通过\ngit add -p && git commit -s',
+        checkpoint: '目标文件 kernel-doc -none 零输出；模块编译通过；git show 的 diff 只含一个逻辑修改。',
+        checkpointEn: 'kernel-doc -none on the file prints nothing; the module still builds; git show contains exactly one logical change.',
+      },
+      {
+        order: 6,
+        title: 'checkpatch 与维护者名单',
+        titleEn: 'checkpatch and the maintainer list',
+        instruction:
+          '发送前的固定动作：checkpatch --strict 必须 0 errors / 0 warnings；get_maintainer 给出 To/Cc 名单。',
+        instructionEn:
+          'The fixed pre-send ritual: checkpatch --strict must report 0 errors / 0 warnings; get_maintainer produces your To/Cc list.',
+        command: 'scripts/checkpatch.pl --strict -g HEAD~1..HEAD\nscripts/get_maintainer.pl -g HEAD~1..HEAD',
+        checkpoint: '0 errors / 0 warnings；获得 amd-gfx 列表与对应维护者的 To/Cc 名单。',
+        checkpointEn: '0 errors / 0 warnings; you have the To/Cc list with amd-gfx and the right maintainers.',
+      },
+      {
+        order: 7,
+        title: '发送前演练（不发出任何邮件）',
+        titleEn: 'Pre-send rehearsal (no email goes out)',
+        instruction:
+          '用 b4 或 git send-email 的演练模式生成"将要发送的邮件"，人工检查 To/Cc、Subject 前缀和 diff 内容。这一步之后，你的补丁处于"随时可发"状态。',
+        instructionEn:
+          'Use b4 or git send-email rehearsal modes to generate exactly what would be sent, then manually inspect To/Cc, the Subject prefix, and the diff. After this step your patch is in a "ready to send" state.',
+        command: '# 方式 A：b4（推荐）\nb4 prep --enroll-base agd5f/amd-staging-drm-next   # 把当前分支交给 b4 管理\nb4 prep --check                                     # 自动运行 checkpatch 等检查\nb4 send -o /tmp/presend                             # 只生成邮件文件，不发送\ncat /tmp/presend/*\n\n# 方式 B：传统流程\ngit format-patch HEAD~1\ngit send-email --dry-run --to amd-gfx@lists.freedesktop.org 0001-*.patch',
+        hint: '若你的 b4 版本不支持 --enroll-base，直接用方式 B——两者产物等价。重点检查：To/Cc 是否完整、Subject 前缀是否正确、diff 是否只含本次修改。',
+        hintEn: 'If your b4 version lacks --enroll-base, just use option B — the output is equivalent. Key checks: complete To/Cc, correct Subject prefix, and a diff containing only this change.',
+        checkpoint: '/tmp/presend（或 dry-run 输出）中的邮件头与正文全部正确。',
+        checkpointEn: 'Headers and body in /tmp/presend (or the dry-run output) are all correct.',
+      },
+      {
+        order: 8,
+        title: '发送与跟踪（由你决定时机）',
+        titleEn: 'Send and track (on your own schedule)',
+        instruction:
+          '发送后：（1）lore 归档链接几分钟内可用——这就是简历上可验证的贡献记录；（2）一周左右无回应可以礼貌地回帖 ping 一次；（3）维护者有时不回邮件直接收下补丁，所以也要定期在分支里查你的名字。',
+        instructionEn:
+          'After sending: (1) the lore archive link appears within minutes — that is the verifiable contribution record for your resume; (2) if there is no response after about a week, a polite ping reply is acceptable; (3) maintainers sometimes pick up patches without replying, so also check the branch for your name periodically.',
+        command: 'b4 send        # 或 git send-email --to ... --cc ... 0001-*.patch\n\n# 几分钟后在归档确认（替换为你的邮箱）：\n#   https://lore.kernel.org/amd-gfx/?q=f:your@email.com\n\n# 之后定期检查补丁是否已被收进分支：\ngit fetch agd5f amd-staging-drm-next\ngit log --oneline --author="Your Name" agd5f/amd-staging-drm-next',
+        checkpoint: '补丁出现在 lore.kernel.org/amd-gfx 归档——把这个链接记进你的 Portfolio。',
+        checkpointEn: 'Your patch appears in the lore.kernel.org/amd-gfx archive — record that link in your portfolio.',
+      },
+    ],
+    expectedOutput: '一个通过 kernel-doc / 编译 / checkpatch 全部检查、随时可发送的真实补丁；发送后获得 lore.kernel.org 归档链接——简历上可验证的上游贡献记录。',
+    expectedOutputEn: 'A real patch passing every kernel-doc / build / checkpatch check, ready to send at any time; once sent, a lore.kernel.org archive link — a verifiable upstream contribution for your resume.',
+    tips: [
+      '⚠️ 不要批量提交纯代码风格修复——drm/amd 维护者通常不接受无功能意义的大面积风格改动；kernel-doc 与真实编译警告类修复是安全区',
+      '第一个补丁越小越好——10 行以内的 kernel-doc 修复比 100 行的"重构"更容易获得回应',
+      '发送前基于最新的 amd-staging-drm-next 重新 rebase，并确认警告仍然存在',
+      '被要求修改不是失败——回应 Review 并发出 v2 的经历，在面试中比一次通过更有故事性',
+      '同类警告先只修一处（一个文件/一个函数），熟悉完整循环后再考虑系列补丁',
+    ],
+    tipsEn: [
+      '⚠️ Do not mass-submit pure style fixes — drm/amd maintainers generally reject broad changes with no functional meaning; kernel-doc and real compiler-warning fixes are the safe zone',
+      'Smaller is better for a first patch — a sub-10-line kernel-doc fix gets a response more easily than a 100-line "refactor"',
+      'Rebase onto the latest amd-staging-drm-next before sending and confirm the warning still exists',
+      'Being asked for changes is not failure — responding to review and sending a v2 makes a better interview story than a one-shot merge',
+      'Fix one instance first (one file / one function); consider a series only after you know the full loop',
+    ],
+    tags: ['upstream', 'kernel-doc', 'checkpatch', 'b4', 'amd-gfx', 'portfolio'],
   },
 ];
 

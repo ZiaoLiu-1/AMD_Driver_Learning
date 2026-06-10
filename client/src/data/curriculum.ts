@@ -111,11 +111,11 @@ export const curriculumZh: Module[] = [
       { id: 'intro-setup', title: '环境搭建', titleEn: 'Environment Setup' },
     ],
     theory: {
-      overview: '这条学习路径旨在将你从一个 Linux 用户，培养成一名能够理解、调试并为 AMD GPU 驱动（amdgpu）贡献代码的内核工程师。你手中任意一块 AMD GPU（RDNA/GCN 均可）都是你最好的学习工具。整个路径分为 11 个模块，预计总学习时间约为 400-600 小时（6-12 个月，取决于你的基础和投入程度）。',
+      overview: '这条学习路径旨在将你从一个 Linux 用户，培养成一名能够理解、调试并为 AMD GPU 驱动（amdgpu）贡献代码的内核工程师。你手中任意一块 AMD GPU（RDNA/GCN 均可）都是你最好的学习工具。整个路径分为 14 个模块，预计总学习时间约为 640 小时（6-12 个月，取决于你的基础和投入程度）。',
       sections: [
         {
           title: '为什么选择 AMD GPU 驱动开发？',
-          content: 'AMD 的 GPU 驱动栈（amdgpu）是目前 Linux 内核中最复杂、最活跃的子系统之一。整个驱动栈完全开源，从内核驱动到用户态 ROCm 计算框架，这为学习提供了无与伦比的透明度。AMD Markham（加拿大）是 AMD 最重要的 GPU 驱动开发中心之一，拥有大量内核工程师岗位。掌握这条路径上的技能，将使你成为一名极具竞争力的候选人。amdgpu 驱动代码量约 250 万行（使用 cloc 对 Linux 6.8 内核 drivers/gpu/drm/amd/ 目录统计），是 Linux 内核中最大的单个子系统之一。它包含 Display Core（DC）、Graphics/Compute（GFX）、DMA 引擎（SDMA）、视频编解码（VCN/JPEG）、电源管理（SMU）等多个 IP Block，每个都有独立的团队在维护。',
+          content: 'AMD 的 GPU 驱动栈（amdgpu）是目前 Linux 内核中最复杂、最活跃的子系统之一。内核驱动（amdgpu）与 Mesa 用户态驱动完全开源，ROCm 计算栈也有大量开源组件（GPU 固件仍以二进制 blob 形式分发），这为学习提供了少见的透明度。AMD Markham（加拿大）是 AMD 最重要的 GPU 驱动开发中心之一，拥有大量内核工程师岗位。掌握这条路径上的技能，将使你成为一名极具竞争力的候选人。amdgpu 驱动代码量约 250 万行（使用 cloc 对 Linux 6.8 内核 drivers/gpu/drm/amd/ 目录统计），是 Linux 内核中最大的单个子系统之一。它包含 Display Core（DC）、Graphics/Compute（GFX）、DMA 引擎（SDMA）、视频编解码（VCN/JPEG）、电源管理（SMU）等多个 IP Block，每个都有独立的团队在维护。',
           diagram: {
             type: 'ascii',
             content: `Why AMD GPU Driver Development?
@@ -139,8 +139,9 @@ export const curriculumZh: Module[] = [
   ✓ Active community   -- amd-gfx: 30+ patches/day
   ✓ Career opportunity -- AMD Markham/Shanghai hiring
   ✓ Cross-domain       -- kernel, compiler, graphics, AI
-  ✓ Accessible HW      -- any AMD consumer GPU works`,
-            caption: 'amdgpu 是 Linux 内核中最大的单个驱动子系统。完全开源的特性使其成为学习 GPU 驱动开发的最佳选择。',
+  ✓ Accessible HW      -- most AMD GPUs work for kernel-driver study
+                          (ROCm/HIP support varies by model)`,
+            caption: 'amdgpu 是 Linux 内核中最大的单个驱动子系统。内核驱动与 Mesa 用户态均开源（ROCm 也有大量开源组件，固件为二进制 blob），这种开放性使其成为学习 GPU 驱动开发的优秀选择。',
           },
         },
         {
@@ -238,7 +239,7 @@ Phase 1: 基础                Phase 2: 内核         Phase 3: 驱动        Ph
         },
         {
           title: '开发环境搭建',
-          content: '你需要准备：一台安装了 Ubuntu 22.04 LTS 或 Arch Linux 的机器（任意一块 AMD GPU 都是很好的测试硬件，RDNA2/3 尤佳）；安装 linux-headers、build-essential、git、clang、llvm 等开发工具；克隆 Linux 内核源码（约 3GB）；安装 ROCm 开发套件。建议使用 KVM 虚拟机进行危险的内核实验，避免破坏主机系统。关键工具链：（1）内核编译：gcc/clang + make/kbuild；（2）代码阅读：cscope + ctags 或 VS Code + clangd；（3）调试：ftrace + perf + trace-cmd；（4）GPU 监控：amdgpu_top + radeontop；（5）版本控制：git + git send-email（用于提交内核补丁）。',
+          content: '你需要准备：一台安装了 Ubuntu 22.04 LTS 或 Arch Linux 的机器（任意一块 AMD GPU 都是很好的测试硬件，RDNA2/3 尤佳）；安装 linux-headers、build-essential、git、clang、llvm 等开发工具；克隆 Linux 内核源码（约 3GB）。ROCm 开发套件为可选项，仅 Module 7/9 的计算内容需要，且安装前务必先核对官方兼容性矩阵——并非所有消费级显卡（如 RX 7600 XT / gfx1102）都受 ROCm 官方支持。建议使用 KVM 虚拟机或 virtme-ng 进行危险的内核实验，避免破坏主机系统。关键工具链：（1）内核编译：gcc/clang + make/kbuild；（2）代码阅读：cscope + ctags 或 VS Code + clangd；（3）调试：ftrace + perf + trace-cmd；（4）GPU 监控：amdgpu_top + radeontop；（5）版本控制：git + git send-email（用于提交内核补丁）。',
         },
       ],
       keyBooks: [
@@ -3244,11 +3245,15 @@ cd igt-gpu-tools
 meson setup build
 ninja -C build
 
-# 列出所有 amdgpu 相关测试
-./build/tests/amdgpu/amdgpu_test --list-subtests
+# IGT 的 amdgpu 测试是一组独立可执行文件（amd_basic、amd_deadlock 等），
+# 并没有单一的 amdgpu_test 二进制。先看有哪些测试：
+ls ./build/tests/amdgpu/
 
-# 运行基本的 amdgpu 测试
-sudo ./build/tests/amdgpu/amdgpu_test
+# 列出某个测试的子项（子项名会随上游变动，先 --list-subtests 再运行）
+./build/tests/amdgpu/amd_basic --list-subtests
+
+# 运行基本的 amdgpu 测试（需 root + 真实 GPU）
+sudo ./build/tests/amdgpu/amd_basic
 
 # 运行 KMS 测试（测试显示功能）
 sudo ./build/tests/kms_atomic --run-subtest atomic-setmode
@@ -3260,7 +3265,7 @@ sudo ./build/tests/kms_atomic --run-subtest atomic-setmode
 # 结果：PASS / FAIL / SKIP / CRASH`,
         annotations: [
           'IGT 测试需要 root 权限，因为它直接通过 DRM ioctl 访问 GPU',
-          'amdgpu_test 是专门针对 amdgpu 驱动的测试程序，测试 GEM、CS、VRAM 等功能',
+'amdgpu 测试由 tests/amdgpu/ 下的一组独立二进制组成（amd_basic、amd_cs_nop、amd_deadlock、amd_vm 等），分别测试 BO 分配、命令提交、死锁恢复、虚拟内存等功能——并没有单一的 amdgpu_test 程序',
           'kms_atomic 测试 KMS Atomic Mode Setting，验证显示功能是否正常',
           'SKIP 结果通常表示测试需要特定硬件功能，当前 GPU 不支持，这是正常的',
           '在提交 amdgpu 补丁前，应确保相关测试全部 PASS',
@@ -3269,11 +3274,12 @@ sudo ./build/tests/kms_atomic --run-subtest atomic-setmode
       {
         title: 'IGT GEM Buffer Object 测试（C 源码）',
         description: '分析 IGT 框架中 amdgpu GEM BO 创建测试的真实 C 代码结构，理解 IGT 测试的编写模式。',
-        file: 'tests/amdgpu/amdgpu_gem.c (IGT)',
+        file: 'IGT 示意（参照 tests/amdgpu/amd_basic.c 等）',
         language: 'c',
         code: `/* IGT 测试示例：amdgpu GEM Buffer Object 创建与验证
- * 基于 igt-gpu-tools/tests/amdgpu/ 中的真实测试模式
- * 文件：tests/amdgpu/amdgpu_gem.c
+ * 示意代码——演示 igt-gpu-tools/tests/amdgpu/ 中真实测试的写法模式。
+ * 子测试名（gem-create-valid 等）为教学虚构；真实的 amd_basic.c 使用
+ * memory-alloc、cs-gfx-with-IP-GFX 等动态子测试名，请用 --list-subtests 查看。
  */
 
 #include "igt.h"
@@ -3501,8 +3507,9 @@ kunit_test_suite(drm_buddy_test_suite);`,
     difficulty: 'intermediate',
     subModules: [
       { id: 'career-patch', title: '11.1 内核补丁实战', titleEn: 'Kernel Patch Workflow' },
-      { id: 'career-portfolio', title: '11.2 构建你的作品集', titleEn: 'Building Your Portfolio' },
-      { id: 'career-interview', title: '11.3 AMD 面试准备', titleEn: 'AMD Interview Prep' },
+      { id: 'career-portfolio', title: '11.2.1 构建你的作品集', titleEn: 'Building Your Portfolio' },
+      { id: 'career-interview', title: '11.2.2 AMD 面试准备', titleEn: 'AMD Interview Prep' },
+      { id: 'career-action', title: '11.3 从补丁到 Offer：行动手册', titleEn: 'From Patches to Offer: Execution Playbook' },
     ],
     theory: {
       overview: '这是整个学习路径的终点，也是你职业生涯的起点。提交一个被接受的内核补丁，是证明你具备内核开发能力的最有力证明。本模块将指导你完成从发现 Bug 到补丁被合并的完整流程，并帮助你将这些经历转化为 AMD 面试的优势。',

@@ -286,7 +286,7 @@ uint32_t read_gpu_status(struct amdgpu_device *adev)
 │                                                                  │
 │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐       │
 │  │Shader  │ │ SDMA   │ │Display │ │ Video  │ │ VRAM   │       │
-│  │Engines │ │Engines │ │Engine  │ │Engine  │ │ 8GB    │       │
+│  │Engines │ │Engines │ │Engine  │ │Engine  │ │ 16GB   │       │
 │  │(32 CU) │ │ (×2)   │ │(DCN3.2)│ │(VCN4.0)│ │GDDR6   │       │
 │  └────────┘ └────────┘ └────────┘ └────────┘ └────────┘       │
 └─────────────────────────────────────────────────────────────────┘`,
@@ -736,7 +736,7 @@ static const struct pci_device_id pciidlist[] = {
               'amdgpu uses DRM_INFO/WARN/ERROR/DEBUG_DRIVER macros for log output',
               'dmesg | grep -i amdgpu is the first step in diagnosing GPU issues',
               'During GPU hangs, dmesg will contain register dumps (GRBM_STATUS, CP_RB_RPTR/WPTR)',
-              'Dynamic debugging: echo "module amdgpu +p" > /proc/dynamic_debug/control',
+              'Dynamic debugging: echo "module amdgpu +p" > /sys/kernel/debug/dynamic_debug/control',
             ],
           },
           diagram: {
@@ -755,9 +755,9 @@ Time           Log Content                                    Source
            amdgpu:   SDMA firmware version...
            amdgpu:   VCN firmware version...
 
-[  2.400]  [drm] VRAM: 8176M                              amdgpu_gmc.c
+[  2.400]  [drm] VRAM: 16368M                             amdgpu_gmc.c
            [drm] VRAM width 128bits GDDR6                 ← VRAM info
-           [drm] GTT: 8176M
+           [drm] GTT: 16368M
 
 [  2.450]  [drm] PSP is alive!                            psp_v13_0.c
            [drm] Loading GFX firmware...                   ← IP Block init
@@ -805,7 +805,7 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
             annotations: [
               'dmesg --level=err,warn shows only error and warning levels, quickly pinpointing problems',
               '"firmware" and "ucode" keywords correspond to GPU firmware loading — firmware load failures are a common issue',
-              'The number in "VRAM: 8176M" isn\'t 8192 because a portion of VRAM is reserved by firmware and system',
+              'The number in "VRAM: 16368M" isn\'t 16384 because a portion of VRAM is reserved by firmware and system',
               'dmesg -w is watch mode, showing new messages in real-time — very useful during testing',
               'Saving to a file is essential when submitting bug reports, which must include complete dmesg output',
             ],
@@ -852,7 +852,7 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
             question: 'When a user reports that the GPU driver won\'t load, how would you begin debugging? Describe your first 5 steps.',
             difficulty: 'medium',
             hint: 'A systematic debugging flow from information gathering (dmesg, system info) to problem classification (firmware, hardware, configuration).',
-            answer: 'First 5 debugging steps: (1) Collect dmesg: dmesg | grep -i "amdgpu\\\\|drm\\\\|error\\\\|fail" > /tmp/gpu_debug.log. First look for obvious error messages (e.g., firmware load failed, probe failed). (2) Confirm hardware is detected: lspci -nn | grep AMD. If lspci doesn\'t show the GPU, the problem is at the PCI layer (BIOS settings, physical connection, PCIe slot). (3) Confirm driver is loaded: lsmod | grep amdgpu. If not, check if the kernel was compiled with amdgpu (zgrep AMDGPU /proc/config.gz or modinfo amdgpu). (4) Check firmware: ls /lib/firmware/amdgpu/ | wc -l. Missing firmware is the most common cause of load failure, especially with new hardware or self-compiled kernels. (5) Check kernel version: uname -r. New GPUs often require a newer kernel and linux-firmware combination for support (refer to your distro\'s support matrix for recommended versions). If the first 5 steps don\'t locate the problem, enable dynamic debugging (echo "module amdgpu +p" > /proc/dynamic_debug/control) for more detailed logs.',
+            answer: 'First 5 debugging steps: (1) Collect dmesg: dmesg | grep -i "amdgpu\\\\|drm\\\\|error\\\\|fail" > /tmp/gpu_debug.log. First look for obvious error messages (e.g., firmware load failed, probe failed). (2) Confirm hardware is detected: lspci -nn | grep AMD. If lspci doesn\'t show the GPU, the problem is at the PCI layer (BIOS settings, physical connection, PCIe slot). (3) Confirm driver is loaded: lsmod | grep amdgpu. If not, check if the kernel was compiled with amdgpu (zgrep AMDGPU /proc/config.gz or modinfo amdgpu). (4) Check firmware: ls /lib/firmware/amdgpu/ | wc -l. Missing firmware is the most common cause of load failure, especially with new hardware or self-compiled kernels. (5) Check kernel version: uname -r. New GPUs often require a newer kernel and linux-firmware combination for support (refer to your distro\'s support matrix for recommended versions). If the first 5 steps don\'t locate the problem, enable dynamic debugging (echo "module amdgpu +p" > /sys/kernel/debug/dynamic_debug/control) for more detailed logs.',
             amdContext: 'This kind of systematic debugging approach is highly valued in AMD interviews. Interviewers want to see not "I\'ll Google the error message," but a structured diagnostic process.',
           },
         },
@@ -934,7 +934,7 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
 │                                                              │
 │  Option B: Real Machine (daily dev, verified changes)        │
 │  sudo rmmod amdgpu && sudo modprobe amdgpu                  │
-│  sudo ./build/tests/amdgpu_test  ← Run IGT tests           │
+│  sudo ./build/tests/amdgpu/amd_basic ← Run IGT tests      │
 └──────────────────────────────┬──────────────────────────────┘
                                │
 ┌──────────────────────────────▼──────────────────────────────┐
@@ -1054,7 +1054,7 @@ make[4]: *** [scripts/Makefile.build:257:
             question: 'Describe your kernel development workflow: from modifying code to testing to submitting patches.',
             difficulty: 'easy',
             hint: 'Demonstrate your understanding of the complete development cycle: edit → compile (make M=...) → test (insmod/IGT) → check (checkpatch) → submit (git format-patch + send-email).',
-            answer: 'My kernel development workflow: (1) Prepare: git checkout -b fix/my-bugfix to create a working branch based on AMD\'s drm-next branch. (2) Edit: use VS Code + clangd (or vim + cscope) to locate and modify code. (3) Compile: make M=drivers/gpu/drm/amd -j$(nproc) to compile only the modified module (~1 minute), ensuring no compilation errors or warnings (make W=1 enables extra warnings). (4) Test: first load amdgpu.ko in a KVM VM via insmod to verify the module loads properly, then on the real machine run sudo rmmod amdgpu && sudo modprobe amdgpu to reload, and run relevant IGT tests (sudo ./build/tests/amdgpu/amdgpu_test). (5) Check code style: scripts/checkpatch.pl --strict HEAD~1..HEAD, ensuring 0 errors, 0 warnings. (6) Commit: git commit -s to add Signed-off-by, using the standard commit message format (drm/amdgpu: fix xxx). (7) Send patch: git format-patch HEAD~1 to generate the patch file, git send-email to send to amd-gfx@lists.freedesktop.org. (8) Respond to reviews: carefully address each review comment, send v2 after revisions.',
+            answer: 'My kernel development workflow: (1) Prepare: git checkout -b fix/my-bugfix to create a working branch based on AMD\'s drm-next branch. (2) Edit: use VS Code + clangd (or vim + cscope) to locate and modify code. (3) Compile: make M=drivers/gpu/drm/amd -j$(nproc) to compile only the modified module (~1 minute), ensuring no compilation errors or warnings (make W=1 enables extra warnings). (4) Test: first load amdgpu.ko in a KVM VM via insmod to verify the module loads properly, then on the real machine run sudo rmmod amdgpu && sudo modprobe amdgpu to reload, and run relevant IGT tests (e.g. sudo ./build/tests/amdgpu/amd_basic). (5) Check code style: scripts/checkpatch.pl --strict HEAD~1..HEAD, ensuring 0 errors, 0 warnings. (6) Commit: git commit -s to add Signed-off-by, using the standard commit message format (drm/amdgpu: fix xxx). (7) Send patch: git format-patch HEAD~1 to generate the patch file, git send-email to send to amd-gfx@lists.freedesktop.org. (8) Respond to reviews: carefully address each review comment, send v2 after revisions.',
             amdContext: 'This question tests whether you have actual kernel development experience. Even if you haven\'t submitted a patch yet, demonstrating that you know the complete workflow (including checkpatch and send-email) will impress the interviewer.',
           },
         },

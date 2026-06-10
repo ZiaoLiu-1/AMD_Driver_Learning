@@ -79,7 +79,7 @@ export const ecosystemModule: Module = {
     │  │  ← 你的 RX 7600 XT 在这里               │
     │  └──────────────────────────────────────────┘
     └──────────────────────────────────────────────→ 时间`,
-          caption: 'AMD GPU 三层产品线。消费级 RX（如 RX 7600 XT）与 Instinct MI300 同代 RDNA3 架构，共享同一套 amdgpu 内核代码。',
+          caption: 'AMD GPU 三层产品线。amdgpu 内核驱动同时支持 Radeon（RDNA）与 Instinct（CDNA）两大家族，但二者的代码路径并不相同——MI300 属于 CDNA3 数据中心架构，并非 RDNA3 消费级图形 GPU；KFD/ROCm 支持优先面向 Instinct。',
         },
       },
       {

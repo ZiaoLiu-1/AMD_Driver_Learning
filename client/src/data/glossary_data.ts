@@ -20,7 +20,7 @@ export const glossaryByModule: Record<string, GlossaryTerm[]> = {
 
   // ── Module 0.5: AMD 生态系统概览 ────────────────────────
   ecosystem: [
-    { abbr: 'RDNA', fullEn: 'Radeon DNA', zhName: 'Radeon DNA 架构', description: 'AMD 自 2019 年起用于消费级 GPU 的现代图形架构，当前最新为 RDNA3（RX 7000 系列）。', category: 'hardware' },
+    { abbr: 'RDNA', fullEn: 'Radeon DNA', zhName: 'Radeon DNA 架构', description: 'AMD 自 2019 年起用于消费级 GPU 的现代图形架构。截至 2026 年最新一代为 RDNA4（RX 9000 系列，2025 年发布）；RX 7000 系列为上一代 RDNA3。', category: 'hardware' },
     { abbr: 'GCN', fullEn: 'Graphics Core Next', zhName: '图形核心下一代', description: 'AMD 2012-2019 年使用的 GPU 架构，奠定了现代 amdgpu 驱动的基础，大量 legacy 代码来自此架构。', category: 'hardware' },
     { abbr: 'CDNA', fullEn: 'Compute DNA', zhName: '计算 DNA 架构', description: 'AMD 专为数据中心 AI/HPC 设计的 GPU 架构，用于 Instinct MI 系列，与 RDNA 分离演进。', category: 'hardware' },
     { abbr: 'APU', fullEn: 'Accelerated Processing Unit', zhName: '加速处理器', description: 'AMD 将 CPU 和 GPU 集成在同一芯片上的产品，如 Ryzen 7000 系列中的集显部分。', category: 'hardware' },
@@ -46,7 +46,7 @@ export const glossaryByModule: Record<string, GlossaryTerm[]> = {
 
   // ── Module 2: 硬件接口基础 ──────────────────────────────
   hardware: [
-    { abbr: 'PCIe', fullEn: 'Peripheral Component Interconnect Express', zhName: '高速外设互联总线', description: '现代 GPU 连接到 CPU/主板的高速串行总线标准，RX 7600 XT 使用 PCIe 4.0 x16。', category: 'hardware' },
+    { abbr: 'PCIe', fullEn: 'Peripheral Component Interconnect Express', zhName: '高速外设互联总线', description: '现代 GPU 连接到 CPU/主板的高速串行总线标准。RX 7600 XT 为 PCIe 4.0 x8（Navi33 原生 x8；可插入 x16 插槽但电气链路为 x8）。', category: 'hardware' },
     { abbr: 'BAR', fullEn: 'Base Address Register', zhName: '基地址寄存器', description: 'PCIe 配置空间中的寄存器，定义设备的 MMIO 和 I/O 空间的物理地址范围，GPU 通过 BAR0 暴露寄存器空间。', category: 'hardware' },
     { abbr: 'MMIO', fullEn: 'Memory-Mapped I/O', zhName: '内存映射 I/O', description: '将硬件寄存器映射到内存地址空间的技术，CPU 通过普通内存读写指令即可操控 GPU 寄存器。', category: 'hardware' },
     { abbr: 'DMA', fullEn: 'Direct Memory Access', zhName: '直接内存访问', description: '允许 GPU 等外设不经过 CPU 直接读写系统内存的技术，大幅降低 CPU 开销，是 GPU 数据传输的核心机制。', category: 'hardware' },

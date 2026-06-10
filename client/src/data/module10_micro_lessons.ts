@@ -35,8 +35,8 @@ export const module10MicroLessons: MicroLessonModule = {
               'IGT 的核心架构围绕三个概念：测试（test）、子测试（subtest）和 fixture。一个 IGT 测试文件通常包含一个 igt_main 块（或 igt_simple_main 用于单一测试），内部通过 igt_subtest 定义多个子测试。fixture 通过 igt_fixture 块定义，用于在子测试之间共享的初始化和清理代码。这种结构让你可以在一个文件中组织多个相关但独立的测试。',
               'IGT 提供了丰富的断言宏：igt_assert(cond) 是最基本的断言，失败时终止当前子测试并报告 FAIL；igt_assert_eq(a, b) 比较两个值，失败时打印两个值方便调试；igt_assert_fd(fd) 断言文件描述符有效；igt_assert_lte(a, b) 断言 a <= b。这些宏内部使用 longjmp 实现跳转，确保测试失败后能正确清理资源。',
               'igt_require(cond) 是另一个关键宏——当条件不满足时，它跳过（SKIP）当前子测试而不是标记为 FAIL。这用于处理硬件能力差异：例如某个测试需要 VCN 视频引擎，但测试机器可能没有，此时 igt_require 会优雅地跳过而不是报错。这对于在不同硬件上运行同一套测试非常重要。',
-              'amdgpu 的 IGT 测试集中在 tests/amdgpu/ 目录下，包括：amd_basic（基础功能测试：打开设备、查询信息）、amd_cs_nop（命令提交空操作测试）、amd_deadlock（死锁检测测试）、amd_pci_unplug（热插拔测试）等。每个文件测试 amdgpu 驱动的一个特定方面。此外 tests/ 根目录下的通用 DRM 测试（如 kms_flip、kms_cursor_crc、gem_create）也会在 amdgpu 上运行。',
-              'Inside IGT\'s tests/amdgpu/ directory, tests are organized by subsystem: amd_basic (sanity: BO alloc, CS submit, device query), amd_deadlock (stress: concurrent CS + reset, identifies lock ordering bugs), amd_pci_unplug (hotplug: tests safe GPU removal under load), amd_cs (command submission: various IB sizes, priorities, preemption), amd_vm (virtual memory: mapping, unmapping, fault injection), amd_hotunplug (PCI remove + re-probe simulation), and amd_abm (display: adaptive backlight management). When verifying your amdgpu patch, the selection rule is: always run amd_basic (quick sanity), then run the test matching your change area — e.g., if you modified amdgpu_cs.c, run amd_cs; if you changed amdgpu_vm.c, run amd_vm; if you changed display/dc/, run kms_* tests. The command: sudo ./build/tests/amdgpu/amd_basic --run-subtest cs-gfx is the minimum test every amdgpu patch must pass.',
+              'amdgpu 的 IGT 测试集中在 tests/amdgpu/ 目录下，包括：amd_basic（基础功能测试：打开设备、查询信息）、amd_cs_nop（命令提交空操作测试）、amd_deadlock（死锁检测测试）、amd_pci_unplug（热插拔测试）等。每个文件测试 amdgpu 驱动的一个特定方面。此外 tests/ 根目录下的通用 DRM/KMS 测试（如 kms_flip、kms_cursor_crc、kms_atomic）也会在 amdgpu 上运行。',
+              '在 IGT 的 tests/amdgpu/ 目录中，测试按子系统组织：amd_basic（基础健全性检查：BO 分配、CS 提交、设备查询）、amd_deadlock（压力测试：并发 CS + reset，用于发现锁顺序 bug）、amd_pci_unplug（热插拔：测试负载下安全移除 GPU）、amd_cs（命令提交：不同 IB 大小、优先级、抢占）、amd_vm（虚拟内存：映射、取消映射、故障注入）、amd_hotunplug（PCI 移除 + 重新探测的模拟）以及 amd_abm（显示：自适应背光管理）。验证你的 amdgpu 补丁时，选择规则是：始终运行 amd_basic（快速健全性检查），然后运行与你改动区域对应的测试——例如，如果你修改了 amdgpu_cs.c，运行 amd_cs_nop；如果你改动了 amdgpu_vm.c，运行 amd_vm；如果你改动了 display/dc/，运行 kms_* 测试。子测试名会随上游变动，请先用 ./build/tests/amdgpu/amd_basic --list-subtests 列出真实名称。最低限度的健全性命令为 sudo ./build/tests/amdgpu/amd_basic --run-subtest cs-gfx-with-IP-GFX。',
             ],
             keyPoints: [
               'IGT 是 Linux GPU 驱动的标准测试框架，1000+ 测试用例覆盖所有 DRM 功能',
@@ -45,7 +45,7 @@ export const module10MicroLessons: MicroLessonModule = {
               'amdgpu 专用测试在 tests/amdgpu/ 目录，通用 DRM 测试也在 amdgpu 上运行',
               'IGT 测试结果有四种状态：PASS / FAIL / SKIP / TIMEOUT',
               '运行单个测试：./build/tests/amdgpu/amd_basic；运行子测试：--run-subtest "subtest-name"',
-              'tests/amdgpu/ organized by subsystem: amd_basic, amd_cs, amd_vm, amd_deadlock, amd_pci_unplug',
+              'tests/amdgpu/ 按子系统组织：amd_basic、amd_cs_nop、amd_vm、amd_deadlock、amd_pci_unplug',
             ],
           },
           diagram: {
@@ -92,11 +92,13 @@ IGT 测试结果状态：
             caption: 'IGT 测试由 igt_main 入口、igt_fixture 共享初始化/清理、igt_subtest 独立子测试三部分组成。每个子测试独立运行，互不影响。',
           },
           codeWalk: {
-            title: '解析一个真实的 IGT amdgpu GEM BO 测试',
-            file: 'tests/amdgpu/amd_basic.c',
+            title: 'IGT amdgpu 测试结构剖析（示意，参照 amd_basic.c）',
+            file: 'tests/amdgpu/amd_basic.c（示意）',
             language: 'c',
             code: `/* IGT amdgpu 基础测试 — GEM Buffer Object 分配与信息查询
- * 文件: tests/amdgpu/amd_basic.c (简化版)
+ * 示意/简化版——下面的子测试名称（query-info、gem-create、vram-gtt-migration）
+ * 是为教学虚构的。真实的 tests/amdgpu/amd_basic.c 使用 memory-alloc、
+ * cs-gfx-with-IP-GFX、userptr-with-IP-DMA 等动态子测试名。运行 --list-subtests 查看真实名称。
  */
 #include "igt.h"
 #include <amdgpu.h>
@@ -175,7 +177,7 @@ igt_main
               'igt_require(vram_gtt.vram_size > 0) 跳过不支持 VRAM 的设备（如 APU 无独立 VRAM）',
               'igt_info() 打印信息到测试输出，不影响 PASS/FAIL 状态',
             ],
-            explanation: '这个测试展示了 IGT 的典型结构：igt_fixture 打开设备，多个 igt_subtest 各测试一个功能点，最后 igt_fixture 清理资源。注意 igt_require 的使用——"vram-gtt-migration" 子测试在无 VRAM 的设备上会优雅地 SKIP 而不是 FAIL。这种模式让同一套测试能在不同硬件上正确运行。',
+            explanation: '这个测试展示了 IGT 的典型结构：igt_fixture 打开设备，多个 igt_subtest 各测试一个功能点，最后 igt_fixture 清理资源。注意 igt_require 的使用——依赖 VRAM 的子测试在无 VRAM 的设备上会优雅地 SKIP 而不是 FAIL。这种模式让同一套测试能在不同硬件上正确运行。（此处的子测试名称仅为示意；真实的 amd_basic.c 使用 memory-alloc、cs-gfx-with-IP-GFX 等名称——请用 --list-subtests 查看。）',
           },
           miniLab: {
             title: '编译和运行 IGT amdgpu 测试',
@@ -186,24 +188,23 @@ igt_main
               '编译：meson build && ninja -C build',
               '列出所有 amdgpu 测试：ls build/tests/amdgpu/',
               '运行基础测试：sudo ./build/tests/amdgpu/amd_basic（需要 root 访问 GPU）',
-              '运行单个子测试：sudo ./build/tests/amdgpu/amd_basic --run-subtest "query-info"',
-              '查看所有子测试列表：./build/tests/amdgpu/amd_basic --list-subtests',
-              '运行通用 GEM 创建测试：sudo ./build/tests/gem_create --device /dev/dri/card0',
+              '先查看真实子测试名（会随上游变动）：./build/tests/amdgpu/amd_basic --list-subtests',
+              '运行单个子测试（使用 --list-subtests 给出的名称，如 memory-alloc）：sudo ./build/tests/amdgpu/amd_basic --run-subtest "memory-alloc"',
+              '运行另一个 amdgpu 测试二进制，例如命令提交空操作：sudo ./build/tests/amdgpu/amd_cs_nop',
             ],
             expectedOutput: `$ sudo ./build/tests/amdgpu/amd_basic
 IGT-Version: 1.28 (x86_64)
-Starting subtest: query-info
-Subtest query-info: SUCCESS (0.003s)
-Starting subtest: gem-create
-Subtest gem-create: SUCCESS (0.001s)
-Starting subtest: vram-gtt-migration
-Subtest vram-gtt-migration: SUCCESS (0.012s)
+Starting subtest: memory-alloc
+Subtest memory-alloc: SUCCESS (0.003s)
+Starting dynamic subtest: cs-gfx-with-IP-GFX
+Dynamic subtest cs-gfx-with-IP-GFX: SUCCESS (0.012s)
 
 $ ./build/tests/amdgpu/amd_basic --list-subtests
-query-info
-gem-create
-vram-gtt-migration
-semaphore
+memory-alloc
+userptr-with-IP-DMA
+cs-gfx-with-IP-GFX
+cs-compute-with-IP-COMPUTE
+cs-sdma-with-IP-DMA
 ...`,
             hint: '如果测试报 "Permission denied"，确保使用 sudo。如果报 "No amdgpu device found"，检查 amdgpu 驱动是否已加载：lsmod | grep amdgpu。某些测试可能需要空闲的 GPU（没有桌面环境运行）。',
           },
@@ -798,20 +799,20 @@ ok 4 drm_buddy_test_free_merge`,
           difficulty: 'intermediate',
           tags: ['CI', 'GitLab', 'regression', 'pipeline', 'freedesktop'],
           concept: {
-            summary: 'AMD 的 GPU 驱动 CI 基础设施运行在 freedesktop.org 的 GitLab 实例上，包含编译检查、静态分析和真实 GPU 硬件测试三个阶段。理解 CI 管线的工作方式——特别是如何区分真正的回归和已知的不稳定测试——是参与上游开发的必备技能。',
+            summary: '图形驱动的 CI 通常将编译检查、静态分析和基于真实硬件的测试结合在一起。理解 CI 管线的工作方式，以及如何区分真正的回归和不稳定的测试，是参与上游开发的一项重要技能。',
             explanation: [
-              'AMD amdgpu 驱动的 CI 运行在 https://gitlab.freedesktop.org/。当一个 Merge Request（MR）被提交到 drm-next 或 amd-staging-drm-next 分支时，GitLab CI 自动触发一系列 pipeline 作业。这些作业在 AMD 提供的硬件测试农场上运行，覆盖从 GCN 到 RDNA3 的多代 GPU。CI 是防止回归（regression）进入主线的最后一道防线。',
-              'CI 管线分为三个主要阶段：（1）Build Stage — 在多种配置下编译内核：x86_64 + gcc、x86_64 + clang、arm64 + cross-compile。编译必须零错误零警告（-Werror）。这个阶段在几分钟内完成。（2）Static Analysis Stage — 运行 sparse（类型检查工具，检测 __user/__iomem 指针滥用）、smatch（bug 模式检测）和 checkpatch.pl（代码风格检查）。这个阶段帮助发现不通过运行时测试就能发现的问题。（3）Hardware Test Stage — 在真实 GPU 上运行 IGT 测试套件。每个支持的 GPU 型号有一台或多台测试机，运行完整的 IGT 测试集。这个阶段最耗时（30-60 分钟），但也是最有价值的。',
-              '处理 flaky test（不稳定测试）是 CI 维护的核心挑战。flaky test 是指在没有代码变更的情况下，有时 PASS 有时 FAIL 的测试。原因包括：硬件时序差异（不同温度下 GPU 行为微妙不同）、竞态条件（测试中的线程调度不确定性）、环境依赖（测试假设特定的显示器连接状态）。CI 系统使用重试策略（retry 2-3 次，任何一次 PASS 即认为通过）来缓解 flaky test 的影响。',
-              'CI 使用 expected-failures 文件（也叫 baseline 或 flakes 文件）来记录已知的失败测试。这个文件列出了在特定硬件上已知会失败的测试用例及其预期的失败状态。CI 在报告结果时，将实际失败与 expected-failures 对比：如果失败在列表中，标记为 "known failure"（不阻塞合并）；如果是新的失败（不在列表中），标记为 "regression"（阻塞合并，必须调查）。这种机制确保了 CI 的可操作性——避免因已知问题不断阻塞新补丁合并。',
-              '当你提交的补丁引入了 CI 回归时，你会收到 CI 系统的自动报告，包含：失败的测试名称、失败的具体子测试、测试的输出日志（stdout + dmesg）、以及该测试在 baseline 上的历史表现。你需要分析失败是你的补丁引入的真正回归还是 pre-existing flake。如果是真正的回归，你需要修复或撤回补丁。',
+              '在 Linux 图形生态中，Mesa、IGT 及相关基础设施等项目的 CI 通常托管在 freedesktop.org 的 GitLab 上，而上游内核的补丁提交本身仍然基于邮件，而非基于 Merge Request。对于 amdgpu 相关工作，最稳妥的理解方式是把 CI 看作围绕开发分支和测试基础设施的辅助验证层，而不是规范的上游提交路径。',
+              '一个有代表性的驱动 CI 管线通常分为三个主要阶段：（1）Build Stage — 在多种配置下编译相关代码，例如 x86_64 + gcc、x86_64 + clang 或交叉编译；（2）Static Analysis Stage — 运行 sparse、smatch、checkpatch.pl 等工具；（3）Hardware Test Stage — 在条件允许时，在真实硬件上运行 IGT 等测试套件。具体的作业矩阵、耗时和阻塞策略会因仓库和基础设施所有者的不同而有所差异。',
+              '处理 flaky test（不稳定测试）是 CI 维护的核心挑战。flaky test 是指在没有相关代码变更的情况下，有时 PASS 有时 FAIL 的测试。原因可能包括时序敏感性、竞态条件和环境依赖。基于重试的缓解手段在 CI 系统中很常见，但具体的重试策略取决于各自的基础设施，并非通用规则。',
+              '许多 CI 系统会为特定硬件上的已知问题测试维护一份预期失败（expected failures）或隔离（quarantine）列表。具体机制各不相同，但其背后的思路都是把已知的不稳定与新引入的回归区分开来。',
+              '当一个补丁看起来引入了 CI 回归时，实际任务是判断该结果是补丁引入的真正回归、本就存在的 flaky test，还是与补丁无关的基础设施故障。失败日志、dmesg 输出以及历史的通过/失败模式，都是做出该判断的相关依据。',
             ],
             keyPoints: [
-              'AMD CI 在 freedesktop.org GitLab 上运行：Build → Static Analysis → Hardware Test',
-              'Build Stage: gcc/clang 多配置编译，-Werror 零容忍',
+              '典型的图形 CI 流程：Build → Static Analysis → Hardware Test',
+              'Build Stage: gcc/clang 多配置编译',
               'Static Analysis: sparse（类型检查）+ smatch（Bug 模式）+ checkpatch（代码风格）',
               'Hardware Test: 真实 GPU 运行 IGT 测试套件，覆盖多代硬件',
-              'expected-failures 文件区分 "已知失败" 和 "新回归"——只有新回归阻塞合并',
+              '已知失败追踪机制将反复出现的不稳定与新引入的回归区分开来',
               'Flaky test 策略：重试机制 + known-flaky 标记 + issue 追踪修复',
             ],
           },
@@ -903,7 +904,7 @@ ok 4 drm_buddy_test_free_merge`,
 # Skip:   1
 
 # --- Failures Detail ---
-# FAIL: amd_basic@query-info
+# FAIL: amd_basic@memory-alloc
 #   Expected: gpu_info.vram_size > 0
 #   Actual:   gpu_info.vram_size == 0
 #   Log: <ci-job-log-url>
@@ -937,7 +938,7 @@ gcn5-vega56   amd_cs_nop@compute-ring                   FAIL  # FW bug, won't fi
 # 如何分析一个 CI 回归
 # ========================================
 # Step 1: 确认是否在 expected-failures 中
-$ grep "amd_basic@query-info" expected-failures.txt
+$ grep "amd_basic@memory-alloc" expected-failures.txt
 (no output — 不在列表中 → 是新回归!)
 
 # Step 2: 查看失败的 dmesg 日志
@@ -946,12 +947,12 @@ $ grep "amd_basic@query-info" expected-failures.txt
 
 # Step 3: 复现
 $ git log --oneline -1   # 确认当前是有问题的提交
-$ sudo ./build/tests/amdgpu/amd_basic --run-subtest query-info
+$ sudo ./build/tests/amdgpu/amd_basic --run-subtest memory-alloc
 
 # Step 4: bisect（如果需要）
 $ git bisect start HEAD known-good-commit
 $ git bisect run sudo ./build/tests/amdgpu/amd_basic \\
-    --run-subtest query-info`,
+    --run-subtest memory-alloc`,
             annotations: [
               'CI 结果区分三种状态：新回归（必须修复）、已知失败（KNOWN，有 issue 追踪）、不稳定测试（FLAKE）',
               'expected-failures.txt 按硬件平台分组，记录已知的失败和不稳定测试',
@@ -998,7 +999,7 @@ Switched to branch 'main'`,
             buggyCode: `你的补丁: "drm/amdgpu: optimize VRAM allocation path"
 
 CI 失败列表:
-1. amd_basic@gem-create
+1. amd_basic@memory-alloc
    Failure: igt_assert_eq(r, 0) failed: r = -12 (ENOMEM)
    Baseline history: 100% PASS in last 30 runs
    In expected-failures.txt: NO
@@ -1014,7 +1015,7 @@ CI 失败列表:
    In expected-failures.txt: NO
    Note: This test occasionally times out on loaded CI machines`,
             hint: '分析每个失败：看 baseline 历史（之前是否一直 PASS）、是否在 expected-failures 中、以及失败模式是否与你的修改相关。',
-            answer: '判断：（1）amd_basic@gem-create — 真正的回归，必须修复。理由：baseline 是 100% PASS（从未失败过），不在 expected-failures 中，且失败原因 ENOMEM（内存不足）与你的补丁"optimize VRAM allocation path"直接相关。你的优化可能改变了分配逻辑导致某种情况下分配失败。（2）kms_cursor_crc@cursor-256x256-rapid-movement — 已知的不稳定测试，可以忽略。理由：已在 expected-failures 中标记为 FLAKE，baseline 只有 73% 通过率，失败原因（像素级 CRC 不匹配）与你的 VRAM 修改无关。（3）gem_exec_whisper@basic-fds — 需要调查但可能不是回归。理由：虽然不在 expected-failures 中，但 98% pass rate 说明它偶尔会失败，且失败原因是 timeout（而非逻辑错误），可能是 CI 机器负载高导致。建议：重试 CI 一次，如果第二次 PASS 则确认是 flake，应该将其添加到 expected-failures 中。你的核心工作是修复 #1。',
+            answer: '判断：（1）amd_basic@memory-alloc — 真正的回归，必须修复。理由：baseline 是 100% PASS（从未失败过），不在 expected-failures 中，且失败原因 ENOMEM（内存不足）与你的补丁"optimize VRAM allocation path"直接相关。你的优化可能改变了分配逻辑导致某种情况下分配失败。（2）kms_cursor_crc@cursor-256x256-rapid-movement — 已知的不稳定测试，可以忽略。理由：已在 expected-failures 中标记为 FLAKE，baseline 只有 73% 通过率，失败原因（像素级 CRC 不匹配）与你的 VRAM 修改无关。（3）gem_exec_whisper@basic-fds — 需要调查但可能不是回归。理由：虽然不在 expected-failures 中，但 98% pass rate 说明它偶尔会失败，且失败原因是 timeout（而非逻辑错误），可能是 CI 机器负载高导致。建议：重试 CI 一次，如果第二次 PASS 则确认是 flake，应该将其添加到 expected-failures 中。你的核心工作是修复 #1。',
           },
           interviewQ: {
             question: '描述 GPU 驱动 CI 管线的主要阶段，以及如何处理 CI 中的 flaky test（不稳定测试）。',

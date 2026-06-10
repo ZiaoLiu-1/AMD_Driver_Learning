@@ -35,8 +35,8 @@ export const module10MicroLessonsEn: MicroLessonModule = {
               'The core architecture of IGT revolves around three concepts: test, subtest and fixture. An IGT test file usually contains an igt_main block (or igt_simple_main for a single test), which internally defines multiple subtests via igt_subtest. Fixtures are defined via igt_fixture blocks for initialization and cleanup code shared between subtests. This structure allows you to organize multiple related but independent tests in a single file.',
               'IGT provides a wealth of assertion macros: igt_assert(cond) is the most basic assertion. It terminates the current subtest and reports FAIL when it fails; igt_assert_eq(a, b) compares two values ​​and prints two values ​​when it fails to facilitate debugging; igt_assert_fd(fd) asserts that the file descriptor is valid; igt_assert_lte(a, b) asserts a <= b. These macros use longjmp internally to implement jumps to ensure that resources can be properly cleaned up after test failures.',
               'igt_require(cond) is another key macro - when the condition is not met, it skips (SKIPs) the current subtest instead of marking it as FAIL. This is used to handle differences in hardware capabilities: for example, a test requires a VCN video engine, but the test machine may not have it, in which case igt_require will skip it gracefully instead of reporting an error. This is important for running the same set of tests on different hardware.',
-              'The IGT tests of amdgpu are concentrated in the tests/amdgpu/ directory, including: amd_basic (basic function test: opening the device, querying information), amd_cs_nop (command submission no-operation test), amd_deadlock (deadlock detection test), amd_pci_unplug (hot plug test), etc. Each file tests a specific aspect of the amdgpu driver. In addition, common DRM tests (such as kms_flip, kms_cursor_crc, gem_create) in the tests/ root directory will also be run on amdgpu.',
-              'Inside IGT\'s tests/amdgpu/ directory, tests are organized by subsystem: amd_basic (sanity: BO alloc, CS submit, device query), amd_deadlock (stress: concurrent CS + reset, identifies lock ordering bugs), amd_pci_unplug (hotplug: tests safe GPU removal under load), amd_cs (command submission: various IB sizes, priorities, preemption), amd_vm (virtual memory: mapping, unmapping, fault injection), amd_hotunplug (PCI remove + re-probe simulation), and amd_abm (display: adaptive backlight management). When verifying your amdgpu patch, the selection rule is: always run amd_basic (quick sanity), then run the test matching your change area — e.g., if you modified amdgpu_cs.c, run amd_cs; if you changed amdgpu_vm.c, run amd_vm; if you changed display/dc/, run kms_* tests. The command: sudo ./build/tests/amdgpu/amd_basic --run-subtest cs-gfx is the minimum test every amdgpu patch must pass.',
+              'The IGT tests of amdgpu are concentrated in the tests/amdgpu/ directory, including: amd_basic (basic function test: opening the device, querying information), amd_cs_nop (command submission no-operation test), amd_deadlock (deadlock detection test), amd_pci_unplug (hot plug test), etc. Each file tests a specific aspect of the amdgpu driver. In addition, common DRM/KMS tests (such as kms_flip, kms_cursor_crc, kms_atomic) in the tests/ root directory will also be run on amdgpu.',
+              'Inside IGT\'s tests/amdgpu/ directory, tests are organized by subsystem: amd_basic (sanity: BO alloc, CS submit, device query), amd_deadlock (stress: concurrent CS + reset, identifies lock ordering bugs), amd_pci_unplug (hotplug: tests safe GPU removal under load), amd_cs (command submission: various IB sizes, priorities, preemption), amd_vm (virtual memory: mapping, unmapping, fault injection), amd_hotunplug (PCI remove + re-probe simulation), and amd_abm (display: adaptive backlight management). When verifying your amdgpu patch, the selection rule is: always run amd_basic (quick sanity), then run the test matching your change area — e.g., if you modified amdgpu_cs.c, run amd_cs_nop; if you changed amdgpu_vm.c, run amd_vm; if you changed display/dc/, run kms_* tests. Always list the real subtest names first (./build/tests/amdgpu/amd_basic --list-subtests), since they change upstream. A minimum sanity command is: sudo ./build/tests/amdgpu/amd_basic --run-subtest cs-gfx-with-IP-GFX.',
             ],
             keyPoints: [
               'IGT is the standard testing framework for Linux GPU drivers, with 1000+ test cases covering all DRM functions',
@@ -45,7 +45,7 @@ export const module10MicroLessonsEn: MicroLessonModule = {
               'amdgpu-specific tests are in the tests/amdgpu/ directory, and general DRM tests are also run on amdgpu',
               'There are four statuses of IGT test results: PASS / FAIL / SKIP / TIMEOUT',
               'Run a single test: ./build/tests/amdgpu/amd_basic; run a subtest: --run-subtest "subtest-name"',
-              'tests/amdgpu/ organized by subsystem: amd_basic, amd_cs, amd_vm, amd_deadlock, amd_pci_unplug',
+              'tests/amdgpu/ organized by subsystem: amd_basic, amd_cs_nop, amd_vm, amd_deadlock, amd_pci_unplug',
             ],
           },
           diagram: {
@@ -92,11 +92,14 @@ TIMEOUT test exceeds maximum running time (default 120s)`,
             caption: 'The IGT test consists of three parts: igt_main entry, igt_fixture shared initialization/cleaning, and igt_subtest independent sub-test. Each subtest runs independently and does not affect each other.',
           },
           codeWalk: {
-            title: 'Parsing a real IGT amdgpu GEM BO test',
-            file: 'tests/amdgpu/amd_basic.c',
+            title: 'Anatomy of an IGT amdgpu test (illustrative, modeled on amd_basic.c)',
+            file: 'tests/amdgpu/amd_basic.c (illustrative)',
             language: 'c',
             code: `/*IGT amdgpu basic test - GEM Buffer Object allocation and information query
- *File: tests/amdgpu/amd_basic.c (simplified version)
+ *Illustrative/simplified — the subtest NAMES below (query-info, gem-create,
+ *vram-gtt-migration) are made up for teaching. The real tests/amdgpu/amd_basic.c
+ *uses dynamic subtests like memory-alloc, cs-gfx-with-IP-GFX, userptr-with-IP-DMA.
+ *Always run --list-subtests to see the actual names.
  */
 #include "igt.h"
 #include <amdgpu.h>
@@ -175,7 +178,7 @@ igt_main
               'igt_require(vram_gtt.vram_size > 0) skips devices that do not support VRAM (such as APU without independent VRAM)',
               'igt_info() prints information to the test output and does not affect the PASS/FAIL status',
             ],
-            explanation: 'This test shows the typical structure of IGT: igt_fixture opens the device, multiple igt_subtests each test a function point, and finally igt_fixture cleans up resources. Note the use of igt_require - the "vram-gtt-migration" subtest will gracefully SKIP rather than FAIL on devices without VRAM. This mode allows the same set of tests to run correctly on different hardware.',
+            explanation: 'This test shows the typical structure of IGT: igt_fixture opens the device, multiple igt_subtests each test a function point, and finally igt_fixture cleans up resources. Note the use of igt_require - a VRAM-dependent subtest will gracefully SKIP rather than FAIL on devices without VRAM. This mode allows the same set of tests to run correctly on different hardware. (The subtest names here are illustrative; the real amd_basic.c uses names like memory-alloc and cs-gfx-with-IP-GFX — check --list-subtests.)',
           },
           miniLab: {
             title: 'Compile and run IGT amdgpu tests',
@@ -186,24 +189,23 @@ igt_main
               'Compile: meson build && ninja -C build',
               'List all amdgpu tests: ls build/tests/amdgpu/',
               'Run basic tests: sudo ./build/tests/amdgpu/amd_basic (requires root access to GPU)',
-              'Run a single subtest: sudo ./build/tests/amdgpu/amd_basic --run-subtest "query-info"',
-              'View a list of all subtests: ./build/tests/amdgpu/amd_basic --list-subtests',
-              'Run the generic GEM create test: sudo ./build/tests/gem_create --device /dev/dri/card0',
+              'View the real subtest names first (they change upstream): ./build/tests/amdgpu/amd_basic --list-subtests',
+              'Run a single subtest (use a name from --list-subtests, e.g. memory-alloc): sudo ./build/tests/amdgpu/amd_basic --run-subtest "memory-alloc"',
+              'Run another amdgpu test binary, e.g. command-submission no-op: sudo ./build/tests/amdgpu/amd_cs_nop',
             ],
             expectedOutput: `$ sudo ./build/tests/amdgpu/amd_basic
 IGT-Version: 1.28 (x86_64)
-Starting subtest: query-info
-Subtest query-info: SUCCESS (0.003s)
-Starting subtest: gem-create
-Subtest gem-create: SUCCESS (0.001s)
-Starting subtest: vram-gtt-migration
-Subtest vram-gtt-migration: SUCCESS (0.012s)
+Starting subtest: memory-alloc
+Subtest memory-alloc: SUCCESS (0.003s)
+Starting dynamic subtest: cs-gfx-with-IP-GFX
+Dynamic subtest cs-gfx-with-IP-GFX: SUCCESS (0.012s)
 
 $ ./build/tests/amdgpu/amd_basic --list-subtests
-query-info
-gem-create
-vram-gtt-migration
-semaphore
+memory-alloc
+userptr-with-IP-DMA
+cs-gfx-with-IP-GFX
+cs-compute-with-IP-COMPUTE
+cs-sdma-with-IP-DMA
 ...`,
             hint: 'If the test reports "Permission denied", make sure to use sudo. If "No amdgpu device found" is reported, check whether the amdgpu driver has been loaded: lsmod | grep amdgpu. Some tests may require an idle GPU (no desktop environment to run).',
           },
@@ -903,7 +905,7 @@ Developer submits MR (Merge Request)
 # Skip:   1
 
 # --- Failures Detail ---
-# FAIL: amd_basic@query-info
+# FAIL: amd_basic@memory-alloc
 #   Expected: gpu_info.vram_size > 0
 #   Actual:   gpu_info.vram_size == 0
 #   Log: <ci-job-log-url>
@@ -937,7 +939,7 @@ gcn5-vega56   amd_cs_nop@compute-ring                   FAIL  # FW bug, won't fi
 #How to analyze a CI regression
 # ========================================
 #Step 1: Confirm whether it is in expected-failures
-$ grep "amd_basic@query-info" expected-failures.txt
+$ grep "amd_basic@memory-alloc" expected-failures.txt
 (no output — not in the list → is a new return!)
 
 #Step 2: View the failed dmesg log
@@ -946,12 +948,12 @@ $ grep "amd_basic@query-info" expected-failures.txt
 
 #Step 3: Reproduce
 $ git log --oneline -1   #Confirm that this is the commit in question
-$ sudo ./build/tests/amdgpu/amd_basic --run-subtest query-info
+$ sudo ./build/tests/amdgpu/amd_basic --run-subtest memory-alloc
 
 #Step 4: bisect (if necessary)
 $ git bisect start HEAD known-good-commit
 $ git bisect run sudo ./build/tests/amdgpu/amd_basic \\
-    --run-subtest query-info`,
+    --run-subtest memory-alloc`,
             annotations: [
               'CI results are divided into three states: new regression (must be fixed), known failure (KNOWN, with issue tracking), and unstable test (FLAKE)',
               'expected-failures.txt Grouped by hardware platform, records known failures and unstable tests',
@@ -998,7 +1000,7 @@ Switched to branch 'main'`,
             buggyCode: `Your patch: "drm/amdgpu: optimize VRAM allocation path"
 
 CI failure list:
-1. amd_basic@gem-create
+1. amd_basic@memory-alloc
    Failure: igt_assert_eq(r, 0) failed: r = -12 (ENOMEM)
    Baseline history: 100% PASS in last 30 runs
    In expected-failures.txt: NO
@@ -1014,7 +1016,7 @@ CI failure list:
    In expected-failures.txt: NO
    Note: This test occasionally times out on loaded CI machines`,
             hint: 'Analyze each failure: look at the baseline history (whether it has been PASS before), whether it is in expected-failures, and whether the failure mode is related to your modification.',
-            answer: 'Verdict: (1) amd_basic@gem-create — a true regression that must be fixed. Reason: The baseline is 100% PASS (never failed), is not among the expected-failures, and the failure reason ENOMEM (out of memory) is directly related to your patch "optimize VRAM allocation path". Your optimization may have changed the allocation logic causing allocation to fail in some cases. (2) kms_cursor_crc@cursor-256x256-rapid-movement - known unstable test, can be ignored. Reason: Marked as FLAKE in expected-failures, baseline only has 73% pass rate, failure reason (pixel-level CRC mismatch) has nothing to do with your VRAM modification. (3) gem_exec_whisper@basic-fds — needs investigation but may not be a regression. Reason: Although it is not in expected-failures, the 98% pass rate shows that it occasionally fails, and the failure reason is timeout (not logical error), which may be caused by the high load of the CI machine. Recommendation: Retry CI once, if the second PASS is confirmed to be flake, it should be added to expected-failures. Your core job is to fix #1.',
+            answer: 'Verdict: (1) amd_basic@memory-alloc — a true regression that must be fixed. Reason: The baseline is 100% PASS (never failed), is not among the expected-failures, and the failure reason ENOMEM (out of memory) is directly related to your patch "optimize VRAM allocation path". Your optimization may have changed the allocation logic causing allocation to fail in some cases. (2) kms_cursor_crc@cursor-256x256-rapid-movement - known unstable test, can be ignored. Reason: Marked as FLAKE in expected-failures, baseline only has 73% pass rate, failure reason (pixel-level CRC mismatch) has nothing to do with your VRAM modification. (3) gem_exec_whisper@basic-fds — needs investigation but may not be a regression. Reason: Although it is not in expected-failures, the 98% pass rate shows that it occasionally fails, and the failure reason is timeout (not logical error), which may be caused by the high load of the CI machine. Recommendation: Retry CI once, if the second PASS is confirmed to be flake, it should be added to expected-failures. Your core job is to fix #1.',
           },
           interviewQ: {
             question: 'Describe the main stages of the GPU-driven CI pipeline and how to handle flaky tests in CI.',

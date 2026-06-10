@@ -177,9 +177,12 @@ int main()
           },
           miniLab: {
             title: 'Compile and run your first HIP program',
-            objective: 'Compile and run vector_add.hip on RX 7600 XT to measure the performance impact of different block sizes.',
-            setup: `#Install ROCm if not already installed
-#Reference https://rocm.docs.amd.com/en/latest/deploy/linux/installer/install.html
+            objective: 'Compile and run vector_add.hip on a ROCm-supported GPU to measure the performance impact of different block sizes. NOTE: the RX 7600 XT (Navi33/gfx1102) is NOT on AMD\'s official ROCm supported-GPU list — first check the ROCm on Radeon compatibility matrix; on an unsupported card HIP/ROCm may fail or require HSA_OVERRIDE_GFX_VERSION (unofficial, unsupported).',
+            setup: `# Install ROCm only if your GPU is on the official compatibility matrix:
+#   https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/compatibility/compatibility.html
+# Reference (install): https://rocm.docs.amd.com/projects/install-on-linux/en/latest/install/quick-start.html
+# The RX 7600 XT (gfx1102) is NOT officially supported as of ROCm 7.2 — it may
+# need: export HSA_OVERRIDE_GFX_VERSION=11.0.0  (unofficial, not guaranteed).
 sudo apt install rocm-hip-sdk
 
 #Verify HIP environment
@@ -257,7 +260,7 @@ int main()
               'HIP Stream is the core mechanism for overlapping asynchronous execution and data transmission. A Stream represents an ordered sequence of operations (copy/kernel function), and operations between different Streams can be executed in parallel. Typical double buffering mode: When Stream 0 executes the kernel function of the current batch, Stream 1 simultaneously transmits the next batch of data. hipMemcpyAsync() initiates asynchronous data transfer (requires pinned memory), and hipStreamCreate/hipStreamSynchronize manages the life cycle of Stream. Under the hood, each Stream corresponds to an HSA queue created by KFD.',
             ],
             keyPoints: [
-              'Memory level: Register (~1cy) > LDS (~10cy) > L1 > L2 (32MB) > VRAM (288GB/s) > System (32GB/s)',
+              'Memory hierarchy: Register (~1cy) > LDS (~10cy) > L1 > L2 (~2MB) + Infinity Cache (32MB, last level) > VRAM (288GB/s) > System (PCIe 4.0 x8, ~16GB/s)',
               'hipMalloc → GPU VRAM, GPU fast access, CPU not directly accessible',
               'hipHostMalloc → CPU pinned memory, which can be accessed by the GPU through PCIe, and has the highest DMA transfer efficiency',
               'hipMallocManaged → unified virtual address, automatic migration, convenient but high performance overhead',
@@ -287,8 +290,8 @@ Delay Bandwidth Size Scope
 └────┬────┘
      │
 ┌────▼────┐
-│ L2 Cache│ ~100 cy ~800 GB/s 32MB Full GPU Shared
-│ (RDNA3) │    ←RDNA3 big L2 is performance critical! (big cache!)
+│ Inf.Cache│ ~100 cy ~800 GB/s 32MB Full GPU Shared
+│ (RDNA3) │ ←RDNA3 Infinity Cache (last-level cache) is performance critical! (L2 proper ~2MB)
 └────┬────┘
      │
 ┌────▼────┐
@@ -422,8 +425,8 @@ hipStreamSynchronize(stream);
             question: 'Describes the GPU memory hierarchy and how to choose between hipMalloc, hipHostMalloc, and hipMallocManaged.',
             difficulty: 'medium',
             hint: 'Describe each layer of memory in terms of latency/bandwidth/size/scope, and then recommend allocation strategies based on usage scenarios.',
-            answer: 'GPU memory hierarchy (from fast to slow): (1) Register: thread private, ~1 cycle, compiler automatically allocates local variables; (2) LDS/Shared Memory: Block shared, ~10 cycles, 64KB/CU, __shared__ explicit management, used for inter-thread data reuse (such as tiled matmul); (3) L1 Cache: CU private, ~20 cycles, hardware automatic caching; (4) L2 Cache: full GPU Shared, ~100 cycles, 32MB on RDNA3, is a buffer for global memory access; (5) VRAM: ~300 cycles, GPU local memory; (6) System RAM: ~1000+ cycles, accessed through PCIe. Allocation strategy selection: hipMalloc allocates VRAM - suitable for GPU-intensive computing data, the fastest access, is the default choice; hipHostMalloc allocates pinned host memory - suitable for DMA transfer buffers and small data frequently exchanged by CPU-GPU, hipHostMallocMapped can also be used to enable GPU zero-copy access through PCIe; hipMallocManaged allocates unified address space memory - suitable for rapid prototyping or scenarios with irregular data access patterns, and runs through page faults Automatic migration, but with migration delay overhead. The combination of hipMalloc + hipHostMalloc is recommended in production code, and stream is used to implement overlapping transmission and calculation.',
-            amdContext: 'This question tests your overall understanding of the GPU memory system. Special mention was made during the interview of RDNA3\'s large L2 (32MB), which is one of AMD\'s design differences over NVIDIA.',
+            answer: 'GPU memory hierarchy (from fast to slow): (1) Register: thread private, ~1 cycle, compiler automatically allocates local variables; (2) LDS/Shared Memory: Block shared, ~10 cycles, 64KB/CU, __shared__ explicit management, used for inter-thread data reuse (such as tiled matmul); (3) L1 Cache: CU private, ~20 cycles, hardware automatic caching; (4) L2 + Infinity Cache: GPU-wide, ~100 cycles, ~2MB L2 proper on Navi33 backed by a 32MB Infinity Cache last level, together buffering VRAM accesses; (5) VRAM: ~300 cycles, GPU local memory; (6) System RAM: ~1000+ cycles, accessed through PCIe. Allocation strategy selection: hipMalloc allocates VRAM - suitable for GPU-intensive computing data, the fastest access, is the default choice; hipHostMalloc allocates pinned host memory - suitable for DMA transfer buffers and small data frequently exchanged by CPU-GPU, hipHostMallocMapped can also be used to enable GPU zero-copy access through PCIe; hipMallocManaged allocates unified address space memory - suitable for rapid prototyping or scenarios with irregular data access patterns, and runs through page faults Automatic migration, but with migration delay overhead. The combination of hipMalloc + hipHostMalloc is recommended in production code, and stream is used to implement overlapping transmission and calculation.',
+            amdContext: 'This question tests your overall understanding of the GPU memory system. In interviews, specifically call out RDNA3\'s large Infinity Cache (a 32MB last-level cache in front of a ~2MB L2 proper) — one of AMD\'s design differences vs NVIDIA.',
           },
         },
       ],

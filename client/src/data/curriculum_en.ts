@@ -23,12 +23,12 @@ export const curriculumEn: Module[] = [
     ],
     theory: {
       overview:
-        'This learning path aims to take you from a Linux user to a kernel engineer who can understand, debug, and contribute to the AMD GPU driver (amdgpu). Any AMD GPU (RDNA or GCN) in your hands is your best learning tool. The path is divided into 11 modules, with an estimated total learning time of 400–600 hours (6–12 months, depending on your background and commitment).',
+        'This learning path aims to take you from a Linux user to a kernel engineer who can understand, debug, and contribute to the AMD GPU driver (amdgpu). Any AMD GPU (RDNA or GCN) in your hands is your best learning tool. The path is divided into 14 modules, with an estimated total learning time of about 640 hours (6–12 months, depending on your background and commitment).',
       sections: [
         {
           title: 'Why Choose AMD GPU Driver Development?',
           content:
-            'The AMD GPU driver stack (amdgpu) is one of the most complex and active subsystems in the Linux kernel. The entire stack is fully open source, from kernel driver to userspace ROCm compute framework, providing unmatched transparency for learning. AMD Markham (Canada) is one of AMD\'s primary GPU driver development centers, with many kernel engineer positions. Mastering the skills on this path will make you a highly competitive candidate. The amdgpu driver comprises approximately 2.5 million lines (measured with cloc on Linux 6.8, drivers/gpu/drm/amd/), one of the largest single subsystems in the Linux kernel. It includes Display Core (DC), Graphics/Compute (GFX), DMA engine (SDMA), video codec (VCN/JPEG), power management (SMU), and more IP Blocks, each maintained by independent teams.',
+            'The AMD GPU driver stack (amdgpu) is one of the most complex and active subsystems in the Linux kernel. The kernel driver (amdgpu) and the Mesa userspace drivers are fully open source, and the ROCm compute stack has substantial open-source components (GPU firmware is still shipped as binary blobs), providing rare transparency for learning. AMD Markham (Canada) is one of AMD\'s primary GPU driver development centers, with many kernel engineer positions. Mastering the skills on this path will make you a highly competitive candidate. The amdgpu driver comprises approximately 2.5 million lines (measured with cloc on Linux 6.8, drivers/gpu/drm/amd/), one of the largest single subsystems in the Linux kernel. It includes Display Core (DC), Graphics/Compute (GFX), DMA engine (SDMA), video codec (VCN/JPEG), power management (SMU), and more IP Blocks, each maintained by independent teams.',
           diagram: {
             type: 'ascii',
             content: `Why AMD GPU Driver Development?
@@ -52,9 +52,10 @@ export const curriculumEn: Module[] = [
   ✓ Active community   -- amd-gfx: 30+ patches/day
   ✓ Career opportunity -- AMD Markham/Shanghai hiring
   ✓ Cross-domain       -- kernel, compiler, graphics, AI
-  ✓ Accessible HW      -- any AMD consumer GPU works`,
+  ✓ Accessible HW      -- most AMD GPUs work for kernel-driver study
+                          (ROCm/HIP support varies by model)`,
             caption:
-              'amdgpu is the largest single driver subsystem in the Linux kernel. Its fully open-source nature makes it the best choice for learning GPU driver development.',
+              'amdgpu is the largest single driver subsystem in the Linux kernel. Its open-source kernel driver and Mesa userspace make it an excellent choice for learning GPU driver development.',
           },
         },
         {
@@ -130,7 +131,7 @@ Phase 1: Basics    Phase 2: Kernel    Phase 3: Driver    Phase 4: Advanced
         {
           title: 'Development Environment Setup',
           content:
-            'You will need: a machine running Ubuntu 22.04 LTS or Arch Linux (any AMD GPU is suitable test hardware; RDNA2/3 preferred); development tools such as linux-headers, build-essential, git, clang, llvm; a Linux kernel source tree clone (~3GB); ROCm development kit. Consider using a KVM VM for risky kernel experiments to avoid damaging the host. Key toolchain: (1) kernel build: gcc/clang + make/kbuild; (2) code navigation: cscope + ctags or VS Code + clangd; (3) debugging: ftrace + perf + trace-cmd; (4) GPU monitoring: amdgpu_top + radeontop; (5) version control: git + git send-email (for kernel patch submission).',
+            'You will need: a machine running Ubuntu 22.04 LTS or Arch Linux (any AMD GPU is suitable test hardware; RDNA2/3 preferred); development tools such as linux-headers, build-essential, git, clang, llvm; a Linux kernel source tree clone (~3GB). The ROCm development kit is optional — only the compute content in Modules 7/9 needs it, and you must check the official compatibility matrix first, since not every consumer card (e.g. the RX 7600 XT / gfx1102) is officially ROCm-supported. Consider using a KVM VM or virtme-ng for risky kernel experiments to avoid damaging the host. Key toolchain: (1) kernel build: gcc/clang + make/kbuild; (2) code navigation: cscope + ctags or VS Code + clangd; (3) debugging: ftrace + perf + trace-cmd; (4) GPU monitoring: amdgpu_top + radeontop; (5) version control: git + git send-email (for kernel patch submission).',
         },
       ],
       keyBooks: [
@@ -1462,8 +1463,9 @@ corners — colors smoothly interpolated across the surface
     difficulty: 'intermediate',
     subModules: [
       { id: 'career-patch', title: '11.1 Kernel Patch Workflow', titleEn: 'Kernel Patch Workflow' },
-      { id: 'career-portfolio', title: '11.2 Building Your Portfolio', titleEn: 'Building Your Portfolio' },
-      { id: 'career-interview', title: '11.3 AMD Interview Prep', titleEn: 'AMD Interview Prep' },
+      { id: 'career-portfolio', title: '11.2.1 Building Your Portfolio', titleEn: 'Building Your Portfolio' },
+      { id: 'career-interview', title: '11.2.2 AMD Interview Prep', titleEn: 'AMD Interview Prep' },
+      { id: 'career-action', title: '11.3 From Patches to Offer: Execution Playbook', titleEn: 'From Patches to Offer: Execution Playbook' },
     ],
     theory: {
       overview:

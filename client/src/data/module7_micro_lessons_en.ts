@@ -183,11 +183,11 @@ $ dmesg | grep -i kfd
 
 $ rocminfo | grep -A2 "Agent"
 Agent 1: CPU (gfx000)
-Agent 2: GPU (gfx1102)          ←Your GPU as HSA Agent
+Agent 2: GPU (gfx1102)          ←(example: a ROCm-supported gfx target)
 
 $ grep HSA_AMD /boot/config-$(uname -r)
 CONFIG_HSA_AMD=y                ←KFD is compiled into the kernel`,
-            hint: 'If /dev/kfd does not exist, check whether CONFIG_HSA_AMD is enabled in the kernel configuration. Most modern distributions enable this option by default if using a distribution kernel. ROCm installation is not required - /dev/kfd is created by the kernel amdgpu module.',
+            hint: 'If /dev/kfd does not exist, check whether CONFIG_HSA_AMD is enabled in the kernel configuration. Most modern distributions enable this option by default if using a distribution kernel. ROCm installation is not required - /dev/kfd is created by the in-kernel amdgpu module regardless of the card. Note: rocminfo only enumerates the GPU as an HSA agent if the card is on AMD\'s official ROCm compatibility matrix; Navi33 (gfx1102, RX 7600 XT) is NOT currently on that list (it may work unofficially via HSA_OVERRIDE_GFX_VERSION), so the rocminfo output above is only an example.',
           },
           debugExercise: {
             title: 'Diagnosing KFD device open failure',
@@ -468,7 +468,7 @@ ioctl(4, AMDKFD_IOC_CREATE_QUEUE, ...) = -1 ENOMEM
               'Traditional GPU programming (an early model of CUDA) requires programmers to explicitly manage data transfers: cudaMalloc allocates memory on the GPU, and cudaMemcpy copies data between the CPU and GPU. Not only is this tedious, it\'s also error-prone—forgetting to synchronize, duplicating copies, memory leaks. The goal of SVM is to eliminate these manual steps: memory allocated with malloc or mmap on the CPU can be directly accessed by the GPU through the same virtual address; and vice versa.',
               'The implementation of SVM relies on several key mechanisms: (1) GPUVM page table - each process has an independent page table on the GPU (similar to the CPU\'s MMU page table), which maps virtual addresses to physical pages (VRAM or system memory). KFD manages these page tables through amdgpu\'s VM subsystem. (2) PASID (Process Address Space ID) - Each process is assigned a unique PASID. The GPU carries the PASID when issuing memory access. IOMMU and GPUVM use it to select the correct page table. This enables process-level GPU memory isolation. (3) GPU page fault - When the virtual address accessed by the GPU is not effectively mapped in the GPUVM page table, the GPU generates a page fault interrupt. KFD\'s fault handler captures this interrupt and establishes mappings as needed (possibly triggering page migration).',
               'Page migration is key to the performance of SVM. When the GPU frequently accesses pages in system memory, KFD can migrate the pages to VRAM for higher bandwidth. svm_migrate_to_vram() performs RAM → VRAM migration: (a) allocates the target page in VRAM; (b) copies the data through the SDMA engine; (c) updates the CPU and GPU page tables; (d) installs a migration entry in the CPU page table. If the CPU later accesses this page, it triggers a CPU page fault to move the page back to RAM. svm_migrate_to_ram() is a migration in the opposite direction. This on-demand migration mechanism is similar to the operating system\'s swap, but occurs between CPU and GPU memory.',
-              'CPU-GPU memory coherency is the most complex part of SVM. RDNA3\'s Navi33 supports cache coherency protocols over PCIe (like CCIX\'s predecessor or CXL-related mechanisms), but in practice, KFD provides different levels of consistency guarantees: (a) Coarse-grained: The GPU sees consistent snapshots during kernel execution, but no real-time consistency is guaranteed - suitable for most computing scenarios. (b) Fine-grained: CPU and GPU read and write to the same address follow a certain order guarantee - hardware-level cache snoop is required and the performance overhead is greater. ROCm users can select the consistency level through the flags of hsa_amd_memory_pool_allocate.',
+              'CPU-GPU memory coherency is the most complex part of SVM. To be clear: discrete consumer GPUs like Navi33 do NOT implement CPU–GPU hardware cache coherency (no CCIX/CXL). On these cards, fine-grained coherence is realized through uncacheable memory plus atomics over the PCIe bus; true hardware cache coherence exists only on AMD APUs and MI300A-class accelerators. In practice, KFD provides different levels of consistency guarantees: (a) Coarse-grained: The GPU sees consistent snapshots during kernel execution, but no real-time consistency is guaranteed - suitable for most computing scenarios. (b) Fine-grained: CPU and GPU read and write to the same address follow a certain order guarantee - hardware-level cache snoop is required and the performance overhead is greater. ROCm users can select the consistency level through the flags of hsa_amd_memory_pool_allocate.',
             ],
             keyPoints: [
               'SVM allows CPU/GPU to share virtual address space - CPU pointers can be used directly in the GPU kernel, eliminating explicit data copying',
@@ -623,8 +623,9 @@ out:
 #Requires installation of ROCm and a HIP program using managed memory
 sudo su`,
             steps: [
-              'Enable KFD SVM related ftrace tracing points: echo 1 > /sys/kernel/debug/tracing/events/amdgpu/svm_migrate_start/enable',
-              'Also enable GPU fault events: echo 1 > /sys/kernel/debug/tracing/events/amdgpu/amdgpu_vm_bo_cs/enable',
+              'First discover the tracepoints your kernel actually exposes (names vary by kernel version): ls /sys/kernel/debug/tracing/events/ | grep -i "kfd\\|amdgpu" and cat /sys/kernel/debug/tracing/available_events | grep -i svm, then enable whatever your kernel exposes',
+              'Enable KFD SVM related ftrace tracing points (names below are illustrative and version-dependent): echo 1 > /sys/kernel/debug/tracing/events/amdgpu/svm_migrate_start/enable',
+              'Also enable GPU fault events (likewise version-dependent): echo 1 > /sys/kernel/debug/tracing/events/amdgpu/amdgpu_vm_bo_cs/enable',
               'Running a HIP program using hipMallocManaged',
               'View the ftrace log: cat /sys/kernel/debug/tracing/trace | grep svm',
               'Observe migration statistics: cat /sys/class/drm/card0/device/kfd/proc/*/svm_stats (if available)',

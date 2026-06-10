@@ -286,7 +286,7 @@ uint32_t read_gpu_status(struct amdgpu_device *adev)
 │                                                                  │
 │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐       │
 │  │Shader  │ │ SDMA   │ │Display │ │ Video  │ │ VRAM   │       │
-│  │Engines │ │Engines │ │Engine  │ │Engine  │ │ 8GB    │       │
+│  │Engines │ │Engines │ │Engine  │ │Engine  │ │ 16GB   │       │
 │  │(32 CU) │ │ (×2)   │ │(DCN3.2)│ │(VCN4.0)│ │GDDR6   │       │
 │  └────────┘ └────────┘ └────────┘ └────────┘ └────────┘       │
 └─────────────────────────────────────────────────────────────────┘`,
@@ -754,9 +754,9 @@ static const struct pci_device_id pciidlist[] = {
            amdgpu:   SDMA firmware version...
            amdgpu:   VCN firmware version...
 
-[  2.400]  [drm] VRAM: 8176M                              amdgpu_gmc.c
+[  2.400]  [drm] VRAM: 16368M                             amdgpu_gmc.c
            [drm] VRAM width 128bits GDDR6                 ← VRAM 信息
-           [drm] GTT: 8176M
+           [drm] GTT: 16368M
 
 [  2.450]  [drm] PSP is alive!                            psp_v13_0.c
            [drm] Loading GFX firmware...                   ← IP Block 初始化
@@ -804,7 +804,7 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
             annotations: [
               'dmesg --level=err,warn 只显示错误和警告级别，快速定位问题',
               '"firmware" 和 "ucode" 关键词对应 GPU 固件加载——固件加载失败是常见问题',
-              '"VRAM: 8176M" 中的数字不是 8192 因为一部分 VRAM 被固件和系统保留',
+              '"VRAM: 16368M" 中的数字不是 16384 因为一部分 VRAM 被固件和系统保留',
               'dmesg -w 是 watch 模式，实时显示新消息——在测试时非常有用',
               '保存到文件在提交 Bug 报告时必须附带完整的 dmesg 输出',
             ],
@@ -933,7 +933,7 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
 │                                                              │
 │  方案 B: 真机（日常开发，已验证的修改）                      │
 │  sudo rmmod amdgpu && sudo modprobe amdgpu                  │
-│  sudo ./build/tests/amdgpu_test  ← 运行 IGT 测试           │
+│  sudo ./build/tests/amdgpu/amd_basic ← 运行 IGT 测试      │
 └──────────────────────────────┬──────────────────────────────┘
                                │
 ┌──────────────────────────────▼──────────────────────────────┐
@@ -1053,7 +1053,7 @@ make[4]: *** [scripts/Makefile.build:257:
             question: '描述你的内核开发工作流：从修改代码到测试到提交补丁。',
             difficulty: 'easy',
             hint: '展示你对完整开发周期的理解：编辑 → 编译（make M=...）→ 测试（insmod/IGT）→ 检查（checkpatch）→ 提交（git format-patch + send-email）。',
-            answer: '我的内核开发工作流：（1）准备：git checkout -b fix/my-bugfix 创建工作分支，基于 AMD drm-next 分支。（2）编辑：使用 VS Code + clangd（或 vim + cscope）定位并修改代码。（3）编译：make M=drivers/gpu/drm/amd -j$(nproc) 只编译修改的模块（~1 分钟），确保没有编译错误和警告（make W=1 开启额外警告）。（4）测试：先在 KVM 虚拟机中 insmod amdgpu.ko 验证模块加载正常，然后在真机上 sudo rmmod amdgpu && sudo modprobe amdgpu 重新加载，运行相关的 IGT 测试（sudo ./build/tests/amdgpu/amdgpu_test）。（5）检查代码风格：scripts/checkpatch.pl --strict HEAD~1..HEAD，确保 0 errors, 0 warnings。（6）提交：git commit -s 添加 Signed-off-by，使用规范的 commit message 格式（drm/amdgpu: fix xxx）。（7）发送补丁：git format-patch HEAD~1 生成补丁文件，git send-email 发送到 amd-gfx@lists.freedesktop.org。（8）回应 Review：认真回应每条 Review 评论，修改后发送 v2。',
+            answer: '我的内核开发工作流：（1）准备：git checkout -b fix/my-bugfix 创建工作分支，基于 AMD drm-next 分支。（2）编辑：使用 VS Code + clangd（或 vim + cscope）定位并修改代码。（3）编译：make M=drivers/gpu/drm/amd -j$(nproc) 只编译修改的模块（~1 分钟），确保没有编译错误和警告（make W=1 开启额外警告）。（4）测试：先在 KVM 虚拟机中 insmod amdgpu.ko 验证模块加载正常，然后在真机上 sudo rmmod amdgpu && sudo modprobe amdgpu 重新加载，运行相关的 IGT 测试（例如 sudo ./build/tests/amdgpu/amd_basic）。（5）检查代码风格：scripts/checkpatch.pl --strict HEAD~1..HEAD，确保 0 errors, 0 warnings。（6）提交：git commit -s 添加 Signed-off-by，使用规范的 commit message 格式（drm/amdgpu: fix xxx）。（7）发送补丁：git format-patch HEAD~1 生成补丁文件，git send-email 发送到 amd-gfx@lists.freedesktop.org。（8）回应 Review：认真回应每条 Review 评论，修改后发送 v2。',
             amdContext: '这个问题测试你是否有实际的内核开发经验。即使你还没有提交过补丁，展示你知道完整的流程（包括 checkpatch 和 send-email）也会给面试官留下好印象。',
           },
         },

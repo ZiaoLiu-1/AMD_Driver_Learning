@@ -812,7 +812,7 @@ Memory Domains & BO Migration:
 
   ┌──────────────┐      eviction      ┌──────────────┐
   │   VRAM       │ ──────────────────▶ │     GTT      │
-  │  (8GB GDDR6) │ ◀────────────────── │(system mem,  │
+  │ (16GB GDDR6) │ ◀────────────────── │(system mem,  │
   │ fastest,GPU- │      validation     │ GPU-visible  │
   │ dedicated    │                     │ via GART)    │
   │  BO_A (4MB)  │                     │  BO_C (2MB)  │
@@ -946,7 +946,7 @@ $ cat /sys/class/drm/card0/device/mem_info_vram_used
 310378496    ← ~296MB (increased by ~24MB for framebuffer and vertex data)
 
 $ cat /sys/class/drm/card0/device/mem_info_vram_total
-8573157376   ← ~8GB total VRAM
+17163091968  ← ~16GB total VRAM
 
 $ cat /sys/class/drm/card0/device/mem_info_gtt_used
 52428800     ← ~50MB GTT in use`,
@@ -999,7 +999,7 @@ err_work:
             question: 'Explain the roles and differences of GEM and TTM in DRM memory management. Why does amdgpu need TTM instead of just GEM?',
             difficulty: 'hard',
             hint: 'The key difference lies in VRAM management: GEM assumes the GPU uses system memory (appropriate for integrated GPUs); TTM supports independent VRAM + object migration + eviction (appropriate for discrete GPUs). As a discrete GPU driver, amdgpu needs to manage data transfers between VRAM and GTT.',
-            answer: 'GEM and TTM are two DRM memory management frameworks that solve problems at different levels. GEM (Graphics Execution Manager) provides the user-space API for Buffer Objects — referencing BOs via GEM handles, giving the CPU access via mmap, and managing lifecycles via reference counting. GEM was originally designed for Intel i915 (an integrated GPU that uses system memory) and assumes all memory is homogeneous. TTM (Translation Table Manager) adds three key capabilities on top of GEM for discrete GPUs: (1) Memory Domains (Placement) — a BO can reside in VRAM (GPU-dedicated, highest bandwidth), GTT (portion of system memory the GPU can access via GART), or System (ordinary system memory). (2) Object Migration — when a BO needs to move from System to VRAM (GPU is about to use it) or from VRAM to GTT (VRAM is insufficient), TTM coordinates the DMA data transfer. (3) Memory Pressure Handling (Eviction) — when VRAM is full, TTM selects BOs to migrate to GTT/System using an LRU policy, analogous to virtual memory page eviction. amdgpu must use TTM because AMD discrete GPUs have independent VRAM (e.g., 8GB GDDR6); the driver needs to efficiently transfer data between VRAM and system memory, handle VRAM pressure, and manage the GART page table. The GEM layer is still used to expose a unified API to user space — users do not need to know whether a BO is currently in VRAM or GTT; TTM manages that transparently.',
+            answer: 'GEM and TTM are two DRM memory management frameworks that solve problems at different levels. GEM (Graphics Execution Manager) provides the user-space API for Buffer Objects — referencing BOs via GEM handles, giving the CPU access via mmap, and managing lifecycles via reference counting. GEM was originally designed for Intel i915 (an integrated GPU that uses system memory) and assumes all memory is homogeneous. TTM (Translation Table Manager) adds three key capabilities on top of GEM for discrete GPUs: (1) Memory Domains (Placement) — a BO can reside in VRAM (GPU-dedicated, highest bandwidth), GTT (portion of system memory the GPU can access via GART), or System (ordinary system memory). (2) Object Migration — when a BO needs to move from System to VRAM (GPU is about to use it) or from VRAM to GTT (VRAM is insufficient), TTM coordinates the DMA data transfer. (3) Memory Pressure Handling (Eviction) — when VRAM is full, TTM selects BOs to migrate to GTT/System using an LRU policy, analogous to virtual memory page eviction. amdgpu must use TTM because AMD discrete GPUs have independent VRAM (e.g., the RX 7600 XT has 16GB GDDR6); the driver needs to efficiently transfer data between VRAM and system memory, handle VRAM pressure, and manage the GART page table. The GEM layer is still used to expose a unified API to user space — users do not need to know whether a BO is currently in VRAM or GTT; TTM manages that transparently.',
             amdContext: 'This is a common memory management fundamentals question in AMD interviews. When answering, emphasize the "GEM as facade, TTM as backend" architectural design in amdgpu, and demonstrate that you understand why discrete GPUs need more complex memory management than integrated GPUs.',
           },
         },

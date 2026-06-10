@@ -1021,6 +1021,364 @@ static int amdgpu_gem_create_ioctl(struct drm_device *dev,
         },
       ],
     },
+
+    // ════════════════════════════════════════════════════════════
+    // Group 11.3: From Patches to Offer: The Execution Playbook
+    // ════════════════════════════════════════════════════════════
+    {
+      id: '11-3',
+      number: '11.3',
+      title: 'From Patches to Offer: The Execution Playbook',
+      titleEn: 'From Patches to Offer: The Execution Playbook',
+      icon: 'Compass',
+      description: 'The first two groups taught the "how". This group answers "where do I start, and what happens after?" — how to systematically find your first patch opportunity in real code, what happens to a patch after it merges, and how to translate all of it into resume language and an application strategy a hiring manager can verify in 30 seconds.',
+      lessons: [
+        // ── Lesson 11.3.1 ──────────────────────────────────────
+        {
+          id: '11-3-1',
+          number: '11.3.1',
+          title: 'Finding Your First Patch Opportunity & Life After Merge',
+          titleEn: 'Finding Your First Patch Opportunity & Life After Merge',
+          duration: 20,
+          difficulty: 'intermediate',
+          tags: ['kernel-doc', 'W=1', 'coccinelle', 'first-patch', 'stable', 'regression'],
+          concept: {
+            summary: 'Knowing the workflow (Module 11.1) is not the same as having a patch to send — the biggest newcomer blocker is "what can I possibly fix in 4 million lines of code?". This lesson gives you an executable opportunity radar — kernel-doc warnings, W=1 build warnings, static-analysis findings, bug-tracker triage — ranked by merge probability, and explains the journey after merge: amd-staging-drm-next → drm-next → mainline → stable backports, plus the right response when your patch causes a regression. Lab 7 is the hands-on companion.',
+            explanation: [
+              'The opportunity pyramid, by merge probability from high to low: documentation/comment fixes (kernel-doc, clear typos) > real build warnings (W=1) > static-analysis findings (coccinelle/smatch/sparse) > bug fixes requiring hardware reproduction > new features (nearly impossible for newcomers). Start your first patch at the top of the pyramid: the goal is not to look clever, but to walk the full pipeline at minimal risk and establish your public submission record. Equally important is the anti-list: pure checkpatch style fixes (whitespace, brace placement, line re-wrapping) are generally unwelcome in drm/amd — bulk "beautification" creates git blame noise; drivers/staging/ is the practice ground for style cleanups, not drm/amd.',
+              'kernel-doc warnings are the community-recognized best entry point. scripts/kernel-doc -none <file> scans at zero cost; these warnings usually appear because a commit changed a function signature without updating the comment — which hands you the commit-message material for free ("commit X changed the parameters but the comment was not updated"; find it with git log -S on the function name). The fix also forces you to learn kernel-doc syntax: @param: descriptions, Returns:/Return:, @member: for struct fields. The display (DC) subtree is header-dense with lots of history — fertile ground for this class of warning.',
+              'W=1 and static analysis are the second tier. make W=1 M=drivers/gpu/drm/amd enables stricter-than-default warnings (unused variables, missing static, kernel-doc and more); make coccicheck MODE=report M=drivers/gpu/drm/amd runs Coccinelle semantic patches; make C=1 invokes sparse for type/lock-annotation checks. Three disciplines: (1) some findings are false positives or categories maintainers deliberately tolerate — read the target file\'s git log first to see what kinds of cleanups were recently accepted; (2) you must fully understand and verify any fix a static analyzer suggests — blind fixes are exposed immediately in review; (3) one problem per patch.',
+              'Four gates between a warning and a patch: (1) reproduce the warning at the tip of amd-staging-drm-next — a fix against an outdated tree is meaningless; (2) dedup on lore.kernel.org/amd-gfx by searching the file name — if someone already sent the same fix, switch targets, or reply with Tested-by on their patch, which is also a contribution; (3) local validation — kernel-doc -none prints nothing (or the warning is gone) and the module still builds; (4) checkpatch.pl --strict reports zero issues. Only after all four gates do you enter the Module 11.1 sending flow. Lab 7 turns this into a step-by-step exercise.',
+              'The journey after merge is worth being able to narrate to an interviewer: an amdgpu patch is first picked into amd-staging-drm-next by the maintainers; it then moves in batches into drm-next (the DRM subsystem staging branch for the next kernel); it lands in Linus\'s mainline during the next merge window; and if it carries a Fixes: tag and applies to released kernels, stable maintainers (and the AUTOSEL automation) backport it into stable/LTS series — meaning your small fix can show up in an Ubuntu/Fedora kernel update months later. Track your patch: git log --author=you on each branch, or watch for the maintainer\'s "Applied, thanks" reply in the lore thread.',
+              'When your patch causes trouble, how you respond builds (or destroys) community trust faster than the patch itself. The kernel\'s iron rule is "no regressions": if someone reports your patch broke something (Reported-by, a bisect landing on your commit), respond within 24-48 hours, help confirm, and either send a quick fix (Fixes: pointing at your own commit) or agree to a revert — restore users first, get it right later. Conversely, you can also accumulate public contributions by testing other people\'s patches and reproducing regressions (Tested-by:) — claiming bugs your hardware can reproduce on the gitlab.freedesktop.org/drm/amd issue tracker is the entry point.',
+            ],
+            keyPoints: [
+              'Opportunity pyramid: kernel-doc/typos > W=1 warnings > static analysis > bug fixes > features — start at the top',
+              'Pure checkpatch style cleanups are unwelcome in drm/amd — kernel-doc and real warnings are the safe zone',
+              'Four gates: reproduce on latest branch → dedup on lore → local validation (tool clean + builds) → checkpatch --strict',
+              'Merge path: amd-staging-drm-next → drm-next → mainline merge window → (with Fixes:) stable backports',
+              'On regressions: respond fast, fix or agree to revert — your regression response defines your reputation',
+              'Testing for others (Tested-by, bug triage) also accumulates as public, verifiable contribution',
+            ],
+          },
+          diagram: {
+            title: 'First-Patch Opportunity Radar & Patch Lifecycle',
+            content: `Opportunity pyramid (merge probability × experience needed)
+
+           ▲ hard
+           │   ┌────────────────────┐
+           │   │ new feature/refactor│ ← newcomers: no — needs trust
+           │   ├────────────────────┤
+           │   │      bug fix        │ ← needs hw repro + root cause
+           │   ├────────────────────┤
+           │   │ static-analysis hit │ ← coccinelle/smatch; filter FPs
+           │   ├────────────────────┤
+           │   │  W=1 build warning  │ ← real, but check maintainer taste
+           │   ├────────────────────┤
+      easy │   │  kernel-doc /       │ ← ★ START HERE:
+           ▼   │  comment·typo fix   │   small, unambiguous, welcomed
+               └────────────────────┘
+
+Four gates (hands-on in Lab 7)
+──────────────────────────────
+① Reproduce on latest amd-staging-drm-next
+② Dedup on lore.kernel.org/amd-gfx (no in-flight fix)
+③ kernel-doc -none silent + module builds
+④ checkpatch.pl --strict clean
+        │
+        ▼ Send (Module 11.1 flow)
+
+The journey after merge
+───────────────────────
+amd-staging-drm-next ──→ drm-next ──→ Linus mainline
+  (maintainer applies)  (subsystem     (merge window)
+                         staging)          │
+                            fixes with Fixes: tags
+                                           ▼
+                                 stable / LTS backports
+                          (lands in distro kernel updates)
+
+When your patch causes a regression
+───────────────────────────────────
+report / bisect points at you → respond in 24-48h
+   ├─ quick fix possible → send it (Fixes: your commit)
+   └─ not possible → agree to revert; users first`,
+            caption: 'The full decision map: start at the top of the pyramid (kernel-doc), pass four gates before sending, and understand the post-merge journey so you can tell an interviewer exactly where your code lives and how it got there.',
+          },
+          codeWalk: {
+            title: 'A Complete Opportunity-Scan Session',
+            file: 'terminal',
+            language: 'bash',
+            code: `# ============================================
+# Opportunity radar: scan to locked target
+# (realistic session example)
+# ============================================
+
+# --- Radar 1: kernel-doc scan ---
+$ find drivers/gpu/drm/amd/display -name "*.h" | \\
+    xargs -r scripts/kernel-doc -none 2>&1 | head -8
+dc_stream.h:142: warning: Function parameter or struct member
+  'adjust' not described in 'dc_stream_adjust_vmin_vmax'
+dc_link.h:88: warning: Excess function parameter 'link'
+  description in 'dc_link_detect'
+...
+
+# --- Radar 2: W=1 warning census ---
+$ make W=1 M=drivers/gpu/drm/amd -j$(nproc) 2>&1 | \\
+    grep -c "warning:"
+37
+
+# --- Gate ①: warning still exists on the latest branch ---
+$ git fetch agd5f amd-staging-drm-next --depth=50
+$ git checkout -b kdoc-fix agd5f/amd-staging-drm-next
+$ scripts/kernel-doc -none \\
+    drivers/gpu/drm/amd/display/dc/dc_stream.h 2>&1 | grep adjust
+dc_stream.h:142: warning: ... 'adjust' not described ...  # still there ✓
+
+# --- Gate ②: dedup on lore ---
+# browser: https://lore.kernel.org/amd-gfx/?q=dc_stream_adjust_vmin_vmax
+# → no recent identical fix ✓
+
+# --- Who changed the signature without the comment? ---
+$ git log --oneline -3 -- drivers/gpu/drm/amd/display/dc/dc_stream.h
+$ git log -S "dc_stream_adjust_vmin_vmax" --oneline | tail -3
+
+# --- Fix + gates ③/④ ---
+$ vim drivers/gpu/drm/amd/display/dc/dc_stream.h  # add @adjust: line
+$ scripts/kernel-doc -none \\
+    drivers/gpu/drm/amd/display/dc/dc_stream.h
+(silent ✓)
+$ make M=drivers/gpu/drm/amd -j$(nproc)           # still builds ✓
+$ git add -p && git commit -s
+$ scripts/checkpatch.pl --strict -g HEAD~1..HEAD
+total: 0 errors, 0 warnings ✓
+# → continue with the Module 11.1 / Lab 7 sending flow`,
+            annotations: [
+              'Two radars produce candidates; the four gates run in order — fail any gate, move to the next candidate',
+              'git log -S "<function>" finds the commit that touched it — your commit message can state "comment out of sync since commit X"',
+              'dc_stream.h and dc_stream_adjust_vmin_vmax are a real file and function; the warning line/content here is illustrative — use your actual scan results',
+              'While fixing kernel-doc, read the whole function — this is reading code with a mission, the best way to learn',
+              'After all gates pass, continue with the b4 rehearsal and send in Lab 7 step 7',
+            ],
+            explanation: 'This session shows the full decision process from scan to "ready to send" — usually under an hour. Note that every step has an explicit pass/fail criterion: this engineering approach means you do not depend on inspiration; you own a repeatable contribution pipeline. After the first patch merges, the same radar keeps producing the second and the third.',
+          },
+          miniLab: {
+            title: 'Run Your Own Opportunity Scan',
+            objective: 'Complete a full scan on amd-staging-drm-next and produce a ranked candidate list (sending not required for this lesson).',
+            steps: [
+              'Sync the branch: git fetch agd5f amd-staging-drm-next --depth=200 && git checkout -b scan agd5f/amd-staging-drm-next',
+              'Radar 1: run scripts/kernel-doc -none across all .h files under drivers/gpu/drm/amd/display, saving to /tmp/kdoc.log',
+              'Radar 2: make W=1 M=drivers/gpu/drm/amd 2>&1 | grep "warning:" | sort | uniq -c | sort -rn to see the warning distribution',
+              'Pick 3 candidates; for each run git log --oneline -5 -- <file> (what cleanups did maintainers recently accept?) plus a lore dedup search',
+              'Rank the 3 by "how well I understand it × merge probability" and write candidates.md: warning text, file & function, origin (git log evidence), dedup result, fix idea',
+              '(Optional) execute the fix for candidate #1 and pass gates ③/④ — that is the entry point of Lab 7',
+            ],
+            expectedOutput: `Example structure for candidates.md:
+
+## Candidate 1 (top pick)
+- Warning: dc_stream.h:142 'adjust' not described
+- Function: dc_stream_adjust_vmin_vmax (display/DC)
+- Origin: git log -S shows commit abc1234 added the param
+- Dedup: nothing in-flight on lore (searched 2026-06)
+- Plan: add @adjust: description, reference abc1234
+
+## Candidate 2 / Candidate 3 ... (same structure)`,
+            hint: 'If the display subtree has too many warnings to choose from, count warnings per file and pick the file with the fewest — 1-2 warnings in one file usually means one commit fixes it completely: the ideal first-patch size.',
+          },
+          debugExercise: {
+            title: 'Why Will This "First Patch" Plan Get Rejected?',
+            language: 'text',
+            description: 'Below is a newcomer\'s plan for a patch to amd-gfx. Find every problem that would get it rejected or ignored.',
+            question: 'List every problem in this plan and produce a corrected version.',
+            buggyCode: `The plan:
+1. Base: the 6.8 kernel source package shipped with Ubuntu 24.04
+2. Changes (all in one patch):
+   a. run checkpatch over drivers/gpu/drm/amd/amdgpu/, find all
+      "line over 100 characters" hits, and re-wrap every one
+   b. also fix 3 comment typos while at it
+   c. change one "if (ret != 0)" to "if (ret)" — "more idiomatic"
+3. No need to build — "it is only formatting and comments,
+   compilation cannot break"
+4. git commit -m "cleanup amdgpu code style"
+5. Send directly to the maintainer's personal email, to avoid
+   embarrassment on the public list
+6. If no reply in three days, send the same patch again`,
+            hint: 'Check seven dimensions: base branch, patch splitting, whether the change type is welcome, validation, commit message, recipients, follow-up etiquette.',
+            answer: 'Problem list: (1) Wrong base — a distro 6.8 source package is far behind amd-staging-drm-next: the warnings may already be fixed and the diff will not apply cleanly. Base on the maintainer\'s development branch. (2) Three unrelated change types in one patch — violates one-logical-change-per-patch; must be split. (3) Wrong change types: (a) bulk line re-wrapping is pure style churn that drm/amd maintainers generally reject (git blame noise); (c) the if (ret) rewrite has no functional meaning and will also be rejected. Only (b), the typo fixes, is sendable — as its own minimal patch, or better, switch to a kernel-doc fix. (4) "No need to build" is wrong — re-wrapping can split strings or macros, and comment edits can break kernel-doc; every patch must be build-tested. (5) Non-compliant commit message: missing subsystem prefix (drm/amdgpu:), missing -s (no Signed-off-by), and "cleanup code style" says nothing about what/why. (6) Mailing the maintainer privately bypasses public review — patches must be publicly reviewable: To: the amd-gfx list, Cc: everyone get_maintainer prints. "Embarrassment" on the list is exactly how a public record gets built. (7) Re-sending the identical patch after three days is too pushy — the correct move is one polite ping in the original thread after about a week. Corrected plan: base on amd-staging-drm-next; keep only the typo fix as a minimal standalone patch (or do a kernel-doc fix instead); pass build + kernel-doc -none + checkpatch --strict; proper commit message with Signed-off-by; git send-email --to amd-gfx --cc maintainers; ping once in-thread after a week of silence.',
+          },
+          interviewQ: {
+            question: 'You are handed a 4-million-line driver codebase you have never seen, and asked to make your first meaningful upstream contribution within a month. Walk me through your approach.',
+            difficulty: 'medium',
+            hint: 'This tests methodology: how you systematically find an entry point, validate, and interact with the community — not raw talent.',
+            answer: 'My four-week plan: Week 1 — environment and map: get a dev setup that can incrementally build the target module; read MAINTAINERS and the last ~200 commits to learn the active areas, the active maintainers, and what kinds of changes they accept; subscribe to the mailing list to absorb the review culture. Week 2 — opportunity scan: use zero-cost tools to mass-produce candidates — scripts/kernel-doc -none, make W=1, make coccicheck — plus entry-level bug-tracker issues my hardware can reproduce; filter every candidate three ways: still present on the latest development branch, no in-flight duplicate on the list archive, and I can genuinely read the surrounding code. Week 3 — execution: pick the smallest, most unambiguous target (typically a kernel-doc or real build-warning fix); fix it and pass all local validation (tool silent, module builds, checkpatch --strict clean); write a commit message that explains the origin (git log -S to find the commit that introduced the inconsistency); send to the right list with maintainers Cc\'d via get_maintainer. Week 4 — iterate and expand: respond to review point by point and send v2 quickly; start a second, slightly larger target; build presence by testing other people\'s patches (Tested-by:). Core principle: the first contribution exists to establish a credible public record and process fluency — small and perfect beats large and risky.',
+            amdContext: 'Interviewers asking this want a repeatable engineering method, not luck. If you can open lore.kernel.org on the spot and show this is exactly how you landed your first patch, the question stops being hypothetical — it becomes your home turf.',
+          },
+        },
+
+        // ── Lesson 11.3.2 ──────────────────────────────────────
+        {
+          id: '11-3-2',
+          number: '11.3.2',
+          title: 'The Resume Playbook: Making AMD See Your Evidence',
+          titleEn: 'The Resume Playbook: Making AMD See Your Evidence',
+          duration: 20,
+          difficulty: 'beginner',
+          tags: ['resume', 'bullet', 'careers', 'application', '12-week-plan'],
+          concept: {
+            summary: 'A resume is not a list of experiences — it is an index of evidence. This lesson is a drop-in translation layer: convert each lab and artifact from this course into bullets shaped as "verb + specific system + method + verifiable link"; tune keywords per target area (display / graphics & memory / compute / compiler / testing); and follow a 12-week evidence plan plus a layered application-channel list. Core principle: every bullet must be verifiable by a hiring manager within 30 seconds.',
+            explanation: [
+              'Evidence first. GPU drivers are a small world, and every hard claim on your resume can be verified live in an interview: write "submitted patches" and you will be asked for the lore link; write "analyzed the VM subsystem" and you will be quizzed on amdgpu_vm.c details. For people who actually did the work this is an advantage — most candidates have course certificates and "familiar with"; you have clickable links. Three rules: (1) every bullet carries at least one verifiable artifact (lore link / GitHub / blog); (2) verbs match facts exactly — submitted (sent) ≠ merged (accepted); ban the vague "contributed to"; (3) only write numbers that are truly countable (N patches, M lab reports) — smaller and true beats bigger and fuzzy.',
+              'The bullet formula: verb + specific object (subsystem/tool names) + method + artifact with link. Standard mappings for this course: Lab 1 → "Built and booted custom Linux kernels (v6.12 LTS) with amdgpu as a loadable module; iterated driver changes in virtme-ng VMs". Lab 2 → "Triggered controlled GPU hangs with IGT amd_deadlock, captured devcoredumps, root-caused the hung ring and reset path via umr + dmesg". Lab 3 → "Traced the dma_fence lifecycle through amdgpu command submission with ftrace". Lab 6 → "Ran and extended the DRM core KUnit suites (drm_buddy — the allocator behind the amdgpu VRAM manager)". Lab 7 → "Submitted <N> patches to the amd-gfx mailing list (kernel-doc/W=1 fixes in drivers/gpu/drm/amd); <M> merged into amd-staging-drm-next". The platform itself → "Designed and shipped a bilingual (EN/ZH) AMDGPU-internals learning platform (React/TypeScript, 14 modules, 75+ micro-lessons, 7 guided labs)". Placeholders must become real numbers.',
+              'Tune keywords per direction. Linux GPU driver roles typically cluster into a few technical areas; reorder bullets and keywords per the job description: display — DRM/KMS, atomic commit, DC, DP/HDMI; graphics & memory — TTM, GPUVM, drm_buddy, command submission, dma_fence, drm_gpu_scheduler; compute — KFD, ROCm, HSA queues, SVM; compiler — LLVM AMDGPU backend, ISA, register allocation; testing & tooling — IGT, KUnit, bisect, CI. Role titles and locations change over time — always verify against live searches on careers.amd.com ("Linux", "GPU driver", "kernel"); historically Markham (Greater Toronto) and Shanghai have publicly posted Linux GPU driver roles, but treat current postings as the source of truth.',
+              'Layered application channels. (1) Direct: careers.amd.com (students and new grads: watch the University/Early-Career categories) plus AMD recruiters on LinkedIn (the 11.2.1 keyword optimization makes you findable). (2) Community visibility: your amd-gfx patches, review interactions, and issue triage are work samples read by your future teammates — many driver developers are active on that very list; keep your lore record and freedesktop GitLab activity clean and professional. (3) Adjacent-employer stepping stones: companies like Igalia, Collabora, Red Hat, Canonical, and the Valve-contractor ecosystem do full-time open-source Linux graphics work, need the same skills, and are often more newcomer-friendly — building full-time upstream experience there first is a well-trodden path into GPU vendors. (4) Student channels: internships/co-op programs usually have a friendlier bar for kernel newcomers (verify what is actually open this cycle).',
+              'The 12-week evidence plan (see diagram). There is exactly one discipline: every week ships one linkable artifact. Weeks 1-4 foundation (Labs 1-3 plus study notes online); weeks 5-8 going upstream (Lab 6 KUnit report, Lab 7 scan and first patch sent, review iteration or a second patch); weeks 9-12 packaging (one deep subsystem write-up, resume and LinkedIn fully linkified, applications out, mock interviews via 11.2.2). Stretch the calendar if needed — but never break the weekly cadence: the public timeline on lore and GitHub is itself the most persuasive hidden message in your application, because it demonstrates sustained delivery.',
+              'Honesty red lines. Never write "merged" when you only "submitted"; never call the learning platform a "production product" or invent user counts; never imply private relationships with AMD engineers. The community is small enough that inflated claims get caught, and the cost far exceeds the value of any honest small result. The flip side: honest small results plus a publicly checkable growth trajectory (lore timeline, GitHub history) is precisely the "low-risk, high-potential" profile hiring managers want — it is the strongest card a newcomer can play.',
+            ],
+            keyPoints: [
+              'Bullet formula: verb + specific subsystem + method/tool + verifiable artifact link',
+              'submitted ≠ merged — verbs must match facts; the community record is public',
+              'Keywords per direction: display (KMS/DC), graphics & memory (TTM/GPUVM), compute (KFD/ROCm), compiler (LLVM), testing (IGT/KUnit)',
+              'Channels: careers.amd.com + community visibility + adjacent employers (Igalia/Collabora/Red Hat...) + student programs',
+              'The single discipline of the 12-week plan: one linkable artifact per week',
+              'Honesty red lines: small and true + public trajectory = the "low-risk, high-potential" profile',
+            ],
+          },
+          diagram: {
+            title: '12-Week Evidence Plan & Bullet Translation Formula',
+            content: `12-week evidence plan (one linkable artifact per week)
+
+Wk   Action                         Artifact (all linkable)
+──   ──────                         ───────────────────────
+ 1   Env setup + Lab 1              portfolio repo + build notes
+ 2   Lab 3 ftrace tracing           fence-trace report .md
+ 3   Lab 2 GPU-hang debugging       devcoredump analysis .md
+ 4   Module 5 source deep-read      VM or Ring subsystem notes
+ ─────────────────────────────────────────────────────────
+ 5   Lab 6 KUnit                    drm_buddy report + own test
+ 6   Lab 7 opportunity scan         candidates.md
+ 7   Lab 7 first patch SENT ★       lore link #1
+ 8   Review iteration / 2nd target  v2 thread or lore link #2
+ ─────────────────────────────────────────────────────────
+ 9   Deep-dive one subsystem        long-form analysis (blog)
+10   (Optional) KUnit/IGT test work test-patch lore link
+11   Resume + LinkedIn linkified    1-page resume, every bullet linked
+12   Apply + mock interview (11.2.2) application tracker
+
+ Slow the calendar if needed — never break the weekly cadence.
+
+Bullet translation formula
+──────────────────────────
+ [verb]       [specific object]       [method/tool]      [artifact]
+ Submitted    N patches → amd-gfx     kernel-doc/W=1     lore link
+ Built        custom kernel v6.12     virtme-ng          build notes
+ Root-caused  controlled GPU hangs    IGT + devcoredump  analysis
+ Extended     DRM KUnit (drm_buddy)   new boundary test  report
+ Shipped      bilingual platform      React/TS           site + repo
+
+ ✗ "Familiar with GPU drivers"      ← unverifiable, delete
+ ✗ "Contributed to Linux kernel"    ← vague; use submitted/merged + N
+ ✓ "2 patches merged in drm/amd/display (kernel-doc fixes),
+    lore.kernel.org/amd-gfx/?q=f:you@mail.com"`,
+            caption: 'The top table is the cadence; the bottom table is the translation. Resume screening averages 30 seconds — every bullet must stand alone, credible and clickable.',
+          },
+          codeWalk: {
+            title: 'Weak Bullets → Strong Bullets (as a diff)',
+            file: 'resume_bullets.diff',
+            language: 'diff',
+            code: `--- resume_weak.md
++++ resume_strong.md
+@@ Skills & Projects @@
+-- Familiar with Linux kernel and GPU drivers
++- Submitted 3 patches to the Linux kernel amd-gfx list
++  (kernel-doc & W=1 fixes in drivers/gpu/drm/amd);
++  2 merged into amd-staging-drm-next
++  [lore.kernel.org/amd-gfx/?q=f:you@mail.com]
+
+-- Studied GPU architecture and driver concepts
++- Root-caused controlled GPU hangs on RX 7600 XT (RDNA3):
++  triggered via IGT amd_deadlock, captured devcoredump,
++  identified hung ring & reset path from umr + dmesg
++  [github.com/you/portfolio/analysis/gpu-hang-report.md]
+
+-- Worked with kernel testing tools
++- Extended the DRM core KUnit suite (drm_buddy — the
++  allocator behind the amdgpu VRAM manager) with a
++  boundary-condition test; all suites pass under UML
++  [github.com/you/portfolio/tests/kunit-report.md]
+
+-- Built a website about GPU drivers
++- Designed & shipped a bilingual (EN/ZH) AMDGPU-internals
++  learning platform: 14 modules, 75+ micro-lessons,
++  7 hands-on labs (React/TypeScript)
++  [your-site.example] [github.com/you/repo]`,
+            annotations: [
+              'Every "-" line shares the same disease: unverifiable, no concrete object, no artifact',
+              'Every "+" line has the same skeleton: verb + specific system + method + clickable evidence in brackets',
+              'Numbers must be real: 3 patches means write 3, not "multiple"; if nothing merged, write only submitted',
+              'The lore f: (from) query lists all your public contributions in one URL — put it front and center',
+              'The last bullet upgrades "built a website" into an engineering delivery with scale metrics',
+            ],
+            explanation: 'The diff makes the translation gap visible: the strong version contains zero adjectives (passionate/expert/familiar) — only verbs, nouns, and links. That is the grammar of an engineering resume: let the evidence speak. The same applies to a Chinese resume: replace 熟悉 GPU 驱动 with 向 amd-gfx 提交 3 个补丁（2 个已合并，lore 链接）.',
+          },
+          miniLab: {
+            title: 'Translate Your Progress into Five Bullets',
+            objective: 'Use the formula to write 5 resume-ready bullets (one English set, one Chinese set) from the labs and artifacts you have actually completed, and verify every link.',
+            steps: [
+              'Honest inventory: list the labs you have completed and the artifacts that actually exist (what is done? what has a linkable output?)',
+              'Apply the formula to each: verb + specific object + method/tool + artifact link',
+              'Audit verbs against facts: submitted / merged / built / analyzed / extended — delete every familiar / passionate / expert',
+              'Actually click every link in all 5 bullets: a 404, a private repo, or an empty doc counts as a failure',
+              'Have a friend who knows nothing about kernels read the English set — they should be able to retell what you did (the specificity test)',
+              'Add the 5 bullets to the Highlights section at the top of your portfolio README, and to both language versions of your resume',
+            ],
+            expectedOutput: `5 bullets (example — replace with your real content and links):
+
+• Submitted 2 kernel-doc fix patches to amd-gfx
+  (drivers/gpu/drm/amd/display); 1 merged —
+  lore.kernel.org/amd-gfx/?q=f:you@mail.com
+• Built & booted custom v6.12 kernels with amdgpu
+  as a module; documented the Ubuntu cert pitfall —
+  github.com/you/portfolio/notes/lab1.md
+• Root-caused a controlled GPU hang (IGT amd_deadlock
+  → devcoredump → umr) on RDNA3 —
+  github.com/you/portfolio/analysis/hang.md
+• Extended the DRM KUnit drm_buddy suite with a
+  boundary test; suites pass under UML —
+  github.com/you/portfolio/tests/kunit.md
+• Shipped a bilingual AMDGPU learning platform
+  (14 modules, 7 labs, React/TS) — your-site.example
+
+Check: each ≤3 lines, ≥1 link, zero adjectives.`,
+            hint: 'Cannot produce 5 bullets? That is an action signal, not a writing problem — go back to the 12-week table and see which artifact this week should produce. The resume is the output; the cadence is the cause.',
+          },
+          debugExercise: {
+            title: 'Audit an Inflated Resume Section',
+            language: 'text',
+            description: 'Every line in this resume section has a problem — some are unverifiable, some are inflated, some will be exposed live in an interview.',
+            question: 'Identify the problem in each line and decide: delete, rewrite, or honestly downgrade?',
+            buggyCode: `OPEN SOURCE & PROJECTS
+
+• Contributed extensively to the Linux kernel GPU subsystem
+• Expert in AMDGPU driver internals (VM, scheduler, display)
+• My patches are used by millions of Ubuntu users worldwide
+• Worked closely with AMD maintainers on driver improvements
+• Built a production-grade GPU driver education SaaS platform
+  serving the developer community
+• Deep experience with ROCm/HIP performance optimization
+  on data-center GPUs`,
+            hint: 'Ask two questions per line: (1) can an interviewer verify it in 30 seconds? (2) what happens after three levels of follow-up questions?',
+            answer: 'Line by line: (1) "Contributed extensively" — vague verb plus unquantifiable "extensively". Rewrite to precise fact: "Submitted N patches (M merged) to amd-gfx — <lore link>". (2) "Expert in ... internals" — expert is the interviewer\'s conclusion, not a self-granted title; three levels of follow-up (GPUVM page-table levels, eviction triggers, scheduler entity/rq relationships) and any stumble backfires. Rewrite to evidence: "Wrote a 5k-word analysis of the amdgpu VM subsystem — <link>". (3) "used by millions" — even if your fix genuinely reached Ubuntu via stable, this attribution is dangerous inflation (merged ≠ you served millions). Honest downgrade: "1 fix backported to stable 6.12.x via Fixes: tag" (if true), else delete. (4) "Worked closely with AMD maintainers" — one or two review rounds is not working closely; follow-ups make this awkward. Rewrite: "Iterated patches through review with amdgpu maintainers (v2 accepted) — <thread link>". (5) "production-grade SaaS serving the community" — a learning platform with no paying users or SLA is not production SaaS; inventing scale crosses the integrity line. Rewrite to the real delivery: "Designed & shipped a bilingual AMDGPU learning platform (14 modules, 7 labs) — <link>". (6) "data-center GPUs" — if you own a consumer RX 7600 XT and your ROCm work was compatibility-matrix-gated experiments, this is plainly false. Delete or downgrade: "Ran HIP kernels and profiling exercises on RDNA3 (consumer ROCm path, compatibility-matrix gated)". Conclusion: zero of the six lines survive as written — but behind each one there is a smaller, true fact; writing that fact is enough.',
+          },
+          interviewQ: {
+            question: 'Your resume says you submitted patches to amdgpu. Pick one and walk me through it: what did it change, why was it needed, and what did the review teach you?',
+            difficulty: 'medium',
+            hint: 'Close with STAR: situation (how you found it) → task → action (validation and process) → result (link + lessons). Proactively be honest about the patch size.',
+            answer: 'Model answer (kernel-doc fix scenario — replace with your real experience): Situation — while scanning the display subtree with scripts/kernel-doc -none, I found a function in dc_stream.h whose comment was missing a description for a newer parameter; git log -S showed a commit months earlier had changed the signature without updating the comment. Task — fix the warning and walk the complete upstream process. Action — I passed the four gates first: confirmed the warning still existed at the tip of amd-staging-drm-next and that lore showed no in-flight fix; after adding the @param description, kernel-doc -none went silent, the module still built, and checkpatch --strict was clean; my commit message referenced the commit that introduced the inconsistency; get_maintainer gave me the recipients and I sent it to amd-gfx with maintainers Cc\'d via git send-email. Result — a maintainer replied the next day with a wording suggestion; I sent v2 (changelog crediting the suggestion), and the patch was applied to amd-staging-drm-next — here is the lore thread link. Three lessons: (1) upstream respects "small and correct" — a 10-line fix still gets a real review; (2) a commit message is a letter to the maintainer five years from now, not a note to myself; (3) review is collaboration, not an exam — responding point by point with attribution beats defending. I am deliberately upfront that this was a small patch: its value is that I now have muscle memory for every step, and my second patch cost a tenth of the first.',
+            amdContext: 'The interviewer will almost certainly open your lore link on the spot. The real test is whether you can narrate your own work accurately, without inflation, with details that survive follow-ups — exactly the skill daily code review and cross-team collaboration require.',
+          },
+        },
+      ],
+    },
   ],
   completionChecklist: [
     'Master the complete kernel patch workflow: format-patch → checkpatch → get_maintainer → send-email',
@@ -1032,5 +1390,8 @@ static int amdgpu_gem_create_ioctl(struct drm_device *dev,
     'Submitted at least one patch (even a typo fix) to the amd-gfx mailing list',
     'Be prepared with 2-3 specific projects/contributions that can be described in detail during the interview',
     'Can present your learning path as evidence-based growth with patch links, write-ups, and tests instead of only resume claims',
+    'Ran a full opportunity scan (kernel-doc + W=1) on amd-staging-drm-next and produced a ranked candidate list',
+    'Every resume bullet follows the "verb + object + method + link" formula, and every link actually resolves',
+    'Started the 12-week "one linkable artifact per week" cadence and shipped at least week one',
   ],
 };

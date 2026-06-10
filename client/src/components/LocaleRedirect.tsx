@@ -4,6 +4,7 @@
 
 import { useEffect } from "react";
 import { useLocation } from "wouter";
+import { changeLanguage } from "@/lib/i18n";
 
 const STORAGE_KEY = "locale";
 
@@ -21,6 +22,9 @@ export default function LocaleRedirect() {
   const [, navigate] = useLocation();
   useEffect(() => {
     const locale = getPreferredLocale();
+    // Switch language before navigating so the locale tree's first render
+    // is already localized (avoids a one-frame flash in the old language).
+    changeLanguage(locale);
     navigate(`/${locale}`, { replace: true });
   }, [navigate]);
   return null;

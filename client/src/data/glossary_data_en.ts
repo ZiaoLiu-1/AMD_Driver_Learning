@@ -67,7 +67,7 @@ export const glossaryByModuleEn: Record<string, GlossaryTerm[]> = {
       abbr: 'RDNA',
       fullEn: 'Radeon DNA',
       zhName: 'Radeon DNA 架构',
-      description: 'AMD modern graphics architecture for consumer GPUs since 2019; RDNA3 powers RX 7000 series.',
+      description: 'AMD modern graphics architecture for consumer GPUs since 2019. As of 2026 the latest generation is RDNA4 (RX 9000 series, launched 2025); the RX 7000 series is the prior RDNA3 generation.',
       category: 'hardware'
     },
     {
