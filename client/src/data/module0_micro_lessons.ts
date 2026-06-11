@@ -33,13 +33,13 @@ export const module0MicroLessons: MicroLessonModule = {
             explanation: [
               '想象你在玩一个游戏。当游戏引擎调用 OpenGL 的 glDrawArrays() 来渲染一个三角形时，这个调用需要经过多层软件才能最终让 GPU 的着色器核心开始工作。GPU 驱动就是这个链条中最关键的一环——它是唯一真正与 GPU 硬件对话的软件。',
               '在最底层，GPU 驱动做的事情非常原始：通过 MMIO（Memory-Mapped I/O）向 GPU 的寄存器写入特定的值。GPU 有成千上万个寄存器，每个寄存器控制硬件的一个具体行为。例如，写入 CP_RB_WPTR（Command Processor Ring Buffer Write Pointer）寄存器会通知 GPU "有新的命令等待执行"。驱动需要知道每个寄存器的地址、格式和语义。',
-              '但驱动不只是写寄存器这么简单。一个现代 GPU 驱动（如 amdgpu）还需要：管理 GPU 的内存（VRAM 分配和回收）、调度 GPU 任务（多个应用共享同一个 GPU）、处理中断（GPU 完成任务后通知 CPU）、管理电源（调整 GPU 频率和电压以平衡性能和功耗）、控制显示输出（设置分辨率、刷新率）。这就是为什么 amdgpu 驱动有超过 400 万行代码。',
+              '但驱动不只是写寄存器这么简单。一个现代 GPU 驱动（如 amdgpu）还需要：管理 GPU 的内存（VRAM 分配和回收）、调度 GPU 任务（多个应用共享同一个 GPU）、处理中断（GPU 完成任务后通知 CPU）、管理电源（调整 GPU 频率和电压以平衡性能和功耗）、控制显示输出（设置分辨率、刷新率）。这就是为什么 amdgpu 驱动有数百万行代码。',
               '理解这一点很重要：GPU 驱动不只是"让 GPU 工作"，它是一个复杂的系统软件，需要同时处理性能、安全、稳定性和功耗等多个维度的问题。这也是为什么 GPU 驱动工程师是高需求岗位——这个领域需要同时理解操作系统内核、硬件架构和图形学。',
             ],
             keyPoints: [
               'GPU 驱动是 OS 与 GPU 硬件之间的翻译层，通过 MMIO 寄存器写入与硬件通信',
               '驱动的核心职责：内存管理、任务调度、中断处理、电源管理、显示控制',
-              'amdgpu 驱动位于 drivers/gpu/drm/amd/，超过 400 万行代码',
+              'amdgpu 驱动位于 drivers/gpu/drm/amd/，数百万行代码（具体数字随内核版本变化）',
               '驱动运行在内核空间（Ring 0），错误会导致整个系统崩溃',
               'GPU 有成千上万个寄存器，每个控制一个硬件行为——驱动需要精确操作它们',
             ],
@@ -393,7 +393,7 @@ glxinfo | grep "OpenGL renderer"
               '在 GPU 驱动领域，AMD、NVIDIA 和 Intel 的策略截然不同。AMD 的 amdgpu 驱动完全开源并合并入 Linux 内核主线，用户态驱动 Mesa radeonsi/radv 也完全开源，甚至 ROCm 计算框架也是开源的。这意味着你可以阅读每一行代码、理解每一个设计决策、甚至直接贡献代码。',
               'NVIDIA 的情况完全不同。直到 2022 年，NVIDIA 的 Linux 驱动是完全闭源的。现在 NVIDIA 开源了 nvidia-open 内核模块，但核心的 GPU 固件和用户态驱动仍然是闭源的。这意味着你无法阅读 NVIDIA 驱动的大部分代码，也几乎不可能为其贡献补丁。社区维护的 nouveau 驱动功能有限，因为缺少硬件文档。',
               'Intel 的 GPU 驱动（i915/xe）也是完全开源的，但 Intel 在独立 GPU 市场的份额很小（Arc 系列），在高性能计算领域几乎没有存在感。Intel 的驱动工程师岗位也相对少于 AMD。',
-              '对于你的职业发展，AMD 的开源策略意味着：（1）你可以通过提交被接受的内核补丁来建立公开的贡献记录——这比任何面试技巧都有说服力；（2）你可以在学习过程中阅读真实的驱动代码，而不是依赖二手文档；（3）AMD Markham（加拿大）和上海办公室持续招聘 GPU 驱动工程师，特别是有实际内核贡献经验的候选人。',
+              '对于你的职业发展，AMD 的开源策略意味着：（1）你可以通过提交被接受的内核补丁来建立公开的贡献记录——这比任何面试技巧都有说服力；（2）你可以在学习过程中阅读真实的驱动代码，而不是依赖二手文档；（3）AMD Markham（加拿大）和上海办公室都有 GPU 驱动相关岗位，招聘随周期变化，以 careers.amd.com 实时职位为准——有实际内核贡献经验的候选人尤其受青睐。',
               'amd-gfx 邮件列表（amd-gfx@lists.freedesktop.org）每天有 30-50 个补丁提交，你可以看到 AMD 工程师在实际工作中遇到什么问题、如何解决。订阅这个邮件列表，就像拥有了一个免费的 AMD 内部培训资源。',
             ],
             keyPoints: [
@@ -402,7 +402,7 @@ glxinfo | grep "OpenGL renderer"
               'Intel: 开源（i915/xe），但独立 GPU 市场份额小，岗位相对少',
               '提交被接受的内核补丁是最有力的 AMD 求职证明',
               'amd-gfx 邮件列表是免费的"内部培训"资源，每天 30-50 个补丁',
-              'AMD Markham / Shanghai 持续招聘 GPU 驱动工程师',
+              'AMD Markham / Shanghai 有 GPU 驱动相关岗位，以 careers.amd.com 实时职位为准',
             ],
           },
           diagram: {
@@ -497,7 +497,7 @@ diff --git a/drivers/gpu/drm/amd/display/dc/core/dc.c
               '查看最近的 amdgpu 提交：cd linux && git log --oneline --since="1 week ago" -- drivers/gpu/drm/amd/ | head -20',
             ],
             expectedOutput: `$ find linux/drivers/gpu/drm/amd/ -name "*.c" -o -name "*.h" | xargs wc -l | tail -1
- 4200000+ total   ← 超过 400 万行代码！
+ multi-million total   ← 数百万行代码（具体数字随内核版本变化）
 
 $ find linux/drivers/gpu/drm/amd/ -name "*.c" -o -name "*.h" | wc -l
  3500+            ← 超过 3500 个源文件
@@ -599,7 +599,7 @@ PCI 子系统扫描总线
               ├─ pci_enable_device(pdev)     → 启用 PCI 设备
               ├─ pci_set_master(pdev)        → 允许 GPU 做 DMA
               ├─ pci_ioremap_bar(pdev, 0)    → 映射 VRAM BAR
-              ├─ pci_ioremap_bar(pdev, 2)    → 映射寄存器 BAR
+              ├─ pci_ioremap_bar(pdev, 5)    → 映射寄存器 BAR
               └─ amdgpu_device_init(adev)    → 初始化所有 IP Block
 
 lspci 输出示例：
@@ -883,7 +883,7 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
             explanation: [
               '内核开发与普通应用开发有一个根本区别：你写的代码在内核空间运行，一个空指针解引用就会导致整个系统崩溃（Kernel Panic）。因此，安全的测试环境至关重要。推荐的方案是使用 KVM/QEMU 虚拟机进行危险的内核实验，在虚拟机中加载你修改的内核或模块，即使崩溃也只需要重启虚拟机。',
               '编译内核需要的工具链：gcc 或 clang（编译器）、make（构建系统）、flex 和 bison（词法/语法分析器，内核配置系统需要）、libelf-dev 和 libssl-dev（ELF 处理和签名验证）、bc（构建脚本中的数学计算）。对于 amdgpu 开发，还需要 libdrm-dev 和 xserver-xorg-dev（如果你要运行 IGT 测试）。',
-              '内核源码的获取有几种方式：（1）Linus Torvalds 的主线仓库（最新稳定版）：git clone https://github.com/torvalds/linux.git；（2）AMD 的 drm-next 分支（amdgpu 最新开发版）：git clone https://gitlab.freedesktop.org/agd5f/linux.git --branch amd-staging-drm-next；（3）浅克隆（节省空间）：加 --depth=1 参数。AMD 的 drm-next 分支包含了还未合并到 Linus 主线的最新 amdgpu 补丁，对于 amdgpu 开发来说这是最推荐的源码基。',
+              '内核源码的获取有几种方式：（1）Linus Torvalds 的主线仓库（最新稳定版）：git clone https://github.com/torvalds/linux.git；（2）跟进 amdgpu 当前开发时使用相应的 DRM/维护者集成树；（3）浅克隆（节省空间）：加 --depth=1 参数。维护者集成分支包含还未合并到 Linus 主线的最新 amdgpu 补丁。具体分支名会随时间变化，应从公开的内核工作流文档确认当前的维护者树，而不要永久硬编码某个分支名。',
               '代码导航是高效阅读内核代码的关键。推荐两种方案：（1）cscope + ctags（经典方案）：在内核源码根目录运行 make cscope && make tags，然后在 vim/emacs 中可以跳转到函数定义、查找引用；（2）clangd（现代方案）：运行 scripts/clang-tools/gen_compile_commands.py 生成 compile_commands.json，然后 VS Code 的 clangd 扩展可以提供智能补全和跳转。',
             ],
             keyPoints: [
@@ -902,8 +902,8 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
 ┌─────────────────────────────────────────────────────────────┐
 │  1. 获取源码                                                 │
 │  git clone --depth=1                                        │
-│    https://gitlab.freedesktop.org/agd5f/linux.git           │
-│    --branch amd-staging-drm-next                            │
+│    <kernel-tree-url>                                         │
+│    --branch <maintainer-branch>                             │
 │                                                              │
 │  目录结构：                                                  │
 │  linux/                                                      │
@@ -970,8 +970,8 @@ sudo apt install -y \\
 
 # 3. 克隆 AMD drm-next 内核源码（浅克隆节省空间）
 git clone --depth=1 \\
-    https://gitlab.freedesktop.org/agd5f/linux.git \\
-    --branch amd-staging-drm-next \\
+    <kernel-tree-url> \\
+    --branch <maintainer-branch> \\
     ~/kernel-src
 cd ~/kernel-src
 
@@ -1002,7 +1002,7 @@ echo "开发环境搭建完成！"`,
               'build-essential 包含 gcc、make 等基本编译工具',
               'flex/bison 是内核配置系统（Kconfig）需要的词法/语法分析器',
               'libelf-dev 处理 ELF 格式（内核和模块都是 ELF 文件）',
-              'amd-staging-drm-next 分支包含最新的 amdgpu 补丁，比 Linus 主线超前数周',
+              '维护者集成分支（如 amd-staging-drm-next）包含尚未进入 Linus 主线的 amdgpu 补丁，分支名以当前社区文档为准',
               'cp /boot/config-$(uname -r) 复用当前内核的配置，避免从零配置的麻烦',
               'make M=drivers/gpu/drm/amd 是日常开发最常用的命令——只编译修改的模块',
             ],

@@ -467,7 +467,7 @@ blender-8901  [003] 10000.280: amdgpu_sched_run_job: sched_job=5199`,
             explanation: [
               'perf 利用 CPU 的 Performance Monitoring Unit（PMU）硬件计数器进行采样。PMU 可以计数事件如 CPU cycles、cache misses、branch mispredictions 等。perf 的工作原理：每 N 个事件发生一次中断（NMI），记录当时的指令指针（IP），统计后产生每个函数被采样到的次数——采样次数越多表示该函数消耗的 CPU 时间越多。',
               'perf 常用子命令：perf top（实时显示 CPU 热点函数，类似 top 但精确到函数），perf stat（统计程序执行的硬件事件总量，如 cycles/instructions/cache-misses），perf record（采样并保存到 perf.data 文件），perf report（交互式分析 perf.data）。对于 amdgpu 内核模块的分析，perf 可以直接看到内核函数的 CPU 消耗。',
-              'rocprof 是 AMD ROCm 生态的 GPU 性能分析工具。它有三种主要模式：--stats 模式（统计每个 GPU kernel 的执行时间和调用次数），--hsa-trace 模式（追踪 HSA 运行时的 API 调用、内存拷贝、kernel dispatch 的完整时间线），硬件计数器模式（通过 input.txt 指定要采集的 GPU PMU 计数器，如 SQ_WAVES、SQ_INSTS_VALU、TA_BUFFER_WAVEFRONTS_SUM）。',
+              'rocprof 是 AMD ROCm 生态的 GPU 性能分析工具。它有三种主要模式：--stats 模式（统计每个 GPU kernel 的执行时间和调用次数），--hsa-trace 模式（追踪 HSA 运行时的 API 调用、内存拷贝、kernel dispatch 的完整时间线），硬件计数器模式（通过 input.txt 指定要采集的 GPU PMU 计数器，如 SQ_WAVES、SQ_INSTS_VALU、TA_BUFFER_WAVEFRONTS_SUM）。注意：rocprof 依赖 ROCm 运行时，而 RX 7600 XT（gfx1102）不在 ROCm 官方支持列表（以官方兼容矩阵为准）——在本卡上以概念理解为主，实测建议用受支持的设备。',
               'Flame Graph（火焰图）是 perf 数据的可视化方式——x 轴是函数调用栈（宽度表示采样百分比），y 轴是调用深度。Brendan Gregg 的 FlameGraph 脚本（github.com/brendangregg/FlameGraph）可以将 perf script 输出转换为交互式 SVG 火焰图。对于 amdgpu 调试，火焰图能直观展示内核中哪些函数消耗了最多的 CPU 时间——常见的热点包括 fence polling、register read/write、memory allocation。',
             ],
             keyPoints: [
@@ -1116,7 +1116,7 @@ gfx1100.grbm.mmGRBM_STATUS == 0xC6008002
   GUI_ACTIVE           [31] = 1   ← 图形引擎活跃!
   CP_BUSY              [30] = 1   ← CP 在处理命令!
   SPI_BUSY          [23:22] = 1   ← 着色器在工作!`,
-            hint: 'umr 需要 root 权限（通过 debugfs 访问 GPU）。如果报 "cannot find ASIC"，确认 amdgpu 驱动已加载。ASIC 名称（如 gfx1100）取决于你的 GPU 型号——RX 7600 XT 可能是 gfx1100 或 gfx1102。',
+            hint: 'umr 需要 root 权限（通过 debugfs 访问 GPU）。如果报 "cannot find ASIC"，确认 amdgpu 驱动已加载。ASIC 名称取决于你的 GPU 型号——RX 7600 XT（Navi33）是 gfx1102（gfx1100 是 Navi31/RX 7900 系列）。',
           },
           debugExercise: {
             title: '从 umr 输出诊断 GPU hang 状态',

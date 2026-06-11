@@ -459,7 +459,7 @@ merge:
       title: 'AMDGPU 后端',
       titleEn: 'AMDGPU Backend',
       icon: '⚙️',
-      description: '深入 LLVM AMDGPU 后端：指令选择、寄存器分配、ISA 汇编。这是 AMD Markham Toolchain 团队的核心工作——将 LLVM IR 高效编译为 AMD GPU 机器码。',
+      description: '深入 LLVM AMDGPU 后端：指令选择、寄存器分配、ISA 汇编。LLVM AMDGPU 后端由多个组织的工程师共同维护，AMD 工程师是主要贡献者之一——核心问题是将 LLVM IR 高效编译为 AMD GPU 机器码。',
       lessons: [
         // ── Lesson 9.2.1 ──────────────────────────────────────
         {

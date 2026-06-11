@@ -522,7 +522,7 @@ static int create_hdmi_connector(struct drm_device *dev,
               'drm_atomic_state is the core data structure of an Atomic commit. It contains three classes of state: drm_crtc_state (the CRTC\'s new mode, active/enable state, mode_changed flag), drm_plane_state (the Plane\'s bound FB, src/dst rectangles, rotation/blend properties), and drm_connector_state (the Connector\'s bound CRTC, DPMS state). On each atomic commit, the kernel creates a copy of the old state; the driver modifies the copy; the check phase validates the copy; the commit phase replaces the current state with the copy. If the check fails, the copy is discarded and hardware is unaffected.',
               'The DRM_MODE_ATOMIC_TEST_ONLY flag lets user space "probe" whether a configuration is legal without actually committing it. This is especially useful for Wayland compositors — they can test-only multiple layout candidates, select the optimal one that passes validation, and then actually commit it. This avoids the cost of "commit → fail → revert."',
               'Page Flip is the most common use of Atomic. After each frame is rendered, the compositor binds the new framebuffer to the Primary Plane and submits it via atomic commit. The DRM_MODE_PAGE_FLIP_EVENT flag requests an event notification when the flip completes. If DRM_MODE_ATOMIC_NONBLOCK is specified, the commit returns immediately without waiting for VBlank — the flip completes automatically at the next VBlank. This is the foundation for tear-free compositing on modern Linux desktops.',
-              'In amdgpu, the core path for Atomic commit is amdgpu_dm_atomic_commit_tail(). This function receives a validated drm_atomic_state and translates the DRM-layer property changes into DC-layer operations: updating dc_stream (corresponding to CRTC mode changes), updating dc_plane (corresponding to Plane property changes), and calling dc_commit_state() to submit all changes to DCN hardware at once. VBlank waiting and page flip completion events are also handled in this function.',
+              'In amdgpu, the core path for Atomic commit is amdgpu_dm_atomic_commit_tail(). This function receives a validated drm_atomic_state and translates the DRM-layer property changes into DC-layer operations: updating dc_stream (corresponding to CRTC mode changes), updating dc_plane (corresponding to Plane property changes), and calling dc_commit_streams() to submit all changes to DCN hardware at once (note: this is the v6.12 interface name; older kernels called it dc_commit_state — DC interfaces evolve, so in interviews explain the atomic-commit flow and defer exact function names to the kernel version you read). VBlank waiting and page flip completion events are also handled in this function.',
             ],
             keyPoints: [
               'Legacy Mode Setting: sets properties one by one, no atomicity guarantee, can lead to intermediate inconsistent states',
@@ -588,7 +588,7 @@ Kernel Space (DRM → amdgpu)
   │  amdgpu_dm_atomic_commit_tail()                  │
   │  ├─ Update dc_stream (CRTC mode changes)        │
   │  ├─ Update dc_plane (Plane property changes)    │
-  │  ├─ dc_commit_state() → write DCN registers     │
+  │  ├─ dc_commit_streams() → write DCN registers     │
   │  ├─ Wait for VBlank (page flip)                 │
   │  └─ drm_crtc_send_vblank_event() → notify USpace│
   └─────────────────────────────────────────────────┘
@@ -635,9 +635,9 @@ static void amdgpu_dm_atomic_commit_tail(
     }
 
     /* Step 2: Commit the full DC state to hardware */
-    WARN_ON(!dc_commit_state(dm->dc, dc_state));
+    WARN_ON(!dc_commit_streams(dm->dc, dc_state));
     /*
-     * dc_commit_state() internally:
+     * dc_commit_streams() internally:
      *   1. Programs OTG timing registers (resolution, refresh rate)
      *   2. Configures DPP/MPC (Plane blending, scaling)
      *   3. Updates surface address (key to page flip)
@@ -664,12 +664,12 @@ static void amdgpu_dm_atomic_commit_tail(
             annotations: [
               'for_each_oldnew_crtc_in_state() iterates over all CRTCs affected by the atomic_state',
               'drm_atomic_crtc_needs_modeset() checks whether the CRTC requires a full mode switch (rather than just a page flip)',
-              'dc_commit_state() is the core of the DC module — it programs the full DC state into DCN hardware registers',
+              'dc_commit_streams() is the core of the DC module — it programs the full DC state into DCN hardware registers',
               'DCN uses double-buffering: new values are written to shadow registers and latched into active registers at VBlank',
               'drm_crtc_send_vblank_event() sends the DRM_EVENT_FLIP_COMPLETE event to user space',
               'The entire function runs in the commit workqueue (if NONBLOCK), without blocking the user space ioctl return',
             ],
-            explanation: 'This function is the heart of amdgpu display updates. When a Wayland compositor submits a new frame, after passing the check phase, commit_tail is responsible for actually writing the changes to hardware. The key is dc_commit_state() — it translates the atomic state from the DRM world into DCN hardware register operations, using DCN\'s double-buffering mechanism to complete the switch within a VBlank interval, ensuring the user sees no flicker or tearing.',
+            explanation: 'This function is the heart of amdgpu display updates. When a Wayland compositor submits a new frame, after passing the check phase, commit_tail is responsible for actually writing the changes to hardware. The key is dc_commit_streams() — it translates the atomic state from the DRM world into DCN hardware register operations, using DCN\'s double-buffering mechanism to complete the switch within a VBlank interval, ensuring the user sees no flicker or tearing.',
           },
           miniLab: {
             title: 'Observe VBlank Synchronization in Atomic Mode Setting',
@@ -727,8 +727,8 @@ void update_display(int fd, uint32_t crtc_id,
             question: 'Explain the advantages of Atomic Mode Setting over Legacy Mode Setting, and describe what the atomic_check and atomic_commit phases each do.',
             difficulty: 'hard',
             hint: 'Analyze from the perspective of atomicity guarantees (eliminating intermediate inconsistent states), test-only capability (probe without committing), and error rollback (check failure does not affect hardware). Describe the validation performed in the check phase (bandwidth, clock, format compatibility) and the hardware programming flow in the commit phase.',
-            answer: 'Core advantages of Atomic Mode Setting: (1) Atomicity — all display property changes (Plane FB, CRTC mode, Connector state) are submitted as a transaction that either all succeeds or all fails, eliminating the intermediate inconsistent states and screen tearing of the Legacy per-ioctl API; (2) Test-only — DRM_MODE_ATOMIC_TEST_ONLY lets compositors validate configuration legality without committing, useful for finding the optimal display layout; (3) Safe rollback — the check phase validates on a copy of the old state; if it fails, the copy is discarded and hardware is completely unaffected. atomic_check phase: (a) drm_atomic_helper_check_modeset() validates the legality of CRTC mode changes (pixel clock ≤ hardware max, total bandwidth of all CRTCs ≤ memory bandwidth limit); (b) drm_atomic_helper_check_planes() validates Plane configuration (FB format supported, scale ratio within hardware scaler capability); (c) driver-specific checks (amdgpu_dm_atomic_check → dc_validate_global_state(), validating DCN hardware resource allocation, e.g. whether there are enough DPPs). atomic_commit phase: (a) if NONBLOCK flag is set, queue the actual commit to a workqueue and return immediately to user space; (b) amdgpu_dm_atomic_commit_tail() translates DRM state into DC operations and calls dc_commit_state() to program DCN registers; (c) using DCN double-buffering, new values are written to shadow registers and latched into active registers at VBlank, achieving flicker-free switching; (d) notify user space of page flip completion via drm_crtc_send_vblank_event().',
-            amdContext: 'Atomic Mode Setting is the foundation of the modern Linux display stack. In an AMD interview, demonstrating that you understand the complete path from user-space drmModeAtomicCommit() through kernel amdgpu_dm_atomic_commit_tail() to DC dc_commit_state() will earn significant credit.',
+            answer: 'Core advantages of Atomic Mode Setting: (1) Atomicity — all display property changes (Plane FB, CRTC mode, Connector state) are submitted as a transaction that either all succeeds or all fails, eliminating the intermediate inconsistent states and screen tearing of the Legacy per-ioctl API; (2) Test-only — DRM_MODE_ATOMIC_TEST_ONLY lets compositors validate configuration legality without committing, useful for finding the optimal display layout; (3) Safe rollback — the check phase validates on a copy of the old state; if it fails, the copy is discarded and hardware is completely unaffected. atomic_check phase: (a) drm_atomic_helper_check_modeset() validates the legality of CRTC mode changes (pixel clock ≤ hardware max, total bandwidth of all CRTCs ≤ memory bandwidth limit); (b) drm_atomic_helper_check_planes() validates Plane configuration (FB format supported, scale ratio within hardware scaler capability); (c) driver-specific checks (amdgpu_dm_atomic_check → dc_validate_global_state(), validating DCN hardware resource allocation, e.g. whether there are enough DPPs). atomic_commit phase: (a) if NONBLOCK flag is set, queue the actual commit to a workqueue and return immediately to user space; (b) amdgpu_dm_atomic_commit_tail() translates DRM state into DC operations and calls dc_commit_streams() to program DCN registers; (c) using DCN double-buffering, new values are written to shadow registers and latched into active registers at VBlank, achieving flicker-free switching; (d) notify user space of page flip completion via drm_crtc_send_vblank_event().',
+            amdContext: 'Atomic Mode Setting is the foundation of the modern Linux display stack. In an AMD interview, demonstrating that you understand the complete path from user-space drmModeAtomicCommit() through kernel amdgpu_dm_atomic_commit_tail() to DC dc_commit_streams() will earn significant credit.',
           },
         },
       ],
@@ -1205,7 +1205,7 @@ mnt_id: 10
 ino:    1234
 drm-driver:     amdgpu
 drm-pdev:       0000:03:00.0
-drm-total-vram: 8176 MiB
+drm-total-vram: 16368 MiB
 drm-shared-vram:        48 MiB   ← VRAM shared with other processes
 drm-total-gtt:  128 MiB
 

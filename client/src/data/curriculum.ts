@@ -232,7 +232,7 @@ Phase 1: 基础                Phase 2: 内核         Phase 3: 驱动        Ph
 │  ├── SDMA Engine (DMA Transfer)                              │
 │  ├── Display Engine (DCN Display Controller)                 │
 │  ├── VCN (Video Codec)                                       │
-│  └── VRAM (8GB GDDR6)                                        │
+│  └── VRAM (16GB GDDR6)                                       │
 └─────────────────────────────────────────────────────────────┘`,
             caption: 'Linux GPU 驱动栈完整分层图。每一层都对应学习路径中的一个或多个模块。这张图是你整个学习过程的"地图"。',
           },
@@ -423,8 +423,8 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
       {
         question: '什么是 PCIe BAR（Base Address Register）？GPU 驱动如何使用它与 GPU 硬件通信？',
         difficulty: 'hard',
-        hint: '从 MMIO 映射、BAR 空间的类型（VRAM BAR、Register BAR、Doorbell BAR）角度回答。',
-        answer: 'PCIe BAR 是 GPU 暴露给 CPU 的物理地址窗口，CPU 通过读写这些地址来与 GPU 通信。amdgpu 驱动使用三个关键 BAR：（1）BAR 0（VRAM BAR）：映射 GPU 的显存（VRAM），CPU 可以直接读写 VRAM 内容，大小取决于 Resizable BAR 是否启用（未启用时通常只有 256MB 窗口）；（2）BAR 2（Register BAR / MMIO）：映射 GPU 的控制寄存器，驱动通过 writel()/readl() 读写寄存器来控制 GPU；例如写入 GRBM_GFX_CNTL 寄存器可以选择当前操作的 Shader Engine；（3）BAR 4（Doorbell BAR）：映射 GPU 的 Doorbell 空间，驱动写入 Doorbell 寄存器来通知 GPU 有新的命令需要处理，这是命令提交的关键路径。在驱动初始化时，amdgpu_device_init() 调用 pci_resource_start/len 获取 BAR 的物理地址，然后通过 ioremap 映射到内核虚拟地址空间。',
+        hint: '从 MMIO 映射、BAR 空间的类型（BAR0=VRAM、BAR2=Doorbell、BAR5=寄存器）角度回答。',
+        answer: 'PCIe BAR 是 GPU 暴露给 CPU 的物理地址窗口，CPU 通过读写这些地址来与 GPU 通信。amdgpu 驱动使用三个关键 BAR：（1）BAR 0（VRAM BAR）：映射 GPU 的显存（VRAM），CPU 可以直接读写 VRAM 内容，大小取决于 Resizable BAR 是否启用（未启用时通常只有 256MB 窗口）；（2）BAR 2（Doorbell BAR）：映射 GPU 的 Doorbell 空间，驱动写入 Doorbell 来通知 GPU 有新的命令需要处理，这是命令提交的关键路径；（3）BAR 5（Register BAR / MMIO，Bonaire 及以后的 ASIC）：映射 GPU 的控制寄存器，驱动通过 writel()/readl() 读写寄存器来控制 GPU；例如写入 GRBM_GFX_CNTL 寄存器可以选择当前操作的 Shader Engine。在驱动初始化时，amdgpu_device_init() 调用 pci_resource_start/len 获取 BAR 的物理地址，然后通过 ioremap 映射到内核虚拟地址空间。',
       },
     ],
   },
@@ -1045,7 +1045,7 @@ ioctl(3, DRM_IOCTL_AMDGPU_CS, ...) # 这就是 Mesa 把 PM4 命令
         },
         {
           title: 'BAR 内存映射与 MMIO',
-          content: 'BAR（Base Address Register）是 PCIe 配置空间中的关键字段，它告诉操作系统这个设备需要多少内存空间，以及这些空间的类型（MMIO 或 I/O 端口）。对于 AMD GPU，BAR0 通常映射 GPU 的 MMIO 寄存器空间（256MB），BAR2 映射 VRAM（显存）。操作系统在枚举时会为这些 BAR 分配物理地址。驱动通过 pci_iomap() 或 ioremap() 将这些物理地址映射到内核虚拟地址空间，之后就可以像读写普通内存一样来读写 GPU 寄存器，这就是 MMIO（Memory-Mapped I/O）。',
+          content: 'BAR（Base Address Register）是 PCIe 配置空间中的关键字段，它告诉操作系统这个设备需要多少内存空间，以及这些空间的类型（MMIO 或 I/O 端口）。对于现代 AMD GPU，BAR0 映射 VRAM aperture（未启用 Resizable BAR 时通常是 256MB 窗口，启用后可达全部显存），BAR2 映射 Doorbell，BAR5 映射 MMIO 寄存器空间。操作系统在枚举时会为这些 BAR 分配物理地址。驱动通过 pci_iomap() 或 ioremap() 将这些物理地址映射到内核虚拟地址空间，之后就可以像读写普通内存一样来读写 GPU 寄存器，这就是 MMIO（Memory-Mapped I/O）。',
         },
         {
           title: 'DMA 与 IOMMU',
@@ -1160,14 +1160,14 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
         '使用 pci_resource_start(), pci_resource_len(), pci_resource_flags() 读取 BAR 信息',
         '对比 lspci -v 的输出，验证你的结果',
       ],
-      expectedOutput: '内核日志中显示 RX 7600 XT 的所有 BAR 信息，包括 MMIO 寄存器空间（BAR0，约 256MB）和 VRAM 空间（BAR2，约 8GB）。',
+      expectedOutput: '内核日志中显示 RX 7600 XT 的所有 BAR 信息，包括 VRAM aperture（BAR0，未启用 Resizable BAR 时约 256MB 窗口，启用后约 16GB）、Doorbell（BAR2，约 2MB）和 MMIO 寄存器空间（BAR5，约 512KB）。',
     },
     interviewQuestions: [
       {
         question: '解释 PCIe BAR（Base Address Register）的作用，以及 GPU 驱动如何使用它。',
         difficulty: 'medium',
         hint: '从 BAR 的类型（MMIO vs I/O）、大小、以及驱动如何通过 ioremap 访问它来回答。',
-        answer: 'BAR 是 PCIe 配置空间中的寄存器，用于描述设备需要的内存区域。GPU 通常有多个 BAR：BAR0/1 映射 GPU 的 MMIO 寄存器空间（驱动通过这里读写 GPU 控制寄存器）；BAR2/3 映射 VRAM（显存，用于 CPU 直接访问显存）；BAR4 有时用于 I/O 端口。驱动使用流程：（1）pci_request_regions() 独占 BAR 资源；（2）pci_iomap() 或 ioremap() 将 BAR 的物理地址映射到内核虚拟地址；（3）之后通过 readl()/writel() 或自定义宏读写寄存器；（4）驱动卸载时调用 iounmap() 和 pci_release_regions() 释放资源。',
+        answer: 'BAR 是 PCIe 配置空间中的寄存器，用于描述设备需要的内存区域。现代 AMD GPU 有多个 BAR：BAR0 映射 VRAM aperture（CPU 直接访问显存的窗口，Resizable BAR 决定窗口大小）；BAR2 映射 Doorbell（通知 GPU 有新命令）；BAR5 映射 MMIO 寄存器空间（驱动通过这里读写 GPU 控制寄存器）；BAR4 有时用于 I/O 端口。驱动使用流程：（1）pci_request_regions() 独占 BAR 资源；（2）pci_iomap() 或 ioremap() 将 BAR 的物理地址映射到内核虚拟地址；（3）之后通过 readl()/writel() 或自定义宏读写寄存器；（4）驱动卸载时调用 iounmap() 和 pci_release_regions() 释放资源。',
       },
       {
         question: '什么是 DMA？为什么 GPU 驱动需要 DMA？解释 coherent DMA 和 streaming DMA 的区别。',
@@ -1863,9 +1863,9 @@ int amdgpu_device_init(struct amdgpu_device *adev,
     /* 1. 基本硬件初始化：映射 MMIO 寄存器 */
     r = amdgpu_device_get_job_timeout_settings(adev);
     
-    /* 2. 映射 BAR0（MMIO 寄存器空间） */
-    adev->rmmio = ioremap(pci_resource_start(adev->pdev, 0),
-                          pci_resource_len(adev->pdev, 0));
+    /* 2. 映射 BAR5（MMIO 寄存器空间） */
+    adev->rmmio = ioremap(pci_resource_start(adev->pdev, 5),
+                          pci_resource_len(adev->pdev, 5));
     
     /* 3. 检测 GPU 型号，设置 IP Block 列表 */
     r = amdgpu_device_ip_early_init(adev);
@@ -2458,7 +2458,7 @@ static int kfd_ioctl_create_queue(struct file *filep,
         },
         {
           title: 'GPU 内存层次结构',
-          content: 'AMD GPU 有多级内存层次，访问速度和容量各不相同：寄存器（Register）：每个线程私有，访问速度最快（单周期），但数量有限；LDS（Local Data Share）：Block 内所有线程共享，速度极快（约 1-2 周期），容量约 64KB per CU；L1 Cache：每个 CU 私有，约 32KB；L2/Infinity Cache：所有 CU 共享，容量因芯片而异（Navi33 约 32MB）；VRAM（HBM/GDDR6）：全局内存，所有线程可访问，容量最大但延迟最高（约 200-400 周期）。性能优化的关键是尽量使用 LDS 和 Cache，减少对 VRAM 的访问次数。',
+          content: 'AMD GPU 有多级内存层次，访问速度和容量各不相同：寄存器（Register）：每个线程私有，访问速度最快（单周期），但数量有限；LDS（Local Data Share）：Block 内所有线程共享，速度极快（约 1-2 周期），容量约 64KB per CU；L1 Cache：每个 CU 私有，约 32KB；L2 Cache：所有 CU 共享（Navi33 约 2MB）；Infinity Cache：独立的末级缓存（Navi33 为 32MB）；VRAM（HBM/GDDR6）：全局内存，所有线程可访问，容量最大但延迟最高（约 200-400 周期）。性能优化的关键是尽量使用 LDS 和 Cache，减少对 VRAM 的访问次数。',
           diagram: {
             type: 'ascii',
             content: `AMD GPU 内存层次结构（RX 7600 XT）
@@ -2482,12 +2482,17 @@ static int kfd_ioctl_create_queue(struct file *filep,
   └───────┬────────┘
           │
   ┌───────▼────────┐
-  │   L2 Cache     │  ~100 cycles  │  32MB (shared)
-  │   (shared)     │              │  Infinity Cache
+  │   L2 Cache     │  ~100 cycles  │  ~2MB (shared)
+  │   (shared)     │              │
   └───────┬────────┘
           │
   ┌───────▼────────┐
-  │     VRAM       │  ~300 cycles  │  8GB GDDR6
+  │ Infinity Cache │  ~150 cycles  │  32MB (last level)
+  │  (last level)  │              │
+  └───────┬────────┘
+          │
+  ┌───────▼────────┐
+  │     VRAM       │  ~300 cycles  │  16GB GDDR6
   │ (Global mem)   │  288 GB/s    │
   │ hipMalloc()    │              │
   └───────┬────────┘
@@ -2679,7 +2684,7 @@ int main()
     title: 'GPU 工具链与 LLVM',
     titleEn: 'GPU Toolchain & LLVM',
     icon: 'Wrench',
-    description: '理解代码如何从 HIP/OpenCL 编译到 GPU 指令。LLVM AMDGPU 后端是 AMD Markham Toolchain 团队的核心工作。',
+    description: '理解代码如何从 HIP/OpenCL 编译到 GPU 指令。LLVM AMDGPU 后端由多组织共同维护，AMD 工程师是主要贡献者之一。',
     estimatedHours: 60,
     difficulty: 'expert',
     subModules: [
@@ -3169,9 +3174,9 @@ IGT 测试失败
 │  Output example:                                            │
 │  kms_atomic-1234  [002] .... 10.123: amdgpu_dm_commit_planes │
 │  kms_atomic-1234  [002] .... 10.124: amdgpu_dm_update_plane  │
-│  kms_atomic-1234  [002] .... 10.125: dc_commit_state ← HANG│
+│  kms_atomic-1234  [002] .... 10.125: dc_commit_streams ← HANG│
 │                                                             │
-│  → Located dc_commit_state as the failure point             │
+│  → Located dc_commit_streams as the failure point             │
 └────────────────────────────────────────────────────────────┘`,
             caption: 'ftrace 调试流程。通过追踪内核函数调用，可以精确定位 IGT 测试失败时内核中发生了什么，比单独看 dmesg 提供更细粒度的信息。',
           },
@@ -3233,9 +3238,11 @@ IGT 测试失败
         file: 'terminal',
         language: 'bash',
         code: `# 安装 IGT 依赖
-sudo apt install libdrm-dev libkmod-dev libprocps-dev \\
+sudo apt install libdrm-dev libkmod-dev \\
                   libudev-dev libcairo2-dev libpixman-1-dev \\
                   libjson-c-dev
+# procps 头文件：24.04+ 用 libproc2-dev，22.04 用 libprocps-dev
+sudo apt install libproc2-dev || sudo apt install libprocps-dev
 
 # 克隆 IGT 源码
 git clone https://gitlab.freedesktop.org/drm/igt-gpu-tools.git

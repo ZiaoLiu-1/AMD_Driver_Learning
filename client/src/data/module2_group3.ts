@@ -353,7 +353,7 @@ void amdgpu_bo_placement_from_domain(struct amdgpu_bo *abo,
           "\u8fd0\u884c glmark2 \u57fa\u51c6\u6d4b\u8bd5: sudo apt install glmark2 && glmark2",
           "\u5bf9\u6bd4 VRAM \u548c GTT \u7684\u5e26\u5bbd\u6570\u636e\uff08VRAM \u5e94\u7ea6\u4e3a GTT \u7684 8-10 \u500d\uff09"
         ],
-      expectedOutput: "Vulkan heap \u4fe1\u606f\u793a\u4f8b:\nheap[0]: size=8192 MiB, flags=DEVICE_LOCAL (VRAM)\nheap[1]: size=16384 MiB, flags=0 (System/GTT)\nVRAM bandwidth: ~288 GB/s\nGTT bandwidth: ~30-40 GB/s via PCIe"
+      expectedOutput: "Vulkan heap \u4fe1\u606f\u793a\u4f8b:\nheap[0]: size=16368 MiB, flags=DEVICE_LOCAL (VRAM)\nheap[1]: size=16384 MiB, flags=0 (System/GTT)\nVRAM bandwidth: ~288 GB/s\nGTT bandwidth: ~30-40 GB/s via PCIe"
     },
     debugExercise: {
       title: "\u9519\u8bef\u7684\u5185\u5b58\u57df\u9009\u62e9\u5bfc\u81f4\u6027\u80fd\u95ee\u9898",

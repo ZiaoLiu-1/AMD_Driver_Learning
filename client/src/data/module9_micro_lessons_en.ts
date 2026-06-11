@@ -459,7 +459,7 @@ merge:
       title: 'AMDGPU backend',
       titleEn: 'AMDGPU Backend',
       icon: '⚙️',
-      description: 'Deep dive into the LLVM AMDGPU backend: instruction selection, register allocation, ISA assembly. This is the core work of the AMD Markham Toolchain team - efficiently compiling LLVM IR into AMD GPU machine code.',
+      description: 'Deep dive into the LLVM AMDGPU backend: instruction selection, register allocation, ISA assembly. The LLVM AMDGPU backend is maintained by engineers from multiple organizations, with AMD engineers among the primary contributors - the core problem is efficiently compiling LLVM IR into AMD GPU machine code.',
       lessons: [
         // ── Lesson 9.2.1 ──────────────────────────────────────
         {

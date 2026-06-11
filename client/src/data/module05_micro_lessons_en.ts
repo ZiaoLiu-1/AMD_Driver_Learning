@@ -182,11 +182,11 @@ int setup_display(struct amdgpu_device *adev)
     mode.clock = 148500;  /* 148.5 MHz pixel clock */
 
     /* Call DC module to set display mode */
-    return dc_commit_state(adev->dm.dc, &mode);
+    return dc_commit_streams(adev->dm.dc, &mode);
     /* Returns -ENODEV on Instinct MI300X */
 }`,
             hint: 'Instinct MI300X is a pure-compute card. Think about which IP Blocks it has and which it doesn\'t.',
-            answer: 'Instinct MI300X is a pure-compute GPU with no display engine (DCN IP). During driver initialization, amdgpu detects via IP discovery that there is no DCE_HWIP, so the DC (Display Core) module is never loaded. adev->dm.dc is NULL, so calling dc_commit_state returns -ENODEV (device not found). Instinct cards have no HDMI/DP ports \u2014 they physically cannot drive a display. This isn\'t a bug; it\'s by design \u2014 Instinct devotes all die area to compute units and HBM controllers rather than wasting it on display functionality. Correct approach: check adev->mode_info.num_crtc > 0 before calling any DC function.',
+            answer: 'Instinct MI300X is a pure-compute GPU with no display engine (DCN IP). During driver initialization, amdgpu detects via IP discovery that there is no DCE_HWIP, so the DC (Display Core) module is never loaded. adev->dm.dc is NULL, so calling dc_commit_streams returns -ENODEV (device not found). Instinct cards have no HDMI/DP ports \u2014 they physically cannot drive a display. This isn\'t a bug; it\'s by design \u2014 Instinct devotes all die area to compute units and HBM controllers rather than wasting it on display functionality. Correct approach: check adev->mode_info.num_crtc > 0 before calling any DC function.',
           },
           interviewQ: {
             question: 'What are the differences between AMD\'s three GPU product tiers (Radeon RX, Radeon Pro, Instinct MI)? How does the amdgpu driver handle their differences?',
@@ -499,7 +499,8 @@ bool amdgpu_gfx_has_wmma(struct amdgpu_device *adev)
 - Wave32/Wave64 dual mode
 - L0 Cache: 16KB per CU
 - L1 Cache: 128KB per Shader Array
-- L2 Cache: 32MB (Infinity Cache)
+- L2 Cache: ~2MB
+- Infinity Cache (last-level): 32MB
 - VRAM: 16GB GDDR6 @ 288 GB/s
 - Supports WMMA AI instructions
 - Navi33 (RX 7600 XT) is a monolithic die (not chiplet)`,

@@ -458,7 +458,7 @@ hipStreamSynchronize(stream);
               'SIMT（Single Instruction, Multiple Threads）是 GPU 的基本执行模型。在 AMD 术语中，Wavefront 是一组线程在硬件 SIMD 单元上的同步执行组。RDNA 架构引入了双模式：Wave32（32 线程/wavefront）和 Wave64（64 线程/wavefront）。Wave32 是 RDNA 的默认模式，每个 SIMD 单元有 32 条 lane，一条指令在一个 cycle 内处理 32 个线程的数据；Wave64 模式下同一指令需要两个 cycle 完成，但减少了调度开销，适合高延迟容忍的计算。',
               '分支分歧（Branch Divergence）是 SIMT 模型的核心性能陷阱。当 Wavefront 内的线程执行到 if-else 时，如果部分线程走 if 分支、其余走 else 分支，GPU 的处理方式是：先执行 if 分支（else 线程被 mask 掉），再执行 else 分支（if 线程被 mask 掉）。这意味着 Wavefront 的执行时间是两条分支的总和，而非较长分支的时间。在最坏情况下（每个线程走不同分支），SIMD 效率降至 1/32（Wave32）或 1/64（Wave64）。',
               'AMD 的 RDNA 架构使用 EXEC mask 寄存器来控制分支执行。EXEC 是一个 32 位（Wave32）或 64 位（Wave64）的位掩码，每一位对应一个 lane。当执行 v_cmp_gt_f32（浮点比较）等指令时，结果写入 VCC（Vector Condition Code）寄存器，然后通过 s_and_b32 等标量指令更新 EXEC mask。被 mask 掉的 lane 虽然不产生实际效果（写入被抑制），但仍然消耗执行 cycle。对于简单的条件赋值，编译器会使用 v_cndmask 指令（predication）代替分支——这不会产生分歧，因为所有 lane 都执行同一条指令。',
-              '占用率（Occupancy）衡量 CU 上活跃 Wavefront 数与最大可能值的比率。每个 CU 的资源有限：RDNA3 每个 CU 最多 16 个 Wave32（或 8 个 Wave64），受限于 VGPR（192KB/CU，每个 Wave32 最多 256 个 VGPR × 32 lane × 4 bytes = 32KB）、LDS（64KB/CU，Block 间共享）和 Block 数量上限。占用率越高，GPU 越能通过切换 Wavefront 来隐藏内存延迟。使用 rocm_agent_enumerator 和 hipOccupancyMaxPotentialBlockSize 可以计算给定核函数的最优 Block 大小。',
+              '占用率（Occupancy）衡量 CU 上活跃 Wavefront 数与最大可能值的比率。每个 CU 的资源有限：RDNA3 每个 CU 最多 16 个 Wave32（或 8 个 Wave64），受限于 VGPR（192KB/CU，每个 Wave32 最多 256 个 VGPR × 32 lane × 4 bytes = 32KB）、LDS（64KB/CU，Block 间共享）和 Block 数量上限。占用率越高，GPU 越能通过切换 Wavefront 来隐藏内存延迟。使用 hipOccupancyMaxPotentialBlockSize 可以计算给定核函数的最优 Block 大小（rocm_agent_enumerator 只用于枚举 HSA agent，与占用率无关）。',
             ],
             keyPoints: [
               'Wavefront = SIMD 执行组：Wave32（RDNA 默认，32 线程/cycle）或 Wave64（64 线程/2 cycle）',

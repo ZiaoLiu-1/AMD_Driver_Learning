@@ -80,7 +80,7 @@ Step 2: Check
 $ scripts/checkpatch.pl --strict HEAD~1..HEAD
   total: 0 errors, 0 warnings, 15 lines checked    ←✓ Pass
 
-$ scripts/get_maintainer.pl --git HEAD~1..HEAD
+$ scripts/get_maintainer.pl -f drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
   Alex Deucher <alexander.deucher@amd.com> (maintainer)
   Christian König <christian.koenig@amd.com> (reviewer)
   amd-gfx@lists.freedesktop.org (list)
@@ -115,7 +115,7 @@ $ git send-email ... \\
     --in-reply-to="<original-message-id>"    #Reply to original message thread
   ▼
   Reviewer: "Reviewed-by: Christian König <...>"  ←✓ Review passed
-  Maintainer: merged into maintainer integration tree    ←✓ Merged`,
+  Maintainer: merged into the maintainer integration branch (e.g. amd-staging-drm-next) ←✓ Merged`,
             caption: 'The complete process from code modification to patch being merged. There are corresponding commands and tools for each step. Most patches require 2-3 review iterations.',
           },
           codeWalk: {
@@ -139,8 +139,10 @@ git config --global sendemail.smtpuser your.email@gmail.com
 # ========================================
 cd ~/kernel-src
 
-#Create a working branch
-git checkout -b fix/vm-tlb-flush <maintainer-branch>
+#Create a working branch (one-time setup first:
+#   git remote add agd5f https://gitlab.freedesktop.org/agd5f/linux.git
+#   git fetch agd5f amd-staging-drm-next)
+git checkout -b fix/vm-tlb-flush agd5f/amd-staging-drm-next
 
 #Edit code
 vim drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
@@ -169,8 +171,9 @@ git commit -s
 scripts/checkpatch.pl --strict -g HEAD~1..HEAD
 #Goal: total: 0 errors, 0 warnings
 
-#Find the maintainer
-scripts/get_maintainer.pl -g HEAD~1..HEAD
+#Find the maintainer (get_maintainer takes a patch file, not a commit range)
+git format-patch -1 -o /tmp/p
+scripts/get_maintainer.pl /tmp/p/0001-*.patch
 #Output:
 #   Alex Deucher <alexander.deucher@amd.com>
 #   Christian König <christian.koenig@amd.com>
@@ -220,7 +223,7 @@ git send-email \\
               'git config sendemail.* Configure only once, Gmail requires creating App Password in security settings',
               'git commit -s automatically adds the Signed-off-by line - this is a legal requirement for kernel patches (DCO statement)',
               'scripts/checkpatch.pl --strict enables stricter checks, including certain WARNING level recommendations',
-              'scripts/get_maintainer.pl -g parse maintainers from git history (not patch files)',
+              'scripts/get_maintainer.pl takes a patch file or -f <file> (no commit ranges) — run git format-patch first, then point it at the .patch',
               '--in-reply-to Put the v2 patch into the v1 email thread to facilitate Reviewer tracking',
               'v2 changelog is written after the --- delimiter so that git am will automatically ignore it when applying the patch.',
             ],
@@ -234,8 +237,8 @@ git send-email \\
               'Make a small change - fix a typo or improve the wording in a comment in drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c',
               'Submit: git add -p && git commit -s (write a standardized commit message)',
               'Run checkpatch: scripts/checkpatch.pl --strict -g HEAD~1..HEAD (ensure 0 errors)',
-              'Run get_maintainer: scripts/get_maintainer.pl -g HEAD~1..HEAD (see maintainer list)',
               'Generate patch file: git format-patch HEAD~1 (view the contents of the generated .patch file)',
+              'Run get_maintainer: scripts/get_maintainer.pl 0001-*.patch (see maintainer list)',
               'Use git send-email --dry-run to simulate sending (it will not actually send an email): git send-email --dry-run --to test@example.com 0001-*.patch',
               'Clean up the practice branch: git checkout main && git branch -D practice/first-patch',
             ],
@@ -243,12 +246,12 @@ git send-email \\
 total: 0 errors, 0 warnings, 5 lines checked
 0001-drm-amdgpu-fix-comment-typo.patch has no obvious style problems
 
-$ scripts/get_maintainer.pl -g HEAD~1..HEAD
-Alex Deucher <alexander.deucher@amd.com> (maintainer:AMD DISPLAY CORE)
-amd-gfx@lists.freedesktop.org (open list:AMD AMDGPU)
-
 $ git format-patch HEAD~1
 0001-drm-amdgpu-fix-comment-typo.patch
+
+$ scripts/get_maintainer.pl 0001-drm-amdgpu-fix-comment-typo.patch
+Alex Deucher <alexander.deucher@amd.com> (maintainer:AMD DISPLAY CORE)
+amd-gfx@lists.freedesktop.org (open list:AMD AMDGPU)
 
 $ git send-email --dry-run --to test@example.com 0001-*.patch
 (dry-run) sendmail ... 0001-drm-amdgpu-fix-comment-typo.patch
@@ -366,7 +369,7 @@ unmap path but accidentally removed the amdgpu_vm_flush() call.  │ ←Why: roo
 The fix adds back the TLB invalidation between the PTE clear    │
 and the page release, matching the sequence in the map path.    │
 
-Tested on RX 7600 XT (gfx1102) with IGT amd_basic@vm-tests.   ←Test information
+Tested on RX 7600 XT (gfx1102) with the IGT amd_vm suite.    ←Test information
 
 Fixes: a1b2c3d4e5f6 ("drm/amdgpu: refactor VM unmap path")     ←Fixes Tag
 Signed-off-by: Your Name <your@email.com>                        ←DCO signature
@@ -570,8 +573,8 @@ Fixes: some old commit`,
               'Core content: kernel patch + amdgpu source code analysis + IGT test + learning record',
               'Technology Blog: Select a subsystem of amdgpu for in-depth analysis, the quality of one article > the quantity of ten articles',
               'LinkedIn Optimization: Headline includes targeted keywords so AMD recruiters can search for you',
-              'Structured organization of GitHub warehouse, README is the first impression',
-              'lore.kernel.org Search your inbox to find all public mailing list contributions',
+              'Structure your GitHub repository deliberately — the README is the first impression',
+              'Search lore.kernel.org for your email address (?q=f:you@mail.com) to list all your public mailing-list contributions',
             ],
           },
           diagram: {
@@ -797,16 +800,16 @@ Projects:
             ],
           },
           diagram: {
-            title: 'AMD GPU driver team structure and interview focus matrix',
-            content: `AMD GPU driver team structure
+            title: 'AMD GPU driver team structure (illustrative) and interview focus matrix',
+            content: `AMD GPU driver team structure (illustrative — not an official org chart; verify against current public job postings)
 
 ┌─────────────────────────────────────────────────────────────┐
 │                    AMD GPU Driver Division                    │
 │                                                              │
 │  Markham (Canada)                Shanghai (China)            │
 │  ─────────────────               ────────────────            │
-│ Main development team is rapidly expanding │
-│  Alex Deucher (Lead)             Display & Compute focus     │
+│  One of several major dev hubs   One of several major hubs   │
+│  Many upstream maintainers here  Display & Compute focus     │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │                    Teams                              │   │
@@ -1249,9 +1252,9 @@ total: 0 errors, 0 warnings ✓
 
 Wk   Action                         Artifact (all linkable)
 ──   ──────                         ───────────────────────
- 1   Env setup + Lab 1              portfolio repo + build notes
- 2   Lab 3 ftrace tracing           fence-trace report .md
- 3   Lab 2 GPU-hang debugging       devcoredump analysis .md
+ 1   Env setup + Lab 1              portfolio repo + notes/lab1-kernel-build.md
+ 2   Lab 3 ftrace tracing           analysis/fence-trace.md
+ 3   Lab 2 GPU-hang debugging       analysis/gpu-hang-report.md
  4   Module 5 source deep-read      VM or Ring subsystem notes
  ─────────────────────────────────────────────────────────
  5   Lab 6 KUnit                    drm_buddy report + own test
@@ -1304,7 +1307,7 @@ Bullet translation formula
 +- Extended the DRM core KUnit suite (drm_buddy — the
 +  allocator behind the amdgpu VRAM manager) with a
 +  boundary-condition test; all suites pass under UML
-+  [github.com/you/portfolio/tests/kunit-report.md]
++  [github.com/you/portfolio/tests/kunit-drm-buddy-report.md]
 
 -- Built a website about GPU drivers
 +- Designed & shipped a bilingual (EN/ZH) AMDGPU-internals
@@ -1338,13 +1341,13 @@ Bullet translation formula
   lore.kernel.org/amd-gfx/?q=f:you@mail.com
 • Built & booted custom v6.12 kernels with amdgpu
   as a module; documented the Ubuntu cert pitfall —
-  github.com/you/portfolio/notes/lab1.md
+  github.com/you/portfolio/notes/lab1-kernel-build.md
 • Root-caused a controlled GPU hang (IGT amd_deadlock
   → devcoredump → umr) on RDNA3 —
-  github.com/you/portfolio/analysis/hang.md
+  github.com/you/portfolio/analysis/gpu-hang-report.md
 • Extended the DRM KUnit drm_buddy suite with a
   boundary test; suites pass under UML —
-  github.com/you/portfolio/tests/kunit.md
+  github.com/you/portfolio/tests/kunit-drm-buddy-report.md
 • Shipped a bilingual AMDGPU learning platform
   (14 modules, 7 labs, React/TS) — your-site.example
 

@@ -47,7 +47,8 @@ export const glossaryByModule: Record<string, GlossaryTerm[]> = {
   // ── Module 2: 硬件接口基础 ──────────────────────────────
   hardware: [
     { abbr: 'PCIe', fullEn: 'Peripheral Component Interconnect Express', zhName: '高速外设互联总线', description: '现代 GPU 连接到 CPU/主板的高速串行总线标准。RX 7600 XT 为 PCIe 4.0 x8（Navi33 原生 x8；可插入 x16 插槽但电气链路为 x8）。', category: 'hardware' },
-    { abbr: 'BAR', fullEn: 'Base Address Register', zhName: '基地址寄存器', description: 'PCIe 配置空间中的寄存器，定义设备的 MMIO 和 I/O 空间的物理地址范围，GPU 通过 BAR0 暴露寄存器空间。', category: 'hardware' },
+    { abbr: 'BAR', fullEn: 'Base Address Register', zhName: '基地址寄存器', description: 'PCIe 配置空间中的寄存器，定义设备的 MMIO 和 I/O 空间的物理地址范围。现代 AMD GPU：BAR0=VRAM aperture、BAR2=Doorbell、BAR5=MMIO 寄存器。', category: 'hardware' },
+    { abbr: 'Infinity Cache', fullEn: 'Infinity Cache (Last-Level Cache)', zhName: '无限缓存', description: 'AMD RDNA2 起引入的末级缓存，位于 L2 与 VRAM 之间。注意它不是 L2：Navi33 的 L2 约 2MB，Infinity Cache 为 32MB。', category: 'hardware' },
     { abbr: 'MMIO', fullEn: 'Memory-Mapped I/O', zhName: '内存映射 I/O', description: '将硬件寄存器映射到内存地址空间的技术，CPU 通过普通内存读写指令即可操控 GPU 寄存器。', category: 'hardware' },
     { abbr: 'DMA', fullEn: 'Direct Memory Access', zhName: '直接内存访问', description: '允许 GPU 等外设不经过 CPU 直接读写系统内存的技术，大幅降低 CPU 开销，是 GPU 数据传输的核心机制。', category: 'hardware' },
     { abbr: 'IOMMU', fullEn: 'Input-Output Memory Management Unit', zhName: 'I/O 内存管理单元', description: '为 PCIe 设备提供虚拟地址翻译的硬件单元，AMD 平台称为 AMD-Vi，可隔离设备的内存访问，增强安全性。', category: 'hardware' },

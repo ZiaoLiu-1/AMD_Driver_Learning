@@ -130,7 +130,8 @@ describe("labs integrity", () => {
 });
 
 describe("forbidden stale-content sweep", () => {
-  // Each entry is an error class the 2026-05-26 verification pass fixed.
+  // Each entry is an error class a verification pass fixed
+  // (2026-05-26 pass + 2026-06-10 deep audit).
   // If one of these strings reappears in content, the old error is back.
   const FORBIDDEN: { pattern: string; reason: string }[] = [
     { pattern: "--run-subtest hang-ring-gfx", reason: "stale IGT subtest taught as runnable (H3)" },
@@ -139,13 +140,52 @@ describe("forbidden stale-content sweep", () => {
     { pattern: "/proc/dynamic_debug", reason: "dynamic_debug lives in debugfs, not /proc (M8)" },
     { pattern: "showoccupancy", reason: "rocm-smi --showoccupancy does not exist (M1)" },
     { pattern: "8589934592", reason: "8 GiB byte count; RX 7600 XT has 16 GiB (H1)" },
+    // ── 2026-06-10 deep audit (B-2): 8GB VRAM figures for the 16GB RX 7600 XT ──
+    { pattern: "VRAM 总量: 8192", reason: "RX 7600 XT has 16GB (driver reports ~16368 MB) (B-2)" },
+    { pattern: "VRAM Total: 8192", reason: "RX 7600 XT has 16GB (driver reports ~16368 MB) (B-2)" },
+    { pattern: "VRAM: 2048MB / 8192MB", reason: "8GB VRAM figure for the 16GB RX 7600 XT (B-2)" },
+    { pattern: "8176 MB", reason: "8GB-card driver-reported VRAM; 16GB card reports ~16368 (B-2)" },
+    { pattern: "8176 MiB", reason: "8GB-card driver-reported VRAM; 16GB card reports ~16368 (B-2)" },
+    { pattern: "8GB GDDR6", reason: "RX 7600 XT has 16GB GDDR6 (AMD product page) (B-2)" },
+    // ── 2026-06-10 deep audit (B-1): BAR layout. Correct: BAR0=VRAM, BAR2=doorbell, BAR5=MMIO ──
+    { pattern: "寄存器空间（BAR 2", reason: "registers are BAR5 on modern AMD GPUs; BAR2 is doorbell (B-1)" },
+    { pattern: "寄存器空间（BAR2", reason: "registers are BAR5 on modern AMD GPUs; BAR2 is doorbell (B-1)" },
+    { pattern: "BAR2（寄存器", reason: "registers are BAR5; BAR2 is doorbell (B-1)" },
+    { pattern: "BAR2: 2MB 寄存器", reason: "registers are BAR5; BAR2 is doorbell (B-1)" },
+    { pattern: "BAR2: 2MB Registers", reason: "registers are BAR5; BAR2 is doorbell (B-1)" },
+    { pattern: "BAR0（MMIO 寄存器", reason: "BAR0 is the VRAM aperture; registers are BAR5 (B-1)" },
+    { pattern: "BAR 2 (Register", reason: "registers are BAR5; BAR2 is doorbell (B-1)" },
+    { pattern: "BAR2 (register", reason: "registers are BAR5; BAR2 is doorbell (B-1)" },
+    // ── 2026-06-10 deep audit (A-7/A-8/B-5): commands verified against upstream sources ──
+    { pattern: "--enroll-base", reason: "b4 prep has no such flag; use -e/--enroll (A-7)" },
+    { pattern: "get_maintainer.pl -g ", reason: "get_maintainer.pl takes patch files, not commit ranges (A-8)" },
+    { pattern: "get_maintainer.pl --git ", reason: "get_maintainer.pl --git is a boolean, not a range option (A-8)" },
+    { pattern: "amd_basic@vm-tests", reason: "no such IGT subtest; vm tests live in amd_vm (B-5)" },
+    // ── 2026-06-10 deep audit (B-8/B-9): hedging / unverifiable assertions ──
+    { pattern: "持续招聘", reason: "hiring is cyclical; point to careers.amd.com instead (B-9)" },
+    { pattern: "最重要的 GPU 软件开发中心", reason: "unverifiable superlative org claim (B-9)" },
+    { pattern: "primary GPU software development center", reason: "unverifiable superlative org claim (B-9)" },
+    { pattern: "Markham Toolchain 团队的核心工作", reason: "LLVM AMDGPU backend is multi-org maintained (B-9)" },
+    { pattern: "core work of the AMD Markham Toolchain team", reason: "LLVM AMDGPU backend is multi-org maintained (B-9)" },
+    { pattern: "4200000+", reason: "hard-coded line count goes stale; hedge it (B-8)" },
+    { pattern: "超过 400 万行", reason: "hard-coded line count goes stale; hedge it (B-8)" },
+    { pattern: "自动重试 2-3 次", reason: "retry policy is infrastructure-specific, not a fact (B-8)" },
+    { pattern: "两轮 Review", reason: "review-round counts are not predictable facts (B-8)" },
   ];
-  // "hang-ring-gfx" may be mentioned only as history (e.g. "the old
-  // hang-ring-gfx no longer exists") — never as a runnable subtest.
-  const HISTORICAL_ONLY = {
-    pattern: "hang-ring-gfx",
-    allowedWhenLineMatches: /已不存在|不存在|no longer exists|removed/,
-  };
+  // Some strings may be mentioned only as history/context (e.g. "the old
+  // hang-ring-gfx no longer exists", "older kernels called it
+  // dc_commit_state") — never taught as current.
+  const HISTORICAL_ONLY_PATTERNS = [
+    {
+      pattern: "hang-ring-gfx",
+      allowedWhenLineMatches: /已不存在|不存在|no longer exists|removed/,
+    },
+    {
+      pattern: "dc_commit_state",
+      // Allowed only in API-evolution notes (B-3): v6.12 has dc_commit_streams.
+      allowedWhenLineMatches: /老版本叫|older kernels (called|used)|API evolves|随版本演进/,
+    },
+  ];
 
   const HERE = path.dirname(fileURLToPath(import.meta.url));
   const SCAN_DIRS = [
@@ -179,17 +219,78 @@ describe("forbidden stale-content sweep", () => {
             violations.push(`${rel}:${i + 1} contains "${pattern}" — ${reason}`);
           }
         }
-        if (
-          line.includes(HISTORICAL_ONLY.pattern) &&
-          !HISTORICAL_ONLY.allowedWhenLineMatches.test(line)
-        ) {
-          violations.push(
-            `${rel}:${i + 1} mentions "${HISTORICAL_ONLY.pattern}" without marking it as historical`,
-          );
+        for (const { pattern, allowedWhenLineMatches } of HISTORICAL_ONLY_PATTERNS) {
+          if (line.includes(pattern) && !allowedWhenLineMatches.test(line)) {
+            violations.push(
+              `${rel}:${i + 1} mentions "${pattern}" without marking it as historical`,
+            );
+          }
         }
       });
     }
     expect(violations).toEqual([]);
+  });
+
+  it("ROCm installer version strings are consistent across SetupGuide (T7)", () => {
+    // B-4: the installer URL drifted because three copies were edited by hand.
+    // All amdgpu-install_<ver> strings must be identical, so a future bump
+    // either updates every copy or fails here.
+    const setupGuide = fs.readFileSync(
+      path.resolve(HERE, "../../pages/SetupGuide.tsx"),
+      "utf8",
+    );
+    const versions = [...setupGuide.matchAll(/amdgpu-install[_-]([\d.]+-\d+)/g)].map(
+      (m) => m[1],
+    );
+    expect(versions.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(versions).size, `installer versions diverge: ${versions.join(", ")}`).toBe(1);
+  });
+
+  it("libprocps-dev is always accompanied by libproc2-dev (T8)", () => {
+    // B-7: Ubuntu 24.04 renamed the package; teaching only the old name
+    // breaks noble installs. File-level pairing keeps both spellings present.
+    const files = SCAN_DIRS.flatMap(collectFiles);
+    const offenders = files.filter((f) => {
+      const s = fs.readFileSync(f, "utf8");
+      return s.includes("libprocps-dev") && !s.includes("libproc2-dev");
+    });
+    expect(
+      offenders.map((f) => path.relative(path.resolve(HERE, "../../../.."), f)),
+    ).toEqual([]);
+  });
+
+  it("no bare-branch checkout of amd-staging-drm-next without the remote qualifier (T9)", () => {
+    // B-8: code blocks taught `git checkout -b <name> amd-staging-drm-next`,
+    // which fails unless the agd5f remote is configured. Commands must use
+    // the remote-qualified form (agd5f/amd-staging-drm-next) or a placeholder.
+    const files = SCAN_DIRS.flatMap(collectFiles);
+    const offenders: string[] = [];
+    for (const file of files) {
+      const rel = path.relative(path.resolve(HERE, "../../../.."), file);
+      fs.readFileSync(file, "utf8")
+        .split(/\r?\n/)
+        .forEach((line, i) => {
+          if (/checkout (-b \S+ )?amd-staging-drm-next/.test(line)) {
+            offenders.push(`${rel}:${i + 1}`);
+          }
+        });
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe("lab portfolio artifact steps (T11)", () => {
+  it("every lab's final step produces a linkable artifact", () => {
+    // A-1: labs 1-5 used to end one step before producing anything a hiring
+    // manager could click. Every lab must now end with a portfolio artifact.
+    for (const lab of labs) {
+      const last = lab.steps[lab.steps.length - 1];
+      const text = `${last.title} ${last.titleEn} ${last.instruction} ${last.instructionEn}`;
+      expect(
+        /portfolio|产出物|报告|report|notes\/|analysis\/|lore/i.test(text),
+        `lab "${lab.id}" final step "${last.title}" produces no linkable artifact`,
+      ).toBe(true);
+    }
   });
 });
 

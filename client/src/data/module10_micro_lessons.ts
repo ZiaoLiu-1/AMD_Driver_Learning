@@ -184,7 +184,7 @@ igt_main
             objective: '从源码编译 IGT GPU Tools，运行 amdgpu 基础测试，学会解读测试输出。',
             steps: [
               '克隆 IGT 源码：git clone https://gitlab.freedesktop.org/drm/igt-gpu-tools.git && cd igt-gpu-tools',
-              '安装依赖：sudo apt install meson ninja-build libdrm-dev libcairo2-dev libpixman-1-dev libudev-dev libprocps-dev libjson-c-dev libdw-dev flex bison',
+              '安装依赖：sudo apt install meson ninja-build libdrm-dev libcairo2-dev libpixman-1-dev libudev-dev libjson-c-dev libdw-dev flex bison，外加 libproc2-dev（Ubuntu 24.04+）或 libprocps-dev（22.04）：sudo apt install libproc2-dev || sudo apt install libprocps-dev',
               '编译：meson build && ninja -C build',
               '列出所有 amdgpu 测试：ls build/tests/amdgpu/',
               '运行基础测试：sudo ./build/tests/amdgpu/amd_basic（需要 root 访问 GPU）',
@@ -463,7 +463,7 @@ igt_main
             expectedOutput: `$ sudo ./build/tests/amdgpu/amd_query_test
 IGT-Version: 1.28 (x86_64)
 Starting subtest: query-vram-size
-GPU VRAM: 8176 MB
+GPU VRAM: 16368 MB
 Subtest query-vram-size: SUCCESS (0.001s)
 Starting subtest: query-fw-version
 GFX FW version: 0x006d
@@ -956,7 +956,7 @@ $ git bisect run sudo ./build/tests/amdgpu/amd_basic \\
             annotations: [
               'CI 结果区分三种状态：新回归（必须修复）、已知失败（KNOWN，有 issue 追踪）、不稳定测试（FLAKE）',
               'expected-failures.txt 按硬件平台分组，记录已知的失败和不稳定测试',
-              'FLAKE 标记的测试在 CI 中自动重试 2-3 次，任何一次 PASS 即认为通过',
+              'FLAKE 标记的测试常见做法是在 CI 中自动重试若干次（具体重试策略因 CI 系统而异），任何一次 PASS 即认为通过',
               'dmesg 日志是诊断回归的关键信息——CI 系统会保存每次运行的完整 dmesg',
               'git bisect run 可以自动化二分查找引入回归的具体提交',
               '回归必须在下一个合并窗口之前修复，否则相关补丁会被 revert',

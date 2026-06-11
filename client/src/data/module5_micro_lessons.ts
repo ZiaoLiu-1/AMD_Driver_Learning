@@ -17,7 +17,7 @@ export const module5MicroLessons: MicroLessonModule = {
       title: '代码导航与架构',
       titleEn: 'Code Navigation & Architecture',
       icon: '🗺️',
-      description: '学会在超过 400 万行的 amdgpu 驱动代码中高效导航，理解 IP Block 模块化架构——这是阅读和贡献 amdgpu 代码的基础。',
+      description: '学会在数百万行的 amdgpu 驱动代码中高效导航，理解 IP Block 模块化架构——这是阅读和贡献 amdgpu 代码的基础。',
       lessons: [
         // ── Lesson 5.1.1 ──────────────────────────────────────
         {
@@ -69,7 +69,7 @@ export const module5MicroLessons: MicroLessonModule = {
 │   └── nbio_v7_7.c             ← NBIO: 北桥 I/O
 │
 ├── display/dc/                  ← Display Core（~1.6M 行，最大子系统）
-│   ├── core/dc.c               ← DC 核心：dc_commit_state 等
+│   ├── core/dc.c               ← DC 核心：dc_commit_streams 等
 │   ├── dc_stream.h             ← 显示流抽象
 │   ├── dcn32/                  ← RDNA3 DCN 3.2 硬件层
 │   ├── dcn321/                 ← RDNA3 DCN 3.2.1 变体
@@ -110,9 +110,9 @@ int amdgpu_device_init(struct amdgpu_device *adev,
     adev->flags = flags;
     adev->asic_type = flags & AMD_ASIC_MASK;
 
-    /* 映射 GPU 寄存器空间（BAR 2）到内核虚拟地址 */
-    adev->rmmio_size = pci_resource_len(adev->pdev, 2);
-    adev->rmmio = ioremap(pci_resource_start(adev->pdev, 2),
+    /* 映射 GPU 寄存器空间（BAR 5）到内核虚拟地址 */
+    adev->rmmio_size = pci_resource_len(adev->pdev, 5);
+    adev->rmmio = ioremap(pci_resource_start(adev->pdev, 5),
                            adev->rmmio_size);
     /* 此后可以使用 WREG32/RREG32 访问 GPU 寄存器 */
 
@@ -197,7 +197,7 @@ $ wc -l /tmp/bo_create_callers.txt
             question: '描述 amdgpu 驱动的源码目录结构。如果让你修复一个 RDNA3 GPU 的显示闪烁问题，你会从哪些文件开始看？',
             difficulty: 'medium',
             hint: '先描述顶层目录（amdgpu/、display/dc/、pm/、amdkfd/），然后针对显示问题定位到 display/dc/ 和 dcn32/。',
-            answer: 'amdgpu 驱动顶层目录 drivers/gpu/drm/amd/ 包含四个核心子目录：（1）amdgpu/ — GPU 核心子系统：设备管理（amdgpu_device.c）、命令提交（amdgpu_cs.c）、虚拟内存（amdgpu_vm.c）、中断（amdgpu_irq.c）、各 IP Block 硬件实现（gfx_v11_0.c 等）；（2）display/dc/ — Display Core：约占 40% 代码量，包含硬件无关核心层（core/dc.c）和硬件相关层（dcn32/ 等）；（3）amdkfd/ — ROCm 计算内核接口；（4）pm/ — 电源管理（SMU 通信、DVFS）。对于 RDNA3 显示闪烁问题，我会从这些文件开始：（a）display/dc/dcn32/ — RDNA3 的 DCN 3.2 硬件层，检查时序（timing）和水印（watermark）计算；（b）display/dc/core/dc.c — dc_commit_state() 函数检查状态提交逻辑；（c）display/dc/dml/ — Display Mode Library 的带宽计算是否正确；（d）dmesg 中搜索 "dc_commit" 和 "underflow" 关键词定位具体阶段。同时用 git log -- display/dc/dcn32/ 查看最近的修改是否引入了回归。',
+            answer: 'amdgpu 驱动顶层目录 drivers/gpu/drm/amd/ 包含四个核心子目录：（1）amdgpu/ — GPU 核心子系统：设备管理（amdgpu_device.c）、命令提交（amdgpu_cs.c）、虚拟内存（amdgpu_vm.c）、中断（amdgpu_irq.c）、各 IP Block 硬件实现（gfx_v11_0.c 等）；（2）display/dc/ — Display Core：约占 40% 代码量，包含硬件无关核心层（core/dc.c）和硬件相关层（dcn32/ 等）；（3）amdkfd/ — ROCm 计算内核接口；（4）pm/ — 电源管理（SMU 通信、DVFS）。对于 RDNA3 显示闪烁问题，我会从这些文件开始：（a）display/dc/dcn32/ — RDNA3 的 DCN 3.2 硬件层，检查时序（timing）和水印（watermark）计算；（b）display/dc/core/dc.c — dc_commit_streams() 函数检查状态提交逻辑；（c）display/dc/dml/ — Display Mode Library 的带宽计算是否正确；（d）dmesg 中搜索 "dc_commit" 和 "underflow" 关键词定位具体阶段。同时用 git log -- display/dc/dcn32/ 查看最近的修改是否引入了回归。',
             amdContext: '这个问题考察你对代码库的熟悉程度和调试思路。AMD 面试官会评估你能否从问题描述快速缩小搜索范围到具体文件。',
           },
         },
@@ -400,7 +400,7 @@ int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
     return 0;
 }`,
             hint: 'DC 初始化依赖 GFX Ring Buffer 来发送显示相关的 GPU 命令（如 cursor 更新）。',
-            answer: 'DC（Display Core）的初始化依赖 GFX 引擎已就绪，原因有：（1）DC 需要通过 GFX Ring Buffer 提交某些显示操作的 GPU 命令（如硬件光标更新、3D LUT 加载）；（2）DC 初始化过程中需要分配 GPU 可访问的内存（如 framebuffer），这要求 GMC 和 GFX 的虚拟地址映射已经工作；（3）DC 在 hw_init 中会尝试做 mode setting 并点亮显示器，这需要向 GPU 提交命令。如果 GFX 还没初始化，Ring Buffer 不存在，DC 的命令提交会失败，dmesg 中会看到类似 "[drm:dc_commit_state_no_check] *ERROR* dc_commit_state_no_check failed" 或直接 "hw_init of IP block <dm> failed -22"。正确的顺序是 PSP → GMC → IH → SMU → GFX → SDMA → VCN → DC/DM，DC 始终在 GFX 之后。',
+            answer: 'DC（Display Core）的初始化依赖 GFX 引擎已就绪，原因有：（1）DC 需要通过 GFX Ring Buffer 提交某些显示操作的 GPU 命令（如硬件光标更新、3D LUT 加载）；（2）DC 初始化过程中需要分配 GPU 可访问的内存（如 framebuffer），这要求 GMC 和 GFX 的虚拟地址映射已经工作；（3）DC 在 hw_init 中会尝试做 mode setting 并点亮显示器，这需要向 GPU 提交命令。如果 GFX 还没初始化，Ring Buffer 不存在，DC 的命令提交会失败，dmesg 中会看到类似 "[drm:dc_commit_streams_no_check] *ERROR* dc_commit_streams_no_check failed" 或直接 "hw_init of IP block <dm> failed -22"。正确的顺序是 PSP → GMC → IH → SMU → GFX → SDMA → VCN → DC/DM，DC 始终在 GFX 之后。',
           },
           interviewQ: {
             question: '解释 amdgpu 驱动的 IP Block 架构。这种设计模式有什么优缺点？',
@@ -439,7 +439,7 @@ int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
               '命令提交（Command Submission, CS）是 GPU 执行任何工作的起点。无论是渲染一帧游戏还是运行一个 AI 推理任务，都需要将 GPU 命令从 CPU 提交到 GPU。在 amdgpu 中，这条路径从用户空间的 ioctl(fd, DRM_IOCTL_AMDGPU_CS, &cs) 开始，到 GPU 的 Command Processor 读取 Ring Buffer 中的命令结束。',
               'GPU 命令以 PM4（Packet Manager 4）格式编码——这是 AMD GPU 自 R600 以来使用的命令包格式。每个 PM4 包由头部（type、opcode、count）和数据体组成。用户空间的 Mesa 驱动（radeonsi/radv）负责将 OpenGL/Vulkan API 调用编译为 PM4 命令包序列，存储在 IB（Indirect Buffer）中。IB 是一块 GPU 可访问的内存，包含一组连续的 PM4 命令。',
               'amdgpu_cs_ioctl() 是内核中处理命令提交的入口函数。它的工作流程：（1）amdgpu_cs_parser_init() 解析 ioctl 参数，验证用户传入的 IB 地址和大小；（2）amdgpu_cs_parser_bos() 验证和映射命令引用的所有 Buffer Object（确保 GPU 可以访问它们）；（3）amdgpu_cs_submit() 将 IB 引用写入 Ring Buffer——Ring Buffer 不直接包含完整的命令，而是包含指向 IB 的指针（INDIRECT_BUFFER PM4 包），GPU 的 CP 会跟随这个指针去 IB 中读取实际命令。',
-              'Ring Buffer 是 CPU 和 GPU 之间的核心通信机制。它是一块环形内存区域，CPU 通过 WPTR（Write Pointer）写入新命令，GPU 的 CP 通过 RPTR（Read Pointer）读取命令。当 CPU 写入新命令后，更新 WPTR 并写入 Doorbell 寄存器——这个 MMIO 写入会产生一个硬件中断，通知 CP "有新命令了"。CP 比较 RPTR 和 WPTR，如果 WPTR > RPTR 说明有新命令待处理。每种 IP Block 有自己的 Ring：GFX Ring（图形/计算命令）、SDMA Ring（DMA 传输命令）、VCN Ring（视频编解码命令）。',
+              'Ring Buffer 是 CPU 和 GPU 之间的核心通信机制。它是一块环形内存区域，CPU 通过 WPTR（Write Pointer）写入新命令，GPU 的 CP 通过 RPTR（Read Pointer）读取命令。当 CPU 写入新命令后，更新 WPTR 并写入 Doorbell 寄存器——这个 MMIO 写入会触发硬件/固件路径去感知新的指针值，CP 由此得知"有新命令了"（注意：Doorbell 不是中断机制）。CP 比较 RPTR 和 WPTR，如果 WPTR > RPTR 说明有新命令待处理。每种 IP Block 有自己的 Ring：GFX Ring（图形/计算命令）、SDMA Ring（DMA 传输命令）、VCN Ring（视频编解码命令）。',
             ],
             keyPoints: [
               'CS 路径：ioctl → amdgpu_cs_ioctl → parser → 验证 BO → 写入 Ring Buffer → Doorbell',
@@ -627,7 +627,7 @@ dmesg:
 amdgpu_cs_ioctl returned -12   /* -ENOMEM */
 
 /* GPU 状态 */
-VRAM: 2048MB / 8192MB used     (大量空闲!)
+VRAM: 2048MB / 16368MB used    (大量空闲!)
 GTT:  512MB / 8192MB used      (大量空闲!)
 
 /* 应用行为 */
@@ -895,14 +895,14 @@ Last emitted                 0x00000128
               'DC（Display Core）是 AMD 从 Windows 驱动移植到 Linux 的显示引擎——这也是为什么它的代码风格与内核其他部分有明显差异（更接近 Windows 驱动的 C 风格，使用大量面向对象模式）。DC 最初在 2017 年合并入内核时引发了争议（因为代码量巨大且风格独特），但它是支持 AMD 现代显示特性的必要组件。',
               'DC 的架构分为两大层：硬件无关的核心层（display/dc/core/）和硬件相关的 DCN 层（display/dc/dcn32/ 等）。核心层定义了显示管线的抽象模型——stream（显示流，对应一个显示器输出）、plane（显示平面，对应一个图层）、timing（时序参数，分辨率/刷新率）。DCN 层实现了具体硬件的寄存器编程。这种分层使得支持新一代 DCN 只需添加硬件层代码，核心逻辑可以复用。',
               'DCN（Display Controller Next）的显示管线由以下硬件单元组成，数据从 framebuffer 到显示器依次经过：HUBP（Hub Pipe，从内存读取像素数据）→ DPP（Display Pipe and Plane，色彩变换、缩放、混合）→ OPP（Output Pixel Processor，gamma 校正、dithering）→ OPTC（Output Pipe Timing Combiner，生成显示时序信号）→ DIO（Display I/O，编码为 DP/HDMI/DVI 信号输出）。每个单元对应 DCN 硬件中的一个子模块，驱动需要精确配置它们的寄存器来实现正确的显示输出。',
-              'DC 与 DRM KMS（Kernel Mode Setting）的关系：DRM KMS 是 Linux 内核的通用显示管理框架（drm_atomic_commit、drm_crtc、drm_connector 等），amdgpu 的 amdgpu_dm.c（Display Manager）是 KMS 和 DC 之间的适配器层。当用户空间（如 GNOME/KDE）调用 DRM atomic commit 请求设置分辨率时，amdgpu_dm 将 DRM 数据结构转换为 DC 的数据结构，然后调用 dc_commit_state() 执行实际的硬件配置。FreeSync/VRR（Variable Refresh Rate）也是通过 DC 实现的——DC 可以动态调整 OPTC 的 VBlank 间隔来匹配 GPU 的渲染帧率。',
+              'DC 与 DRM KMS（Kernel Mode Setting）的关系：DRM KMS 是 Linux 内核的通用显示管理框架（drm_atomic_commit、drm_crtc、drm_connector 等），amdgpu 的 amdgpu_dm.c（Display Manager）是 KMS 和 DC 之间的适配器层。当用户空间（如 GNOME/KDE）调用 DRM atomic commit 请求设置分辨率时，amdgpu_dm 将 DRM 数据结构转换为 DC 的数据结构，然后调用 dc_commit_streams() 执行实际的硬件配置。FreeSync/VRR（Variable Refresh Rate）也是通过 DC 实现的——DC 可以动态调整 OPTC 的 VBlank 间隔来匹配 GPU 的渲染帧率。',
             ],
             keyPoints: [
               'DC 是 amdgpu 最大的子系统（~1.6M 行代码），从 Windows 驱动移植而来',
               '两层架构：核心层（硬件无关）+ DCN 层（硬件相关，如 dcn32 = RDNA3）',
               '显示管线：HUBP → DPP → OPP → OPTC → DIO → 显示器',
               'DRM KMS ←→ amdgpu_dm.c（适配层）←→ DC Core ←→ DCN Hardware',
-              'dc_commit_state() 是显示状态提交的核心函数，执行 atomic mode setting',
+              'dc_commit_streams() 是显示状态提交的核心函数（v6.12 接口名；老版本叫 dc_commit_state，API 随版本演进）',
               'FreeSync/VRR 通过 DC 动态调整 OPTC 的 VBlank 周期实现',
             ],
           },
@@ -969,7 +969,7 @@ DRM KMS 与 DC 的关系：
        │ drm_atomic_helper_commit()
        ▼
   amdgpu_dm.c (适配层)         ← 将 DRM 结构转为 DC 结构
-       │ dc_commit_state()
+       │ dc_commit_streams()
        ▼
   DC Core (display/dc/core/)   ← 硬件无关的显示逻辑
        │ 调用 DCN 硬件函数
@@ -978,14 +978,14 @@ DRM KMS 与 DC 的关系：
             caption: 'DCN 3.2 显示管线和 DRM KMS 到 DC 的调用层次。每个管线阶段（HUBP→DPP→OPP→OPTC→DIO）对应硬件中的一个子模块，驱动需要配置大量寄存器来让数据正确流过整个管线。',
           },
           codeWalk: {
-            title: 'dc_commit_state — 显示状态提交的核心流程',
+            title: 'dc_commit_streams — 显示状态提交的核心流程',
             file: 'drivers/gpu/drm/amd/display/dc/core/dc.c',
             language: 'c',
-            code: `/* dc_commit_state() — 将新的显示状态提交到硬件
+            code: `/* dc_commit_streams() — 将新的显示状态提交到硬件
  * 当用户空间请求改变分辨率、刷新率、HDR 模式等时调用
  * 这是 DC 子系统中最核心的函数
  */
-enum dc_status dc_commit_state(struct dc *dc,
+enum dc_status dc_commit_streams(struct dc *dc,
                                 struct dc_state *context)
 {
     enum dc_status result;
@@ -1390,14 +1390,14 @@ power1_average: 8500000  (8.5W — 几乎是空闲功耗)
             summary: 'DC（Display Core）占 amdgpu 代码量的约 40%，拥有驱动中最高的 bug 密度。它不只是一个显示子系统——它是一个从 Windows 驱动移植过来的独立王国，拥有自己的类型系统（dc_stream、dc_plane）、自己的状态验证（dc_validate_state）、自己的内存模型和错误处理，与 Linux DRM/KMS 框架几乎是"翻译"关系而非"集成"关系。',
             explanation: [
               'DC 作为独立抽象层的历史根源：DC 最初是 AMD Windows 驱动中的显示引擎，使用 C 语言的面向对象风格编写（大量的 vtable、抽象接口、构造/析构模式）。2017 年移植到 Linux 时，AMD 选择保持 DC 的独立性而非重写为 DRM/KMS 原生风格——原因是 DC 的复杂度（160 万行代码）使得重写不现实，且 AMD 需要 Windows 和 Linux 共享同一份显示核心代码。这意味着 DC 有自己的内存分配包装、自己的日志系统、甚至自己的数学库（定点数运算用于 DML），与内核的其他子系统形成了风格上的鲜明对比。',
-              'dc_state 提交流程是 DC 的核心工作路径。当用户空间请求改变显示配置时（如切换分辨率、启用 HDR），完整的提交流程为：dc_validate_state()（验证新配置是否在硬件能力范围内——检查管线资源数量、带宽限制、时序兼容性）→ DML 带宽计算（Display Mode Library 计算每个管线阶段的水印值，确保数据流不会 underflow）→ dc_commit_state()（将验证通过的配置编程到硬件寄存器，在 VBlank 期间切换以避免撕裂）。任何一步失败都会阻止配置生效，向用户空间返回错误。',
+              'dc_state 提交流程是 DC 的核心工作路径。当用户空间请求改变显示配置时（如切换分辨率、启用 HDR），完整的提交流程为：dc_validate_state()（验证新配置是否在硬件能力范围内——检查管线资源数量、带宽限制、时序兼容性）→ DML 带宽计算（Display Mode Library 计算每个管线阶段的水印值，确保数据流不会 underflow）→ dc_commit_streams()（将验证通过的配置编程到硬件寄存器，在 VBlank 期间切换以避免撕裂）。任何一步失败都会阻止配置生效，向用户空间返回错误。',
               'DML（Display Mode Library）是 DC 中最复杂、最容易出 bug 的子模块。DML 本质上是一个带宽/延迟计算框架——给定显示配置（分辨率、刷新率、像素格式、缩放比例、活跃平面数），DML 计算出所有管线阶段需要的内存带宽，并与可用带宽比较。如果需求超出可用带宽，DML 会拒绝该配置（返回 DC_FAIL_BANDWIDTH）。DML 还计算"水印值"（watermark）——HUBP 必须在像素被显示器消耗之前多久开始从内存预取数据。水印计算错误会导致显示 underflow（HUBP 来不及读取数据，屏幕出现黑线或闪烁），这是 DC 中最常见的 bug 类型。',
               'DC 拥有完全独立于 DRM/KMS 的类型系统。DRM 使用 drm_crtc、drm_connector、drm_plane；DC 使用 dc_stream（对应一个显示输出流）、dc_plane（对应一个显示图层）、dc_sink（对应一个显示设备）。amdgpu_dm.c 是连接这两个世界的"翻译层"——它将 drm_atomic_state 转换为 dc_state，将 drm_crtc_state 映射到 dc_stream_state，将 drm_plane_state 映射到 dc_plane_state。这种双重抽象增加了复杂性，但也使得 DC 核心完全不依赖 Linux 内核 API，可以在 Windows 和 Linux 之间共享。',
               'DC 的错误处理独立于内核。DC 内部使用自己的错误枚举（enum dc_status：DC_OK、DC_FAIL_BANDWIDTH、DC_FAIL_RESOURCES 等），而非 Linux 标准的 errno（-EINVAL、-ENOMEM 等）。amdgpu_dm.c 负责将 DC 错误码翻译为 DRM/KMS 期望的错误码。DC 内部的日志也使用自定义的 DC_LOG_* 宏而非内核的 pr_info/dev_err。理解这种独立性对于调试 DC 问题至关重要——你需要同时在 DRM 层（dmesg 中的 [drm] 前缀）和 DC 层（[drm] DC: 前缀）查找信息。',
             ],
             keyPoints: [
               'DC 是从 Windows 驱动移植的独立抽象层，占 amdgpu 约 40% 代码量，bug 密度最高',
-              'dc_state 提交流程：dc_validate_state → DML 带宽计算 → dc_commit_state → 硬件编程',
+              'dc_state 提交流程：dc_validate_state → DML 带宽计算 → dc_commit_streams → 硬件编程',
               'DML（Display Mode Library）：带宽/延迟计算框架，水印错误导致 underflow 是最常见 bug',
               'DC 独立类型系统：dc_stream/dc_plane/dc_sink，与 DRM 的 drm_crtc/drm_plane 是翻译关系',
               'amdgpu_dm.c 是 DRM/KMS 和 DC 之间的适配器层，负责类型转换和错误码翻译',
@@ -1428,7 +1428,7 @@ power1_average: 8500000  (8.5W — 几乎是空闲功耗)
 │  drm_connector_state ─→ dc_sink         (显示设备)          │
 │  errno (-EINVAL) ◄────── dc_status (DC_FAIL_BANDWIDTH)      │
 │                                                              │
-│  amdgpu_dm_atomic_commit() → dc_commit_state()              │
+│  amdgpu_dm_atomic_commit() → dc_commit_streams()              │
 └──────────────────────────────┬───────────────────────────────┘
                                │
                                ▼ DC 内部（独立王国）
@@ -1448,7 +1448,7 @@ power1_average: 8500000  (8.5W — 几乎是空闲功耗)
 │  │     ├─ 带宽需求 > 可用带宽? → DC_FAIL_BANDWIDTH        │ │
 │  │     └─ 水印值 → HUBP/DPP 寄存器配置                    │ │
 │  │         │                                                │ │
-│  │  3. dc_commit_state(dc, validated_state)                │ │
+│  │  3. dc_commit_streams(dc, validated_state)                │ │
 │  │     ├─ 等待 VBlank（避免撕裂）                          │ │
 │  │     ├─ 编程 HUBP 寄存器（framebuffer 地址）             │ │
 │  │     ├─ 编程 DPP 寄存器（缩放/色彩）                     │ │
@@ -1466,14 +1466,14 @@ power1_average: 8500000  (8.5W — 几乎是空闲功耗)
             caption: 'DC 作为独立王国的架构全景。amdgpu_dm.c 是唯一连接 DRM/KMS 世界和 DC 世界的桥梁。DC 内部拥有完全独立的类型系统、错误处理、日志系统和内存管理——这来自于其 Windows 驱动的历史遗产。',
           },
           codeWalk: {
-            title: 'dc_commit_state — 验证 → 带宽检查 → 硬件编程序列',
+            title: 'dc_commit_streams — 验证 → 带宽检查 → 硬件编程序列',
             file: 'drivers/gpu/drm/amd/display/dc/core/dc.c',
             language: 'c',
-            code: `/* dc_commit_state() — DC 的核心状态提交函数
+            code: `/* dc_commit_streams() — DC 的核心状态提交函数
  * 完整流程: 验证 → DML 带宽计算 → 硬件编程
  * 从 amdgpu_dm.c 的 amdgpu_dm_atomic_commit_tail() 调用
  */
-enum dc_status dc_commit_state(struct dc *dc,
+enum dc_status dc_commit_streams(struct dc *dc,
                                 struct dc_state *context)
 {
     enum dc_status result;
@@ -1553,22 +1553,22 @@ enum dc_status dc_commit_state(struct dc *dc,
             explanation: '这个函数展示了 DC 的完整工作流：先验证配置是否可行（避免硬件损坏或 underflow），再计算精确的管线参数（水印值），最后按顺序编程硬件寄存器。任何一步失败都会中止并返回 DC 的自有错误码——amdgpu_dm.c 负责将其翻译为 DRM/KMS 期望的 errno。',
           },
           miniLab: {
-            title: '追踪 dc_commit_state 的执行路径',
-            objective: '使用 ftrace 和 debugfs 观察 dc_commit_state 的真实执行，理解 DML 验证和硬件编程的顺序。',
+            title: '追踪 dc_commit_streams 的执行路径',
+            objective: '使用 ftrace 和 debugfs 观察 dc_commit_streams 的真实执行，理解 DML 验证和硬件编程的顺序。',
             setup: `sudo mount -t tracefs nodev /sys/kernel/tracing 2>/dev/null
 # 确认 DC debug 输出已启用
 sudo sh -c 'echo 0x1 > /sys/module/amdgpu/parameters/dc 2>/dev/null'`,
             steps: [
-              '设置 ftrace 追踪 dc_commit_state：echo dc_commit_state > /sys/kernel/tracing/set_ftrace_filter',
+              '设置 ftrace 追踪 dc_commit_streams：echo dc_commit_streams > /sys/kernel/tracing/set_ftrace_filter',
               '启用函数图追踪：echo function_graph > /sys/kernel/tracing/current_tracer',
               '开始追踪：echo 1 > /sys/kernel/tracing/tracing_on',
-              '触发 dc_commit_state 执行——切换分辨率：xrandr --output DP-1 --mode 1920x1080 && sleep 1 && xrandr --output DP-1 --mode 2560x1440',
+              '触发 dc_commit_streams 执行——切换分辨率：xrandr --output DP-1 --mode 1920x1080 && sleep 1 && xrandr --output DP-1 --mode 2560x1440',
               '停止追踪：echo 0 > /sys/kernel/tracing/tracing_on',
               '查看执行序列：cat /sys/kernel/tracing/trace | grep -E "dc_commit|validate|watermark|dml" | head -30',
               '查看 DC 内部状态：sudo cat /sys/kernel/debug/dri/0/amdgpu_dm_dtn_log 2>/dev/null | head -80',
             ],
             expectedOutput: `$ cat /sys/kernel/tracing/trace | grep -E "dc_commit|validate" | head -10
-  kworker/0:2-345  =>  dc_commit_state() {
+  kworker/0:2-345  =>  dc_commit_streams() {
   kworker/0:2-345      dc_validate_global_state() {
   kworker/0:2-345        dml_validate() {
   kworker/0:2-345          ... (DML 带宽计算) ...

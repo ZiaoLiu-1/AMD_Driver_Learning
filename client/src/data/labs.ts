@@ -132,6 +132,18 @@ export const labs: Lab[] = [
         checkpoint: '虚拟机成功启动，运行 uname -r 显示你编译的内核版本。',
         checkpointEn: 'VM boots successfully, uname -r shows your compiled kernel version.',
       },
+      {
+        order: 7,
+        title: '产出物：写构建笔记进 Portfolio',
+        titleEn: 'Artifact: write a build report for your portfolio',
+        instruction:
+          '在 Portfolio 仓库的 notes/ 目录写 lab1-kernel-build.md：内核版本与来源、CONFIG_DRM_AMDGPU=m 的 .config 关键片段、Canonical 证书坑的现象与修复命令、vng 启动日志摘录（uname -r 输出）。这是 11.3.2 简历公式里第一条 bullet 的链接目标。',
+        instructionEn:
+          'In your portfolio repo under notes/, write lab1-kernel-build.md: kernel version and source, the key .config lines (CONFIG_DRM_AMDGPU=m), the Canonical cert pitfall symptom and fix commands, and a vng boot-log excerpt (uname -r output). This is the link target for the first resume bullet in lesson 11.3.2.',
+        command: 'grep -E "CONFIG_DRM_AMDGPU|SYSTEM_TRUSTED_KEYS" .config\n# 把上述输出、修复命令和 vng 里的 uname -r 整理进\n# portfolio/notes/lab1-kernel-build.md',
+        checkpoint: '笔记包含可复现的命令与日志摘录，Portfolio README 已链接它。',
+        checkpointEn: 'The note contains reproducible commands plus log excerpts, and your portfolio README links to it.',
+      },
     ],
     expectedOutput: '能在 virtme-ng 虚拟机中启动自定义编译的内核，并确认 amdgpu 模块可用。',
     expectedOutputEn: 'Boot a custom-compiled kernel in virtme-ng VM with amdgpu module available.',
@@ -225,6 +237,18 @@ export const labs: Lab[] = [
         checkpoint: '能够识别出 Hang 发生在哪个 Ring（GFX/Compute/SDMA）以及使用了哪种 Reset 类型。',
         checkpointEn: 'Can identify which Ring hung (GFX/Compute/SDMA) and which Reset type was used.',
       },
+      {
+        order: 5,
+        title: '产出物：写 GPU Hang 分析报告进 Portfolio',
+        titleEn: 'Artifact: write a GPU-hang analysis report for your portfolio',
+        instruction:
+          '在 Portfolio 仓库的 analysis/ 目录写 gpu-hang-report.md：触发命令（IGT 子项名）、dmesg 关键行摘录（reset begin/succeeded）、umr 对 devcoredump 的解析摘录、结论（哪个 Ring hang、哪种 Reset、恢复是否成功）。这是面试聊 GPU 调试时最有说服力的展示材料。',
+        instructionEn:
+          'In your portfolio repo under analysis/, write gpu-hang-report.md: the trigger command (IGT subtest name), key dmesg lines (reset begin/succeeded), umr devcoredump parsing excerpts, and conclusions (which ring hung, which reset type, whether recovery succeeded). This is your most convincing exhibit when interviews turn to GPU debugging.',
+        command: 'dmesg | grep -E "amdgpu.*(reset|hang)" > /tmp/hang-evidence.txt\n# 连同 umr 输出摘录一起整理进\n# portfolio/analysis/gpu-hang-report.md',
+        checkpoint: '报告包含触发→现象→分析→结论四段，Portfolio README 已链接它。',
+        checkpointEn: 'The report covers trigger → symptoms → analysis → conclusion, and your portfolio README links to it.',
+      },
     ],
     expectedOutput: '能独立触发 GPU Hang，收集 devcoredump 和 dmesg 日志，并分析出 Hang 的根因。',
     expectedOutputEn: 'Independently trigger a GPU Hang, collect devcoredump and dmesg logs, and analyze root cause.',
@@ -305,6 +329,18 @@ export const labs: Lab[] = [
           '# 导出 trace 数据用于分析\ncat trace > /tmp/fence_trace.txt\ngrep "dma_fence_signal" /tmp/fence_trace.txt | wc -l\n# 统计 fence signal 的数量',
         checkpoint: '能解释 GFX Ring 和 Compute Ring 的 fence 频率差异。',
         checkpointEn: 'Can explain the fence frequency difference between GFX Ring and Compute Ring.',
+      },
+      {
+        order: 5,
+        title: '产出物：写 fence 追踪报告进 Portfolio',
+        titleEn: 'Artifact: write a fence-trace report for your portfolio',
+        instruction:
+          '把 /tmp/fence_trace.txt 的关键摘录整理进 Portfolio 仓库 analysis/fence-trace.md：使用的 ftrace 过滤器与命令、GFX vs Compute 负载下 dma_fence_signal 的计数对比、一段解释（fence 生命周期：创建→提交→执行→中断→signal）。/tmp 重启即失——报告才是留得下来的产物。',
+        instructionEn:
+          'Distill the key excerpts from /tmp/fence_trace.txt into analysis/fence-trace.md in your portfolio repo: the ftrace filters and commands used, the dma_fence_signal count comparison between GFX and Compute workloads, and a paragraph explaining the fence lifecycle (create → submit → execute → interrupt → signal). /tmp vanishes on reboot — the report is what survives.',
+        command: 'grep -c "dma_fence_signal" /tmp/fence_trace.txt\n# 连同 trace 摘录与对比结论整理进\n# portfolio/analysis/fence-trace.md',
+        checkpoint: '报告包含命令清单、计数对比和生命周期解释，Portfolio README 已链接它。',
+        checkpointEn: 'The report contains the command list, count comparison, and lifecycle explanation, and your portfolio README links to it.',
       },
     ],
     expectedOutput: '理解 dma_fence 的完整生命周期：创建 → 提交 → GPU 执行 → 中断触发 → signal → 唤醒等待者。',
@@ -388,6 +424,18 @@ export const labs: Lab[] = [
           '# 创建 modprobe 配置文件\necho "options amdgpu gpu_recovery=1 dc=1 dpm=1" | sudo tee /etc/modprobe.d/amdgpu.conf\n\n# 验证配置\ncat /etc/modprobe.d/amdgpu.conf',
         checkpoint: '配置文件创建成功。下次系统启动或手动 modprobe 时参数会生效。',
         checkpointEn: 'Config file created. Parameters take effect on next boot or manual modprobe.',
+      },
+      {
+        order: 5,
+        title: '产出物：写模块参数笔记进 Portfolio',
+        titleEn: 'Artifact: write a module-parameter note for your portfolio',
+        instruction:
+          '在 Portfolio 仓库的 notes/ 目录写 lab4-module-params.md：你研究过的参数表（名称、含义、加载期 vs 运行时）、manual/auto 模式下 pp_dpm_sclk 的实测输出对比、debug_mask 只读这个坑的解释。小而真实的观察记录最能体现动手深度。',
+        instructionEn:
+          'In your portfolio repo under notes/, write lab4-module-params.md: a table of the parameters you studied (name, meaning, load-time vs runtime), measured pp_dpm_sclk output in manual vs auto mode, and an explanation of the read-only debug_mask pitfall. Small, genuine observation logs are the best evidence of hands-on depth.',
+        command: 'cat /sys/class/drm/card0/device/pp_dpm_sclk\n# 把 manual/auto 两种模式的输出对比整理进\n# portfolio/notes/lab4-module-params.md',
+        checkpoint: '笔记包含参数表与实测输出，Portfolio README 已链接它。',
+        checkpointEn: 'The note contains the parameter table and measured output, and your portfolio README links to it.',
       },
     ],
     expectedOutput: '能通过 sysfs 和 modprobe 动态调整 amdgpu 驱动行为，理解关键模块参数的作用。',
@@ -484,6 +532,18 @@ export const labs: Lab[] = [
           '# 查看所有 IP Block 的初始化函数\ngrep -rn "static int.*_sw_init" drivers/gpu/drm/amd/amdgpu/*.c | head -20\n\n# 常见的 IP Block：\n# gfx_v11_0 (GFX), sdma_v6_0 (SDMA), vcn_v4_0 (VCN),\n# smu_v13_0 (SMU), dm/amdgpu_dm (Display Core)',
         checkpoint: '能画出完整的 IP Block 初始化顺序图。',
         checkpointEn: 'Can draw a complete IP Block initialization order diagram.',
+      },
+      {
+        order: 6,
+        title: '产出物：把初始化顺序图写进 Portfolio',
+        titleEn: 'Artifact: commit the init-order diagram to your portfolio',
+        instruction:
+          '在 Portfolio 仓库的 analysis/ 目录写 ip-block-init-order.md：带 [LAB5] 标记的 dmesg 日志摘录、你画的 IP Block 初始化顺序图（ASCII 或 mermaid）、一段解释（为什么 SMU/PSP 必须先于 GFX 初始化）。上一步"画出"的图只有进了仓库才算存在。',
+        instructionEn:
+          'In your portfolio repo under analysis/, write ip-block-init-order.md: the [LAB5]-tagged dmesg excerpts, your IP Block init-order diagram (ASCII or mermaid), and a paragraph explaining why SMU/PSP must initialize before GFX. The diagram you "drew" in the previous step only exists once it is committed.',
+        command: 'dmesg | grep "\\[LAB5\\]" > /tmp/lab5-init-order.txt\n# 连同顺序图整理进\n# portfolio/analysis/ip-block-init-order.md',
+        checkpoint: '报告包含日志摘录与顺序图，Portfolio README 已链接它。',
+        checkpointEn: 'The report contains log excerpts plus the diagram, and your portfolio README links to it.',
       },
     ],
     expectedOutput: '理解 amdgpu 驱动中 IP Block 的初始化顺序，并掌握在内核代码中添加调试信息的基本方法。',
@@ -705,7 +765,7 @@ export const labs: Lab[] = [
           '发送前的固定动作：checkpatch --strict 必须 0 errors / 0 warnings；get_maintainer 给出 To/Cc 名单。',
         instructionEn:
           'The fixed pre-send ritual: checkpatch --strict must report 0 errors / 0 warnings; get_maintainer produces your To/Cc list.',
-        command: 'scripts/checkpatch.pl --strict -g HEAD~1..HEAD\nscripts/get_maintainer.pl -g HEAD~1..HEAD',
+        command: 'scripts/checkpatch.pl --strict -g HEAD~1..HEAD\n\n# get_maintainer 接受补丁文件（不接受 commit 区间），先生成再分析：\ngit format-patch -1 -o /tmp/patch-check\nscripts/get_maintainer.pl /tmp/patch-check/0001-*.patch',
         checkpoint: '0 errors / 0 warnings；获得 amd-gfx 列表与对应维护者的 To/Cc 名单。',
         checkpointEn: '0 errors / 0 warnings; you have the To/Cc list with amd-gfx and the right maintainers.',
       },
@@ -717,9 +777,9 @@ export const labs: Lab[] = [
           '用 b4 或 git send-email 的演练模式生成"将要发送的邮件"，人工检查 To/Cc、Subject 前缀和 diff 内容。这一步之后，你的补丁处于"随时可发"状态。',
         instructionEn:
           'Use b4 or git send-email rehearsal modes to generate exactly what would be sent, then manually inspect To/Cc, the Subject prefix, and the diff. After this step your patch is in a "ready to send" state.',
-        command: '# 方式 A：b4（推荐）\nb4 prep --enroll-base agd5f/amd-staging-drm-next   # 把当前分支交给 b4 管理\nb4 prep --check                                     # 自动运行 checkpatch 等检查\nb4 send -o /tmp/presend                             # 只生成邮件文件，不发送\ncat /tmp/presend/*\n\n# 方式 B：传统流程\ngit format-patch HEAD~1\ngit send-email --dry-run --to amd-gfx@lists.freedesktop.org 0001-*.patch',
-        hint: '若你的 b4 版本不支持 --enroll-base，直接用方式 B——两者产物等价。重点检查：To/Cc 是否完整、Subject 前缀是否正确、diff 是否只含本次修改。',
-        hintEn: 'If your b4 version lacks --enroll-base, just use option B — the output is equivalent. Key checks: complete To/Cc, correct Subject prefix, and a diff containing only this change.',
+        command: '# 方式 A：b4（推荐）\nb4 prep -e agd5f/amd-staging-drm-next               # 把当前分支交给 b4 管理（-e/--enroll）\nb4 prep --check                                     # 自动运行 checkpatch 等检查\nb4 send -o /tmp/presend                             # 只生成邮件文件，不发送\ncat /tmp/presend/*\n\n# 方式 B：传统流程\ngit format-patch HEAD~1\ngit send-email --dry-run --to amd-gfx@lists.freedesktop.org 0001-*.patch',
+        hint: '若你的 b4 版本较旧不支持 -e/--enroll，直接用方式 B——两者产物等价。重点检查：To/Cc 是否完整、Subject 前缀是否正确、diff 是否只含本次修改。',
+        hintEn: 'If your b4 version is too old for -e/--enroll, just use option B — the output is equivalent. Key checks: complete To/Cc, correct Subject prefix, and a diff containing only this change.',
         checkpoint: '/tmp/presend（或 dry-run 输出）中的邮件头与正文全部正确。',
         checkpointEn: 'Headers and body in /tmp/presend (or the dry-run output) are all correct.',
       },

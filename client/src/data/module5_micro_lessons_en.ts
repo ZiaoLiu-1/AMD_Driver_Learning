@@ -69,7 +69,7 @@ export const module5MicroLessonsEn: MicroLessonModule = {
 │   └── nbio_v7_7.c             ←NBIO: Northbridge I/O
 │
 ├── display/dc/                  ←Display Core (~1.6M lines, largest subsystem)
-│   ├── core/dc.c               ←DC core: dc_commit_state, etc.
+│   ├── core/dc.c               ←DC core: dc_commit_streams, etc.
 │   ├── dc_stream.h             ←display flow abstraction
 │   ├── dcn32/                  ←RDNA3 DCN 3.2 hardware layer
 │   ├── dcn321/                 ←RDNA3 DCN 3.2.1 variant
@@ -110,9 +110,9 @@ int amdgpu_device_init(struct amdgpu_device *adev,
     adev->flags = flags;
     adev->asic_type = flags & AMD_ASIC_MASK;
 
-    /*Map GPU register space (BAR 2) to kernel virtual address */
-    adev->rmmio_size = pci_resource_len(adev->pdev, 2);
-    adev->rmmio = ioremap(pci_resource_start(adev->pdev, 2),
+    /*Map GPU register space (BAR 5) to kernel virtual address */
+    adev->rmmio_size = pci_resource_len(adev->pdev, 5);
+    adev->rmmio = ioremap(pci_resource_start(adev->pdev, 5),
                            adev->rmmio_size);
     /*The GPU registers can then be accessed using WREG32/RREG32 */
 
@@ -197,7 +197,7 @@ $ wc -l /tmp/bo_create_callers.txt
             question: 'Describe the source code directory structure of the amdgpu driver. If you were asked to fix a display flickering problem on an RDNA3 GPU, which files would you start with?',
             difficulty: 'medium',
             hint: 'First describe the top-level directories (amdgpu/, display/dc/, pm/, amdkfd/), and then locate display/dc/ and dcn32/ for display problems.',
-            answer: 'The amdgpu driver top-level directory drivers/gpu/drm/amd/ contains four core subdirectories: (1) amdgpu/ — GPU core subsystem: device management (amdgpu_device.c), command submission (amdgpu_cs.c), virtual memory (amdgpu_vm.c), interrupt (amdgpu_irq.c), each IP Block hardware implementation (gfx_v11_0.c etc.); (2) display/dc/ — Display Core: accounts for about 40% of the code, including hardware-independent core layer (core/dc.c) and hardware-related layers (dcn32/, etc.); (3) amdkfd/ — ROCm computing kernel interface; (4) pm/ — power management (SMU communication, DVFS). For RDNA3 display flickering issues, I would start with these files: (a) display/dc/dcn32/ — DCN 3.2 hardware layer of RDNA3, checking timing and watermark calculations; (b) display/dc/core/dc.c — dc_commit_state() function checking state commit logic; (c) display/dc/dml/ — Display Mode Library Whether the bandwidth calculation is correct; (d) Search "dc_commit" and "underflow" keywords in dmesg to locate the specific stage. At the same time, use git log -- display/dc/dcn32/ to check whether recent modifications have introduced regressions.',
+            answer: 'The amdgpu driver top-level directory drivers/gpu/drm/amd/ contains four core subdirectories: (1) amdgpu/ — GPU core subsystem: device management (amdgpu_device.c), command submission (amdgpu_cs.c), virtual memory (amdgpu_vm.c), interrupt (amdgpu_irq.c), each IP Block hardware implementation (gfx_v11_0.c etc.); (2) display/dc/ — Display Core: accounts for about 40% of the code, including hardware-independent core layer (core/dc.c) and hardware-related layers (dcn32/, etc.); (3) amdkfd/ — ROCm computing kernel interface; (4) pm/ — power management (SMU communication, DVFS). For RDNA3 display flickering issues, I would start with these files: (a) display/dc/dcn32/ — DCN 3.2 hardware layer of RDNA3, checking timing and watermark calculations; (b) display/dc/core/dc.c — dc_commit_streams() function checking state commit logic; (c) display/dc/dml/ — Display Mode Library Whether the bandwidth calculation is correct; (d) Search "dc_commit" and "underflow" keywords in dmesg to locate the specific stage. At the same time, use git log -- display/dc/dcn32/ to check whether recent modifications have introduced regressions.',
             amdContext: 'This question tests your familiarity with the code base and debugging ideas. AMD interviewers will assess your ability to quickly narrow your search from problem description to specific documents.',
           },
         },
@@ -400,7 +400,7 @@ int amdgpu_discovery_set_ip_blocks(struct amdgpu_device *adev)
     return 0;
 }`,
             hint: 'DC initialization relies on the GFX Ring Buffer to send display-related GPU commands (such as cursor updates).',
-            answer: 'The initialization of DC (Display Core) relies on the GFX engine being ready for the following reasons: (1) DC needs to submit GPU commands for certain display operations (such as hardware cursor update, 3D LUT loading) through the GFX Ring Buffer; (2) GPU-accessible memory (such as framebuffer) needs to be allocated during the DC initialization process, which requires that the virtual address mapping of GMC and GFX has worked; (3) DC will try to do mode setting in hw_init and lights up the display, which requires submitting commands to the GPU. If GFX has not been initialized and the Ring Buffer does not exist, the DC command submission will fail, and you will see something like "[drm:dc_commit_state_no_check] *ERROR* dc_commit_state_no_check failed" or "hw_init of IP block <dm> failed -22" in dmesg. The correct order is PSP → GMC → IH → SMU → GFX → SDMA → VCN → DC/DM, DC is always after GFX.',
+            answer: 'The initialization of DC (Display Core) relies on the GFX engine being ready for the following reasons: (1) DC needs to submit GPU commands for certain display operations (such as hardware cursor update, 3D LUT loading) through the GFX Ring Buffer; (2) GPU-accessible memory (such as framebuffer) needs to be allocated during the DC initialization process, which requires that the virtual address mapping of GMC and GFX has worked; (3) DC will try to do mode setting in hw_init and lights up the display, which requires submitting commands to the GPU. If GFX has not been initialized and the Ring Buffer does not exist, the DC command submission will fail, and you will see something like "[drm:dc_commit_streams_no_check] *ERROR* dc_commit_streams_no_check failed" or "hw_init of IP block <dm> failed -22" in dmesg. The correct order is PSP → GMC → IH → SMU → GFX → SDMA → VCN → DC/DM, DC is always after GFX.',
           },
           interviewQ: {
             question: 'Explain the IP Block architecture of amdgpu driver. What are the pros and cons of this design pattern?',
@@ -627,7 +627,7 @@ dmesg:
 amdgpu_cs_ioctl returned -12   /* -ENOMEM */
 
 /*GPU status */
-VRAM: 2048MB / 8192MB used (lots of free space!)
+VRAM: 2048MB / 16368MB used (lots of free space!)
 GTT: 512MB / 8192MB used (lots of free time!)
 
 /*Application behavior */
@@ -895,14 +895,14 @@ Last emitted                 0x00000128
               'DC (Display Core) is AMD\'s display engine ported from Windows driver to Linux - which is why its code style is significantly different from other parts of the kernel (closer to the C style of Windows driver, using a lot of object-oriented patterns). DC was initially controversial when it was merged into the kernel in 2017 (because of the large code size and unique style), but it is a necessary component to support AMD\'s modern display features.',
               'The DC architecture is divided into two major layers: the hardware-independent core layer (display/dc/core/) and the hardware-related DCN layer (display/dc/dcn32/, etc.). The core layer defines the abstract model of the display pipeline - stream (display stream, corresponding to a display output), plane (display plane, corresponding to a layer), and timing (timing parameters, resolution/refresh rate). The DCN layer implements hardware-specific register programming. This layering allows supporting the new generation of DCN by simply adding hardware layer code, and the core logic can be reused.',
               'The display pipeline of DCN (Display Controller Next) consists of the following hardware units. The data passes from the framebuffer to the display in sequence: HUBP (Hub Pipe, reading pixel data from memory) → DPP (Display Pipe and Plane, color transformation, scaling, mixing) → OPP (Output Pixel Processor, gamma correction, dithering) → OPTC (Output Pipe Timing Combiner, generating display timing signals) → DIO (Display I/O, encoded as DP/HDMI/DVI signal output). Each unit corresponds to a submodule in the DCN hardware, and the driver needs to accurately configure their registers to achieve correct display output.',
-              'The relationship between DC and DRM KMS (Kernel Mode Setting): DRM KMS is the general display management framework of the Linux kernel (drm_atomic_commit, drm_crtc, drm_connector, etc.), amdgpu\'s amdgpu_dm.c (Display Manager) is the adapter layer between KMS and DC. When user space (such as GNOME/KDE) calls a DRM atomic commit request to set the resolution, amdgpu_dm converts the DRM data structure into the DC\'s data structure and then calls dc_commit_state() to perform the actual hardware configuration. FreeSync/VRR (Variable Refresh Rate) is also implemented through DC - DC can dynamically adjust the VBlank interval of OPTC to match the rendering frame rate of the GPU.',
+              'The relationship between DC and DRM KMS (Kernel Mode Setting): DRM KMS is the general display management framework of the Linux kernel (drm_atomic_commit, drm_crtc, drm_connector, etc.), amdgpu\'s amdgpu_dm.c (Display Manager) is the adapter layer between KMS and DC. When user space (such as GNOME/KDE) calls a DRM atomic commit request to set the resolution, amdgpu_dm converts the DRM data structure into the DC\'s data structure and then calls dc_commit_streams() to perform the actual hardware configuration. FreeSync/VRR (Variable Refresh Rate) is also implemented through DC - DC can dynamically adjust the VBlank interval of OPTC to match the rendering frame rate of the GPU.',
             ],
             keyPoints: [
               'DC is the largest subsystem of amdgpu (~1.6M lines of code), ported from Windows driver',
               'Two-layer architecture: core layer (hardware-independent) + DCN layer (hardware-dependent, such as dcn32 = RDNA3)',
               'Display pipeline: HUBP → DPP → OPP → OPTC → DIO → display',
               'DRM KMS ←→ amdgpu_dm.c (adaptation layer) ←→ DC Core ←→ DCN Hardware',
-              'dc_commit_state() is the core function to display status submission and executes atomic mode setting',
+              'dc_commit_streams() is the core display-state submission function (the v6.12 interface name; older kernels used dc_commit_state — the API evolves across versions)',
               'FreeSync/VRR dynamically adjusts OPTC\'s VBlank cycle through DC',
             ],
           },
@@ -969,7 +969,7 @@ DRM Atomic KMS Framework
        │ drm_atomic_helper_commit()
        ▼
   amdgpu_dm.c (adapter layer)  ←Convert DRM structures to DC structures
-       │ dc_commit_state()
+       │ dc_commit_streams()
        ▼
   DC Core (display/dc/core/)   ←Hardware-independent display logic
 │ Call DCN hardware function
@@ -978,14 +978,14 @@ DRM Atomic KMS Framework
             caption: 'DCN 3.2 shows the pipeline and call hierarchy of DRM KMS to DC. Each pipeline stage (HUBP→DPP→OPP→OPTC→DIO) corresponds to a submodule in the hardware, and the driver needs to configure a large number of registers to allow data to flow correctly through the entire pipeline.',
           },
           codeWalk: {
-            title: 'dc_commit_state — shows the core process of state submission',
+            title: 'dc_commit_streams — shows the core process of state submission',
             file: 'drivers/gpu/drm/amd/display/dc/core/dc.c',
             language: 'c',
-            code: `/*dc_commit_state() — Commits the new display state to the hardware
+            code: `/*dc_commit_streams() — Commits the new display state to the hardware
  *Called when user space requests a change in resolution, refresh rate, HDR mode, etc.
  *This is the core function in the DC subsystem
  */
-enum dc_status dc_commit_state(struct dc *dc,
+enum dc_status dc_commit_streams(struct dc *dc,
                                 struct dc_state *context)
 {
     enum dc_status result;
@@ -1390,14 +1390,14 @@ power1_average: 8500000 (8.5W - almost idle power consumption)
             summary: 'DC (Display Core) accounts for about 40% of amdgpu code and has the highest bug density among drivers. It is not just a display subsystem - it is an independent kingdom ported from the Windows driver, with its own type system (dc_stream, dc_plane), its own state validation (dc_validate_state), its own memory model and error handling, and it is almost a "translation" relationship rather than an "integration" relationship with the Linux DRM/KMS framework.',
             explanation: [
               'Historical roots of DC as a separate abstraction layer: DC was originally the display engine in the AMD Windows driver, written in the object-oriented style of C (lots of vtables, abstract interfaces, construction/destruction patterns). When porting to Linux in 2017, AMD chose to keep DC independent rather than rewrite it to a DRM/KMS native style - the reason was that the complexity of DC (1.6 million lines of code) made rewriting impractical, and AMD needed Windows and Linux to share the same display core code. This means that DC has its own memory allocation wrapper, its own logging system, and even its own math library (fixed-point arithmetic is used for DML), creating a stylistic contrast to other subsystems of the kernel.',
-              'The dc_state commit process is the core working path of DC. When user space requests to change the display configuration (such as switching resolution, enabling HDR), the complete submission process is: dc_validate_state() (verify whether the new configuration is within the hardware capabilities - check the number of pipeline resources, bandwidth limits, timing compatibility) → DML bandwidth calculation (Display Mode Library calculates the watermark value of each pipeline stage to ensure that the data flow will not underflow) → dc_commit_state() (program the verified configuration into the hardware register, in VBlank switch between to avoid tearing). Failure in any step will prevent the configuration from taking effect and return an error to user space.',
+              'The dc_state commit process is the core working path of DC. When user space requests to change the display configuration (such as switching resolution, enabling HDR), the complete submission process is: dc_validate_state() (verify whether the new configuration is within the hardware capabilities - check the number of pipeline resources, bandwidth limits, timing compatibility) → DML bandwidth calculation (Display Mode Library calculates the watermark value of each pipeline stage to ensure that the data flow will not underflow) → dc_commit_streams() (program the verified configuration into the hardware register, in VBlank switch between to avoid tearing). Failure in any step will prevent the configuration from taking effect and return an error to user space.',
               'DML (Display Mode Library) is the most complex and bug-prone submodule in DC. DML is essentially a bandwidth/latency calculation framework - given a display configuration (resolution, refresh rate, pixel format, scaling, number of active planes), DML calculates the required memory bandwidth for all pipeline stages and compares it to the available bandwidth. If demand exceeds available bandwidth, DML rejects the configuration (returning DC_FAIL_BANDWIDTH). DML also calculates the "watermark" - how long HUBP must start prefetching data from memory before a pixel is consumed by the display. Watermark calculation errors can lead to display underflow (HUBP has no time to read the data, and the screen appears with black lines or flickers), which is the most common type of bug in DC.',
               'DC has a completely independent type system from DRM/KMS. DRM uses drm_crtc, drm_connector, and drm_plane; DC uses dc_stream (corresponding to a display output stream), dc_plane (corresponding to a display layer), and dc_sink (corresponding to a display device). amdgpu_dm.c is the "translation layer" that connects these two worlds - it converts drm_atomic_state to dc_state, maps drm_crtc_state to dc_stream_state, and drm_plane_state to dc_plane_state. This double abstraction adds complexity, but also makes the DC core completely independent of the Linux kernel API and can be shared between Windows and Linux.',
               'DC\'s error handling is independent of the kernel. DC internally uses its own error enumeration (enum dc_status: DC_OK, DC_FAIL_BANDWIDTH, DC_FAIL_RESOURCES, etc.) instead of the Linux standard errno (-EINVAL, -ENOMEM, etc.). amdgpu_dm.c is responsible for translating DC error codes into error codes expected by DRM/KMS. DC internal logging also uses custom DC_LOG_* macros instead of the kernel\'s pr_info/dev_err. Understanding this independence is critical for debugging DC issues - you need to look for information at both the DRM layer ([drm] prefix in dmesg) and the DC layer ([drm] DC: prefix).',
             ],
             keyPoints: [
               'DC is an independent abstraction layer ported from the Windows driver. It accounts for about 40% of amdgpu code and has the highest bug density.',
-              'dc_state submission process: dc_validate_state → DML bandwidth calculation → dc_commit_state → hardware programming',
+              'dc_state submission process: dc_validate_state → DML bandwidth calculation → dc_commit_streams → hardware programming',
               'DML (Display Mode Library): bandwidth/delay calculation framework, underflow caused by watermark errors is the most common bug',
               'DC independent type system: dc_stream/dc_plane/dc_sink, which is a translation relationship with DRM\'s drm_crtc/drm_plane',
               'amdgpu_dm.c is the adapter layer between DRM/KMS and DC, responsible for type conversion and error code translation',
@@ -1428,7 +1428,7 @@ Userspace (GNOME/KDE/Wayland Compositor)
 │ drm_connector_state ─→ dc_sink (display device) │
 │  errno (-EINVAL) ◄────── dc_status (DC_FAIL_BANDWIDTH)      │
 │                                                              │
-│  amdgpu_dm_atomic_commit() → dc_commit_state()              │
+│  amdgpu_dm_atomic_commit() → dc_commit_streams()              │
 └──────────────────────────────┬───────────────────────────────┘
                                │
 ▼ Inside DC (Independent Kingdom)
@@ -1448,7 +1448,7 @@ Userspace (GNOME/KDE/Wayland Compositor)
 │ │ ├─ Bandwidth requirement > Available bandwidth? → DC_FAIL_BANDWIDTH │ │
 │ │ └─ Watermark value → HUBP/DPP register configuration │ │
 │  │         │                                                │ │
-│  │  3. dc_commit_state(dc, validated_state)                │ │
+│  │  3. dc_commit_streams(dc, validated_state)                │ │
 │ │ ├─ Wait for VBlank (avoid tearing) │ │
 │ │ ├─ Programming HUBP register (framebuffer address) │ │
 │ │ ├─ Programming DPP Register (Scale/Color) │ │
@@ -1466,14 +1466,14 @@ Userspace (GNOME/KDE/Wayland Compositor)
             caption: 'An architectural panorama of DC as an independent kingdom. amdgpu_dm.c is the only bridge between the DRM/KMS world and the DC world. DC has a completely independent type system, error handling, logging system and memory management internally - this comes from its Windows driver heritage.',
           },
           codeWalk: {
-            title: 'dc_commit_state — Verification → Bandwidth Check → Hardware Programming Sequence',
+            title: 'dc_commit_streams — Verification → Bandwidth Check → Hardware Programming Sequence',
             file: 'drivers/gpu/drm/amd/display/dc/core/dc.c',
             language: 'c',
-            code: `/*dc_commit_state() — DC's core state commit function
+            code: `/*dc_commit_streams() — DC's core state commit function
  *Complete process: Verification → DML bandwidth calculation → Hardware programming
  *Called from amdgpu_dm_atomic_commit_tail() in amdgpu_dm.c
  */
-enum dc_status dc_commit_state(struct dc *dc,
+enum dc_status dc_commit_streams(struct dc *dc,
                                 struct dc_state *context)
 {
     enum dc_status result;
@@ -1553,22 +1553,22 @@ enum dc_status dc_commit_state(struct dc *dc,
             explanation: 'This function shows the complete workflow of DC: first verify whether the configuration is feasible (to avoid hardware damage or underflow), then calculate the precise pipeline parameters (watermark value), and finally program the hardware registers in sequence. Failure in any step will abort and return DC\'s own error code - amdgpu_dm.c is responsible for translating it into the errno expected by DRM/KMS.',
           },
           miniLab: {
-            title: 'Trace the execution path of dc_commit_state',
-            objective: 'Observe the real execution of dc_commit_state using ftrace and debugfs, understand the sequence of DML verification and hardware programming.',
+            title: 'Trace the execution path of dc_commit_streams',
+            objective: 'Observe the real execution of dc_commit_streams using ftrace and debugfs, understand the sequence of DML verification and hardware programming.',
             setup: `sudo mount -t tracefs nodev /sys/kernel/tracing 2>/dev/null
 #Confirm that DC debug output is enabled
 sudo sh -c 'echo 0x1 > /sys/module/amdgpu/parameters/dc 2>/dev/null'`,
             steps: [
-              'Set ftrace tracing dc_commit_state: echo dc_commit_state > /sys/kernel/tracing/set_ftrace_filter',
+              'Set ftrace tracing dc_commit_streams: echo dc_commit_streams > /sys/kernel/tracing/set_ftrace_filter',
               'Enable function graph tracing: echo function_graph > /sys/kernel/tracing/current_tracer',
               'Start tracing: echo 1 > /sys/kernel/tracing/tracing_on',
-              'Trigger dc_commit_state execution - switch resolution: xrandr --output DP-1 --mode 1920x1080 && sleep 1 && xrandr --output DP-1 --mode 2560x1440',
+              'Trigger dc_commit_streams execution - switch resolution: xrandr --output DP-1 --mode 1920x1080 && sleep 1 && xrandr --output DP-1 --mode 2560x1440',
               'Stop tracing: echo 0 > /sys/kernel/tracing/tracing_on',
               'View the execution sequence: cat /sys/kernel/tracing/trace | grep -E "dc_commit|validate|watermark|dml" | head -30',
               'Check the DC internal status: sudo cat /sys/kernel/debug/dri/0/amdgpu_dm_dtn_log 2>/dev/null | head -80',
             ],
             expectedOutput: `$ cat /sys/kernel/tracing/trace | grep -E "dc_commit|validate" | head -10
-  kworker/0:2-345  =>  dc_commit_state() {
+  kworker/0:2-345  =>  dc_commit_streams() {
   kworker/0:2-345      dc_validate_global_state() {
   kworker/0:2-345        dml_validate() {
 kworker/0:2-345 ... (DML bandwidth calculation) ...

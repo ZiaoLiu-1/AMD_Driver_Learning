@@ -522,7 +522,7 @@ static int create_hdmi_connector(struct drm_device *dev,
               'drm_atomic_state 是 Atomic 提交的核心数据结构。它包含三类状态：drm_crtc_state（CRTC 的新模式、active/enable 状态、mode_changed 标志）、drm_plane_state（Plane 绑定的 FB、src/dst 矩形、rotation/blend 属性）、drm_connector_state（Connector 绑定的 CRTC、DPMS 状态）。每次 atomic commit 时，内核创建一份旧状态的副本，驱动在副本上做修改，check 阶段验证副本，commit 阶段用副本替换当前状态。如果 check 失败，副本被丢弃，硬件不受影响。',
               'DRM_MODE_ATOMIC_TEST_ONLY 标志让用户空间可以"试探"一个配置是否合法，而不实际提交。这对 Wayland compositor 特别有用——它可以先 test-only 多种布局方案，选择能通过验证的最优方案，再实际提交。这避免了"提交→失败→回退"的代价。',
               'Page Flip（页面翻转）是 Atomic 最常见的用途。每一帧渲染完成后，compositor 将新的 framebuffer 绑定到 Primary Plane，通过 atomic commit 提交。DRM_MODE_PAGE_FLIP_EVENT 标志请求在翻转完成时发送事件通知。如果指定了 DRM_MODE_ATOMIC_NONBLOCK，提交立即返回，不等待 VBlank——翻转在下一个 VBlank 自动完成。这是现代 Linux 桌面实现无撕裂合成的基础。',
-              '在 amdgpu 中，Atomic commit 的核心路径是 amdgpu_dm_atomic_commit_tail()。这个函数接收验证通过的 drm_atomic_state，将 DRM 层的属性变更翻译为 DC 层的操作：更新 dc_stream（对应 CRTC 模式变更）、更新 dc_plane（对应 Plane 属性变更）、调用 dc_commit_state() 将所有变更一次性提交给 DCN 硬件。VBlank 等待和 page flip completion 事件也在这个函数中处理。',
+              '在 amdgpu 中，Atomic commit 的核心路径是 amdgpu_dm_atomic_commit_tail()。这个函数接收验证通过的 drm_atomic_state，将 DRM 层的属性变更翻译为 DC 层的操作：更新 dc_stream（对应 CRTC 模式变更）、更新 dc_plane（对应 Plane 属性变更）、调用 dc_commit_streams() 将所有变更一次性提交给 DCN 硬件（注：这是 v6.12 的接口名；老版本叫 dc_commit_state，DC 的接口随版本演进——面试时讲清 atomic commit 的流程原理，具体函数名以你阅读的内核版本为准）。VBlank 等待和 page flip completion 事件也在这个函数中处理。',
             ],
             keyPoints: [
               'Legacy Mode Setting：逐个设置属性，无原子性保证，可能导致中间不一致状态',
@@ -588,7 +588,7 @@ static int create_hdmi_connector(struct drm_device *dev,
   │  amdgpu_dm_atomic_commit_tail()                  │
   │  ├─ 更新 dc_stream（CRTC 模式变更）             │
   │  ├─ 更新 dc_plane（Plane 属性变更）              │
-  │  ├─ dc_commit_state() → 写入 DCN 寄存器         │
+  │  ├─ dc_commit_streams() → 写入 DCN 寄存器         │
   │  ├─ 等待 VBlank（page flip）                     │
   │  └─ drm_crtc_send_vblank_event() → 通知用户空间 │
   └─────────────────────────────────────────────────┘
@@ -635,9 +635,9 @@ static void amdgpu_dm_atomic_commit_tail(
     }
 
     /* Step 2: 提交完整的 DC state 到硬件 */
-    WARN_ON(!dc_commit_state(dm->dc, dc_state));
+    WARN_ON(!dc_commit_streams(dm->dc, dc_state));
     /*
-     * dc_commit_state() 内部:
+     * dc_commit_streams() 内部:
      *   1. 编程 OTG 时序寄存器（分辨率、刷新率）
      *   2. 配置 DPP/MPC（Plane blending、scaling）
      *   3. 更新 surface address（page flip 的关键）
@@ -664,12 +664,12 @@ static void amdgpu_dm_atomic_commit_tail(
             annotations: [
               'for_each_oldnew_crtc_in_state() 遍历 atomic_state 中所有受影响的 CRTC',
               'drm_atomic_crtc_needs_modeset() 检查 CRTC 是否需要完整的模式切换（而不仅是 page flip）',
-              'dc_commit_state() 是 DC 模块的核心——将完整的 DC state 编程到 DCN 硬件寄存器',
+              'dc_commit_streams() 是 DC 模块的核心——将完整的 DC state 编程到 DCN 硬件寄存器',
               'DCN 使用 double-buffer：新值写入 shadow 寄存器，VBlank 时 latch 到 active 寄存器',
               'drm_crtc_send_vblank_event() 向用户空间发送 DRM_EVENT_FLIP_COMPLETE 事件',
               '整个函数在 commit 工作队列中运行（如果是 NONBLOCK），不阻塞用户空间 ioctl 返回',
             ],
-            explanation: '这个函数是 amdgpu 显示更新的心脏。当 Wayland compositor 提交一个新帧时，经过 check 阶段验证后，commit_tail 负责实际将变更写入硬件。关键在于 dc_commit_state()——它将 DRM 世界的原子状态翻译为 DCN 硬件寄存器操作，利用 DCN 的 double-buffering 机制在 VBlank 间隔内完成切换，确保用户看不到任何闪烁或撕裂。',
+            explanation: '这个函数是 amdgpu 显示更新的心脏。当 Wayland compositor 提交一个新帧时，经过 check 阶段验证后，commit_tail 负责实际将变更写入硬件。关键在于 dc_commit_streams()——它将 DRM 世界的原子状态翻译为 DCN 硬件寄存器操作，利用 DCN 的 double-buffering 机制在 VBlank 间隔内完成切换，确保用户看不到任何闪烁或撕裂。',
           },
           miniLab: {
             title: '观察 Atomic Mode Setting 的 VBlank 同步',
@@ -727,8 +727,8 @@ void update_display(int fd, uint32_t crtc_id,
             question: '解释 Atomic Mode Setting 相对于 Legacy Mode Setting 的优势，以及 atomic_check 和 atomic_commit 两个阶段分别做了什么。',
             difficulty: 'hard',
             hint: '从原子性保证（消除中间不一致状态）、test-only 能力（试探不提交）、以及错误回滚（check 失败不影响硬件）的角度分析。描述 check 阶段的验证内容（带宽、时钟、格式兼容性）和 commit 阶段的硬件编程流程。',
-            answer: 'Atomic Mode Setting 的核心优势：（1）原子性——所有显示属性变更（Plane FB、CRTC 模式、Connector 状态）作为一个事务提交，要么全部生效要么全部不生效，消除了 Legacy API 逐个 ioctl 的中间不一致状态和画面撕裂；（2）Test-only——DRM_MODE_ATOMIC_TEST_ONLY 标志让 compositor 可以验证配置是否合法而不实际提交，用于寻找最优显示布局；（3）安全回退——check 阶段在旧状态的副本上验证，失败时丢弃副本，硬件完全不受影响。atomic_check 阶段：（a）drm_atomic_helper_check_modeset() 验证 CRTC 模式变更的合法性（pixel clock ≤ 硬件上限、所有 CRTC 总带宽 ≤ 内存带宽上限）；（b）drm_atomic_helper_check_planes() 验证 Plane 配置（FB 格式是否支持、缩放比例是否在硬件 scaler 能力范围内）；（c）驱动特定检查（amdgpu_dm_atomic_check → dc_validate_global_state()，验证 DCN 硬件资源分配，如 DPP 数量是否足够）。atomic_commit 阶段：（a）如果 NONBLOCK 标志，将实际提交排入工作队列，立即返回用户空间；（b）amdgpu_dm_atomic_commit_tail() 将 DRM 状态翻译为 DC 操作，调用 dc_commit_state() 编程 DCN 寄存器；（c）利用 DCN 的 double-buffering，新值写入 shadow 寄存器，在 VBlank 时 latch 到 active 寄存器，实现无闪烁切换；（d）通过 drm_crtc_send_vblank_event() 通知用户空间 page flip 完成。',
-            amdContext: 'Atomic Mode Setting 是现代 Linux 显示栈的基础。AMD 面试中展示你理解从用户空间 drmModeAtomicCommit() 到内核 amdgpu_dm_atomic_commit_tail() 再到 DC dc_commit_state() 的完整路径，会显著加分。',
+            answer: 'Atomic Mode Setting 的核心优势：（1）原子性——所有显示属性变更（Plane FB、CRTC 模式、Connector 状态）作为一个事务提交，要么全部生效要么全部不生效，消除了 Legacy API 逐个 ioctl 的中间不一致状态和画面撕裂；（2）Test-only——DRM_MODE_ATOMIC_TEST_ONLY 标志让 compositor 可以验证配置是否合法而不实际提交，用于寻找最优显示布局；（3）安全回退——check 阶段在旧状态的副本上验证，失败时丢弃副本，硬件完全不受影响。atomic_check 阶段：（a）drm_atomic_helper_check_modeset() 验证 CRTC 模式变更的合法性（pixel clock ≤ 硬件上限、所有 CRTC 总带宽 ≤ 内存带宽上限）；（b）drm_atomic_helper_check_planes() 验证 Plane 配置（FB 格式是否支持、缩放比例是否在硬件 scaler 能力范围内）；（c）驱动特定检查（amdgpu_dm_atomic_check → dc_validate_global_state()，验证 DCN 硬件资源分配，如 DPP 数量是否足够）。atomic_commit 阶段：（a）如果 NONBLOCK 标志，将实际提交排入工作队列，立即返回用户空间；（b）amdgpu_dm_atomic_commit_tail() 将 DRM 状态翻译为 DC 操作，调用 dc_commit_streams() 编程 DCN 寄存器；（c）利用 DCN 的 double-buffering，新值写入 shadow 寄存器，在 VBlank 时 latch 到 active 寄存器，实现无闪烁切换；（d）通过 drm_crtc_send_vblank_event() 通知用户空间 page flip 完成。',
+            amdContext: 'Atomic Mode Setting 是现代 Linux 显示栈的基础。AMD 面试中展示你理解从用户空间 drmModeAtomicCommit() 到内核 amdgpu_dm_atomic_commit_tail() 再到 DC dc_commit_streams() 的完整路径，会显著加分。',
           },
         },
       ],
@@ -1202,7 +1202,7 @@ mnt_id: 10
 ino:    1234
 drm-driver:     amdgpu
 drm-pdev:       0000:03:00.0
-drm-total-vram: 8176 MiB
+drm-total-vram: 16368 MiB
 drm-shared-vram:        48 MiB   ← 与其他进程共享的 VRAM
 drm-total-gtt:  128 MiB
 

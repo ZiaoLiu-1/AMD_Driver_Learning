@@ -185,7 +185,7 @@ igt_main
             objective: 'Compile IGT GPU Tools from source, run amdgpu basic tests, and learn to interpret test output.',
             steps: [
               'Clone IGT source code: git clone https://gitlab.freedesktop.org/drm/igt-gpu-tools.git && cd igt-gpu-tools',
-              'Install dependencies: sudo apt install meson ninja-build libdrm-dev libcairo2-dev libpixman-1-dev libudev-dev libprocps-dev libjson-c-dev libdw-dev flex bison',
+              'Install dependencies: sudo apt install meson ninja-build libdrm-dev libcairo2-dev libpixman-1-dev libudev-dev libjson-c-dev libdw-dev flex bison, plus libproc2-dev (Ubuntu 24.04+) or libprocps-dev (22.04): sudo apt install libproc2-dev || sudo apt install libprocps-dev',
               'Compile: meson build && ninja -C build',
               'List all amdgpu tests: ls build/tests/amdgpu/',
               'Run basic tests: sudo ./build/tests/amdgpu/amd_basic (requires root access to GPU)',
@@ -464,7 +464,7 @@ igt_main
             expectedOutput: `$ sudo ./build/tests/amdgpu/amd_query_test
 IGT-Version: 1.28 (x86_64)
 Starting subtest: query-vram-size
-GPU VRAM: 8176 MB
+GPU VRAM: 16368 MB
 Subtest query-vram-size: SUCCESS (0.001s)
 Starting subtest: query-fw-version
 GFX FW version: 0x006d

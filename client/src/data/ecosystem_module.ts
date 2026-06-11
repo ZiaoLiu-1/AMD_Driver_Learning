@@ -26,7 +26,7 @@ export const ecosystemModule: Module = {
     sections: [
       {
         title: 'AMD 公司整体结构',
-        content: 'AMD（Advanced Micro Devices）是一家专注于半导体的公司，主要业务分为四大块：CPU（Ryzen 消费级 / EPYC 服务器级）、GPU（Radeon 消费级 / Instinct 数据中心级）、APU（CPU+GPU 集成，如 Ryzen 7000 系列中的 Radeon 集显）、以及 2022 年收购的 Xilinx FPGA 业务。对于驱动开发者来说，最相关的是 GPU 部门，特别是 Radeon 和 Instinct 产品线。AMD Markham（加拿大安大略省）是 AMD 最重要的 GPU 软件开发中心，负责 Linux 内核 amdgpu 驱动、ROCm 计算框架和 Mesa 用户态驱动的开发。',
+        content: 'AMD（Advanced Micro Devices）是一家专注于半导体的公司，主要业务分为四大块：CPU（Ryzen 消费级 / EPYC 服务器级）、GPU（Radeon 消费级 / Instinct 数据中心级）、APU（CPU+GPU 集成，如 Ryzen 7000 系列中的 Radeon 集显）、以及 2022 年收购的 Xilinx FPGA 业务。对于驱动开发者来说，最相关的是 GPU 部门，特别是 Radeon 和 Instinct 产品线。AMD Markham（加拿大安大略省）是 AMD 重要的 GPU 软件开发中心之一，深度参与 Linux 内核 amdgpu 驱动、ROCm 计算框架和 Mesa 用户态驱动的开发。',
         diagram: {
           type: 'ascii',
           content: `AMD 公司业务结构
@@ -240,7 +240,7 @@ export const ecosystemModule: Module = {
 结论：AMD 是学习 GPU 驱动开发的最佳平台
   ✓ 完全开源 → 可以阅读所有代码
   ✓ 活跃社区 → amd-gfx 邮件列表每天数十个补丁
-  ✓ 职业机会 → AMD Markham 持续招聘驱动工程师`,
+  ✓ 职业机会 → AMD 各地有驱动岗位（以 careers.amd.com 为准）`,
           caption: 'AMD vs NVIDIA vs Intel 驱动生态对比。AMD 的全开源策略使其成为学习 GPU 驱动开发的最佳选择——你可以阅读所有代码，参与所有讨论，提交真实的补丁。',
         },
       },

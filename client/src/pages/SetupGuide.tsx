@@ -930,15 +930,15 @@ ls /sys/kernel/debug/dri/0/ | grep amdgpu_gpu_recover && \\
             </div>
 
             <CopyBlock title="Ubuntu 24.04" code={`# Official ROCm Quick Start (https://rocm.docs.amd.com)
-wget https://repo.radeon.com/amdgpu-install/7.2/ubuntu/noble/amdgpu-install_7.2.70200-1_all.deb
-sudo apt install ./amdgpu-install_7.2.70200-1_all.deb
+wget https://repo.radeon.com/amdgpu-install/7.2.4/ubuntu/noble/amdgpu-install_7.2.4.70204-1_all.deb
+sudo apt install ./amdgpu-install_7.2.4.70204-1_all.deb
 sudo apt update
 sudo apt install python3-setuptools python3-wheel
 sudo usermod -a -G render,video $LOGNAME
 sudo apt install rocm`} />
 
-            <CopyBlock title="Ubuntu 22.04" code={`wget https://repo.radeon.com/amdgpu-install/7.2/ubuntu/jammy/amdgpu-install_7.2.70200-1_all.deb
-sudo apt install ./amdgpu-install_7.2.70200-1_all.deb
+            <CopyBlock title="Ubuntu 22.04" code={`wget https://repo.radeon.com/amdgpu-install/7.2.4/ubuntu/jammy/amdgpu-install_7.2.4.70204-1_all.deb
+sudo apt install ./amdgpu-install_7.2.4.70204-1_all.deb
 sudo apt update
 sudo apt install python3-setuptools python3-wheel
 sudo usermod -a -G render,video $LOGNAME
@@ -946,7 +946,7 @@ sudo apt install rocm`} />
 
             <CopyBlock title="RHEL 9.x / Rocky Linux" code={`# Replace 9.6 with your RHEL version (9.4, 9.6, 9.7, etc.)
 sudo dnf install \\
-    https://repo.radeon.com/amdgpu-install/7.2/rhel/9.6/amdgpu-install-7.2.70200-1.el9.noarch.rpm
+    https://repo.radeon.com/amdgpu-install/7.2.4/rhel/9.6/amdgpu-install-7.2.4.70204-1.el9.noarch.rpm
 sudo dnf clean all
 wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
 sudo rpm -ivh epel-release-latest-9.noarch.rpm

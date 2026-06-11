@@ -425,7 +425,7 @@ alias:          pci:v00001002d*sv*sd*bc*sc*i*  ← 匹配 AMD Vendor ID`,
 
     pci_set_master(pdev);
 
-    regs = pci_ioremap_bar(pdev, 0);
+    regs = pci_ioremap_bar(pdev, 5);
     if (!regs) {
         ret = -ENOMEM;
         goto err_disable;  /* BUG: 跳过了 pci_clear_master! */
@@ -470,7 +470,7 @@ err_disable:
               '内核使用负的 errno 值作为错误码（如 -ENOMEM、-EINVAL、-EIO）。成功返回 0，失败返回负值。这个约定贯穿整个内核。IS_ERR(ptr) 宏检查一个指针是否编码了错误码（指针值在 -1 到 -MAX_ERRNO 范围内），PTR_ERR(ptr) 从编码了错误的指针中提取 errno 值，ERR_PTR(errno) 将 errno 编码为指针。这种"错误指针"机制让函数可以在一个返回值中同时表达"成功（返回有效指针）"和"失败（返回编码了错误码的假指针）"。',
               'amdgpu_device_init 是这种模式的典型案例。它需要初始化十几个子系统：doorbell、VRAM、IP discovery、固件加载、各个 IP Block 等。每个子系统的初始化都可能失败，而且后面的子系统依赖前面的。函数末尾有一个长长的 goto 标签链，确保任何步骤失败都能正确回滚。这不是糟糕的编码风格——这是经过数十年验证的、最可靠的内核资源管理模式。',
               '常见的反模式是忘记在错误路径中释放资源——这会导致内核内存泄漏。Linux 有专门的工具（kmemleak、smatch、sparse）来静态检测这类 Bug。在提交 amdgpu 补丁时，审查者会特别关注错误路径的资源释放是否完整。',
-              'Modern kernel development (5.x+) also uses dev_err_probe() for probe-time errors. This function combines dev_err() with returning the error code, and specially handles -EPROBE_DEFER (deferred probing — when a dependency isn\'t ready yet). In amdgpu, you\'ll see patterns like: return dev_err_probe(dev, ret, "failed to init GMC"); which prints the error AND returns the error code in one line. It\'s cleaner than the traditional if (ret) { dev_err(...); return ret; } pattern. Understanding dev_err_probe is essential because reviewers on amd-gfx will request you use it for new probe-path error handling.',
+              '现代内核开发（5.x+）还使用 dev_err_probe() 处理 probe 阶段的错误。这个函数把 dev_err() 与返回错误码合二为一，并对 -EPROBE_DEFER（延迟探测——依赖尚未就绪）做了特殊处理。在 amdgpu 中你会看到这样的写法：return dev_err_probe(dev, ret, "failed to init GMC"); 一行同时完成打印错误和返回错误码，比传统的 if (ret) { dev_err(...); return ret; } 更简洁。理解 dev_err_probe 很重要——amd-gfx 的 Reviewer 会要求新的 probe 路径错误处理使用它。',
             ],
             keyPoints: [
               'goto 在内核中是推荐的错误处理模式——Linus 在 CodingStyle 中明确支持',
@@ -479,7 +479,7 @@ err_disable:
               'IS_ERR/PTR_ERR/ERR_PTR 宏用于指针编码的错误码——常见于返回指针的函数',
               'amdgpu_device_init 有 20+ 个 goto 标签，是 goto 链式清理的大型实例',
               '忘记在错误路径释放资源 = 内核内存泄漏 → kmemleak/smatch 可检测',
-              'dev_err_probe() is the modern (5.x+) pattern for probe-time errors — combines error logging and -EPROBE_DEFER handling',
+              'dev_err_probe() 是现代（5.x+）probe 错误处理模式——合并错误打印与 -EPROBE_DEFER 处理',
             ],
           },
           diagram: {

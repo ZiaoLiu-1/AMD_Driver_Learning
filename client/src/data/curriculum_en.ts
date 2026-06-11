@@ -323,9 +323,9 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
       {
         question: 'What is PCIe BAR (Base Address Register)? How does the GPU driver use it to talk to the GPU?',
         difficulty: 'hard',
-        hint: 'Focus on MMIO mapping and BAR types (VRAM BAR, Register BAR, Doorbell BAR).',
+        hint: 'Focus on MMIO mapping and BAR types (BAR0=VRAM, BAR2=Doorbell, BAR5=registers).',
         answer:
-          'PCIe BAR is a physical address window the GPU exposes. Driver uses: BAR 0 (VRAM), BAR 2 (Register/MMIO), BAR 4 (Doorbell). ioremap maps these into kernel virtual address; writel/readl control the GPU.',
+          'PCIe BAR is a physical address window the GPU exposes. Modern AMD GPUs use: BAR 0 (VRAM aperture), BAR 2 (Doorbell), BAR 5 (Register/MMIO, Bonaire and later ASICs). ioremap maps these into kernel virtual address; writel/readl control the GPU.',
       },
     ],
   },

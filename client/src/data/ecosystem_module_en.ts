@@ -29,7 +29,7 @@ export const ecosystemModuleEn: Module = {
       {
         title: 'AMD Company Structure',
         content:
-          'AMD (Advanced Micro Devices) is a semiconductor company with four main business units: CPUs (Ryzen consumer / EPYC server), GPUs (Radeon consumer / Instinct datacenter), APUs (CPU+GPU integrated, e.g., Radeon iGPU in Ryzen 7000 series), and Xilinx FPGA (acquired in 2022). For driver developers, the GPU division—especially Radeon and Instinct product lines—is most relevant. AMD Markham (Ontario, Canada) is AMD\'s primary GPU software development center, responsible for the Linux kernel amdgpu driver, ROCm compute framework, and Mesa userspace drivers.',
+          'AMD (Advanced Micro Devices) is a semiconductor company with four main business units: CPUs (Ryzen consumer / EPYC server), GPUs (Radeon consumer / Instinct datacenter), APUs (CPU+GPU integrated, e.g., Radeon iGPU in Ryzen 7000 series), and Xilinx FPGA (acquired in 2022). For driver developers, the GPU division—especially Radeon and Instinct product lines—is most relevant. AMD Markham (Ontario, Canada) is one of AMD\'s major GPU software development centers, deeply involved in the Linux kernel amdgpu driver, ROCm compute framework, and Mesa userspace drivers.',
         diagram: {
           type: 'ascii',
           content: `AMD Company Business Structure

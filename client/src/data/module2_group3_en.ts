@@ -356,7 +356,7 @@ void amdgpu_bo_placement_from_domain(struct amdgpu_bo *abo,
           "Run glmark2 benchmark: sudo apt install glmark2 && glmark2",
           "Compare VRAM and GTT bandwidth figures (VRAM should be ~8-10x GTT)"
         ],
-      expectedOutput: "Vulkan heap info example:\nheap[0]: size=8192 MiB, flags=DEVICE_LOCAL (VRAM)\nheap[1]: size=16384 MiB, flags=0 (System/GTT)\nVRAM bandwidth: ~288 GB/s\nGTT bandwidth: ~30-40 GB/s via PCIe"
+      expectedOutput: "Vulkan heap info example:\nheap[0]: size=16368 MiB, flags=DEVICE_LOCAL (VRAM)\nheap[1]: size=16384 MiB, flags=0 (System/GTT)\nVRAM bandwidth: ~288 GB/s\nGTT bandwidth: ~30-40 GB/s via PCIe"
     },
     debugExercise: {
       title: "Wrong Memory Domain Choice Causes Performance Bottleneck",

@@ -426,7 +426,7 @@ alias:          pci:v00001002d*sv*sd*bc*sc*i*  ← matches AMD Vendor ID`,
 
     pci_set_master(pdev);
 
-    regs = pci_ioremap_bar(pdev, 0);
+    regs = pci_ioremap_bar(pdev, 5);
     if (!regs) {
         ret = -ENOMEM;
         goto err_disable;  /* BUG: skips pci_clear_master! */

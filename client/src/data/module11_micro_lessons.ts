@@ -80,7 +80,7 @@ Step 2: 检查
 $ scripts/checkpatch.pl --strict HEAD~1..HEAD
   total: 0 errors, 0 warnings, 15 lines checked    ← ✓ 通过
 
-$ scripts/get_maintainer.pl --git HEAD~1..HEAD
+$ scripts/get_maintainer.pl -f drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
   Alex Deucher <alexander.deucher@amd.com> (maintainer)
   Christian König <christian.koenig@amd.com> (reviewer)
   amd-gfx@lists.freedesktop.org (list)
@@ -115,7 +115,7 @@ $ git send-email ... \\
     --in-reply-to="<original-message-id>"    # 回复原始邮件线程
   ▼
   Reviewer: "Reviewed-by: Christian König <...>"  ← ✓ 审查通过
-  Maintainer: 合并到 amd-staging-drm-next         ← ✓ 已合并`,
+  Maintainer: 合并到维护者集成分支（如 amd-staging-drm-next） ← ✓ 已合并`,
             caption: '从代码修改到补丁被合并的完整流程。每一步都有对应的命令和工具。大多数补丁需要 2-3 轮 Review 迭代。',
           },
           codeWalk: {
@@ -139,8 +139,10 @@ git config --global sendemail.smtpuser your.email@gmail.com
 # ========================================
 cd ~/kernel-src
 
-# 创建工作分支
-git checkout -b fix/vm-tlb-flush amd-staging-drm-next
+# 创建工作分支（前置一次性配置：
+#   git remote add agd5f https://gitlab.freedesktop.org/agd5f/linux.git
+#   git fetch agd5f amd-staging-drm-next）
+git checkout -b fix/vm-tlb-flush agd5f/amd-staging-drm-next
 
 # 编辑代码
 vim drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
@@ -169,8 +171,9 @@ git commit -s
 scripts/checkpatch.pl --strict -g HEAD~1..HEAD
 # 目标: total: 0 errors, 0 warnings
 
-# 找到维护者
-scripts/get_maintainer.pl -g HEAD~1..HEAD
+# 找到维护者（get_maintainer 接受补丁文件，不接受 commit 区间）
+git format-patch -1 -o /tmp/p
+scripts/get_maintainer.pl /tmp/p/0001-*.patch
 # 输出:
 #   Alex Deucher <alexander.deucher@amd.com>
 #   Christian König <christian.koenig@amd.com>
@@ -220,7 +223,7 @@ git send-email \\
               'git config sendemail.* 只需配置一次，Gmail 需要在安全设置中创建 App Password',
               'git commit -s 自动添加 Signed-off-by 行——这是内核补丁的法律要求（DCO 声明）',
               'scripts/checkpatch.pl --strict 启用更严格的检查，包括某些 WARNING 级别的建议',
-              'scripts/get_maintainer.pl -g 从 git 历史（而非补丁文件）中分析维护者',
+              'scripts/get_maintainer.pl 接受补丁文件或 -f <文件>（不支持 commit 区间）——先 git format-patch 再对 .patch 运行',
               '--in-reply-to 将 v2 补丁放入 v1 的邮件线程中，方便 Reviewer 跟踪',
               'v2 changelog 写在 --- 分隔符之后，这样 git am 应用补丁时会自动忽略它',
             ],
@@ -234,8 +237,8 @@ git send-email \\
               '做一个小修改——在 drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c 的某个注释中修复一个 typo 或改善措辞',
               '提交：git add -p && git commit -s（写规范的 commit message）',
               '运行 checkpatch：scripts/checkpatch.pl --strict -g HEAD~1..HEAD（确保 0 errors）',
-              '运行 get_maintainer：scripts/get_maintainer.pl -g HEAD~1..HEAD（看到维护者列表）',
               '生成补丁文件：git format-patch HEAD~1（查看生成的 .patch 文件内容）',
+              '运行 get_maintainer：scripts/get_maintainer.pl 0001-*.patch（看到维护者列表）',
               '用 git send-email --dry-run 模拟发送（不会真的发邮件）：git send-email --dry-run --to test@example.com 0001-*.patch',
               '清理练习分支：git checkout main && git branch -D practice/first-patch',
             ],
@@ -243,12 +246,12 @@ git send-email \\
 total: 0 errors, 0 warnings, 5 lines checked
 0001-drm-amdgpu-fix-comment-typo.patch has no obvious style problems
 
-$ scripts/get_maintainer.pl -g HEAD~1..HEAD
-Alex Deucher <alexander.deucher@amd.com> (maintainer:AMD DISPLAY CORE)
-amd-gfx@lists.freedesktop.org (open list:AMD AMDGPU)
-
 $ git format-patch HEAD~1
 0001-drm-amdgpu-fix-comment-typo.patch
+
+$ scripts/get_maintainer.pl 0001-drm-amdgpu-fix-comment-typo.patch
+Alex Deucher <alexander.deucher@amd.com> (maintainer:AMD DISPLAY CORE)
+amd-gfx@lists.freedesktop.org (open list:AMD AMDGPU)
 
 $ git send-email --dry-run --to test@example.com 0001-*.patch
 (dry-run) sendmail ... 0001-drm-amdgpu-fix-comment-typo.patch
@@ -264,7 +267,7 @@ Dry-OK. Log says: ...`,
             buggyCode: `# 开发者的错误提交流程
 
 # 1. 直接在主分支上修改
-git checkout amd-staging-drm-next
+git checkout <maintainer-branch>
 vim drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
 
 # 2. 提交（没有 -s 标志）
@@ -366,7 +369,7 @@ unmap path but accidentally removed the amdgpu_vm_flush() call.  │ ← Why: �
 The fix adds back the TLB invalidation between the PTE clear    │
 and the page release, matching the sequence in the map path.    │
 
-Tested on RX 7600 XT (gfx1102) with IGT amd_basic@vm-tests.   ← 测试信息
+Tested on RX 7600 XT (gfx1102) with the IGT amd_vm suite.    ← 测试信息
 
 Fixes: a1b2c3d4e5f6 ("drm/amdgpu: refactor VM unmap path")     ← Fixes 标签
 Signed-off-by: Your Name <your@email.com>                        ← DCO 签名
@@ -764,7 +767,7 @@ Projects:
             question: '你做过哪些与 GPU 驱动相关的项目或贡献？请具体描述。',
             difficulty: 'easy',
             hint: '准备 2-3 个具体的例子：一个内核补丁（展示代码能力）、一个源码分析（展示理解深度）、一个测试项目（展示质量意识）。',
-            answer: '示范回答（根据本课程的学习内容）：（1）内核补丁贡献：我向 amd-gfx 邮件列表提交了 [具体补丁]，修复了 amdgpu 驱动中 [具体问题]。补丁经过两轮 Review 后被合并到 amd-staging-drm-next。在这个过程中，我学会了内核的补丁提交流程（checkpatch、format-patch、send-email）和专业的 Review 回应方式。（2）amdgpu 源码深入分析：我深入分析了 amdgpu 的 VM 子系统，从 amdgpu_vm_init 到 GPU 页表更新的完整流程。我把分析结果写成了一篇技术博客文章，附带源码引用和执行流程图。这帮助我理解了 GPU 虚拟内存管理与 CPU 的核心区别。（3）IGT 测试编写：我为 amdgpu 编写了一个 VRAM 分配压力测试（amd_vram_stress.c），包含正面测试（各种大小的分配）和负面测试（无效参数处理），以及 1000 次分配/释放的压力测试来检测内存泄漏。这个测试已经提交到 IGT 仓库。每个例子都有公开链接可以验证——这是我 Portfolio 的核心价值。',
+            answer: '示范回答（根据本课程的学习内容）：（1）内核补丁贡献：我向 amd-gfx 邮件列表提交了 [具体补丁]，修复了 amdgpu 驱动中 [具体问题]。补丁经过若干轮 Review 迭代后被维护者合并。在这个过程中，我学会了内核的补丁提交流程（checkpatch、format-patch、send-email）和专业的 Review 回应方式。（2）amdgpu 源码深入分析：我深入分析了 amdgpu 的 VM 子系统，从 amdgpu_vm_init 到 GPU 页表更新的完整流程。我把分析结果写成了一篇技术博客文章，附带源码引用和执行流程图。这帮助我理解了 GPU 虚拟内存管理与 CPU 的核心区别。（3）IGT 测试编写：我为 amdgpu 编写了一个 VRAM 分配压力测试（amd_vram_stress.c），包含正面测试（各种大小的分配）和负面测试（无效参数处理），以及 1000 次分配/释放的压力测试来检测内存泄漏。这个测试已经提交到 IGT 仓库。每个例子都有公开链接可以验证——这是我 Portfolio 的核心价值。',
             amdContext: '在 AMD 面试中，"具体描述"意味着面试官期望听到具体的代码、具体的文件、具体的问题——而不是泛泛的"我学过驱动"。准备好随时在屏幕上打开你的 GitHub 展示代码。',
           },
         },
@@ -797,16 +800,16 @@ Projects:
             ],
           },
           diagram: {
-            title: 'AMD GPU 驱动团队结构与面试重点矩阵',
-            content: `AMD GPU 驱动团队结构
+            title: 'AMD GPU 驱动团队结构（示意）与面试重点矩阵',
+            content: `AMD GPU 驱动团队结构（示意图——非官方组织架构，以当前公开招聘信息为准）
 
 ┌─────────────────────────────────────────────────────────────┐
 │                    AMD GPU Driver Division                    │
 │                                                              │
 │  Markham (Canada)                Shanghai (China)            │
 │  ─────────────────               ────────────────            │
-│ 主力开发团队持续扩张中 │
-│  Alex Deucher (Lead)             Display & Compute focus     │
+│  重要开发中心之一                  重要开发中心之一            │
+│  上游维护者多在此（如 A. Deucher）  Display & Compute focus    │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │                    Teams                              │   │
@@ -1246,9 +1249,9 @@ total: 0 errors, 0 warnings ✓
 
 周   行动                          产出（全部可链接）
 ──   ────                          ──────────────────
- 1   环境搭建 + 实验一              Portfolio 仓库 + 构建笔记
- 2   实验三 ftrace 追踪             fence 追踪报告 .md
- 3   实验二 GPU Hang 调试           devcoredump 分析报告 .md
+ 1   环境搭建 + 实验一              Portfolio 仓库 + notes/lab1-kernel-build.md
+ 2   实验三 ftrace 追踪             analysis/fence-trace.md
+ 3   实验二 GPU Hang 调试           analysis/gpu-hang-report.md
  4   Module 5 源码精读              VM 或 Ring 子系统笔记
  ────────────────────────────────────────────────────
  5   实验六 KUnit                   drm_buddy 测试报告 + 自写用例
@@ -1301,7 +1304,7 @@ Bullet 翻译公式
 +- Extended the DRM core KUnit suite (drm_buddy — the
 +  allocator behind the amdgpu VRAM manager) with a
 +  boundary-condition test; all suites pass under UML
-+  [github.com/you/portfolio/tests/kunit-report.md]
++  [github.com/you/portfolio/tests/kunit-drm-buddy-report.md]
 
 -- Built a website about GPU drivers
 +- Designed & shipped a bilingual (EN/ZH) AMDGPU-internals
@@ -1335,13 +1338,13 @@ Bullet 翻译公式
   lore.kernel.org/amd-gfx/?q=f:you@mail.com
 • Built & booted custom v6.12 kernels with amdgpu
   as a module; documented the Ubuntu cert pitfall —
-  github.com/you/portfolio/notes/lab1.md
+  github.com/you/portfolio/notes/lab1-kernel-build.md
 • Root-caused a controlled GPU hang (IGT amd_deadlock
   → devcoredump → umr) on RDNA3 —
-  github.com/you/portfolio/analysis/hang.md
+  github.com/you/portfolio/analysis/gpu-hang-report.md
 • Extended DRM KUnit drm_buddy suite with a
   boundary test; suites pass under UML —
-  github.com/you/portfolio/tests/kunit.md
+  github.com/you/portfolio/tests/kunit-drm-buddy-report.md
 • Shipped a bilingual AMDGPU learning platform
   (14 modules, 7 labs, React/TS) — your-site.example
 

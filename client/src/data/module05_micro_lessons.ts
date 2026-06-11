@@ -182,11 +182,11 @@ int setup_display(struct amdgpu_device *adev)
     mode.clock = 148500;  /* 148.5 MHz pixel clock */
 
     /* 调用 DC 模块设置显示模式 */
-    return dc_commit_state(adev->dm.dc, &mode);
+    return dc_commit_streams(adev->dm.dc, &mode);
     /* 在 Instinct MI300X 上返回 -ENODEV */
 }`,
             hint: 'Instinct MI300X 是一张纯计算卡。想想它有哪些 IP Block，没有哪些。',
-            answer: 'Instinct MI300X 是纯计算 GPU，没有显示引擎（DCN IP）。在驱动初始化时，amdgpu 通过 IP discovery 检测到没有 DCE_HWIP，因此不会加载 DC（Display Core）模块。adev->dm.dc 为 NULL，调用 dc_commit_state 会返回 -ENODEV（设备不存在）。Instinct 卡没有 HDMI/DP 接口，物理上就不支持显示输出。这不是 Bug，而是硬件设计如此——Instinct 把所有晶体管面积都用于计算单元和 HBM 控制器，不浪费在显示功能上。正确做法：在调用 DC 函数前检查 adev->mode_info.num_crtc > 0。',
+            answer: 'Instinct MI300X 是纯计算 GPU，没有显示引擎（DCN IP）。在驱动初始化时，amdgpu 通过 IP discovery 检测到没有 DCE_HWIP，因此不会加载 DC（Display Core）模块。adev->dm.dc 为 NULL，调用 dc_commit_streams 会返回 -ENODEV（设备不存在）。Instinct 卡没有 HDMI/DP 接口，物理上就不支持显示输出。这不是 Bug，而是硬件设计如此——Instinct 把所有晶体管面积都用于计算单元和 HBM 控制器，不浪费在显示功能上。正确做法：在调用 DC 函数前检查 adev->mode_info.num_crtc > 0。',
           },
           interviewQ: {
             question: 'AMD GPU 的三个产品层次（Radeon RX、Radeon Pro、Instinct MI）有什么区别？amdgpu 驱动如何处理它们的差异？',
@@ -499,7 +499,8 @@ bool amdgpu_gfx_has_wmma(struct amdgpu_device *adev)
 - Wave32/Wave64 双模式
 - L0 Cache: 16KB per CU
 - L1 Cache: 128KB per Shader Array
-- L2 Cache: 32MB (Infinity Cache)
+- L2 Cache: ~2MB
+- Infinity Cache (末级缓存): 32MB
 - VRAM: 16GB GDDR6 @ 288 GB/s
 - 支持 WMMA AI 指令
 - Navi33（RX 7600 XT）为单晶粒实现（非 Chiplet）`,
@@ -546,14 +547,14 @@ void setup_wmma_compute(struct amdgpu_device *adev)
               '第二层：Mesa 3D / ROCm 运行时。Mesa（https://mesa3d.org/）是开源的 OpenGL/Vulkan 实现。AMD 的 Mesa 驱动包括 radeonsi（OpenGL）和 radv（Vulkan）。Mesa 的工作是编译着色器（GLSL/SPIR-V → AMD ISA）、构建 GPU 命令缓冲区（PM4 格式）、管理用户态的 Buffer 分配。ROCm 的 HIP Runtime 做类似的事但面向计算——通过 HSA Runtime 与 KFD 通信。Mesa 和 ROCm 都在用户空间运行。',
               '第三层：libdrm。这是用户空间的 C 库（https://gitlab.freedesktop.org/mesa/drm），封装了 DRM 的 ioctl 调用。libdrm 的 amdgpu 子库（libdrm_amdgpu）提供了 amdgpu_bo_alloc（分配 GPU 内存）、amdgpu_cs_submit（提交命令）等 API。Mesa 和 ROCm 都依赖 libdrm。',
               '第四层：DRM 内核框架。位于 Linux 内核的 drivers/gpu/drm/drm_*.c。DRM 提供通用的 GPU 管理框架：设备文件（/dev/dri/card0）、ioctl 接口、KMS（显示模式设置）、GEM/TTM（内存管理）。DRM 是所有 Linux GPU 驱动的公共代码——AMD、Intel、NVIDIA 都使用同一个 DRM 框架。',
-              '第五层：amdgpu 内核驱动。位于 drivers/gpu/drm/amd/，超过 400 万行代码。这是 AMD GPU 特定的实现，包含：GFX（图形引擎控制）、SDMA（DMA 传输）、DC（Display Core，显示控制）、VCN（视频编解码）、KFD（ROCm 计算接口）、PM/SMU（电源管理）。amdgpu 是你学习的核心对象。',
+              '第五层：amdgpu 内核驱动。位于 drivers/gpu/drm/amd/，数百万行代码。这是 AMD GPU 特定的实现，包含：GFX（图形引擎控制）、SDMA（DMA 传输）、DC（Display Core，显示控制）、VCN（视频编解码）、KFD（ROCm 计算接口）、PM/SMU（电源管理）。amdgpu 是你学习的核心对象。',
             ],
             keyPoints: [
               'OpenGL/Vulkan/HIP API → 应用层标准接口，跨平台',
               'Mesa radeonsi/radv → 用户态驱动，编译着色器和构建命令包',
               'libdrm (libdrm_amdgpu) → 封装 ioctl，提供 C API',
               'DRM Core → 内核通用 GPU 框架，所有 GPU 驱动共享',
-              'amdgpu → AMD 特定内核驱动，IP Block 架构，400 万行代码',
+              'amdgpu → AMD 特定内核驱动，IP Block 架构，数百万行代码',
               '每层有独立的代码仓库、团队和发布周期',
             ],
           },

@@ -190,7 +190,14 @@ export const glossaryByModuleEn: Record<string, GlossaryTerm[]> = {
       abbr: 'BAR',
       fullEn: 'Base Address Register',
       zhName: '基地址寄存器',
-      description: 'PCIe config register defining MMIO and I/O address ranges.',
+      description: 'PCIe config register defining MMIO and I/O address ranges. On modern AMD GPUs: BAR0=VRAM aperture, BAR2=Doorbell, BAR5=MMIO registers.',
+      category: 'hardware'
+    },
+    {
+      abbr: 'Infinity Cache',
+      fullEn: 'Infinity Cache (Last-Level Cache)',
+      zhName: '无限缓存',
+      description: 'AMD last-level cache introduced with RDNA2, sitting between L2 and VRAM. Not the same as L2: Navi33 has ~2MB L2 and 32MB Infinity Cache.',
       category: 'hardware'
     },
     {

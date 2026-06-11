@@ -600,7 +600,7 @@ PCI Subsystem Scans Bus
               ├─ pci_enable_device(pdev)     → Enable PCI device
               ├─ pci_set_master(pdev)        → Allow GPU to do DMA
               ├─ pci_ioremap_bar(pdev, 0)    → Map VRAM BAR
-              ├─ pci_ioremap_bar(pdev, 2)    → Map Register BAR
+              ├─ pci_ioremap_bar(pdev, 5)    → Map Register BAR
               └─ amdgpu_device_init(adev)    → Initialize all IP Blocks
 
 lspci output example:
@@ -1003,7 +1003,7 @@ echo "Development environment setup complete!"`,
               'build-essential includes gcc, make, and other basic compilation tools',
               'flex/bison are lexer/parser generators required by the kernel configuration system (Kconfig)',
               'libelf-dev handles the ELF format (kernel and modules are both ELF files)',
-              'Maintainer integration branches can contain amdgpu patches that have not yet landed in Linus\' mainline',
+              'Maintainer integration branches (e.g. amd-staging-drm-next) contain amdgpu patches that have not yet landed in Linus\' mainline — verify the current branch name against community docs',
               'cp /boot/config-$(uname -r) reuses the current kernel\'s config, avoiding the hassle of configuring from scratch',
               'make M=drivers/gpu/drm/amd is the most commonly used command in daily development — compile only the modified module',
             ],
