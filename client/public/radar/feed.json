@@ -1,22 +1,76 @@
 {
-  "generatedAt": "2026-06-13T06:39:31.660Z",
+  "generatedAt": "2026-06-14T06:53:38.926Z",
   "windowDays": 14,
   "sources": {
     "gitlab": {
       "ok": true,
       "count": 150,
-      "totalOpen": 1675,
+      "totalOpen": 1676,
       "error": null,
       "url": "https://gitlab.freedesktop.org/drm/amd/-/issues"
     },
     "lore": {
       "ok": true,
-      "count": 97,
+      "count": 96,
       "error": null,
       "url": "https://lore.kernel.org/amd-gfx/"
     }
   },
   "issues": [
+    {
+      "iid": 5387,
+      "title": "amdgpu/TTM: hibernation eviction corrupts bulk_move list → WARN in ttm_resource_add_bulk_move, then fatal list_del BUG minutes later (Ryzen 7040, gfx1103)",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5387",
+      "createdAt": "2026-06-14T05:45:56.410Z",
+      "updatedAt": "2026-06-14T05:46:51.966Z",
+      "labels": [],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "Samuel Ainsworth",
+      "description": "I have been experiencing semi-regular issues with hibernation on my FW13 with 7640U. This report is product of my debugging one such issue. In the interest of transparency, this work was done with coding assistance. What follows is the report, heavily edited by me (human), and vetted to a quality bar such that it would be a bug report I would be happy to receive. However with that said, I offer the disclaimer that I am not an expert in this codebase. I am happy to provide any additional information that may be helpful in investigating.\n\n[crash-boot-hibernate-trigger.log](/uploads/5bc7f8194cf186d30172856287295939/crash-boot-hibernate-trigger.log)\n\n[crash-boot-kernel.log](/uploads/f438ce6a23d267fdaca0c26527439d0e/crash-boot-kernel.log)\n\n[pstore-panic-full.log](/uploads/777f506a5482b7a6389efc0a7f5d4b71/pstore-panic-full.log)\n\n[system-info.txt](/uploads/6d30f745a2bc270882eef30de20961ec/system-info.txt)\n\n## Summary\n\nDuring a `suspend-then-hibernate` cycle, the TTM hibernation eviction path\n(`ttm_device_prepare_hibernation` → `ttm_bo_swapout` → `ttm_resource_alloc` →\n`ttm_resource_add_bulk_move`) hits a `WARN_ON` at\n`drivers/gpu/drm/ttm/ttm_resource.c:235`. The WARN is non-fatal and the machine\nresumes normally, but it leaves a `ttm_lru_bulk_move` list internally\ninconsistent. Later (for me it was approx. 17 minutes), a routine `list_del` on that same list\ntripped `BUG_ON` in `lib/list_debug.c:65` (`list_del corruption`), panicking the\nkernel, which presents as a spontaneous reboot",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 3709,
+      "title": "Mouse lag / broken input with amd-staging-drm-next and kernel 6.12.0-rc4",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/3709",
+      "createdAt": "2024-10-22T03:11:51.188Z",
+      "updatedAt": "2026-06-14T01:41:04.864Z",
+      "labels": [
+        "7000 dGPU series",
+        "AMDgpu",
+        "DC",
+        "bisected",
+        "xorg"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 85,
+      "author": "Marek Olšák",
+      "description": "There is a regression in amd-staging-drm-next causing unpleasant mouse lag, making the computer more difficult to use. I have only tested Navi31, though the regression might not be limited to that chip.\n\nThe regression is somewhere between v6.10.0 and HEAD of amd-staging-drm-next.\n\nSteps to reproduce:\n* Pick any 2 points on the screen roughly half the screen apart and try to move the mouse cursor between them very quickly as if bouncing along a straight line.\n* If the regression is present, it will be very difficult to do that. Not only will the mouse cursor move with noticeable delay, but it will also move away from the line (as if some of the input was lost), which is also difficult to correct with the delay.\n\nTags and branches where it's reproducible:\n* REPRODUCIBLE: v6.12.0-rc4\n* NOT REPRODUCIBLE: v6.11.4\n* NOT REPRODUCIBLE: v6.10.14\n* REPRODUCIBLE: amd-staging-drm-next commit 99a1c83a8d2e2016fbeec28fe4512e89c3ca1b70 (3501 commits ahead of v6.10.0)\n* NOT REPRODUCIBLE: v6.10.0\n\nI use firmware from the upstream linux-firmware repository.",
+      "descriptionTruncated": false,
+      "patchMatches": []
+    },
+    {
+      "iid": 5381,
+      "title": "Not waking up from sleep [ThinkPad P14s Gen 6 AMD / Pop!OS / 7.0.11-76070011]",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5381",
+      "createdAt": "2026-06-12T15:58:56.025Z",
+      "updatedAt": "2026-06-13T07:01:39.767Z",
+      "labels": [
+        "BIOS",
+        "s0ix"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 6,
+      "author": "Jeremyia Eleero",
+      "description": "## Brief summary of the problem:\n\nSystem does not wake up from sleep, merely shows the greeter (frozen) or last screen (frozen; when using amd-s2idle).\n\n## Hardware description:\n\n# [amd-s2idle-report-2026-06-12.html](/uploads/f53eb562c4aa836405fd248bfb9d150c/amd-s2idle-report-2026-06-12.html)\n\n## System information:\n\n- Distro name and Version: Pop!\\_OS 24.04 LTS\n- Kernel version: 7.0.11-76070011-generic #202606011647~~1780583645~~24.04\\~5c4cc15 SMP PREEMPT_DYNAMIC Thu J x86_64 x86_64 x86_64 GNU/Linux\n\n## How to reproduce the issue:\n\n1. Suspend system (through GUI or by closing lid; or using `amd-s2idle test`)\n2. Wake up the system through any means\n3. GUI is frozen, only killing through long-pressing power button revives it\n\n## Attached files:",
+      "descriptionTruncated": false,
+      "patchMatches": []
+    },
     {
       "iid": 4041,
       "title": "kwin_wayland_drm: Pageflip timed out! This is  a bug in the amdgpu kernel driver",
@@ -117,23 +171,6 @@
       "author": "Fredrik Bäckström",
       "description": "### AMDGPU Navi 24 (RX 6500 XT) SMU bus error crashes host during long VM passthrough sessions\n\n## Brief summary of the problem:\n\nHost GPU Sapphire Radeon RX 6500 XT (Navi 24, PCI ID 1002:743f, BDF 0000:06:00.0) crashes with SMU bus error after 2+ hours of sustained GPU compositing workload during QEMU/KVM passthrough sessions with Looking Glass.\n\nHardware description:\n\nCPU: AMD Ryzen 9 5950X 16-Core Processor\n\nGPU:\n\n• Host: Advanced Micro Devices, Inc. \\[AMD/ATI\\] Navi 24 \\[Radeon RX 6400/6500 XT/6500M\\] \\[1002:743f\\] (rev c7)\n\n• Passthrough (VFIO): Advanced Micro Devices, Inc. \\[AMD/ATI\\] Navi 21 \\[Radeon RX 6800/6800 XT / 6900 XT\\] \\[1002:73bf\\] (rev c0)\n\nSystem Memory: 62 GB total \\[(64 GiB)\n\nDisplay(s): 1 connected (HDMI-A-1)\n\nType of Display Connection: HDMI\n\nSystem information:\n\nDistro name and Version: Fedora Linux 44 (KDE Plasma Desktop Edition)\n\nKernel version: Linux fedora 7.0.12-cachyos1.fc44.x86_64 #1 SMP PREEMPT_DYNAMIC Thu Jun 11 22:13:58 UTC 2026 x86_64 GNU/Linux\n\nCustom kernel: CachyOS kernel (kernel-cachyos-7.0.12-cachyos1.fc44.x86_64), also effects same bug in fedora stable kernel.\n\nAMD official driver version: N/A — using in-tree kernel amdgpu driver. SMU firmware version: 0x00492500 (73.37.0). Display Core: v3.2.369. DMUB firmware: version=0x02020021.\n\nAdditional notes for the report:\n\n• The crash affects the host GPU (RX 6500 XT), NOT the passthrough GPU (RX 6800/6900 XT)\n\n• The passthrough GPU runs under vfio-pci and is not loaded by amdgpu in the host\n",
       "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5381,
-      "title": "Not waking up from sleep [ThinkPad P14s Gen 6 AMD / Pop!OS / 7.0.11-76070011]",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5381",
-      "createdAt": "2026-06-12T15:58:56.025Z",
-      "updatedAt": "2026-06-12T23:13:05.759Z",
-      "labels": [
-        "s0ix"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 5,
-      "author": "Jeremyia Eleero",
-      "description": "## Brief summary of the problem:\n\nSystem does not wake up from sleep, merely shows the greeter (frozen) or last screen (frozen; when using amd-s2idle).\n\n## Hardware description:\n\n# [amd-s2idle-report-2026-06-12.html](/uploads/f53eb562c4aa836405fd248bfb9d150c/amd-s2idle-report-2026-06-12.html)\n\n## System information:\n\n- Distro name and Version: Pop!\\_OS 24.04 LTS\n- Kernel version: 7.0.11-76070011-generic #202606011647~~1780583645~~24.04\\~5c4cc15 SMP PREEMPT_DYNAMIC Thu J x86_64 x86_64 x86_64 GNU/Linux\n\n## How to reproduce the issue:\n\n1. Suspend system (through GUI or by closing lid; or using `amd-s2idle test`)\n2. Wake up the system through any means\n3. GUI is frozen, only killing through long-pressing power button revives it\n\n## Attached files:",
-      "descriptionTruncated": false,
       "patchMatches": []
     },
     {
@@ -561,27 +598,6 @@
       "author": "Isaac Bruno",
       "description": "**Description:** **System Environment:**\n\n* **OS:** Fedora 44\n* **Desktop Environment:** GNOME 50 (Wayland / Mutter)\n* **Kernel version:** 7.0.10-201.fc44.x86_64\n* **CPU/APU:** AMD Ryzen 8600G (DCN 3.1 - driving the displays)\n* **RAM:** 2x16 GB DDR5 4800MHz\n* **dGPU:** AMD RX 9060XT (Used for compute/LLMs, no monitors attached)\n\n**Symptoms:** While using the system normally, the screen randomly fades/dims as if trying to suspend, followed by white background flashes and visual artifacts. The issue is highly intermittent and happens randomly with no specific trigger or heavy UI workload. The display eventually recovers after Mutter/Wayland handles the GPU hang. There are no specific actions to trigger visual bugs.\n\nThis setup worked perfectly on previous kernel versions before adding the dedicated RX 9060XT to the system. The display is plugged directly into the motherboard (iGPU).\n\n**Steps to Reproduce:** Highly intermittent, no reliable reproducer. Occurs randomly during normal desktop usage.\n\n**Workarounds Tried (None worked):**\n\n* **Kernel Parameters (amdgpu / PCIe):**\n  * `amdgpu.sg_display=0` (Disabled scatter/gather display support)\n  * `amdgpu.dcdebugmask=0x10` (Disabled Panel Self Refresh - PSR)\n  * `amdgpu.aspm=0` and `pcie_aspm=off` (Disabled Active State Power Management)\n  * `amdgpu.runpm=0` (Disabled runtime power management)\n  * `amdgpu.dpm=0` (Disabled dynamic power management entirely)\n  * `amdgpu.ppfeaturemask=0xffffffff` (Altered PowerPlay feature masks)\n  *",
       "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 3709,
-      "title": "Mouse lag / broken input with amd-staging-drm-next and kernel 6.12.0-rc4",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/3709",
-      "createdAt": "2024-10-22T03:11:51.188Z",
-      "updatedAt": "2026-06-08T21:39:34.354Z",
-      "labels": [
-        "7000 dGPU series",
-        "AMDgpu",
-        "DC",
-        "bisected",
-        "xorg"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 84,
-      "author": "Marek Olšák",
-      "description": "There is a regression in amd-staging-drm-next causing unpleasant mouse lag, making the computer more difficult to use. I have only tested Navi31, though the regression might not be limited to that chip.\n\nThe regression is somewhere between v6.10.0 and HEAD of amd-staging-drm-next.\n\nSteps to reproduce:\n* Pick any 2 points on the screen roughly half the screen apart and try to move the mouse cursor between them very quickly as if bouncing along a straight line.\n* If the regression is present, it will be very difficult to do that. Not only will the mouse cursor move with noticeable delay, but it will also move away from the line (as if some of the input was lost), which is also difficult to correct with the delay.\n\nTags and branches where it's reproducible:\n* REPRODUCIBLE: v6.12.0-rc4\n* NOT REPRODUCIBLE: v6.11.4\n* NOT REPRODUCIBLE: v6.10.14\n* REPRODUCIBLE: amd-staging-drm-next commit 99a1c83a8d2e2016fbeec28fe4512e89c3ca1b70 (3501 commits ahead of v6.10.0)\n* NOT REPRODUCIBLE: v6.10.0\n\nI use firmware from the upstream linux-firmware repository.",
-      "descriptionTruncated": false,
       "patchMatches": []
     },
     {
@@ -2669,24 +2685,6 @@
       "comments": 1,
       "author": "Paweł-Jan Dediu",
       "description": "Total freeze of all input (keyboard & mouse) on Linux Mint 22.1\n\nIts happens randomly, sometimes after suspend, sometimes while doing my work routine\n\n\\[drm:do_aquire_global_lock.isra.0 \\[amdgpu\\]\\] _ERROR_ \\[CRTC:73:crtc-0\\] hw_done or flip_done timed out\n\n> `2026-02-13T09:26:25.799512+01:00 HP-Pavilion-GL-15 systemd[1]: Starting apt-daily-upgrade.service - Daily apt upgrade and clean activities...`\n>\n> `2026-02-13T09:26:26.455170+01:00 HP-Pavilion-GL-15 systemd[1]: apt-daily-upgrade.service: Deactivated successfully. 2026-02-13T09:26:26.455532+01:00 HP-Pavilion-GL-15 systemd[1]: Finished apt-daily-upgrade.service - Daily apt upgrade and clean activities.`\n>\n> `2026-02-13T09:27:31.845656+01:00 HP-Pavilion-GL-15 kernel: [drm:do_aquire_global_lock.isra.0 [amdgpu]] _ERROR_ [CRTC:73:crtc-0] hw_done or flip_done timed out`\n>\n> `2026-02-13T09:27:38.247995+01:00 HP-Pavilion-GL-15 kernel: sysrq: This sysrq operation is disabled. 2026-02-13T09:27:41.088717+01:00 HP-Pavilion-GL-15 kernel: message repeated 2 times: [ sysrq: This sysrq operation is disabled.]`\n>\n> `2026-02-13T09:27:42.384097+01:00 HP-Pavilion-GL-15 kernel: sysrq: Emergency Sync 2026-02-13T09:27:42.389669+01:00 HP-Pavilion-GL-15 kernel: Emergency Sync complete`\n>\n> `2026-02-13T09:27:43.838025+01:00 HP-Pavilion-GL-15 kernel: sysrq: Emergency Remount R/O`\n\n**Hardware description**:\n\nHP Pavilion Gaming Laptop 15-ec1xxx\n\nKernel: 6.8.0-100-generic\n\nDesktop: Cinnamon v: 6.4.8 Distro: Linux Mint 22.1 Xia\n\nCPU: Info: 6-core mode",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 4394,
-      "title": "kwin_wayland_drm: Pageflip timed out! This is a bug in the amdgpu kernel driver",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/4394",
-      "createdAt": "2025-07-06T14:15:57.911Z",
-      "updatedAt": "2026-05-20T03:03:42.200Z",
-      "labels": [
-        "Strix Halo",
-        "page flip timeout"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 3,
-      "author": "Eliot Carney-Seim",
-      "description": "## Brief summary of the problem:\n\nWas filling out a bug report for a different problem when this occurred, lol. Do not know how to receate. So far one time occurrance, will update if happens again.\n\nhttps://shop.asus.com/us/rog/90nr0jy1-m00670-rog-flow-z13-2025.html?config=90NR0JY1-M00670\n\n## Hardware description:\n\n- CPU: AMD Ryzen™ AI MAX+ 395 Processor 3.0GHz (80MB Cache, up to 5.1GHz, 16 cores, 32 Threads); AMD XDNA™ NPU up to 50TOPS\n- GPU: Strix Halo \\[Radeon Graphics / Radeon 8050S Graphics / Radeon 8060S Graphics\\] \\[1002:1586\\]\n- System Memory: 128GB (variable, shared RAM/VRAM)\n- Display(s): 2560 x 1600, WQXGA\n\n## System information:\n\n- Distro name and Version:\n\n  > Operating System: Fedora Linux 42 KDE\n  >\n  > Plasma Version: 6.4.2 KDE\n  >\n  > Frameworks Version: 6.15.0\n  >\n  > Qt Version: 6.9.1 Kernel Version\n- Kernel version:\n\n  > 6.15.4-200.fc42.x86_64 (64-bit)\n- AMD official driver version: **amdgpu** 3.63.0 for 0000:c4:00.0 on minor 1\n\n## How to reproduce the issue:\n\nJust use the computer, maybe run something in fullscreen for a while then stop it and continue normal use.\n\nAttached files:\n\n[myJournalCTL.txt](/uploads/f7f050c0f5dfb0da90e4191bb8feb395/myJournalCTL.txt)\n\n[myDMESG.txt](/uploads/405d7e5b93ad8ebf7e510e96de5a5407/myDMESG.txt)\n\n### Screenshots/video files\n\nN/A - \"Screen Freezes, Ctrl-Alt-F4 -\\> sign-in -\\> 'sudo systemctl reboot' \" - that only works after some time, changing the tts also has a wait.\n\n### Log files (for system lockups / game freezes / cra",
       "descriptionTruncated": true,
       "patchMatches": []
     }
