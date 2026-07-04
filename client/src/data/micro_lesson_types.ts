@@ -33,11 +33,15 @@ export interface MicroLesson {
   summary?: string;
   keyPoints?: string[];
 
-  // ASCII diagram
+  // Diagram: ASCII art (content) with optional SVG figure upgrade.
+  // When svgId matches a figure registered in
+  // components/shared/LessonFigure.tsx, the SVG renders instead
+  // of the ASCII fallback.
   diagram: {
     title: string;
     content: string;
     caption?: string;
+    svgId?: string;
   };
 
   // Annotated kernel code snippet

@@ -4,6 +4,8 @@
 // ============================================================
 import type { Module } from './curriculum';
 import { ecosystemModuleEn } from './ecosystem_module_en';
+import { cCppModuleEn } from './c_cpp_module_en';
+import { gpuArchModuleEn } from './gpu_arch_module_en';
 
 export const curriculumEn: Module[] = [
   {
@@ -330,6 +332,7 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
     ],
   },
   ecosystemModuleEn,
+  cCppModuleEn,
   {
     id: 'prerequisites',
     number: '1',
@@ -421,24 +424,26 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
     ],
   },
   // ═══════════════════════════════════════════════════════════════
-  // Module 1.5 — Real-Time Graphics APIs & GPU Architecture
+  // Module 1.5 — GPU Architecture Fundamentals (gpu_arch_module_en.ts)
+  // Module 1.7 — Real-Time Graphics APIs
   // ═══════════════════════════════════════════════════════════════
+  gpuArchModuleEn,
   {
     id: 'graphics-apis',
-    number: '1.5',
-    title: 'Real-Time Graphics APIs & GPU Architecture',
-    titleEn: 'Real-Time Graphics APIs & GPU Architecture',
+    number: '1.7',
+    title: 'Real-Time Graphics APIs',
+    titleEn: 'Real-Time Graphics APIs',
     icon: 'Monitor',
     description:
       'Understand how GPUs are actually used — from the application developer perspective. Real-time rendering pipeline, OpenGL, Vulkan, OpenCL, and DirectX 12 concepts. Knowing this layer makes you understand what the driver ultimately serves.',
     estimatedHours: 30,
     difficulty: 'intermediate',
     subModules: [
-      { id: 'gfx-pipeline', title: '1.5.1 Real-Time Rendering Pipeline', titleEn: 'Real-Time Rendering Pipeline' },
-      { id: 'gfx-opengl', title: '1.5.2 OpenGL State Machine', titleEn: 'OpenGL State Machine' },
-      { id: 'gfx-vulkan', title: '1.5.3 Vulkan: Modern Explicit API', titleEn: 'Vulkan: Modern Explicit API' },
-      { id: 'gfx-opencl', title: '1.5.4 OpenCL Compute Model', titleEn: 'OpenCL Compute Model' },
-      { id: 'gfx-dx12', title: '1.5.5 DirectX 12 Concepts & Comparison', titleEn: 'DirectX 12 Concepts & Comparison' },
+      { id: 'gfx-pipeline', title: '1.7.1 Real-Time Rendering Pipeline', titleEn: 'Real-Time Rendering Pipeline' },
+      { id: 'gfx-opengl', title: '1.7.2 OpenGL State Machine', titleEn: 'OpenGL State Machine' },
+      { id: 'gfx-vulkan', title: '1.7.3 Vulkan: Modern Explicit API', titleEn: 'Vulkan: Modern Explicit API' },
+      { id: 'gfx-opencl', title: '1.7.4 OpenCL Compute Model', titleEn: 'OpenCL Compute Model' },
+      { id: 'gfx-dx12', title: '1.7.5 DirectX 12 Concepts & Comparison', titleEn: 'DirectX 12 Concepts & Comparison' },
     ],
     theory: {
       overview: `This module approaches the GPU from the application developer's perspective — understanding how graphics and compute APIs drive the hardware. This is crucial for AMD engineers because the driver's entire purpose is to faithfully implement these APIs.

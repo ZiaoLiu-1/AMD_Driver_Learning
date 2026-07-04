@@ -1,6 +1,7 @@
 import type { LucideIcon, LucideProps } from "lucide-react";
 import {
     BookOpen,
+    Braces,
     Brain,
     Bug,
     Building,
@@ -8,6 +9,7 @@ import {
     CheckCircle2,
     Compass,
     Cpu,
+    Database,
     Flame,
     FlaskConical,
     GitBranch,
@@ -17,6 +19,7 @@ import {
     Layers,
     Link,
     Mail,
+    Map,
     Microscope,
     Monitor,
     Plug,
@@ -41,6 +44,7 @@ export interface DynamicIconProps extends LucideProps {
 // icon name, register it here.
 const iconMap: Record<string, LucideIcon> = {
     BookOpen,
+    Braces,
     Brain,
     Bug,
     Building,
@@ -48,6 +52,7 @@ const iconMap: Record<string, LucideIcon> = {
     CheckCircle2,
     Compass,
     Cpu,
+    Database,
     Flame,
     FlaskConical,
     GitBranch,
@@ -57,6 +62,7 @@ const iconMap: Record<string, LucideIcon> = {
     Layers,
     Link,
     Mail,
+    Map,
     Microscope,
     Monitor,
     Plug,

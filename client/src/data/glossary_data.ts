@@ -44,6 +44,26 @@ export const glossaryByModule: Record<string, GlossaryTerm[]> = {
     { abbr: 'NUMA', fullEn: 'Non-Uniform Memory Access', zhName: '非统一内存访问', description: '多处理器系统中，不同 CPU 访问不同内存区域的延迟不同，驱动需要感知 NUMA 拓扑以优化性能。', category: 'hardware' },
   ],
 
+  // ── Module 1.5: GPU 架构基础 ────────────────────────────
+  'gpu-arch': [
+    { abbr: 'Wavefront', fullEn: 'Wavefront (Wave)', zhName: '波前', description: 'AMD GPU 的基本执行单位：32 或 64 个 work-item 共享一条指令流锁步执行，等价于 NVIDIA 的 warp。RDNA 原生 wave32，GCN/CDNA 固定 wave64。', category: 'hardware' },
+    { abbr: 'WGP', fullEn: 'Workgroup Processor', zhName: '工作组处理器', description: 'RDNA 特有组织：2 个 CU 共享 128 KiB LDS 与 L0 指令缓存；一个 workgroup 必须整体落在一个 WGP 上。CDNA 无此概念。', category: 'hardware' },
+    { abbr: 'SIMD32', fullEn: 'Single Instruction Multiple Data (32-wide)', zhName: '32 宽向量执行单元', description: 'RDNA CU 内真正执行指令的单元，每 CU 两个；每个 SIMD32 有 16 个 wave slot（RDNA2/3）和自己的 VGPR 堆。', category: 'hardware' },
+    { abbr: 'SGPR', fullEn: 'Scalar General-Purpose Register', zhName: '标量通用寄存器', description: '每个 wave 一份的寄存器，存指针、循环计数等全 wave 相同的值；由标量单元（SALU）操作，指令前缀 s_。', category: 'hardware' },
+    { abbr: 'VGPR', fullEn: 'Vector General-Purpose Register', zhName: '矢量通用寄存器', description: '每条 lane 一份的寄存器，存各 lane 不同的数据；用量直接决定 occupancy，是 GPU 性能调优的头号资源。指令前缀 v_。', category: 'hardware' },
+    { abbr: 'LDS', fullEn: 'Local Data Share', zhName: '本地数据共享', description: '程序员手动管理的片上共享内存（HIP 的 __shared__）：RDNA 每 WGP 128 KiB，GCN/CDNA 每 CU 64 KiB，workgroup 内交换数据与归约的主场。', category: 'hardware' },
+    { abbr: 'EXEC', fullEn: 'Execute Mask', zhName: '执行掩码', description: '按 lane 的开关位图：分支发散时硬件用它分批执行两条路径，被关闭的 lane 不写回结果。读 AMD 汇编的第一个关键寄存器。', category: 'hardware' },
+    { abbr: 'MALL', fullEn: 'Memory Attached Last Level (Infinity Cache)', zhName: '无限缓存（官方术语）', description: 'Infinity Cache 在 AMD 文档中的正式名称：位于 L2 之后的片上末级缓存，拦截显存流量放大等效带宽，使总线可以收窄降本。', category: 'hardware' },
+    { abbr: 'GTT', fullEn: 'Graphics Translation Table', zhName: '图形转换表内存域', description: '经 GART 页表映射给 GPU 的系统内存：容量大但走 PCIe 带宽低；与 VRAM 并列为 amdgpu 两大内存域，BO 驱逐的目的地。', category: 'kernel' },
+    { abbr: 'GPUVM', fullEn: 'GPU Virtual Memory', zhName: 'GPU 虚拟内存', description: 'GPU 的 MMU：每进程独立 GPU 页表，提供隔离与地址稳定；页表更新由 SDMA 执行，是 amdgpu 内存管理的地基。', category: 'kernel' },
+    { abbr: 'PM4', fullEn: 'PM4 Packet Format', zhName: 'PM4 命令包格式', description: 'GC 命令处理器的命令编码：32 位头部+数据，type-3 包携带 DRAW/DISPATCH/WRITE_DATA 等操作码；Mesa/驱动都用它跟 CP 说话。', category: 'hardware' },
+    { abbr: 'IB', fullEn: 'Indirect Buffer', zhName: '间接缓冲区', description: '装载大块命令的 GPU buffer：ring 里只放指向它的跳转包，容量与安全（用户命令不直接进内核 ring）双赢。', category: 'kernel' },
+    { abbr: 'MQD', fullEn: 'Memory Queue Descriptor', zhName: '内存队列描述符', description: '内存中保存一条队列全部状态的结构体（ring 基址/指针/doorbell 偏移），可被调度固件随时装载进硬件队列槽。', category: 'hardware' },
+    { abbr: 'HQD', fullEn: 'Hardware Queue Descriptor', zhName: '硬件队列描述符', description: '硬件上描述"活跃队列"的寄存器组，数量有限；MQD 被装载进 HQD 后队列才真正被 CP 服务，关系如同线程与 CPU 核。', category: 'hardware' },
+    { abbr: 'MES', fullEn: 'MicroEngine Scheduler', zhName: '微引擎调度器', description: 'GFX11+ 的队列调度固件（取代 KIQ）：把大量 MQD 动态映射到有限 HQD，支持超订/优先级/抢占，是用户态队列的基石。', category: 'hardware' },
+    { abbr: 'ACE', fullEn: 'Asynchronous Compute Engine', zhName: '异步计算引擎', description: 'MEC 提供的计算队列引擎，可独立于图形管线派发计算 workgroup；MI300 每个 XCD 配 4 个 ACE。', category: 'hardware' },
+  ],
+
   // ── Module 2: 硬件接口基础 ──────────────────────────────
   hardware: [
     { abbr: 'PCIe', fullEn: 'Peripheral Component Interconnect Express', zhName: '高速外设互联总线', description: '现代 GPU 连接到 CPU/主板的高速串行总线标准。RX 7600 XT 为 PCIe 4.0 x8（Navi33 原生 x8；可插入 x16 插槽但电气链路为 x8）。', category: 'hardware' },

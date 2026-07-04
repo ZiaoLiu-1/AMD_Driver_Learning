@@ -178,6 +178,24 @@ export const glossaryByModuleEn: Record<string, GlossaryTerm[]> = {
       category: 'kernel'
     }
   ],
+  'gpu-arch': [
+    { abbr: 'Wavefront', fullEn: 'Wavefront (Wave)', zhName: '波前', description: "AMD's basic execution unit: 32 or 64 work-items sharing one instruction stream in lockstep — the equivalent of an NVIDIA warp. RDNA is wave32-native; GCN/CDNA are always wave64.", category: 'hardware' },
+    { abbr: 'WGP', fullEn: 'Workgroup Processor', zhName: '工作组处理器', description: 'RDNA-only grouping: 2 CUs sharing 128 KiB LDS and the L0 instruction cache; a workgroup must fit entirely within one WGP. CDNA has no WGPs.', category: 'hardware' },
+    { abbr: 'SIMD32', fullEn: 'Single Instruction Multiple Data (32-wide)', zhName: '32 宽向量执行单元', description: 'The unit that actually executes instructions in an RDNA CU (two per CU); each SIMD32 holds 16 wave slots (RDNA2/3) and its own VGPR file.', category: 'hardware' },
+    { abbr: 'SGPR', fullEn: 'Scalar General-Purpose Register', zhName: '标量通用寄存器', description: 'One copy per wave, holding values uniform across lanes (pointers, loop counters); operated by the scalar unit (SALU), instruction prefix s_.', category: 'hardware' },
+    { abbr: 'VGPR', fullEn: 'Vector General-Purpose Register', zhName: '矢量通用寄存器', description: 'One copy per lane for per-lane data; usage directly determines occupancy, making it the #1 resource in GPU performance tuning. Instruction prefix v_.', category: 'hardware' },
+    { abbr: 'LDS', fullEn: 'Local Data Share', zhName: '本地数据共享', description: "Programmer-managed on-chip shared memory (HIP's __shared__): 128 KiB per WGP on RDNA, 64 KiB per CU on GCN/CDNA — home of intra-workgroup data exchange and reductions.", category: 'hardware' },
+    { abbr: 'EXEC', fullEn: 'Execute Mask', zhName: '执行掩码', description: 'Per-lane on/off bitmap: on branch divergence, hardware executes both paths in turn with lanes masked off not writing results. The first key register you meet in AMD assembly.', category: 'hardware' },
+    { abbr: 'MALL', fullEn: 'Memory Attached Last Level (Infinity Cache)', zhName: '无限缓存（官方术语）', description: "Infinity Cache's official name in AMD docs: the on-die last-level cache behind L2 that absorbs VRAM traffic, multiplying effective bandwidth so the memory bus can be narrower and cheaper.", category: 'hardware' },
+    { abbr: 'GTT', fullEn: 'Graphics Translation Table', zhName: '图形转换表内存域', description: 'System memory mapped GPU-visible through GART page tables: large but PCIe-limited bandwidth; together with VRAM it forms the two main amdgpu memory domains, and is where evicted BOs go.', category: 'kernel' },
+    { abbr: 'GPUVM', fullEn: 'GPU Virtual Memory', zhName: 'GPU 虚拟内存', description: "The GPU's MMU: per-process GPU page tables providing isolation and stable addresses; page-table updates are executed by the SDMA engine. The foundation of amdgpu memory management.", category: 'kernel' },
+    { abbr: 'PM4', fullEn: 'PM4 Packet Format', zhName: 'PM4 命令包格式', description: "The GC command processor's command encoding: a 32-bit header plus payload; type-3 packets carry opcodes like DRAW/DISPATCH/WRITE_DATA. Both Mesa and the kernel speak it to the CP.", category: 'hardware' },
+    { abbr: 'IB', fullEn: 'Indirect Buffer', zhName: '间接缓冲区', description: 'A GPU buffer holding bulk commands: the ring only carries a jump packet referencing it — a win for both capacity and security (user commands never enter the kernel ring directly).', category: 'kernel' },
+    { abbr: 'MQD', fullEn: 'Memory Queue Descriptor', zhName: '内存队列描述符', description: "An in-memory struct holding a queue's complete state (ring base/pointers/doorbell offset), ready to be loaded into a hardware queue slot by scheduling firmware at any time.", category: 'hardware' },
+    { abbr: 'HQD', fullEn: 'Hardware Queue Descriptor', zhName: '硬件队列描述符', description: 'The register set describing an active queue in hardware — a scarce resource; a queue is only serviced by the CP once its MQD is loaded into an HQD, like threads onto CPU cores.', category: 'hardware' },
+    { abbr: 'MES', fullEn: 'MicroEngine Scheduler', zhName: '微引擎调度器', description: 'The GFX11+ queue-scheduling firmware (replacing KIQ): dynamically maps many MQDs onto few HQDs with oversubscription, priorities, and preemption — the foundation of user-mode queues.', category: 'hardware' },
+    { abbr: 'ACE', fullEn: 'Asynchronous Compute Engine', zhName: '异步计算引擎', description: 'Compute queue engines provided by the MEC, dispatching compute workgroups independently of graphics; MI300 has 4 ACEs per XCD.', category: 'hardware' },
+  ],
   hardware: [
     {
       abbr: 'PCIe',

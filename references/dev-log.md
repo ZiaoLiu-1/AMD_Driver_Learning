@@ -222,3 +222,21 @@ Scale: 1-5 where 5 = "reading this chapter covers 90% of the knowledge needed"
 1. ...
 2. ...
 ```
+
+## Session: 2026-07-04 — Module 1.5 "GPU Architecture Fundamentals" + Kernel C Idioms group + SVG figures
+
+**Module(s) worked on**: new `gpu-arch` (Module 1.5), `c-cpp` (new group 0.7.3), `graphics-apis` (renumbered 1.5 → 1.7)
+
+**Changes made**:
+- New Module 1.5 "GPU 架构基础" (id `gpu-arch`, 35h): 12 micro-lessons in 4 groups (what-a-GPU-is / execution model / memory & command front-end / architecture map), zh + en, fact-checked against RDNA3/RDNA4 ISA guides, ROCm gpu-arch-specs, GPUOpen "Occupancy explained", and kernel amdgpu docs (driver-core/GC/MES). 16 new glossary terms per locale.
+- First real (non-ASCII) figures: `components/shared/LessonFigure.tsx` — theme-aware SVG registry (CSS variables, light/dark), 12 architecture figures wired via `diagram.svgId` with ASCII fallback; `.lesson-figure` panel styling in index.css; MicroLessonPage renders SVG when svgId matches. Preview: `references/gpu-arch-figure-preview.html`.
+- New c-cpp group 0.7.3 "内核 C 惯用法实战" (6 lessons, zh+en): BIT/GENMASK/FIELD_GET, list_head intrusive lists, macro hygiene + designated initializers, ERR_PTR + layered goto + overflow checks, kref/devm lifetimes, concurrency contexts (spinlock/mutex/GFP/workqueue). Fills gaps found by coverage audit; c-cpp hours 30 → 42.
+- graphics-apis renumbered to 1.7 and retitled "实时图形 API" (GPU-architecture content now lives in 1.5); gpu-arch added to engineering phase-1; Database/Map icons registered in DynamicIcon.
+- Curated resource list (RDNA3/4 + CDNA3 ISA, ROCm specs/glossary/MI300 uarch, GPUOpen occupancy article + 2 official videos, Branch Education, Fabian Giesen) embedded as module onlineResources with per-lesson source notes.
+
+**Verification**: tsc clean; vitest 30/30 (incl. zh/en parity + forbidden-content sweeps); vite build OK (new chunks code-split); all 12 SVGs SSR-render clean, rasterized and visually inspected in both themes (4 text-overflow fixes applied).
+
+**Carry-forward lessons**:
+1. SVG figures via a registry + `svgId` upgrade path preserves ASCII fallback and needs zero data-format migration — reuse for older modules' key diagrams.
+2. Content numbers must anchor to the audit-pinned facts (RX 7600 XT 16GB, BAR0/2/5 layout); forbidden-string tests catch regressions — keep feeding them.
+3. New-module registration touchpoints: curriculum(_en), micro_lessons_index, glossary(_en), engineering_phases, DynamicIcon — in that order, then run the invariants suite.

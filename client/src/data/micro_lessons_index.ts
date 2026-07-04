@@ -20,9 +20,17 @@ const lessonLoaders: Record<string, Record<Locale, ModuleLoader>> = {
     zh: () => import("./module05_micro_lessons").then((m) => m.module05MicroLessons),
     en: () => import("./module05_micro_lessons_en").then((m) => m.module05MicroLessonsEn),
   },
+  "c-cpp": {
+    zh: () => import("./c_cpp_micro_lessons").then((m) => m.cCppMicroLessons),
+    en: () => import("./c_cpp_micro_lessons_en").then((m) => m.cCppMicroLessonsEn),
+  },
   prerequisites: {
     zh: () => import("./module1_micro_lessons").then((m) => m.module1MicroLessons),
     en: () => import("./module1_micro_lessons_en").then((m) => m.module1MicroLessonsEn),
+  },
+  "gpu-arch": {
+    zh: () => import("./gpu_arch_micro_lessons").then((m) => m.gpuArchMicroLessons),
+    en: () => import("./gpu_arch_micro_lessons_en").then((m) => m.gpuArchMicroLessonsEn),
   },
   hardware: {
     zh: () => import("./module2_micro_lessons").then((m) => m.module2MicroLessons),

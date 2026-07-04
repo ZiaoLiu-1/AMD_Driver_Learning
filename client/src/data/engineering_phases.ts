@@ -33,7 +33,7 @@ export const engineeringPhases: EngineeringPhase[] = [
     descriptionEn:
       'Understand how GPU drivers exist as DRM devices in the Linux kernel. Master the macro code structure and initialization flow of the amdgpu driver.',
     icon: 'Layers',
-    moduleIds: ['intro', 'ecosystem', 'prerequisites', 'kernel', 'drm', 'amdgpu'],
+    moduleIds: ['intro', 'ecosystem', 'c-cpp', 'prerequisites', 'gpu-arch', 'kernel', 'drm', 'amdgpu'],
     coreConcepts: [
       'amdgpu_driver 注册',
       'amdgpu_device 创建',

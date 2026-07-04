@@ -4,6 +4,8 @@
 // All 12 modules with theory, diagrams, code, projects, interviews
 // ============================================================
 import { ecosystemModule } from './ecosystem_module';
+import { cCppModule } from './c_cpp_module';
+import { gpuArchModule } from './gpu_arch_module';
 
 export interface SubModule {
   id: string;
@@ -429,6 +431,7 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
     ],
   },
   ecosystemModule,
+  cCppModule,
   {
     id: 'prerequisites',
     number: '1',
@@ -611,23 +614,27 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
     ],
   },
   // ═══════════════════════════════════════════════════════════════
-  // Module 1.5 — 实时图形 API 与 GPU 架构
+  // Module 1.5 — GPU 架构基础（gpu_arch_module.ts）
+  // ═══════════════════════════════════════════════════════════════
+  gpuArchModule,
+  // ═══════════════════════════════════════════════════════════════
+  // Module 1.7 — 实时图形 API
   // ═══════════════════════════════════════════════════════════════
   {
     id: 'graphics-apis',
-    number: '1.5',
-    title: '实时图形 API 与 GPU 架构',
-    titleEn: 'Real-Time Graphics APIs & GPU Architecture',
+    number: '1.7',
+    title: '实时图形 API',
+    titleEn: 'Real-Time Graphics APIs',
     icon: 'Monitor',
     description: '从应用开发者的视角理解 GPU 的用途：实时渲染流水线、OpenGL、Vulkan、OpenCL 和 DirectX 12。掌握这层知识，才能真正理解驱动为"上层"服务的意义。',
     estimatedHours: 30,
     difficulty: 'intermediate',
     subModules: [
-      { id: 'gfx-pipeline', title: '1.5.1 实时渲染流水线', titleEn: 'Real-Time Rendering Pipeline' },
-      { id: 'gfx-opengl', title: '1.5.2 OpenGL 状态机模型', titleEn: 'OpenGL State Machine' },
-      { id: 'gfx-vulkan', title: '1.5.3 Vulkan：现代显式 API', titleEn: 'Vulkan: Modern Explicit API' },
-      { id: 'gfx-opencl', title: '1.5.4 OpenCL 计算模型', titleEn: 'OpenCL Compute Model' },
-      { id: 'gfx-dx12', title: '1.5.5 DirectX 12 概念与对比', titleEn: 'DirectX 12 Concepts & Comparison' },
+      { id: 'gfx-pipeline', title: '1.7.1 实时渲染流水线', titleEn: 'Real-Time Rendering Pipeline' },
+      { id: 'gfx-opengl', title: '1.7.2 OpenGL 状态机模型', titleEn: 'OpenGL State Machine' },
+      { id: 'gfx-vulkan', title: '1.7.3 Vulkan：现代显式 API', titleEn: 'Vulkan: Modern Explicit API' },
+      { id: 'gfx-opencl', title: '1.7.4 OpenCL 计算模型', titleEn: 'OpenCL Compute Model' },
+      { id: 'gfx-dx12', title: '1.7.5 DirectX 12 概念与对比', titleEn: 'DirectX 12 Concepts & Comparison' },
     ],
     theory: {
       overview: `本模块从图形应用开发者的视角出发，系统讲解 GPU 的使用方式。理解应用如何通过图形 API 驱动 GPU，是理解驱动"服务对象"的关键。

@@ -17,6 +17,7 @@ import { SearchModal } from "@/components/SearchModal";
 import { DynamicIcon } from "@/components/DynamicIcon";
 import { Button } from "@/components/ui/button";
 import { CopyCodeBlock } from "@/components/shared/CopyCodeBlock";
+import { LessonFigure, hasLessonFigure } from "@/components/shared/LessonFigure";
 import {
   DifficultyBadge as DifficultyPill,
   type DifficultyTone,
@@ -520,7 +521,11 @@ export default function MicroLessonPage() {
               <SectionHeader type="diagram" />
               <div className="space-y-3">
                 <h2 className="text-sm font-semibold text-foreground/80">{lesson.diagram.title}</h2>
-                <pre className="ascii-diagram">{lesson.diagram.content}</pre>
+                {hasLessonFigure(lesson.diagram.svgId) ? (
+                  <LessonFigure id={lesson.diagram.svgId!} />
+                ) : (
+                  <pre className="ascii-diagram">{lesson.diagram.content}</pre>
+                )}
                 {lesson.diagram.caption && (
                   <p className="text-xs text-muted-foreground/55 italic pl-1">{lesson.diagram.caption}</p>
                 )}
