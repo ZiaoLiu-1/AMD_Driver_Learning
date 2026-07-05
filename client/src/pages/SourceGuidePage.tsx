@@ -57,10 +57,15 @@ export default function SourceGuidePage() {
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border/50">
               <GitBranch className="w-3 h-3" />
               {locale === 'zh'
-                ? `源码链接基于 Linux ${KERNEL_TAG} LTS（2026-05 校对）`
-                : `Source links pinned to Linux ${KERNEL_TAG} LTS (audited 2026-05)`}
+                ? `源码链接基于 Linux ${KERNEL_TAG} LTS（2026-07 校对）`
+                : `Source links pinned to Linux ${KERNEL_TAG} LTS (audited 2026-07)`}
             </span>
           </div>
+          <p className="mt-3 text-center text-xs text-muted-foreground/70 max-w-2xl mx-auto">
+            {locale === 'zh'
+              ? `锚定 LTS 保证 file:line 稳定可复现，但主线在继续演进——例如 amdgpu 用户态队列（userq）在 Linux 6.16 才合入、${KERNEL_TAG} 中不存在。面试引用源码时报出版本号，是加分而不是减分。`
+              : `Pinning to an LTS keeps file:line references stable and reproducible, but mainline keeps moving — e.g. amdgpu user-mode queues (userq) only landed in Linux 6.16 and do not exist in ${KERNEL_TAG}. Quoting the kernel version when citing source in an interview is a plus, not a weakness.`}
+          </p>
         </div>
 
         <div className="relative">
