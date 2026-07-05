@@ -13,8 +13,13 @@ import { Button } from "@/components/ui/button";
 import { DifficultyBadge, interviewDifficultyTones } from "@/components/ui/difficulty-badge";
 import {
   ChevronLeft, Lightbulb, CheckCircle2, XCircle, RotateCcw, Filter,
-  BookOpen, Target, Shuffle, PartyPopper
+  BookOpen, Target, Shuffle, PartyPopper, GraduationCap
 } from "lucide-react";
+
+// Fundamentals modules covered by intern/new-grad interview loops.
+const INTERN_TRACK_MODULES = new Set([
+  "intro", "ecosystem", "c-cpp", "prerequisites", "gpu-arch", "hardware", "kernel",
+]);
 
 interface PracticeQuestion {
   question: string;
@@ -86,6 +91,7 @@ export default function PracticePage() {
 
   const [filterDiff, setFilterDiff] = useState<"all" | "easy" | "medium" | "hard">("all");
   const [filterModule, setFilterModule] = useState<string>("all");
+  const [internTrack, setInternTrack] = useState(false);
   const [questions, setQuestions] = useState<PracticeQuestion[]>(() => shuffle(allQs));
   const [idx, setIdx] = useState(0);
   const [showHint, setShowHint] = useState(false);
@@ -98,9 +104,12 @@ export default function PracticePage() {
     return questions.filter(q => {
       if (filterDiff !== "all" && q.difficulty !== filterDiff) return false;
       if (filterModule !== "all" && q.moduleId !== filterModule) return false;
+      // Intern/new-grad track: fundamentals modules only, no hard questions —
+      // mirrors the actual scope of intern & new-grad interview loops.
+      if (internTrack && (q.difficulty === "hard" || !INTERN_TRACK_MODULES.has(q.moduleId))) return false;
       return true;
     });
-  }, [questions, filterDiff, filterModule]);
+  }, [questions, filterDiff, filterModule, internTrack]);
 
   const current = filteredQs[idx];
   const total = filteredQs.length;
@@ -234,6 +243,15 @@ export default function PracticePage() {
             {d === "all" ? t("practice.allDiff") : t(`module.${d}`)}
           </button>
         ))}
+        <div className="w-px h-5 bg-border/40 mx-1 self-center" />
+        {/* Intern/new-grad track toggle */}
+        <button
+          onClick={() => { setInternTrack(v => !v); applyFilter(); }}
+          title={t("practice.internTrackHint")}
+          className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-medium transition-colors border ${internTrack ? "border-primary/50 bg-primary/10 text-primary" : "border-border/40 text-muted-foreground/60 hover:border-border"}`}>
+          <GraduationCap className="w-3.5 h-3.5" />
+          {t("practice.internTrack")}
+        </button>
         <div className="w-px h-5 bg-border/40 mx-1 self-center" />
         {/* Module filter */}
         <select

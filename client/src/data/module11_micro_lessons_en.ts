@@ -1380,6 +1380,119 @@ Check: each ≤3 lines, ≥1 link, zero adjectives.`,
             amdContext: 'The interviewer will almost certainly open your lore link on the spot. The real test is whether you can narrate your own work accurately, without inflation, with details that survive follow-ups — exactly the skill daily code review and cross-team collaboration require.',
           },
         },
+        // ── Lesson 11.3.3 ────────────────────────────────────
+        {
+          id: '11-3-3',
+          number: '11.3.3',
+          title: 'The Intern/New-Grad Track: A Different Interview Entirely',
+          titleEn: 'The Intern/New-Grad Track: A Different Interview Entirely',
+          duration: 20,
+          tags: ['intern', 'new-grad', 'referral', 'interview-strategy'],
+          concept: {
+            summary:
+              "Everything earlier in this module speaks to full-time roles — where the 4-8 year experience wall is real. The intern and new-grad tracks play by different rules: no seniority screen, interviews test fundamentals rather than track record, and domain knowledge flips from requirement to rare bonus. With a referral in hand, the only remaining variable is interview performance itself — and its composition differs systematically from full-time loops, so your preparation strategy must change.",
+            explanation: [
+              'The weight structures compared. Full-time driver-role interviews: deep-diving past projects (~40%), domain system design (~30%), kernel/concurrency specials (~20%), coding (~10%). Intern/new-grad interviews: basic coding problems (~35%), C/C++ and OS fundamentals (~30%), project storytelling (~20%), domain knowledge (~15%, and as a bonus). Note the two reversals: coding goes from least important to most important; domain knowledge goes from hard gate to differentiation weapon. Preparing for an intern loop with a full-time strategy wins you the 15% and loses you the 35%.',
+              "What this means for learners of this site: on domain knowledge you will crush the candidate pool (most intern candidates cannot state the difference between a wavefront and a warp, let alone ring buffers and doorbells), but if you have not written an algorithm problem in three months you will fall at the first coding screen. Honest self-assessment: this site does not cover DS/algo — supplement externally (1-2 problems daily; arrays/strings/linked lists/hash/trees; driver-track intern loops rarely ask hard DP). The Practice page's Intern-track filter narrows the on-site question bank to the real scope of intern interviews; use it alongside external drilling.",
+              'Using the referral correctly: a referral solves "getting your resume seen", not "an easier interview". Once you have one, do three things proactively: (1) ask which team is hiring (display/kernel/tools/ROCm interview focuses differ completely — display asks KMS/atomic, ROCm asks HIP/memory model); (2) ask about the timing window (intern postings are seasonal; North-American summer roles often open 6-9 months ahead — apply the moment the window opens, do not wait to be "perfectly ready"); (3) hand your referrer a 30-second retellable intro ("self-taught the AMD driver stack for a year, built a bilingual learning platform, sent patches to amd-gfx" — write the words you want your referrer to say for you).',
+              "Deploy your differentiator deliberately: this learning platform is itself a double artifact — a full-stack engineering project (React/TS/bilingual architecture/content-invariant tests/CI) and proof of domain commitment. For the 'tell me about a project' segment, always pick it: prepare a 2-minute version (what, why, the two hardest technical decisions) and a 30-second elevator version. Stack any real upstream trace on top (a lab-8 triage comment, a lab-7 lore link) and you become the candidate the interviewer remembers. Final calibration: intern pass rates are naturally higher than full-time, and the return offer is the highest-probability road into a full-time seat — aiming for 'land the internship, convert with real work' beats charging directly at full-time openings.",
+            ],
+            keyPoints: [
+              'Weight reversal: intern loops run ~35% coding + ~30% fundamentals; domain knowledge is only ~15% — but a rare bonus.',
+              'Know this site\'s blind spot: DS/algo must be supplemented externally (1-2 easy/medium daily); use the Practice page Intern-track filter for the on-site bank.',
+              'Three referral questions: target team, timing window, and a 30-second retellable intro for your referrer.',
+              'The learning platform is your strongest project material: prepare 2-minute and 30-second versions.',
+              'Intern → return offer is the highest-probability path to full-time; apply when windows open, not when "ready".',
+            ],
+          },
+          diagram: {
+            title: 'Full-time vs intern: the weight reversal',
+            content: `Full-time driver role        Intern/new-grad
+Project deep-dive ████████ ~40%   Coding      ███████ ~35%
+Domain design     ██████ ~30%     C/OS basics ██████ ~30%
+Kernel specials   ████ ~20%       Project     ████ ~20%
+Coding            ██ ~10%         Domain      ███ ~15% (bonus)
+
+Your position: domain over-prepared | coding = the one gap
+Strategy: 1-2 problems daily to restore touch; let the
+          domain edge pay out in project + bonus segments`,
+            caption: 'Same company, same team — two tracks sit two different exams. Allocate prep by the right-hand weights. Percentages are experiential rough guides and vary by team.',
+          },
+          codeWalk: {
+            title: 'Referrer script + resume project block (adapt directly)',
+            language: 'text',
+            file: 'Referral communication templates (trim to your reality)',
+            code: `-- 30-second script for your referrer -----------
+"He's a new grad from [school/major] who spent the
+past year systematically self-teaching the AMD
+Linux driver stack - built a bilingual learning
+platform (14 modules, 9 labs, content verified
+against ROCm/ISA official docs), did GPU hang
+analysis and ftrace tracing on an RX 7600 XT,
+[sent patches to amd-gfx / triaged issues on the
+drm/amd tracker]. Looking for an intern spot on
+[team]. Links: [site] [lore/GitLab]"
+
+-- Resume Projects block ------------------------
+AMD GPU Driver Learning Platform  [link]
+- Built a bilingual (EN/zh) learning platform for
+  Linux/AMDGPU driver development: 14 modules, 9
+  hands-on labs, 115+ interview questions
+- Content fact-checked against AMD ISA guides and
+  ROCm docs; 30+ content-invariant tests in CI
+- Labs produce public artifacts: kernel builds,
+  GPU hang RCA, ftrace analysis, KUnit reports
+  [+ upstream patch on lore / issue triage link]`,
+            explanation:
+              'The shared discipline of both blocks: every noun is click-verifiable, and not one adjective requires the interviewer to trust your self-assessment (self-check against the 11.3.2 red-line list). The referrer version is deliberately conversational — they have 30 hallway seconds; every resume bullet opens with a verb and closes with a link. Trim the bracketed parts to your actual progress — shorter beats inflated, always.',
+          },
+          miniLab: {
+            title: 'Convert the referral into an interview: the three-piece kit',
+            objective: 'Produce every referral-supporting material within 48 hours and complete a first pre-application check.',
+            steps: [
+              'Write the 30-second referrer script (adapt the codeWalk template to your reality), send it to your referrer, and ask two direct questions: which team is hiring interns? When do applications open?',
+              'Rework your resume Projects block with the 11.3.2 formula + this template; have a strong English speaker read it for 60 seconds — it passes only if they can retell what you did',
+              "Prepare the 2-minute site pitch: what it is (30s) → why you built it (30s) → the two hardest technical decisions (60s, e.g. how content-invariant tests prevent factual regressions) — record yourself and listen back once",
+              "Start daily coding practice: 2 easy problems today (arrays/strings), log your times; finish 10 this week and run one pass of the on-site fundamentals bank with the Practice page's Intern-track filter",
+              'Set up an application tracker: posting link, date applied, referral confirmed, follow-up date — row one is the posting your referrer named',
+            ],
+            expectedOutput:
+              'Within 48 hours you should have: the script in your referrer\'s hands plus answers on team and timing, a sendable resume, a recorded 2-minute pitch, page one of a coding log, and row one of an application tracker. Together these equal the referral\'s full value, realized.',
+            hint: 'Step 1 matters most and procrastinates easiest — send the script today; the other four steps run off the deadline it creates.',
+          },
+          debugExercise: {
+            title: 'Where did this intern interview go wrong?',
+            language: 'text',
+            question: 'Three moments from an AMD intern interview by a candidate who finished this site. Identify each mistake and give the correct play.',
+            buggyCode: `Moment A (coding round, reverse-a-linked-list):
+"This is really like the kernel's list_head - let
+me first explain the design philosophy of
+intrusive lists... the principle of container_of
+is..." (8 minutes in, zero lines written)
+
+Moment B (asked "tell me about a project"):
+"I made a learning website, in React, just
+organizing what I studied, nothing special.
+What I'd really like to discuss is my
+understanding of amdgpu - say, TTM eviction..."
+
+Moment C (behavioral, "biggest difficulty?"):
+"GPUVM page tables were really hard. I read the
+material three times before I got it. Then I
+got it."`,
+            hint: 'A: what skill is the interviewer assessing right now? B: what did the candidate just do to their strongest evidence? C: which letters of STAR are missing?',
+            answer:
+              'A (using domain knowledge to dodge the assessment target): the coding round measures "can you correctly implement a simple thing" — eight minutes of intrusive-list philosophy with no code on the board gets recorded as "cannot enter execution mode". Correct play: start writing within 30 seconds, naive solution first, then optimize; the domain connection earns its bonus as one sentence after the code works ("incidentally, the kernel\'s list_head is the intrusive variant of this idea") — placed before, it is evasion. B (demoting your best asset + answering a different question): calling the bilingual platform "just organizing notes" voluntarily downgrades the loop\'s only differentiating evidence; steering to TTM is writing the interviewer\'s questions for them — a project question probes engineering judgment and communication, not driver trivia. Correct play: run the 2-minute pitch (numbers + two technical decisions + link) and let TTM come up if the interviewer chooses to dig. C (STAR reduced to S): no Task (what you needed to achieve), no Action (what you actually did — drew the page-table hierarchy? wrote a test module to verify understanding?), no Result (where the output lives). "Read it three times and got it" transmits zero information. The common root cause across all three: failing to see that an intern interview is an exam scored on the interviewer\'s rubric — your domain depth only counts when placed into their scoring boxes.',
+          },
+          interviewQ: {
+            question: '(Behavioral rehearsal) You have no internship experience. Why should we give you this GPU driver team internship?',
+            difficulty: 'medium',
+            hint: 'Do not apologize for the gap — redefine the question with an evidence chain: what you have is exactly what most intern candidates lack.',
+            answer:
+              'Model framework (fill with your reality): "I don\'t have a formal internship, but I have a year-long verifiable self-study track record — and it happens to be this team\'s daily stack. Three pieces of evidence. First, I built a bilingual AMD driver learning platform — not a notes dump but an engineering project with 30+ content-invariant tests, fact-checked against ROCm and ISA official docs; here is the link. Second, I have done the full debugging practice on my own RX 7600 XT: GPU-hang dmesg/devcoredump analysis, fence tracing with ftrace, KUnit test reports — all in this portfolio repo. Third, I have walked the real upstream loop — [sent a kernel-doc fix to amd-gfx / triaged an issue on the drm/amd tracker]; the lore/GitLab links open right now. I understand an intern\'s daily reality is executing assigned tasks and learning fast; these three things prove exactly that nobody needs to teach me how to set up the environment, read the code, or follow the process — I can start contributing on day one." Key points: (1) every claim carries a link; (2) land the ending on "lowering the cost of onboarding me" — the actual decision function of intern hiring; (3) the tone states facts rather than begging for a chance.',
+            amdContext: 'A guaranteed intern-interview question type (possibly phrased as "why you / why this team"). With a referral, the interviewer has likely skimmed your links already — when the answer and the materials corroborate, credibility multiplies; when they contradict, it is a single-veto failure.',
+          },
+        },
       ],
     },
   ],

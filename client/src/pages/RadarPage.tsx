@@ -379,6 +379,14 @@ export default function RadarPage() {
                 </a>
               </div>
 
+              {/* Lab-8 handoff: turn a spotted issue into a public contribution */}
+              <Link
+                href="/labs/lab-8-issue-triage"
+                className="block mb-4 px-3 py-2 rounded-lg border border-primary/25 bg-primary/5 text-xs text-primary hover:bg-primary/10 transition-colors"
+              >
+                {t('radar.triageLabCta') || 'Found a reproducible issue? → Lab 8: claim & triage it into a public contribution'}
+              </Link>
+
               {/* Toolbar: search + sort */}
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 <div className="relative flex-1 min-w-[220px]">

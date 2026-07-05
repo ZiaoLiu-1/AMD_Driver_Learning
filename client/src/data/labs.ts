@@ -795,6 +795,32 @@ export const labs: Lab[] = [
         checkpoint: '补丁出现在 lore.kernel.org/amd-gfx 归档——把这个链接记进你的 Portfolio。',
         checkpointEn: 'Your patch appears in the lore.kernel.org/amd-gfx archive — record that link in your portfolio.',
       },
+      {
+        order: 9,
+        title: '回应 Review 并发出 v2（把"发出"变成"跟完"）',
+        titleEn: 'Respond to review and send a v2 (from "sent" to "seen through")',
+        instruction:
+          '收到 review 意见是常态而非失败。规则：（1）逐条回复每个意见——同意就写 "Will fix in v2"，不同意就摆技术理由，不许沉默跳过；（2）修改后发 v2：主题变为 [PATCH v2]，正文 --- 分隔线下写变更说明（如 "v2: fix parameter name per review"），并保留/添加评审者给出的 tag；（3）v2 作为对原线程的回复发出（b4 自动处理 In-Reply-To），让讨论保持在同一线程。用 git range-diff 自查 v1→v2 的差异是否恰好等于你声称的修改。',
+        instructionEn:
+          'Getting review comments is the norm, not failure. Rules: (1) reply to every comment — "Will fix in v2" when you agree, technical reasoning when you do not; never silently skip one; (2) send a v2: subject becomes [PATCH v2], change notes go below the --- separator (e.g. "v2: fix parameter name per review"), keep/add any tags reviewers gave; (3) send v2 as a reply to the original thread (b4 handles In-Reply-To) so discussion stays in one thread. Self-check with git range-diff that v1→v2 differs exactly as you claim.',
+        command: '# 修改代码后：\ngit add -u && git commit --amend    # 单补丁小修直接 amend\nb4 prep --edit-cover                 # 记录 v2 变更说明\ngit range-diff first-patch@{1}...first-patch  # 自查 v1→v2 差异\nb4 send                              # b4 自动升版本号并回挂原线程',
+        hint: '没人回复怎么办：一周后礼貌 ping 一次；再无回应就把 ping 记录留档继续等——amd-gfx 流量大，沉默常见，不等于被拒。',
+        hintEn: 'If nobody replies: one polite ping after a week; if still silent, keep the ping on record and wait — amd-gfx is high-traffic, silence is common and is not rejection.',
+        checkpoint: 'v2 出现在原线程内（lore 线程视图可见 v1 → 评论 → v2 的完整链条）。',
+        checkpointEn: 'The v2 appears inside the original thread (the lore thread view shows the full v1 → comments → v2 chain).',
+      },
+      {
+        order: 10,
+        title: '跟踪到终点并归档整个旅程',
+        titleEn: 'Track to the finish line and archive the journey',
+        instruction:
+          '补丁的终点有三种：被合并（维护者分支 git log 出现你的名字）、被明确拒绝（拒绝理由本身是宝贵学习材料）、或长期沉默（记录 ping 历史后可以放手）。无论哪种，把完整旅程写成 portfolio 文档：问题是什么、怎么发现的、v1→vN 每轮改了什么、评审者说了什么、结局如何。这份文档在面试里的价值常常超过补丁本身——它证明你能完整走通上游协作循环。',
+        instructionEn:
+          'A patch ends one of three ways: merged (your name appears in the maintainer branch git log), explicitly rejected (the reasoning is valuable learning material), or prolonged silence (record your ping history, then let go). Either way, write the full journey into a portfolio doc: what the problem was, how you found it, what changed each revision, what reviewers said, how it ended. In interviews this document is often worth more than the patch itself — it proves you can complete the upstream collaboration loop.',
+        command: '# 检查是否已被收编：\ngit fetch agd5f amd-staging-drm-next\ngit log --oneline --author="Your Name" agd5f/amd-staging-drm-next\n\n# 归档（模板见本仓库 portfolio-template/ 目录）：\ncp portfolio-template/notes/lab7-patch-journey.md ~/portfolio/notes/\n# 填入：lore 线程链接、每轮 range-diff 摘要、review 往来、最终状态',
+        checkpoint: '你的 portfolio 仓库中存在 notes/lab7-patch-journey.md，含 lore 线程链接与逐轮变更记录。',
+        checkpointEn: 'Your portfolio repo contains notes/lab7-patch-journey.md with the lore thread link and a per-revision change log.',
+      },
     ],
     expectedOutput: '一个通过 kernel-doc / 编译 / checkpatch 全部检查、随时可发送的真实补丁；发送后获得 lore.kernel.org 归档链接——简历上可验证的上游贡献记录。',
     expectedOutputEn: 'A real patch passing every kernel-doc / build / checkpatch check, ready to send at any time; once sent, a lore.kernel.org archive link — a verifiable upstream contribution for your resume.',
@@ -813,6 +839,221 @@ export const labs: Lab[] = [
       'Fix one instance first (one file / one function); consider a series only after you know the full loop',
     ],
     tags: ['upstream', 'kernel-doc', 'checkpatch', 'b4', 'amd-gfx', 'portfolio'],
+  },
+  {
+    id: 'lab-8-issue-triage',
+    phaseId: 'phase-4',
+    title: '实验八：认领并 triage 一个真实的 amdgpu issue',
+    titleEn: 'Lab 8: Claim & Triage a Real amdgpu Issue',
+    description:
+      '把"雷达页看到 issue"变成一条可点击的公开贡献记录。在 drm/amd 的 GitLab tracker 挑一个你的硬件能复现（或能明确证伪）的 issue，按上游标准采集证据、排除重复、写出规范的 triage 评论。freedesktop GitLab 上的高质量评论与补丁同级可链接——这是不写一行内核代码就能产生真实证据的最短路径。',
+    descriptionEn:
+      'Turn "saw an issue on the Radar page" into a clickable public contribution. Pick an issue on the drm/amd GitLab tracker that your hardware can reproduce (or clearly falsify), gather evidence to upstream standards, rule out duplicates, and write a proper triage comment. High-quality comments on freedesktop GitLab are just as linkable as patches — the shortest path to real evidence without writing a line of kernel code.',
+    difficulty: 'intermediate',
+    estimatedMinutes: 120,
+    prerequisites: ['任意 AMD GPU + amdgpu 驱动的 Linux 环境', '已完成实验二（GPU hang 分析）的 dmesg 阅读训练', 'gitlab.freedesktop.org 账号'],
+    prerequisitesEn: ['Any Linux box with an AMD GPU on the amdgpu driver', 'Lab 2 (GPU hang analysis) dmesg reading practice completed', 'A gitlab.freedesktop.org account'],
+    steps: [
+      {
+        order: 1,
+        title: '用雷达页/tracker 选一个"够得着"的 issue',
+        titleEn: 'Pick a reachable issue via the Radar page / tracker',
+        instruction:
+          '选择标准（按优先级)：① 涉及你手头的 GPU 家族（gfx 版本相同最好，如 Navi3x 之于 gfx1102）；② 有明确复现步骤或至少明确的触发场景（某游戏/某 compositor/挂起唤醒）；③ 近 3 个月内有活动但还没有维护者结论；④ 避开需要特殊硬件（VR/多屏 DSC）的。把候选 issue 的编号、标题、你选它的理由记下来。',
+        instructionEn:
+          'Selection criteria (in priority order): (1) involves your GPU family (same gfx version is ideal, e.g. Navi3x for gfx1102); (2) has clear repro steps or at least a well-defined trigger (a given game / compositor / suspend-resume); (3) active within ~3 months but no maintainer conclusion yet; (4) avoid issues needing exotic hardware (VR, multi-monitor DSC). Write down the issue number, title, and why you chose it.',
+        command: '# 站内雷达页（/radar）已按补丁关联度聚合，或直接：\n# https://gitlab.freedesktop.org/drm/amd/-/issues/?sort=updated_desc\n# 过滤词示例: suspend, flicker, ring timeout, 你的芯片代号(navi33)',
+        hint: '第一次做选"行为类"issue（闪烁/挂死/唤醒失败），别选"性能低 5%"类——后者需要基准测试功底才能给出有效证据。',
+        hintEn: 'For a first triage pick a behavioral issue (flicker/hang/resume failure), not a "5% slower" one — the latter needs benchmarking rigor to produce useful evidence.',
+        checkpoint: '选定 1 个 issue，能一句话说清"它声称什么、我能验证什么"。',
+        checkpointEn: 'One issue chosen; you can state in one sentence what it claims and what you can verify.',
+      },
+      {
+        order: 2,
+        title: '先查重：lore 与 tracker 双向搜索',
+        titleEn: 'Duplicate check first: search both lore and the tracker',
+        instruction:
+          '上游最不欢迎的评论是"me too"和重复报告。动手前先搜：tracker 内用关键错误串（如 ring gfx_0.0.0 timeout）搜相似 issue；lore.kernel.org/amd-gfx 搜是否已有补丁在修同一问题。如果发现重复/已有修复，这本身就是有价值的 triage 结论——在 issue 里给出链接就是一条合格贡献。',
+        instructionEn:
+          'The least welcome upstream comments are "me too" and duplicate reports. Before anything else, search: the tracker for similar issues using the key error string (e.g. ring gfx_0.0.0 timeout), and lore.kernel.org/amd-gfx for patches already addressing it. Finding a duplicate/existing fix is itself a valuable triage result — posting the link is a legitimate contribution.',
+        command: '# tracker 内搜索错误关键串；lore 侧：\n# https://lore.kernel.org/amd-gfx/?q=<关键词>\n# 站内雷达页的 patchMatches 字段已做了一层自动关联，先看它',
+        checkpoint: '确认无重复/无在途修复，或已把重复链接贴进 issue（后者直接跳到第 7 步归档）。',
+        checkpointEn: 'Confirmed no duplicate / in-flight fix, or you posted the duplicate link to the issue (then jump to step 7 to archive).',
+      },
+      {
+        order: 3,
+        title: '搭建干净的复现环境并记录基线',
+        titleEn: 'Set up a clean repro environment and record the baseline',
+        instruction:
+          '复现要在尽量"干净"的条件下做：记录内核版本（uname -r）、Mesa 版本（glxinfo | grep OpenGL.version 或 vulkaninfo --summary）、固件包版本、桌面环境/合成器、amdgpu 模块参数（cat /sys/module/amdgpu/parameters/* 有变更的项）。这组"环境指纹"是评论里必须出现的第一段——没有它任何复现声明都无效。',
+        instructionEn:
+          'Reproduce under conditions as clean as possible: record kernel version (uname -r), Mesa version (glxinfo | grep "OpenGL version" or vulkaninfo --summary), firmware package version, desktop environment/compositor, and any non-default amdgpu module parameters. This "environment fingerprint" is the mandatory first paragraph of your comment — without it no repro claim is valid.',
+        command: 'uname -r\nglxinfo -B 2>/dev/null | grep -E "OpenGL version|renderer"\ndpkg -l | grep -E "linux-firmware|mesa" | head -5\nlspci -nn | grep -i vga',
+        checkpoint: '一段可直接粘贴的环境指纹文本就绪。',
+        checkpointEn: 'A paste-ready environment fingerprint block exists.',
+      },
+      {
+        order: 4,
+        title: '复现并采集一手证据',
+        titleEn: 'Reproduce and capture first-hand evidence',
+        instruction:
+          '按 issue 的步骤触发问题，同时采集：完整 dmesg（出问题前后各留 30 行上下文）、如发生 GPU reset 则抓 devcoredump（/sys/class/devcoredump/devcd*/data，出现后 5 分钟内读走）、以及问题现象的精确描述（频率：必现/概率；触发时间点）。复现失败同样是结论——"在 X 环境下按步骤无法复现"配上环境指纹，对维护者同样有价值。',
+        instructionEn:
+          'Trigger the problem per the issue steps while capturing: full dmesg (keep ~30 lines of context around the event), a devcoredump if a GPU reset occurred (/sys/class/devcoredump/devcd*/data — read it within minutes of appearing), and a precise description of the symptom (always/probabilistic; when it triggers). Failure to reproduce is also a result — "cannot reproduce with steps on environment X" plus your fingerprint is equally valuable to maintainers.',
+        command: 'sudo dmesg -w | tee /tmp/issue-dmesg.log   # 复现期间持续记录\n# 若发生 reset：\nls /sys/class/devcoredump/ 2>/dev/null\nsudo cat /sys/class/devcoredump/devcd*/data > /tmp/devcoredump.txt 2>/dev/null',
+        hint: 'devcoredump 读一次后会消失，先落盘再分析；日志太长时贴关键段+附完整文件，别把 5000 行直接糊进评论。',
+        hintEn: 'A devcoredump vanishes after one read — save to disk first. If logs are long, quote the key section and attach the full file; never paste 5000 raw lines into a comment.',
+        checkpoint: '拿到带时间戳的复现（或不可复现）证据包。',
+        checkpointEn: 'You have a timestamped evidence bundle for repro (or non-repro).',
+      },
+      {
+        order: 5,
+        title: '写出维护者想看的 triage 评论',
+        titleEn: 'Write the triage comment maintainers want to read',
+        instruction:
+          '结构固定五段：① 环境指纹（第 3 步）；② 复现结果（能/不能 + 频率 + 精确触发条件）；③ 关键证据（dmesg 关键行内嵌 + 完整日志/coredump 作附件）；④ 你做过的排除（换内核版本？关某参数后消失？——有一条写一条，没有就不写）；⑤ 下一步表态（"愿意测试候选补丁，Tested-by 随叫随到"）。全程只陈述事实，不猜根因——triage 的价值在证据质量，不在诊断勇气。',
+        instructionEn:
+          'Fixed five-paragraph structure: (1) environment fingerprint (step 3); (2) repro result (yes/no + frequency + exact trigger); (3) key evidence (crucial dmesg lines inline, full log/coredump attached); (4) what you ruled out (different kernel? disappears with a parameter off? — one line each, only if actually done); (5) closing offer ("happy to test candidate patches, Tested-by available"). State facts only, do not guess the root cause — triage value lies in evidence quality, not diagnostic bravado.',
+        checkpoint: '评论草稿完成且五段俱全，通读一遍没有推测性语言。',
+        checkpointEn: 'Comment draft complete with all five sections and zero speculative language on re-read.',
+      },
+      {
+        order: 6,
+        title: '发布评论并保持跟进',
+        titleEn: 'Post the comment and stay on the thread',
+        instruction:
+          '发布后订阅该 issue 的通知。如果维护者/开发者回复要求补充信息或测试补丁，这是最好的结果——按 lab-7 的方式在你的树上应用候选补丁（b4 shazam <lore链接> 一条命令），测试后回帖报告结果并附 Tested-by: Your Name <email>。一条被补丁 commit message 收录的 Tested-by 是公开、永久、可搜索的贡献记录。',
+        instructionEn:
+          'After posting, subscribe to the issue. If a maintainer/developer replies asking for more info or a patch test, that is the best outcome — apply the candidate patch to your tree the lab-7 way (b4 shazam <lore-link> in one command), test, report back, and offer Tested-by: Your Name <email>. A Tested-by recorded in a patch commit message is a public, permanent, searchable contribution.',
+        command: '# 测试候选补丁的最短路径：\nb4 shazam <lore 消息链接>   # 自动抓取并 am 到当前分支\nmake -j$(nproc) modules M=drivers/gpu/drm/amd 2>/dev/null || make -j$(nproc)\n# 按 issue 场景复测后回帖',
+        checkpoint: '评论已发布，通知已订阅；如有补丁测试请求，完成往返一次。',
+        checkpointEn: 'Comment posted, notifications on; if a test was requested, one full round-trip completed.',
+      },
+      {
+        order: 7,
+        title: '归档为 portfolio 产物',
+        titleEn: 'Archive as a portfolio artifact',
+        instruction:
+          '把这次 triage 写成 analysis/issue-<编号>-triage.md（模板在本仓库 portfolio-template/）：issue 链接、你的评论链接（点评论时间戳获取 permalink）、证据摘要、结局/当前状态。简历 bullet 直接可写："Triaged drm/amd issue #NNNN on RX 7600 XT: reproduced, captured devcoredump, ruled out X; comment linked."',
+        instructionEn:
+          'Write the triage up as analysis/issue-<id>-triage.md (template in this repo under portfolio-template/): issue link, your comment permalink (click the comment timestamp), evidence summary, outcome/current status. The resume bullet writes itself: "Triaged drm/amd issue #NNNN on RX 7600 XT: reproduced, captured devcoredump, ruled out X; comment linked."',
+        checkpoint: 'portfolio 仓库存在 analysis/issue-<编号>-triage.md，内含可点击的评论 permalink。',
+        checkpointEn: 'Your portfolio repo contains analysis/issue-<id>-triage.md with a clickable comment permalink.',
+      },
+    ],
+    expectedOutput: '一条发布在 gitlab.freedesktop.org/drm/amd 上、符合上游证据标准的 triage 评论（永久可链接），以及配套的 portfolio 分析文档；最优路径下再加一条被收录的 Tested-by。',
+    expectedOutputEn: 'A triage comment on gitlab.freedesktop.org/drm/amd meeting upstream evidence standards (permanently linkable), plus the matching portfolio analysis doc; on the best path, also a recorded Tested-by.',
+    tips: [
+      '不猜根因是纪律：维护者需要的是可信证据，错误的诊断会消耗你唯一的第一印象',
+      '"无法复现"报告与"成功复现"同样有价值——前提是环境指纹完整',
+      'Tested-by 的分量来自可复核：报告里必须有内核版本 + 补丁版本 + 测试场景三要素',
+      '一次只跟一个 issue，跟到有结论；三个半途而废的 triage 不如一个完整闭环',
+      '评论发布前通读 issue 全部历史——重复别人已给出的信息是最常见的新手减分项',
+    ],
+    tipsEn: [
+      'Not guessing the root cause is discipline: maintainers need trustworthy evidence, and a wrong diagnosis burns your only first impression',
+      'A "cannot reproduce" report is as valuable as a successful repro — provided the environment fingerprint is complete',
+      'A Tested-by carries weight because it is auditable: kernel version + patch revision + test scenario are mandatory',
+      'Follow one issue at a time until it concludes; one complete loop beats three abandoned triages',
+      'Read the entire issue history before posting — repeating already-given information is the most common rookie penalty',
+    ],
+    tags: ['issue-triage', 'gitlab', 'devcoredump', 'Tested-by', 'portfolio', 'radar'],
+  },
+  {
+    id: 'lab-9-backport-fix',
+    phaseId: 'phase-1',
+    title: '实验九：把一个主线修复 backport 到 v6.12 LTS',
+    titleEn: 'Lab 9: Backport a Mainline Fix to v6.12 LTS',
+    description:
+      'backporting 是 AMD JD 里白纸黑字的日常工作（发行版内核、企业内核、stable 树都靠它），也是把"读得懂代码"升级成"改得动代码"的最安全练习：正确答案（主线提交）就在那里，你的任务是让它在老树上活过来。本实验从主线挑一个真实的 drm/amd 修复，backport 到本站锚定的 v6.12，处理冲突、编译验证并归档。',
+    descriptionEn:
+      'Backporting is day-job work spelled out in AMD JDs (distro kernels, enterprise kernels and stable trees all live on it), and the safest exercise for upgrading "can read code" to "can change code": the correct answer (the mainline commit) already exists — your job is to make it live on an older tree. Pick a real drm/amd fix from mainline, backport it to this site\'s pinned v6.12, resolve conflicts, build-verify, and archive.',
+    difficulty: 'advanced',
+    estimatedMinutes: 150,
+    prerequisites: ['已完成实验一（能编译内核/模块）', '本地有 v6.12 检出 + 可 fetch 主线', '读过 Module 11.1 的 stable 规则一节'],
+    prerequisitesEn: ['Lab 1 completed (can build kernel/modules)', 'Local v6.12 checkout + ability to fetch mainline', 'Module 11.1 stable-rules section read'],
+    steps: [
+      {
+        order: 1,
+        title: '选一个合格的 backport 候选',
+        titleEn: 'Pick a qualified backport candidate',
+        instruction:
+          '在主线 drivers/gpu/drm/amd 的近期提交里找满足以下条件的修复：① 是 bugfix 而非新功能（commit message 有 Fixes: 标签最佳）；② 补丁体量 <100 行；③ 触碰的文件在 v6.12 里存在。带 Fixes: 标签的提交自带"它修的是哪个提交引入的 bug"——用它判断 v6.12 是否真的受影响（Fixes 指向的提交在 v6.12 里存在 = 受影响 = backport 有意义）。',
+        instructionEn:
+          'In recent mainline drivers/gpu/drm/amd commits, find a fix that: (1) is a bugfix, not a feature (a Fixes: tag in the message is ideal); (2) is under ~100 lines; (3) touches files that exist in v6.12. A Fixes: tag tells you which commit introduced the bug — use it to check whether v6.12 is actually affected (the referenced commit being present in v6.12 = affected = the backport is meaningful).',
+        command: 'cd ~/linux\ngit fetch origin master --depth=1000\ngit log --oneline --grep="Fixes:" origin/master -- drivers/gpu/drm/amd | head -20\n# 对候选逐个验证 v6.12 是否受影响：\ngit log v6.12 --oneline | grep <Fixes 指向的短哈希>',
+        hint: '避开触碰 dc/（display core）巨型文件的提交——那里两个版本间漂移最大，第一次 backport 会淹死在冲突里。',
+        hintEn: 'Avoid commits touching huge dc/ (display core) files — drift between versions is worst there and a first backport will drown in conflicts.',
+        checkpoint: '选定候选提交，且已证明 v6.12 受该 bug 影响。',
+        checkpointEn: 'Candidate chosen, with proof that v6.12 is affected by the bug.',
+      },
+      {
+        order: 2,
+        title: '尝试直接 cherry-pick 并读懂失败',
+        titleEn: 'Attempt the cherry-pick and read the failure',
+        instruction:
+          'git cherry-pick -x <hash>（-x 会在 message 里记录源提交，stable 树的惯例）。三种结局：干净应用（直接跳第 4 步）；冲突（最有学习价值，进第 3 步）；文件不存在/结构大改（换候选）。冲突不是错误，是两个版本间历史差异的清单——git status 里每个 both modified 文件都在告诉你"这段代码在 6.12 之后被谁改过"。',
+        instructionEn:
+          'git cherry-pick -x <hash> (-x records the source commit in the message — stable-tree convention). Three outcomes: applies cleanly (skip to step 4); conflicts (the most instructive case — go to step 3); file missing/heavily restructured (pick another candidate). A conflict is not an error, it is an inventory of history between the two versions — every both-modified file in git status tells you "this code changed after 6.12, by someone".',
+        command: 'git checkout -b backport-<hash短版> v6.12\ngit cherry-pick -x <hash>\ngit status   # 看冲突清单',
+        checkpoint: 'cherry-pick 已执行，结局三选一已明确。',
+        checkpointEn: 'Cherry-pick executed; which of the three outcomes occurred is clear.',
+      },
+      {
+        order: 3,
+        title: '用 blame/log 考古解决冲突',
+        titleEn: 'Resolve conflicts with blame/log archaeology',
+        instruction:
+          '解决冲突的正道不是"把 <<<< 标记删得能编译"，而是回答：主线这段上下文是被哪个提交改掉的？那个提交在不在我的目标树？用 git log v6.12..origin/master -- <文件> 列出两版本间该文件的全部变更，找到造成漂移的提交，判断：只需语境适配（函数改名/参数变化）→ 手工调整；依赖另一个前置提交 → 把前置也 backport（记录依赖链）；语义已根本变化 → 此路不通，换候选并记录原因。',
+        instructionEn:
+          'Proper conflict resolution is not "delete the <<<< markers until it compiles" but answering: which commit changed this context on mainline, and is that commit in my target tree? Use git log v6.12..origin/master -- <file> to list every change to the file between the versions, find the drift-causing commit, then decide: context-only adaptation (renamed function/changed parameter) → adjust by hand; depends on a prerequisite commit → backport that too (record the dependency chain); semantics fundamentally changed → dead end, switch candidates and write down why.',
+        command: 'git log --oneline v6.12..origin/master -- <冲突文件> | head -20\ngit blame -L <冲突行范围> origin/master -- <冲突文件>\n# 解决后：\ngit add <文件> && git cherry-pick --continue',
+        hint: '在冲突处犹豫时，打开主线版本的完整函数对照着看——上下文比冲突块本身信息量大得多。',
+        hintEn: 'When stuck on a hunk, open the full mainline version of the function side by side — the context carries far more information than the conflict block itself.',
+        checkpoint: '冲突全部按"考古→判断→适配"流程解决，每处冲突能说出漂移原因。',
+        checkpointEn: 'All conflicts resolved via archaeology → judgment → adaptation, and you can name the drift cause for each.',
+      },
+      {
+        order: 4,
+        title: '编译验证 + 语义自检',
+        titleEn: 'Build-verify + semantic self-check',
+        instruction:
+          '编译通过只是底线。语义自检清单：① 补丁里每个被调用的函数在 v6.12 中签名一致吗（主线可能已改参数）？② 补丁依赖的字段/宏在 v6.12 的头文件里存在吗？③ 如果原修复配了测试场景（commit message 通常写触发条件），在你的环境里按场景验证。差异适配处在 commit message 的 --- 下方逐条注明——这是 stable backport 的标准礼仪。',
+        instructionEn:
+          'Compiling is only the floor. Semantic checklist: (1) does every function the patch calls have the same signature in v6.12 (mainline may have changed parameters)? (2) do the fields/macros the patch relies on exist in v6.12 headers? (3) if the original fix documents a trigger scenario in its message, verify it in your environment. Note every adaptation below the --- line in your commit message — standard stable-backport etiquette.',
+        command: 'make -j$(nproc) M=drivers/gpu/drm/amd modules\n# 或全量: make -j$(nproc)\nscripts/checkpatch.pl --git HEAD -q',
+        checkpoint: '模块编译零警告；语义清单三项逐一打勾；适配说明已写进 message。',
+        checkpointEn: 'Module builds with zero warnings; all three semantic checks ticked; adaptation notes written into the message.',
+      },
+      {
+        order: 5,
+        title: '归档：backport 报告',
+        titleEn: 'Archive: the backport report',
+        instruction:
+          '写 analysis/backport-<hash短版>.md（模板在 portfolio-template/）：原提交链接与摘要、为什么 v6.12 受影响（Fixes 链推理）、冲突清单与每处的漂移考古结论、适配差异、验证方式。这份文档直接对应 AMD JD 里的 "backporting" 关键词——面试被问到时，你有真实案例可讲。进阶（可选）：真实的 stable 提交流程是给 stable@vger.kernel.org 发请求，读一遍 Documentation/process/stable-kernel-rules.rst 了解正规入口。',
+        instructionEn:
+          'Write analysis/backport-<shorthash>.md (template in portfolio-template/): original commit link and summary, why v6.12 is affected (the Fixes-chain reasoning), the conflict inventory with the drift archaeology for each, adaptation diffs, and how you verified. This document maps directly onto the "backporting" keyword in AMD JDs — when asked in an interview, you have a real case to walk through. Advanced (optional): the real stable submission path goes through stable@vger.kernel.org — read Documentation/process/stable-kernel-rules.rst for the official entrance.',
+        checkpoint: 'portfolio 仓库存在完整的 backport 报告，含依赖链与冲突考古记录。',
+        checkpointEn: 'Your portfolio repo contains the full backport report with dependency chain and conflict archaeology.',
+      },
+    ],
+    expectedOutput: '一个在 v6.12 上编译通过、语义验证过的真实 backport 提交（带 -x 溯源与适配说明），以及讲得出每处冲突来龙去脉的分析报告——JD 高频词 "backporting" 的实证材料。',
+    expectedOutputEn: 'A real backport commit that builds and semantically verifies on v6.12 (with -x provenance and adaptation notes), plus an analysis report that can explain the story of every conflict — hard evidence for the high-frequency JD keyword "backporting".',
+    tips: [
+      '选题决定成败：第一次做选 <50 行、带 Fixes: 标签、不碰 dc/ 的提交',
+      '每一处冲突都要能回答"是哪个提交造成的漂移"——答不上来就还没解完',
+      '依赖链超过 2 个前置提交时果断换候选：backport 雪球是真实工作里放弃的正当理由',
+      'cherry-pick -x 与 --- 下的适配说明是 stable 礼仪，写进肌肉记忆',
+      '这个练习可以反复做——每月挑一个新修复，就是持续的 changelog 阅读训练',
+    ],
+    tipsEn: [
+      'Candidate choice decides the outcome: first time, pick <50 lines, with a Fixes: tag, not touching dc/',
+      'For every conflict you must be able to answer "which commit caused this drift" — if you cannot, you are not done resolving it',
+      'If the dependency chain exceeds ~2 prerequisite commits, switch candidates: the backport snowball is a legitimate reason to stop in real work too',
+      'cherry-pick -x and adaptation notes below the --- line are stable etiquette — make them muscle memory',
+      'This exercise repeats well — one new fix per month doubles as ongoing changelog-reading training',
+    ],
+    tags: ['backport', 'cherry-pick', 'stable', 'conflict-resolution', 'portfolio', 'LTS'],
   },
 ];
 
