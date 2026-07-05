@@ -92,10 +92,10 @@ export const module7MicroLessons: MicroLessonModule = {
             GPU 硬件 (Navi33)
             ┌─────────────────────────┐
             │ Shader Engines (32 CU)  │
-            │ ┌─────┐ ┌─────┐        │
-            │ │GFX  │ │Comp │        │
-            │ │Rings│ │Queue│        │
-            │ └─────┘ └─────┘        │
+            │ ┌─────┐ ┌─────┐         │
+            │ │GFX  │ │Comp │         │
+            │ │Rings│ │Queue│         │
+            │ └─────┘ └─────┘         │
             └─────────────────────────┘`,
             caption: 'amdgpu 驱动同时为图形渲染和 GPU 计算提供内核接口。两条路径在用户空间分别通过 /dev/dri/renderD128 和 /dev/kfd 进入内核，在底层共享硬件访问层。Compute Queue 可以独立于 GFX Ring 被 GPU 直接调度。',
           },
@@ -257,16 +257,16 @@ HSA_STATUS_ERROR_OUT_OF_RESOURCES: PASID allocation failed`,
 用户空间 (ROCm Runtime)
 ─────────────────────────────────────────────────────────
   1) 写入 AQL 包到队列内存
-  ┌──────────────────────────────────────────────┐
-  │  AQL Queue (mmap'd to userspace)             │
-  │  ┌────────┬────────┬────────┬────────┐       │
-  │  │AQL pkt │AQL pkt │AQL pkt │ (空)   │       │
-  │  │dispatch│dispatch│barrier │        │       │
-  │  │grid:   │grid:   │signal  │        │       │
-  │  │256x1x1 │1024x1  │wait    │        │       │
-  │  └────────┴────────┴────────┴────────┘       │
-  │   read_ptr ──────────────▲  ▲── write_ptr    │
-  └──────────────────────────┼──┼────────────────┘
+  ┌────────────────────────────────────────────────┐
+  │  AQL Queue (mmap'd to userspace)　             │
+  │  ┌────────┬────────┬────────┬────────┐　       │
+  │  │AQL pkt │AQL pkt │AQL pkt │ (空)   │         │
+  │  │dispatch│dispatch│barrier │　      │         │
+  │  │grid:   │grid:   │signal  │　      │         │
+  │  │256x1x1 │1024x1  │wait    │　      │         │
+  │  └────────┴────────┴────────┴────────┘　       │
+  │   read_ptr ──────────────▲  ▲── write_ptr　    │
+  └──────────────────────────┼──┼──────────────────┘
                              │  │
   2) 更新 write_dispatch_id  │  │
   3) 写 doorbell 寄存器 ─────┼──┘
@@ -296,11 +296,11 @@ GPU 硬件                     │
      │  ┌───────────────────────────┐ │
      │  │ header:    DISPATCH       │ │
      │  │ dimensions: 3             │ │
-     │  │ grid_size_x: 256         │ │
-     │  │ workgroup_size_x: 64     │ │
-     │  │ kernel_object: 0x7f...   │ │
-     │  │ kernarg_address: 0x7f... │ │
-     │  │ completion_signal: sig_1 │ │
+     │  │ grid_size_x: 256          │ │
+     │  │ workgroup_size_x: 64      │ │
+     │  │ kernel_object: 0x7f...    │ │
+     │  │ kernarg_address: 0x7f...  │ │
+     │  │ completion_signal: sig_1  │ │
      │  └───────────────────────────┘ │
      └────────────────┬───────────────┘
                       │
@@ -484,29 +484,29 @@ ioctl(4, AMDKFD_IOC_CREATE_QUEUE, ...) = -1 ENOMEM
             content: `SVM 统一虚拟地址空间：CPU 和 GPU 共享指针
 
 进程虚拟地址空间 (64-bit)
-┌────────────────────────────────────────────────────────┐
-│  0x0000'7f00'0000'0000   ← malloc 分配的缓冲区        │
-│  0x0000'7f00'0001'0000   ← GPU kernel 的参数          │
-│  0x0000'7f00'0002'0000   ← 计算结果                   │
-│  ...                                                   │
-│  CPU 和 GPU 使用相同的虚拟地址访问这些数据             │
-└──────────┬────────────────────────────┬────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│  0x0000'7f00'0000'0000   ← malloc 分配的缓冲区　　　　　　　　　　    │
+│  0x0000'7f00'0001'0000   ← GPU kernel 的参数　　　　　　　　　　　　　│
+│  0x0000'7f00'0002'0000   ← 计算结果　　　　　　　　　　　　           │
+│  ...　　　　　　　　　　　　　　　　                                  │
+│  CPU 和 GPU 使用相同的虚拟地址访问这些数据                            │
+└──────────┬────────────────────────────┬───────────────────────────────┘
            │                            │
      CPU MMU 页表                 GPUVM 页表
      (per-process)                (per-PASID)
            │                            │
            ▼                            ▼
-┌──────────────────┐          ┌──────────────────┐
-│  CPU 物理内存     │          │  GPU VRAM        │
-│  (DDR5 RAM)      │          │  (GDDR6 8GB)     │
-│                  │          │                  │
-│  Page A [热数据] │ ──迁移──→│  Page A (副本)   │
-│  (migration      │          │  高带宽 GPU 访问  │
-│   entry 标记)    │          │                  │
-│                  │          │                  │
-│  Page B          │←──回迁── │  Page B          │
-│  (CPU 访问触发)  │          │  (evicted)       │
-└──────────────────┘          └──────────────────┘
+┌────────────────────┐          ┌───────────────────────┐
+│  CPU 物理内存      │　　      │  GPU VRAM　　　　　   │
+│  (DDR5 RAM)　　　　│　　      │  (GDDR6 8GB)　　　　　│
+│　　　　            │　　      │　　　　　             │
+│  Page A [热数据]　 │ ──迁移──→│  Page A (副本)　　　  │
+│  (migration　　　　│　　      │  高带宽 GPU 访问      │
+│   entry 标记)　　  │　　      │　　　　　             │
+│　　　　            │　　      │　　　　　             │
+│  Page B　　　　    │←──回迁── │  Page B　　　　　     │
+│  (CPU 访问触发)    │　　      │  (evicted)　　　　　  │
+└────────────────────┘          └───────────────────────┘
 
 页面迁移流程 (svm_migrate_to_vram):
 ──────────────────────────────────────

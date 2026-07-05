@@ -754,13 +754,13 @@ $ sudo perf report | head -20
 ┌─────────── dmesg output ──────────┐
 │                                │
 │  [drm:amdgpu_job_timedout]     │
-│  *ERROR* ring gfx_0.0.0       │
+│  *ERROR* ring gfx_0.0.0        │
 │  timeout, signaled fence=1233  │
 │  emitted fence=1234            │
 │                                │
-│  GRBM_STATUS=0xEE008002       │
-│  CP_RB_RPTR=0x00001200        │
-│  CP_RB_WPTR=0x00001234        │
+│  GRBM_STATUS=0xEE008002        │
+│  CP_RB_RPTR=0x00001200         │
+│  CP_RB_WPTR=0x00001234         │
 │                                │
 └──────────────┬─────────────────┘
                │

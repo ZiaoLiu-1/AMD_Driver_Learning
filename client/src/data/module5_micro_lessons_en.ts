@@ -84,7 +84,7 @@ export const module5MicroLessonsEn: MicroLessonModule = {
 │
 ├── pm/                          ←Power management (~300K lines)
 │   ├── swsmu/                  ←Software SMU interface
-│   │   ├── smu13/              ← SMU v13（RDNA3）
+│   │   ├── smu13/              ← SMU v13 (RDNA3)
 │   │   └── amdgpu_smu.c       ←SMU common abstraction layer
 │   └── powerplay/              ←Legacy power management (GCN era)
 │

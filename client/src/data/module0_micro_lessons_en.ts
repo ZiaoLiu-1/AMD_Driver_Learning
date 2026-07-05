@@ -244,27 +244,27 @@ uint32_t read_gpu_status(struct amdgpu_device *adev)
 ┌───────────────▼──────────────▼─────────────────▼────────────────┐
 │  Layer 4: User-Space Drivers                                     │
 │                                                                  │
-│  ┌─────────────┐  ┌─────────────┐  ┌──────────────────────┐    │
-│  │ Mesa radeonsi│  │ ROCm / HIP  │  │ Mesa radv (Vulkan)   │    │
-│  │ (OpenGL)    │  │ Runtime     │  │                      │    │
-│  └──────┬──────┘  └──────┬──────┘  └──────────┬───────────┘    │
+│  ┌─────────────┐  ┌─────────────┐  ┌──────────────────────┐      │
+│  │ Mesa radeonsi│  │ ROCm / HIP  │  │ Mesa radv (Vulkan)   │     │
+│  │ (OpenGL)     │  │ Runtime     │  │                      │     │
+│  └──────┬──────┘  └──────┬──────┘  └──────────┬───────────┘      │
 │         │                │                     │                 │
-│  ┌──────▼────────────────▼─────────────────────▼──────────┐     │
+│  ┌──────▼────────────────▼─────────────────────▼──────────┐      │
 │  │                    libdrm                               │     │
-│  │  amdgpu_bo_alloc()  amdgpu_cs_submit()  drmModeSetCrtc()│    │
-│  └────────────────────────┬───────────────────────────────┘     │
-└───────────────────────────┼─────────────────────────────────────┘
+│  │  amdgpu_bo_alloc()  amdgpu_cs_submit()  drmModeSetCrtc()│     │
+│  └────────────────────────┬───────────────────────────────┘      │
+└───────────────────────────┼──────────────────────────────────────┘
                             │
         ═══════════════ ioctl() System Call ═══════════════
                             │
 ┌───────────────────────────▼─────────────────────────────────────┐
 │  Layer 3: DRM Core (DRM Kernel Framework)                        │
-│  drivers/gpu/drm/drm_*.c                                        │
+│  drivers/gpu/drm/drm_*.c                                         │
 │                                                                  │
 │  drm_ioctl()  →  Dispatch to driver-specific handler by ioctl #  │
 │  drm_gem_*    →  Generic GPU memory management framework         │
 │  drm_atomic_* →  KMS Atomic Mode Setting (display management)    │
-└───────────────────────────┬─────────────────────────────────────┘
+└───────────────────────────┬──────────────────────────────────────┘
                             │
 ┌───────────────────────────▼─────────────────────────────────────┐
 │  Layer 2: amdgpu Driver                                          │
@@ -588,11 +588,11 @@ PCI Subsystem Scans Bus
               Search for matching driver (search all registered pci_drivers)
                             │
               amdgpu's pciidlist matches:
-              ┌─────────────────────────────────────────┐
-              │ {0x1002, 0x7480, ..., CHIP_NAVI33}      │
-              │  ↑ AMD    ↑ Navi33         ↑ Internal   │
+              ┌──────────────────────────────────────────┐
+              │ {0x1002, 0x7480, ..., CHIP_NAVI33}       │
+              │  ↑ AMD    ↑ Navi33         ↑ Internal    │
               │                              chip type   │
-              └─────────────────────────────────────────┘
+              └──────────────────────────────────────────┘
                             │
                             ▼
               Call amdgpu_pci_probe(pdev, ent)
@@ -900,30 +900,30 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
             title: 'Kernel Development Workflow',
             content: `Kernel Development Daily Workflow
 
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │  1. Obtain Source Code                                       │
-│  git clone --depth=1                                        │
-│    <kernel-tree-url>                                        │
-│    --branch <maintainer-branch>                             │
+│  git clone --depth=1                                         │
+│    <kernel-tree-url>                                         │
+│    --branch <maintainer-branch>                              │
 │                                                              │
 │  Directory Structure:                                        │
 │  linux/                                                      │
-│  ├── drivers/gpu/drm/amd/    ← amdgpu driver code (main)   │
-│  ├── include/drm/             ← DRM header files            │
-│  ├── include/uapi/drm/        ← User-space API headers      │
-│  └── Makefile, Kconfig, ...   ← Build system                │
-└──────────────────────────────┬──────────────────────────────┘
+│  ├── drivers/gpu/drm/amd/    ← amdgpu driver code (main)     │
+│  ├── include/drm/             ← DRM header files             │
+│  ├── include/uapi/drm/        ← User-space API headers       │
+│  └── Makefile, Kconfig, ...   ← Build system                 │
+└──────────────────────────────┬───────────────────────────────┘
                                │
 ┌──────────────────────────────▼──────────────────────────────┐
 │  2. Configure & Compile                                      │
 │                                                              │
-│  make defconfig                 ← Use default config        │
-│  scripts/config --enable DRM_AMDGPU  ← Ensure amdgpu on    │
-│  make -j$(nproc)                ← Full build (first, ~30min)│
+│  make defconfig                 ← Use default config         │
+│  scripts/config --enable DRM_AMDGPU  ← Ensure amdgpu on      │
+│  make -j$(nproc)                ← Full build (first, ~30min) │
 │                                                              │
 │  --- After code changes ---                                  │
-│  make M=drivers/gpu/drm/amd    ← Build only amdgpu (~1min) │
-└──────────────────────────────┬──────────────────────────────┘
+│  make M=drivers/gpu/drm/amd    ← Build only amdgpu (~1min)   │
+└──────────────────────────────┬───────────────────────────────┘
                                │
 ┌──────────────────────────────▼──────────────────────────────┐
 │  3. Test                                                     │
@@ -940,10 +940,10 @@ dmesg | grep -i amdgpu > ~/amdgpu_dmesg.log`,
 ┌──────────────────────────────▼──────────────────────────────┐
 │  4. Submit Patches (covered in detail in Module 11)          │
 │                                                              │
-│  git add -p && git commit -s                                │
-│  scripts/checkpatch.pl HEAD~1..HEAD                         │
-│  git format-patch HEAD~1 && git send-email ...              │
-└─────────────────────────────────────────────────────────────┘`,
+│  git add -p && git commit -s                                 │
+│  scripts/checkpatch.pl HEAD~1..HEAD                          │
+│  git format-patch HEAD~1 && git send-email ...               │
+└──────────────────────────────────────────────────────────────┘`,
             caption: 'Complete kernel development workflow: obtain source → configure and compile → test → submit patches. Module-only compilation (make M=...) is the most frequently used command in daily development.',
           },
           codeWalk: {

@@ -83,10 +83,10 @@ Phase 1: Basics    Phase 2: Kernel    Phase 3: Driver    Phase 4: Advanced
 └──────────┘  └────┬─────┘  └────┬─────┘  └────┬────┘
                    │             │              │
 ┌──────────┐  ┌────▼─────┐  ┌────▼─────┐  ┌────▼─────┐
-│ M1: Prep │  │ M4: DRM │  │ M6: Debug│  │ M8: ROCm │
+│ M1: Prep │  │ M4: DRM  │  │ M6: Debug│  │ M8: ROCm │
 │ Prereqs  │→ │ Subsys   │→ │ (40h)    │  │ Compute  │
 │ (40h)    │  │ (60h)    │  └──────────┘  │ (50h)    │
-└──────────┘  └──────────┘                └────┬────┘
+└──────────┘  └──────────┘                └────┬─────┘
                                                │
 ┌──────────┐                              ┌────▼─────┐
 │ M2: HW   │                              │ M9: LLVM │
@@ -110,22 +110,22 @@ Phase 1: Basics    Phase 2: Kernel    Phase 3: Driver    Phase 4: Advanced
             type: 'ascii',
             content: `Linux GPU Kernel Driver Stack
 
-┌─────────────────────────────────────────────────────────────┐
-│ User Space                                                   │
-│  Applications (Games / AI Training / Video Editing)          │
+┌───────────────────────────────────────────────────────────────┐
+│ User Space                                                    │
+│  Applications (Games / AI Training / Video Editing)           │
 │       │  Graphics API (OpenGL / Vulkan / HIP)                 │
 │       │  Userspace Drivers (Mesa radeonsi / radv / ROCr)      │
 │       │  libdrm (wraps ioctl calls)                           │
-├───────┼──────────────────────────────────────────────────────┤
-│       │  Syscall Boundary (ioctl / mmap / read / write)      │
-├───────┼──────────────────────────────────────────────────────┤
-│ Kernel Space                                                 │
+├───────┼───────────────────────────────────────────────────────┤
+│       │  Syscall Boundary (ioctl / mmap / read / write)       │
+├───────┼───────────────────────────────────────────────────────┤
+│ Kernel Space                                                  │
 │       ▼  DRM Core → amdgpu Driver                             │
-├───────┼──────────────────────────────────────────────────────┤
-│       │  MMIO / PCIe                                         │
-├───────┼──────────────────────────────────────────────────────┤
-│       ▼  GPU Hardware (RX 7600 XT / Navi33 / gfx1102)        │
-└─────────────────────────────────────────────────────────────┘`,
+├───────┼───────────────────────────────────────────────────────┤
+│       │  MMIO / PCIe                                          │
+├───────┼───────────────────────────────────────────────────────┤
+│       ▼  GPU Hardware (RX 7600 XT / Navi33 / gfx1102)         │
+└───────────────────────────────────────────────────────────────┘`,
             caption:
               'Linux GPU driver stack. Each layer maps to one or more modules in the learning path. This diagram is the "map" for your entire learning journey.',
           },

@@ -92,10 +92,10 @@ amdgpu hardware abstraction layer
 GPU hardware (Navi33)
             ┌─────────────────────────┐
             │ Shader Engines (32 CU)  │
-            │ ┌─────┐ ┌─────┐        │
-            │ │GFX  │ │Comp │        │
-            │ │Rings│ │Queue│        │
-            │ └─────┘ └─────┘        │
+            │ ┌─────┐ ┌─────┐         │
+            │ │GFX  │ │Comp │         │
+            │ │Rings│ │Queue│         │
+            │ └─────┘ └─────┘         │
             └─────────────────────────┘`,
             caption: 'The amdgpu driver provides kernel interfaces for both graphics rendering and GPU computing. The two paths enter the kernel through /dev/dri/renderD128 and /dev/kfd in user space respectively, and share the hardware access layer at the bottom. Compute Queue can be scheduled directly by the GPU independently of the GFX Ring.',
           },
@@ -296,11 +296,11 @@ GPU Hardware │
      │  ┌───────────────────────────┐ │
      │  │ header:    DISPATCH       │ │
      │  │ dimensions: 3             │ │
-     │  │ grid_size_x: 256         │ │
-     │  │ workgroup_size_x: 64     │ │
-     │  │ kernel_object: 0x7f...   │ │
-     │  │ kernarg_address: 0x7f... │ │
-     │  │ completion_signal: sig_1 │ │
+     │  │ grid_size_x: 256          │ │
+     │  │ workgroup_size_x: 64      │ │
+     │  │ kernel_object: 0x7f...    │ │
+     │  │ kernarg_address: 0x7f...  │ │
+     │  │ completion_signal: sig_1  │ │
      │  └───────────────────────────┘ │
      └────────────────┬───────────────┘
                       │

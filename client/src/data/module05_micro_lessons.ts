@@ -567,25 +567,25 @@ Layer 6: 应用 (Games / AI / Video)
    ↓ OpenGL / Vulkan / HIP / VA-API
 
 Layer 5: 用户态驱动
-   ┌─────────────────────┬─────────────────────┐
-   │     Mesa 3D         │     ROCm            │
-   │  radeonsi (GL)      │  HIP Runtime        │
-   │  radv (Vulkan)      │  HSA Runtime        │
-   │                     │                     │
-   │  仓库: mesa/mesa    │  仓库: ROCm/*       │
-   │  许可: MIT          │  许可: MIT          │
-   │  团队: AMD + 社区   │  团队: AMD Compute  │
-   └──────────┬──────────┴──────────┬──────────┘
+   ┌───────────────────────┬─────────────────────┐
+   │     Mesa 3D　　　　   │     ROCm　　        │
+   │  radeonsi (GL)　　　　│  HIP Runtime　　    │
+   │  radv (Vulkan)　　　　│  HSA Runtime　　    │
+   │　　　　               │　　                 │
+   │  仓库: mesa/mesa　　  │  仓库: ROCm/*       │
+   │  许可: MIT　　        │  许可: MIT          │
+   │  团队: AMD + 社区     │  团队: AMD Compute  │
+   └──────────┬──────────┴──────────┬────────────┘
               ↓ libdrm API                     ↓ KFD ioctl
 
 Layer 4: libdrm
-   ┌─────────────────────────────────────────────┐
-   │  libdrm_amdgpu                              │
-   │  amdgpu_bo_alloc / amdgpu_cs_submit / ...   │
-   │                                              │
-   │  仓库: mesa/drm                              │
+   ┌───────────────────────────────────────────────┐
+   │  libdrm_amdgpu　　                            │
+   │  amdgpu_bo_alloc / amdgpu_cs_submit / ...　　 │
+   │　　                                           │
+   │  仓库: mesa/drm                               │
    │  许可: MIT                                    │
-   └──────────────────┬──────────────────────────┘
+   └──────────────────┬────────────────────────────┘
                       ↓ ioctl() 系统调用
 
 Layer 3: DRM Core (内核空间)

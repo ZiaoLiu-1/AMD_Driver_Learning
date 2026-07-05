@@ -52,9 +52,9 @@ export const module9MicroLessons: MicroLessonModule = {
 
  HIP 源码 (vector_add.hip)
  ┌──────────────────────────────────────────────────────────────┐
- │ __global__ void vector_add(float *a, float *b, float *c) {  │
- │   int i = blockIdx.x * blockDim.x + threadIdx.x;            │
- │   c[i] = a[i] + b[i];                                       │
+ │ __global__ void vector_add(float *a, float *b, float *c) {   │
+ │   int i = blockIdx.x * blockDim.x + threadIdx.x;             │
+ │   c[i] = a[i] + b[i];                                        │
  │ }                                                            │
  └────────────────────────┬─────────────────────────────────────┘
                           │
@@ -709,21 +709,21 @@ s_endpgm`,
             content: `RDNA3 (gfx1102) CU 寄存器资源与 Occupancy
 
 ┌──────────────────── Compute Unit (CU) ────────────────────┐
-│                                                            │
-│  VGPR File: 1536 × 32-bit registers (wave32 mode)         │
-│  ┌────────────────────────────────────────────────────┐    │
-│  │ Wave 0: v0-v47  │ Wave 1: v0-v47  │ Wave 2: ...   │    │
-│  │ (48 VGPRs)      │ (48 VGPRs)      │               │    │
-│  │ ...              │ ...              │               │    │
-│  │ Wave 15 (最多)                                     │    │
-│  └────────────────────────────────────────────────────┘    │
-│                                                            │
-│  SGPR File: 512 × 32-bit registers                         │
-│  ┌────────────────────────────────────────────────────┐    │
-│  │ 每个 Wavefront 最多 106 个 SGPR                     │    │
-│  └────────────────────────────────────────────────────┘    │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
+│　　　　　                                                             │
+│  VGPR File: 1536 × 32-bit registers (wave32 mode)　　　　　           │
+│  ┌────────────────────────────────────────────────────┐　　　　　     │
+│  │ Wave 0: v0-v47   │ Wave 1: v0-v47   │ Wave 2: ...   │　　　　　    │
+│  │ (48 VGPRs)       │ (48 VGPRs)       │               │　　　　　    │
+│  │ ...              │ ...              │               │　　　　　    │
+│  │ Wave 15 (最多)　　　                                │              │
+│  └────────────────────────────────────────────────────┘　　　　　     │
+│　　　　　                                                             │
+│  SGPR File: 512 × 32-bit registers　　　　　                          │
+│  ┌────────────────────────────────────────────────────┐　　　　　     │
+│  │ 每个 Wavefront 最多 106 个 SGPR                     │              │
+│  └────────────────────────────────────────────────────┘　　　　　     │
+│　　　　　                                                             │
+└───────────────────────────────────────────────────────────────────────┘
 
 VGPR 使用量 vs Occupancy (RDNA3 wave32, 1536 VGPRs/CU)：
 
@@ -901,58 +901,58 @@ $ grep "private_segment_fixed_size" very_complex.s
             title: 'RDNA3 ISA 指令格式分类',
             content: `RDNA3 (gfx1102) ISA 指令格式总览
 
-┌──────────────────────────────────────────────────────────────┐
-│  Vector Instructions (v_*) — 操作 VGPR, 在 VALU 上执行       │
-│                                                               │
-│  VOP1    v_<op>_e32 dst, src0        单操作数                 │
-│          v_mov_b32_e32 v0, v1        复制                     │
-│          v_cvt_f32_i32_e32 v0, v1    类型转换                 │
-│                                                               │
-│  VOP2    v_<op>_e32 dst, src0, src1  双操作数                 │
-│          v_add_f32_e32 v0, v1, v2    浮点加                   │
-│          v_mul_f32_e32 v0, v1, v2    浮点乘                   │
-│                                                               │
-│  VOP3    v_<op>_e64 dst, src0, src1, src2  三操作数+修饰符   │
-│          v_fma_f32 v0, v1, v2, v3    融合乘加 (FMA)          │
-│          v_add_f32_e64 v0, |v1|, -v2 支持 abs/neg 修饰符    │
-│                                                               │
-│  VOPC    v_cmp_<cc>_<type> vcc, src0, src1  比较→vcc         │
-│          v_cmp_lt_f32_e32 vcc_lo, v0, v1  逐线程比较         │
-│                                                               │
-│  VINTERP v_interp_p1/p2_f32         像素插值（图形）         │
-└──────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│  Vector Instructions (v_*) — 操作 VGPR, 在 VALU 上执行　　      │
+│　　　　　　　　                                                 │
+│  VOP1    v_<op>_e32 dst, src0        单操作数　　　　           │
+│          v_mov_b32_e32 v0, v1        复制　　　　　　           │
+│          v_cvt_f32_i32_e32 v0, v1    类型转换　　　　           │
+│　　　　　　　　                                                 │
+│  VOP2    v_<op>_e32 dst, src0, src1  双操作数　　　　           │
+│          v_add_f32_e32 v0, v1, v2    浮点加　　　　　           │
+│          v_mul_f32_e32 v0, v1, v2    浮点乘　　　　　           │
+│　　　　　　　　                                                 │
+│  VOP3    v_<op>_e64 dst, src0, src1, src2  三操作数+修饰符　    │
+│          v_fma_f32 v0, v1, v2, v3    融合乘加 (FMA)　　　　     │
+│          v_add_f32_e64 v0, |v1|, -v2 支持 abs/neg 修饰符　　　  │
+│　　　　　　　　                                                 │
+│  VOPC    v_cmp_<cc>_<type> vcc, src0, src1  比较→vcc　　　　　　│
+│          v_cmp_lt_f32_e32 vcc_lo, v0, v1  逐线程比较　　　      │
+│　　　　　　　　                                                 │
+│  VINTERP v_interp_p1/p2_f32         像素插值（图形）            │
+└─────────────────────────────────────────────────────────────────┘
 
-┌──────────────────────────────────────────────────────────────┐
-│  Scalar Instructions (s_*) — 操作 SGPR, 在 SALU 上执行       │
-│                                                               │
-│  SOP1    s_mov_b32 s0, s1            标量复制                 │
-│  SOP2    s_add_u32 s0, s1, s2        标量加法                 │
+┌───────────────────────────────────────────────────────────────┐
+│  Scalar Instructions (s_*) — 操作 SGPR, 在 SALU 上执行        │
+│　　　　　　                                                   │
+│  SOP1    s_mov_b32 s0, s1            标量复制　　             │
+│  SOP2    s_add_u32 s0, s1, s2        标量加法　　             │
 │  SOPP    s_waitcnt vmcnt(0)          等待内存操作             │
-│          s_barrier                   workgroup 同步           │
-│          s_branch <label>            无条件跳转               │
-│          s_cbranch_execz <label>     exec=0 时跳转            │
-│          s_endpgm                    kernel 结束              │
-│  SOPK    s_movk_i32 s0, 0x100       16-bit 立即数            │
-└──────────────────────────────────────────────────────────────┘
+│          s_barrier                   workgroup 同步　　　　   │
+│          s_branch <label>            无条件跳转　             │
+│          s_cbranch_execz <label>     exec=0 时跳转　　　      │
+│          s_endpgm                    kernel 结束　　　　      │
+│  SOPK    s_movk_i32 s0, 0x100       16-bit 立即数　　　       │
+└───────────────────────────────────────────────────────────────┘
 
-┌──────────────────────────────────────────────────────────────┐
-│  Memory Instructions — 全局/标量/本地内存访问                 │
-│                                                               │
-│  SMEM    s_load_b32 s0, s[2:3], off  标量内存加载→SGPR       │
-│          s_load_b128 s[0:3], ...     加载 128-bit (4 dword)  │
-│          → 使用 lgkmcnt 跟踪                                 │
-│                                                               │
-│  GLOBAL  global_load_b32 v0, v1, s[0:1]   全局加载→VGPR     │
-│          global_store_b32 v0, v1, s[0:1]  全局存储            │
-│          → 使用 vmcnt 跟踪                                   │
-│                                                               │
-│  LDS     ds_read_b32 v0, v1          LDS 读取                │
-│          ds_write_b32 v0, v1         LDS 写入                │
-│          → 使用 lgkmcnt 跟踪                                 │
-│                                                               │
-│  SCRATCH scratch_load_b32 v0, off    scratch (spill) 读取    │
-│          scratch_store_b32 off, v0   scratch (spill) 写入    │
-└──────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│  Memory Instructions — 全局/标量/本地内存访问                              │
+│　　　　　　　　　　                                                        │
+│  SMEM    s_load_b32 s0, s[2:3], off  标量内存加载→SGPR　　　　             │
+│          s_load_b128 s[0:3], ...     加载 128-bit (4 dword)　　　　　　　　│
+│          → 使用 lgkmcnt 跟踪　　　　　　                                   │
+│　　　　　　　　　　                                                        │
+│  GLOBAL  global_load_b32 v0, v1, s[0:1]   全局加载→VGPR　　　　　　        │
+│          global_store_b32 v0, v1, s[0:1]  全局存储　　　　　　             │
+│          → 使用 vmcnt 跟踪　　　　　　                                     │
+│　　　　　　　　　　                                                        │
+│  LDS     ds_read_b32 v0, v1          LDS 读取　　　　　　　　              │
+│          ds_write_b32 v0, v1         LDS 写入　　　　　　　　              │
+│          → 使用 lgkmcnt 跟踪　　　　　　                                   │
+│　　　　　　　　　　                                                        │
+│  SCRATCH scratch_load_b32 v0, off    scratch (spill) 读取　　　　　　　　  │
+│          scratch_store_b32 off, v0   scratch (spill) 写入　　　　　　　　  │
+└────────────────────────────────────────────────────────────────────────────┘
 
 s_waitcnt 同步语义：
   vmcnt   — 跟踪 global_load/store（向量内存）

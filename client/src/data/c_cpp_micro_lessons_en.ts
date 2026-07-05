@@ -192,16 +192,16 @@ int g_debug_level = 0;   /* note: this is a DEFINITION, not a declaration */
           diagram: {
             title: 'Integer types and promotion under LP64',
             content: `  Type sizes (Linux x86-64, LP64)
-  ┌───────────┬───────┬──────────────────────────────┐
+  ┌───────────┬───────┬───────────────────────────────┐
   │ type      │ bytes │ kernel fixed-width alias      │
-  ├───────────┼───────┼──────────────────────────────┤
-  │ char      │  1    │ u8  / s8                     │
-  │ short     │  2    │ u16 / s16                    │
-  │ int       │  4    │ u32 / s32   ← GPU reg width  │
-  │ long      │  8    │ u64 / s64 (x86-64)           │
-  │ long long │  8    │ u64 / s64                    │
-  │ void *    │  8    │ —                            │
-  └───────────┴───────┴──────────────────────────────┘
+  ├───────────┼───────┼───────────────────────────────┤
+  │ char      │  1    │ u8  / s8                      │
+  │ short     │  2    │ u16 / s16                     │
+  │ int       │  4    │ u32 / s32   ← GPU reg width   │
+  │ long      │  8    │ u64 / s64 (x86-64)            │
+  │ long long │  8    │ u64 / s64                     │
+  │ void *    │  8    │ —                             │
+  └───────────┴───────┴───────────────────────────────┘
 
   Promotion trap:
     uint8_t a = 0xFF, b = 0x01;
@@ -748,8 +748,8 @@ uint32_t read_size(const void *raw) {
             content: `   high addr ┌─────────────┐
             │   Stack     │  automatic vars, push/pop with calls
             │  ↓ grows down│  lifetime = scope
-            │             │
-            │     ...     │
+            │              │
+            │     ...      │
             │  ↑ grows up  │
             │    Heap     │  malloc allocates, free releases
    low addr └─────────────┘  lifetime = explicitly yours
@@ -897,12 +897,12 @@ int ctx_init(struct ctx *c, int n) {
   };
 
          fill in different impls → different "objects"
-  ┌───────────────────┐     ┌───────────────────┐
-  │ gfx_funcs         │     │ sdma_funcs        │
-  │  .sw_init=gfx_sw  │     │  .sw_init=sdma_sw │
-  │  .hw_init=gfx_hw  │     │  .hw_init=sdma_hw │
+  ┌───────────────────┐     ┌────────────────────┐
+  │ gfx_funcs         │     │ sdma_funcs         │
+  │  .sw_init=gfx_sw  │     │  .sw_init=sdma_sw  │
+  │  .hw_init=gfx_hw  │     │  .hw_init=sdma_hw  │
   │  .fini   =gfx_fini│     │  .fini   =sdma_fini│
-  └───────────────────┘     └───────────────────┘
+  └───────────────────┘     └────────────────────┘
             ▲                         ▲
             └──── caller knows only the interface ────┘
    for (each block)

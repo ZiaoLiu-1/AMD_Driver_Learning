@@ -88,16 +88,16 @@ export const module4MicroLessons: MicroLessonModule = {
                       │
                       ▼
   amdgpu_device (内嵌 drm_device)
-  ┌───────────────────────────────────────────────────┐
-  │  struct amdgpu_device {                           │
-  │      struct drm_device        ddev;  ← DRM 核心  │
-  │      struct amdgpu_ring       gfx_ring[...];      │
-  │      struct amdgpu_vm_manager vm_manager;         │
-  │      struct amdgpu_gmc        gmc;   ← VRAM/GTT  │
-  │      void __iomem            *rmmio; ← 寄存器BAR │
-  │      ...                                          │
-  │  };                                               │
-  └───────────────────────────────────────────────────┘`,
+  ┌──────────────────────────────────────────────────────┐
+  │  struct amdgpu_device {　　　                        │
+  │      struct drm_device        ddev;  ← DRM 核心　    │
+  │      struct amdgpu_ring       gfx_ring[...];　　　   │
+  │      struct amdgpu_vm_manager vm_manager;　　　      │
+  │      struct amdgpu_gmc        gmc;   ← VRAM/GTT　　　│
+  │      void __iomem            *rmmio; ← 寄存器BAR     │
+  │      ...　　　                                       │
+  │  };　　　                                            │
+  └──────────────────────────────────────────────────────┘`,
             caption: 'DRM ioctl 分发的完整路径。DRM 核心处理通用操作（VERSION、GEM_CLOSE、MODE_*），驱动特定操作（AMDGPU_CS、AMDGPU_GEM_CREATE）由 amdgpu 自己的处理函数完成。',
           },
           codeWalk: {
@@ -310,8 +310,8 @@ Framebuffer (VRAM)         DRM/KMS 对象              物理硬件
                                   ▼
                            ┌──────────────┐     DCN 硬件
                            │   CRTC 0     │     ┌──────────┐
-                           │ 1920x1080    │────▶│ OTG 0    │
-                           │ @60Hz        │     │(扫描引擎) │
+                           │ 1920x1080    │────▶│ OTG 0　　　　│
+                           │ @60Hz        │     │(扫描引擎)    │
                            │ VBlank IRQ ──│──┐  └────┬─────┘
                            └──────────────┘  │       │
                                              │       ▼
@@ -341,9 +341,9 @@ Framebuffer (VRAM)         DRM/KMS 对象              物理硬件
 
 VBlank 时序（单帧）：
 ┌─────────── Active Display ───────────┐┌── VBlank ──┐
-│ 逐行扫描 1920x1080 像素              ││ Front Porch │
-│ CRTC 从 Plane 读取 FB 数据           ││ Sync Pulse  │
-│                                       ││ Back Porch  │
+│ 逐行扫描 1920x1080 像素               ││ Front Porch │
+│ CRTC 从 Plane 读取 FB 数据　          ││ Sync Pulse  │
+│　　　　　　                           ││ Back Porch  │
 └───────────────────────────────────────┘└─── IRQ! ───┘`,
             caption: 'KMS 显示管线的完整视图。左侧是 VRAM 中的 Framebuffer，中间是 DRM/KMS 抽象对象，右侧是实际的物理接口。VBlank 中断在每帧扫描结束时触发，是安全更新显示内容的时间窗口。',
           },
@@ -559,39 +559,39 @@ static int create_hdmi_connector(struct drm_device *dev,
   drm_mode_atomic_ioctl()                  (drm_atomic_uapi.c)
      │
      ▼
-  ┌─────────────────────────────────────────────────┐
-  │  Phase 1: atomic_check （验证阶段）              │
-  │                                                  │
-  │  drm_atomic_helper_check_modeset()               │
-  │  ├─ 每个 CRTC: mode_changed? active_changed?    │
-  │  ├─ 带宽检查: 所有 CRTC 的总带宽 ≤ GPU 上限     │
-  │  └─ 时钟检查: pixel clock ≤ 硬件支持的最大值     │
-  │                                                  │
-  │  drm_atomic_helper_check_planes()                │
-  │  ├─ 每个 Plane: FB 格式支持? src/dst 矩形合法?  │
-  │  ├─ 缩放比例: 不超过硬件 scaler 的能力           │
-  │  └─ 带宽: 所有活跃 Plane 的带宽 ≤ 可用内存带宽  │
-  │                                                  │
-  │  amdgpu_dm_atomic_check()    ← amdgpu 特有检查   │
-  │  └─ DC 验证: dc_validate_global_state()          │
-  │                                                  │
-  │  如果 TEST_ONLY → 到此返回，不修改硬件            │
-  └──────────────────────┬──────────────────────────┘
+  ┌───────────────────────────────────────────────────────────────────────┐
+  │  Phase 1: atomic_check （验证阶段）　　　　　　　　　                 │
+  │　　　　　　　　　　　　　　　                                         │
+  │  drm_atomic_helper_check_modeset()　　　　　　　　　　　　　　　      │
+  │  ├─ 每个 CRTC: mode_changed? active_changed?　　　　　　　　　　　　　│
+  │  ├─ 带宽检查: 所有 CRTC 的总带宽 ≤ GPU 上限　　　                     │
+  │  └─ 时钟检查: pixel clock ≤ 硬件支持的最大值　　　                    │
+  │　　　　　　　　　　　　　　　                                         │
+  │  drm_atomic_helper_check_planes()　　　　　　　　　　　　　　　       │
+  │  ├─ 每个 Plane: FB 格式支持? src/dst 矩形合法?　　　　　              │
+  │  ├─ 缩放比例: 不超过硬件 scaler 的能力　　　                          │
+  │  └─ 带宽: 所有活跃 Plane 的带宽 ≤ 可用内存带宽                        │
+  │　　　　　　　　　　　　　　　                                         │
+  │  amdgpu_dm_atomic_check()    ← amdgpu 特有检查　　　　　　　　　　　  │
+  │  └─ DC 验证: dc_validate_global_state()　　　　　　　　　　　　　     │
+  │　　　　　　　　　　　　　　　                                         │
+  │  如果 TEST_ONLY → 到此返回，不修改硬件　　　                          │
+  └──────────────────────┬────────────────────────────────────────────────┘
                          │ check 通过
                          ▼
-  ┌─────────────────────────────────────────────────┐
-  │  Phase 2: atomic_commit （提交阶段）             │
-  │                                                  │
-  │  如果 NONBLOCK:                                  │
-  │    排入工作队列，立即返回用户空间                 │
-  │                                                  │
-  │  amdgpu_dm_atomic_commit_tail()                  │
-  │  ├─ 更新 dc_stream（CRTC 模式变更）             │
-  │  ├─ 更新 dc_plane（Plane 属性变更）              │
-  │  ├─ dc_commit_streams() → 写入 DCN 寄存器         │
-  │  ├─ 等待 VBlank（page flip）                     │
-  │  └─ drm_crtc_send_vblank_event() → 通知用户空间 │
-  └─────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────────────┐
+  │  Phase 2: atomic_commit （提交阶段）　　　　　　　　　           │
+  │　　　　　　　　　　　　　　　                                    │
+  │  如果 NONBLOCK:　　　　　　　　　　　　　                        │
+  │    排入工作队列，立即返回用户空间                                │
+  │　　　　　　　　　　　　　　　                                    │
+  │  amdgpu_dm_atomic_commit_tail()　　　　　　　　　　　　　　　    │
+  │  ├─ 更新 dc_stream（CRTC 模式变更）　　　　　　　                │
+  │  ├─ 更新 dc_plane（Plane 属性变更）　　　　　　　                │
+  │  ├─ dc_commit_streams() → 写入 DCN 寄存器　　　　　　　　　　    │
+  │  ├─ 等待 VBlank（page flip）　　　　　　　　　　　               │
+  │  └─ drm_crtc_send_vblank_event() → 通知用户空间　　　　　　　　　│
+  └──────────────────────────────────────────────────────────────────┘
                          │
                          ▼
   用户空间收到 DRM_EVENT_FLIP_COMPLETE
@@ -787,37 +787,37 @@ void update_display(int fd, uint32_t crtc_id,
   │
 内核空间
   ▼
-┌─────────────────────────────────────────────────────────┐
-│  GEM 层 (drm_gem.c)                                     │
-│  ├─ drm_gem_object: handle 管理、引用计数、mmap         │
-│  └─ GEM ioctl: CREATE, MMAP, CLOSE, WAIT_IDLE           │
-└─────────────────────┬───────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  GEM 层 (drm_gem.c)　　　　　　　                            │
+│  ├─ drm_gem_object: handle 管理、引用计数、mmap              │
+│  └─ GEM ioctl: CREATE, MMAP, CLOSE, WAIT_IDLE　　　　　　　　│
+└─────────────────────┬────────────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────┐
-│  TTM 层 (ttm_bo.c, ttm_resource.c)                      │
-│  ├─ ttm_buffer_object: 生命周期、锁、LRU 管理           │
-│  ├─ ttm_resource_manager: 每个域的分配器                 │
-│  ├─ ttm_bo_validate(): 确保 BO 在指定域中               │
-│  └─ ttm_bo_move(): 跨域数据迁移（DMA 或 memcpy）        │
-└─────────────────────┬───────────────────────────────────┘
+│  TTM 层 (ttm_bo.c, ttm_resource.c)　　　　　　　　       │
+│  ├─ ttm_buffer_object: 生命周期、锁、LRU 管理            │
+│  ├─ ttm_resource_manager: 每个域的分配器　　             │
+│  ├─ ttm_bo_validate(): 确保 BO 在指定域中　　            │
+│  └─ ttm_bo_move(): 跨域数据迁移（DMA 或 memcpy）         │
+└─────────────────────┬────────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────┐
-│  amdgpu TTM 后端 (amdgpu_ttm.c)                         │
-│  ├─ amdgpu_bo_move(): 使用 SDMA 引擎做 DMA 搬运        │
-│  ├─ amdgpu_ttm_io_mem_reserve(): 映射 VRAM BAR          │
-│  └─ amdgpu_ttm_backend_bind(): 绑定 GART 页表           │
+│  amdgpu TTM 后端 (amdgpu_ttm.c)　　　　　               │
+│  ├─ amdgpu_bo_move(): 使用 SDMA 引擎做 DMA 搬运         │
+│  ├─ amdgpu_ttm_io_mem_reserve(): 映射 VRAM BAR　　　　　│
+│  └─ amdgpu_ttm_backend_bind(): 绑定 GART 页表　　　     │
 └─────────────────────────────────────────────────────────┘
 
 内存域与 BO 迁移：
 
   ┌──────────────┐      eviction      ┌──────────────┐
-  │   VRAM       │ ──────────────────▶ │     GTT      │
-  │ (16GB GDDR6) │ ◀────────────────── │(系统内存,可达│
-  │  最快,GPU专用│      validation     │ GPU通过GART) │
-  │              │                     │              │
-  │  BO_A (4MB)  │                     │  BO_C (2MB)  │
-  │  BO_B (16MB) │                     │  evicted BO  │
-  └──────────────┘                     └──────┬───────┘
+  │   VRAM　　　　      │ ──────────────────▶ │     GTT　　　　　　    │
+  │ (16GB GDDR6)　　　　│ ◀────────────────── │(系统内存,可达          │
+  │  最快,GPU专用       │      validation     │ GPU通过GART)　　　　   │
+  │　　　　             │                     │　　　　　　            │
+  │  BO_A (4MB)　　　　 │                     │  BO_C (2MB)　　　　　　│
+  │  BO_B (16MB)　　　　│                     │  evicted BO　　　　　　│
+  └──────────────┘                     └──────┬────────────────────────┘
         ▲                                     │
         │                                     ▼
         │                              ┌──────────────┐
@@ -1078,27 +1078,27 @@ err_work:
                                              零拷贝！
 
 物理内存视角：
-┌──────────────────────────────────────────────────────┐
-│  VRAM                                                 │
-│                                                       │
-│  ┌─────────┐                                          │
-│  │ 视频帧   │ ← VCN 解码输出 (exporter 的 BO)        │
-│  │ 1920×1080│ ← 同时也是合成器的纹理 (importer 的 BO)│
-│  │ NV12     │                                         │
-│  └─────────┘                                          │
-│  同一块物理内存，两个进程通过不同 BO 访问              │
-│  数据从未被复制 — 这就是零拷贝                         │
-└──────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│  VRAM　　　　　　　　　　　　　　　　　　                              │
+│　　　　　　　　　　　　　　　　　　                                    │
+│  ┌─────────┐　　　　　　　　　　　　　　　　　　                       │
+│  │ 视频帧         │ ← VCN 解码输出 (exporter 的 BO)　　　　　　　　　　│
+│  │ 1920×1080　　　│ ← 同时也是合成器的纹理 (importer 的 BO)　　　　    │
+│  │ NV12　　　     │　　　　　　　　　　　　　　　                      │
+│  └─────────┘　　　　　　　　　　　　　　　　　　                       │
+│  同一块物理内存，两个进程通过不同 BO 访问                              │
+│  数据从未被复制 — 这就是零拷贝　　　　　                               │
+└────────────────────────────────────────────────────────────────────────┘
 
 DMA-BUF sg_table（scatter-gather 表）：
-  ┌────────────────────────────────────────┐
-  │  entry[0]: phys=0x80001000, len=4096   │
-  │  entry[1]: phys=0x80005000, len=4096   │
-  │  entry[2]: phys=0x80002000, len=8192   │
-  │  ...                                    │
-  │  → Importer 的 IOMMU/GART 将这些分散   │
-  │    页面映射为设备连续地址空间            │
-  └────────────────────────────────────────┘`,
+  ┌───────────────────────────────────────────────────────────────┐
+  │  entry[0]: phys=0x80001000, len=4096　　　　　　　　　　　　　│
+  │  entry[1]: phys=0x80005000, len=4096　　　　　　　　　　　　　│
+  │  entry[2]: phys=0x80002000, len=8192　　　　　　　　　　　　　│
+  │  ...　　　　　　　　　　　　　                                │
+  │  → Importer 的 IOMMU/GART 将这些分散　　　　　　　            │
+  │    页面映射为设备连续地址空间                                 │
+  └───────────────────────────────────────────────────────────────┘`,
             caption: 'DMA-BUF 实现零拷贝的完整流程。视频解码器（VCN）将帧数据解码到 VRAM，通过 DMA-BUF fd 共享给合成器，合成器直接将同一块 VRAM 数据作为纹理渲染——数据从未离开 VRAM。',
           },
           codeWalk: {

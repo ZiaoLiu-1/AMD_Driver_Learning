@@ -162,12 +162,12 @@ __global__ void saxpy_slow(int n, float a,
 │ ┌────────────────────┐ ┌─────────────────┐ │
 │ │ GC graphics+compute│ │ GMC/VM memory   │ │
 │ │ (CU/CP/caches)     │ │ controller      │ │──VRAM
-│ ├─────────┬──────────┤ ├────────┬────────┤ │
+│ ├─────────┬──────────┤ ├────────┬────────┤  │
 │ │ SDMA    │ VCN video│ │ IH irq │ SMU pwr │ │
-│ ├─────────┼──────────┤ └────────┴────────┘ │
-│ │ DCN disp│ PSP sec  │                     │
-│ └─────────┴──────────┘                     │
-└────────────────┬───────────────────────────┘
+│ ├─────────┼──────────┤ └────────┴────────┘  │
+│ │ DCN disp│ PSP sec  │                      │
+│ └─────────┴──────────┘                      │
+└────────────────┬────────────────────────────┘
               PCIe ↔ CPU
 Driver mapping: gfx_v11_0.c / sdma_v6_0.c / vcn_v4_0.c ...`,
             caption: 'Every block on the left has a matching <ip>_v<version>.c file family in amdgpu. GC is the protagonist of this course; SDMA/GMC return in the memory lessons; DCN is a world of its own.',
@@ -402,7 +402,7 @@ EXEC mask: [11111111 11110000 00001111 11111111]
             svgId: 'wgp-cu-internals',
             content: `GPU → SE ×2 → SA ×2 → WGP ×4        (RX 7600 XT)
 ┌──────────────── WGP ────────────────┐
-│ ┌── CU0 ──────────┐ ┌── CU1 ───────┐│
+│ ┌── CU0 ──────────┐ ┌── CU1 ───────┐ │
 │ │ SIMD32 + VGPR   │ │ SIMD32 + VGPR ││
 │ │ SIMD32 + VGPR   │ │ SIMD32 + VGPR ││
 │ │ SALU + SGPR     │ │ SALU + SGPR   ││

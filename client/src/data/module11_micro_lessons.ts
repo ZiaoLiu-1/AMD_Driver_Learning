@@ -70,7 +70,7 @@ $ git commit -s                              # -s 自动添加 Signed-off-by
   │  │ a TLB flush after unmapping pages,       │
   │  │ causing stale mappings that lead to      │
   │  │ GPU page faults on RDNA3 hardware.       │
-  │  │                                         │
+  │  │                                          │
   │  │ Fixes: abc123def ("drm/amdgpu: ...")    │ ← 引用引入 Bug 的提交
   │  │ Signed-off-by: You <you@email.com>      │ ← 法律声明
   │  └─────────────────────────────────────────┘
@@ -609,7 +609,7 @@ GitHub: github.com/yourname
 └── "RDNA3 GFX Ring Buffer 完全指南"
 
 LinkedIn Profile
-┌─────────────────────────────────────────────┐
+┌──────────────────────────────────────────────┐
 │ Your Name                                    │
 │ GPU Driver Engineer | Linux Kernel           │
 │ AMD amdgpu | DRM | Mesa                      │
@@ -617,14 +617,14 @@ LinkedIn Profile
 │ Summary:                                     │
 │ Linux kernel contributor focused on GPU      │
 │ driver development. Submitted patches to     │
-│ amd-gfx mailing list. Deep knowledge of     │
+│ amd-gfx mailing list. Deep knowledge of      │
 │ amdgpu driver internals (VM, GFX, PM).       │
 │                                              │
 │ Open Source Contributions:                   │
 │ • Linux kernel amdgpu driver (patches)       │
-│ • IGT GPU test suite (new tests)            │
-│ • Technical blog on GPU driver internals    │
-└─────────────────────────────────────────────┘
+│ • IGT GPU test suite (new tests)             │
+│ • Technical blog on GPU driver internals     │
+└──────────────────────────────────────────────┘
 
 邮件列表记录 (可公开验证)
 lore.kernel.org/amd-gfx/?q=your@email.com

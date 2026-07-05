@@ -56,9 +56,9 @@ export const module6MicroLessons: MicroLessonModule = {
   pr_warn("amdgpu: ...")         ──→  dmesg (级别 4, 始终输出)
   pr_info("amdgpu: ...")         ──→  dmesg (级别 6, 始终输出)
   pr_debug("amdgpu: ...")        ──→  dmesg (级别 7, 需要动态调试开启)
-       │                                       │
+       │　　　　                                 │
        │  控制方式:                              │
-       │  echo "module amdgpu +p"              │
+       │  echo "module amdgpu +p"　　　　        │
        │  > /sys/kernel/debug/                 ▼
        │    dynamic_debug/control          dmesg -w | grep amdgpu
        │
@@ -248,43 +248,43 @@ $ cat /sys/module/drm/parameters/debug
             content: `ftrace 架构——从追踪点到用户空间分析
 
                       内核空间
-    ┌──────────────────────────────────────────────┐
-    │                                              │
-    │  amdgpu 代码中的追踪点                        │
-    │                                              │
-    │  amdgpu_cs_ioctl() {                         │
-    │      trace_amdgpu_cs_ioctl(job);  ──────┐    │
-    │      ...                                │    │
-    │  }                                      │    │
-    │                                         │    │
-    │  amdgpu_job_run() {                     │    │
-    │      trace_amdgpu_sched_run_job(job); ──┤    │
-    │      ...                                │    │
-    │  }                                      │    │
-    │                                         ▼    │
-    │  ┌─────────── ftrace 框架 ───────────────┐   │
-    │  │                                       │   │
-    │  │  function tracer (mcount/fentry hook)  │   │
-    │  │  ┌─ amdgpu_cs_ioctl                   │   │
-    │  │  ├─ amdgpu_cs_parser_init             │   │
-    │  │  ├─ amdgpu_cs_submit                  │   │
-    │  │  └─ ...                               │   │
-    │  │                                       │   │
-    │  │  TRACE_EVENT 追踪点                    │   │
-    │  │  ┌─ amdgpu:amdgpu_cs_ioctl           │   │
-    │  │  ├─ amdgpu:amdgpu_sched_run_job      │   │
-    │  │  ├─ amdgpu:amdgpu_vm_bo_map          │   │
-    │  │  └─ amdgpu:amdgpu_bo_create          │   │
-    │  │                                       │   │
-    │  │          ▼                             │   │
-    │  │  ┌── Per-CPU Ring Buffer ──┐          │   │
-    │  │  │ CPU0: [event][event]... │          │   │
-    │  │  │ CPU1: [event][event]... │          │   │
-    │  │  │ CPU2: [event][event]... │          │   │
-    │  │  │ CPU3: [event][event]... │          │   │
-    │  │  └────────────────────────┘          │   │
-    │  └───────────────┬───────────────────────┘   │
-    └──────────────────┼───────────────────────────┘
+    ┌───────────────────────────────────────────────────────────────────────────────────┐
+    │　　　　　　　                                                                     │
+    │  amdgpu 代码中的追踪点                                                            │
+    │　　　　　　　                                                                     │
+    │  amdgpu_cs_ioctl() {　　　　　　　                                                │
+    │      trace_amdgpu_cs_ioctl(job);  ──────┐　　　　　　　                           │
+    │      ...                                │　　　　　　　                           │
+    │  }                                      │　　　　　　　                           │
+    │                                         │　　　　　　　                           │
+    │  amdgpu_job_run() {                     │　　　　　　　                           │
+    │      trace_amdgpu_sched_run_job(job); ──┤　　　　　　　                           │
+    │      ...                                │　　　　　　　                           │
+    │  }                                      │　　　　　　　                           │
+    │                                         ▼　　　　　　　                           │
+    │  ┌─────────── ftrace 框架 ───────────────┐　　　　　                              │
+    │  │　　　                                      │　　　　                           │
+    │  │  function tracer (mcount/fentry hook)　　　│　　　　                           │
+    │  │  ┌─ amdgpu_cs_ioctl　　　                  │　　　　                           │
+    │  │  ├─ amdgpu_cs_parser_init　　　            │　　　　                           │
+    │  │  ├─ amdgpu_cs_submit　　　                 │　　　　                           │
+    │  │  └─ ...　　　                              │　　　　                           │
+    │  │　　　                                      │　　　　                           │
+    │  │  TRACE_EVENT 追踪点                        │　　　　                           │
+    │  │  ┌─ amdgpu:amdgpu_cs_ioctl　　　           │　　　　                           │
+    │  │  ├─ amdgpu:amdgpu_sched_run_job　　　      │　　　　                           │
+    │  │  ├─ amdgpu:amdgpu_vm_bo_map　　　          │　　　　                           │
+    │  │  └─ amdgpu:amdgpu_bo_create　　　          │　　　　                           │
+    │  │　　　                                      │　　　　                           │
+    │  │          ▼　　　                           │　　　　                           │
+    │  │  ┌── Per-CPU Ring Buffer ──┐　　　         │　　　　                           │
+    │  │  │ CPU0: [event][event]... │          │　　　　　　　                          │
+    │  │  │ CPU1: [event][event]... │          │　　　　　　　                          │
+    │  │  │ CPU2: [event][event]... │          │　　　　　　　                          │
+    │  │  │ CPU3: [event][event]... │          │　　　　　　　                          │
+    │  │  └────────────────────────┘　　　          │　　　　                           │
+    │  └───────────────┬───────────────────────┘　　　　　　　                          │
+    └─────────────────────────────────────────┼─────────────────────────────────────────┘
                        │
     ┌──────────────────▼───────────────────────────┐
     │                用户空间                        │
@@ -484,50 +484,50 @@ blender-8901  [003] 10000.280: amdgpu_sched_run_job: sched_job=5199`,
             content: `CPU + GPU 联合性能分析工作流
 
 ┌─────────── 应用程序 (如 AI 训练) ──────────┐
-│                                              │
-│  CPU 代码         GPU 代码 (HIP kernel)      │
-│  数据预处理        矩阵乘法                   │
-│  内存分配          卷积运算                   │
-│  GPU 调度          ...                        │
-│       │                    │                  │
-└───────┼────────────────────┼──────────────────┘
+│　　　　　　　　　                                               │
+│  CPU 代码         GPU 代码 (HIP kernel)　　　　　               │
+│  数据预处理        矩阵乘法                                     │
+│  内存分配          卷积运算　                                   │
+│  GPU 调度          ...　　　　　　　                            │
+│       │                    │　　　　　　　　　                  │
+└───────┼────────────────────┼────────────────────────────────────┘
         │                    │
   ┌─────▼──────┐      ┌─────▼──────┐
-  │   perf     │      │  rocprof   │
-  │  (CPU 侧)  │      │  (GPU 侧)  │
-  │            │      │            │
-  │ perf stat  │      │ --stats    │
-  │  cycles    │      │ kernel时间  │
-  │  cache-miss│      │ 调用次数    │
-  │  IPC       │      │            │
-  │            │      │ --hsa-trace│
-  │ perf record│      │ API调用     │
-  │  采样      │      │ 内存拷贝    │
-  │  调用栈    │      │ dispatch   │
-  │            │      │            │
-  │ perf report│      │ 硬件计数器  │
-  │  热点函数  │      │ SQ_WAVES   │
-  │            │      │ SQ_INSTS   │
-  │  → 火焰图  │      │ L2 cache   │
-  └─────┬──────┘      └─────┬──────┘
+  │   perf　　　　     │      │  rocprof　　　　　   │
+  │  (CPU 侧)　　　    │      │  (GPU 侧)　　　　    │
+  │　　　　            │      │　　　　　            │
+  │ perf stat　　　　  │      │ --stats　　　　　    │
+  │  cycles　　　　    │      │ kernel时间　　　     │
+  │  cache-miss　　　　│      │ 调用次数　           │
+  │  IPC　　　　       │      │　　　　　            │
+  │　　　　            │      │ --hsa-trace　　　　　│
+  │ perf record　　　　│      │ API调用　　　        │
+  │  采样　　          │      │ 内存拷贝　           │
+  │  调用栈　          │      │ dispatch　　　　　   │
+  │　　　　            │      │　　　　　            │
+  │ perf report　　　　│      │ 硬件计数器           │
+  │  热点函数          │      │ SQ_WAVES　　　　　   │
+  │　　　　            │      │ SQ_INSTS　　　　　   │
+  │  → 火焰图　        │      │ L2 cache　　　　　   │
+  └─────┬──────┘      └─────┬────────────────────────┘
         │                    │
         ▼                    ▼
-  ┌──────────────────────────────────────┐
-  │         分析结果整合                   │
-  │                                      │
-  │  典型发现:                            │
-  │  ├─ CPU 热点: amdgpu_fence_wait_any  │
-  │  │   → fence polling 占 CPU 30%      │
-  │  │   → 方案: 改用中断等待模式         │
-  │  │                                    │
-  │  ├─ GPU 热点: matmul_kernel          │
-  │  │   → SQ_WAVES 利用率只有 40%       │
-  │  │   → 方案: 增大 workgroup size     │
-  │  │                                    │
-  │  └─ CPU-GPU 交互:                    │
-  │      → 数据拷贝占总时间 60%           │
-  │      → 方案: 使用 pinned memory      │
-  └──────────────────────────────────────┘`,
+  ┌────────────────────────────────────────────────────┐
+  │         分析结果整合　　　　                       │
+  │　　　　　　　　　　                                │
+  │  典型发现:　　　　　　                             │
+  │  ├─ CPU 热点: amdgpu_fence_wait_any　　　　　　　　│
+  │  │   → fence polling 占 CPU 30%　　　　　　　　　  │
+  │  │   → 方案: 改用中断等待模式                      │
+  │  │　　　　　　　　　　                             │
+  │  ├─ GPU 热点: matmul_kernel　　　　　　　　        │
+  │  │   → SQ_WAVES 利用率只有 40%　　　　　           │
+  │  │   → 方案: 增大 workgroup size　　　　　　       │
+  │  │　　　　　　　　　　                             │
+  │  └─ CPU-GPU 交互:　　　　　　　　                  │
+  │      → 数据拷贝占总时间 60%　　                    │
+  │      → 方案: 使用 pinned memory　　　　　　        │
+  └────────────────────────────────────────────────────┘`,
             caption: 'perf 分析 CPU 侧热点（驱动代码、调度、fence wait），rocprof 分析 GPU 侧热点（kernel 执行、内存带宽）。两者结合可以完整定位 CPU+GPU 工作负载的瓶颈。',
           },
           codeWalk: {
@@ -713,11 +713,11 @@ $ sudo perf report | head -20
             content: `GPU Hang 从检测到恢复的完整流程
 
 ┌─────────── 正常运行 ───────────┐
-│                                │
+│　　　　                        │
 │  应用提交 job → ring buffer    │
 │  CP 执行命令 → fence signal    │
 │  drm_sched 标记 job 完成       │
-│                                │
+│　　　　                        │
 └──────────────┬─────────────────┘
                │ fence 未在 10s 内 signal
                ▼
@@ -732,54 +732,54 @@ $ sudo perf report | head -20
                │
                ▼
 ┌─────────── 状态采集 ───────────┐
-│                                │
-│  1. GRBM_STATUS = 0xEE008002  │
-│     解析:                      │
-│     bit 31: GUI_ACTIVE = 1     │
-│     bit 30: CP_BUSY    = 1     │
-│     bit 23: SPI_BUSY   = 1     │
-│     → 图形引擎+CP+SPI 全忙!    │
-│                                │
-│  2. CP_RB_RPTR = 0x00001200   │
-│     CP_RB_WPTR = 0x00001234   │
-│     → RPTR < WPTR, ring 不空   │
-│     → CP 卡在 offset 0x1200   │
-│                                │
-│  3. IB test: TIMEOUT           │
-│     → ring 确认 hang           │
-│                                │
-└──────────────┬─────────────────┘
+│　　　　　　                             │
+│  1. GRBM_STATUS = 0xEE008002　　　　　　│
+│     解析:　　　　                       │
+│     bit 31: GUI_ACTIVE = 1　　　　　　  │
+│     bit 30: CP_BUSY    = 1　　　　　　  │
+│     bit 23: SPI_BUSY   = 1　　　　　　  │
+│     → 图形引擎+CP+SPI 全忙!             │
+│　　　　　　                             │
+│  2. CP_RB_RPTR = 0x00001200　　　　　　 │
+│     CP_RB_WPTR = 0x00001234　　　　　　 │
+│     → RPTR < WPTR, ring 不空　　　　    │
+│     → CP 卡在 offset 0x1200　　　　     │
+│　　　　　　                             │
+│  3. IB test: TIMEOUT　　　　　　        │
+│     → ring 确认 hang　　　　            │
+│　　　　　　                             │
+└──────────────┬──────────────────────────┘
                │
                ▼
 ┌─────────── dmesg 输出 ─────────┐
 │                                │
 │  [drm:amdgpu_job_timedout]     │
-│  *ERROR* ring gfx_0.0.0       │
+│  *ERROR* ring gfx_0.0.0        │
 │  timeout, signaled fence=1233  │
 │  emitted fence=1234            │
 │                                │
-│  GRBM_STATUS=0xEE008002       │
-│  CP_RB_RPTR=0x00001200        │
-│  CP_RB_WPTR=0x00001234        │
+│  GRBM_STATUS=0xEE008002        │
+│  CP_RB_RPTR=0x00001200         │
+│  CP_RB_WPTR=0x00001234         │
 │                                │
 └──────────────┬─────────────────┘
                │
                ▼
 ┌─────────── GPU Reset ──────────┐
-│                                │
-│  amdgpu_device_gpu_recover()   │
-│  ├─ 通知所有客户端              │
-│  ├─ 停止所有 ring 调度          │
-│  ├─ Mode 1: GRBM_SOFT_RST     │
-│  │  └─ 如果失败 →              │
-│  │     Mode 2: PSP full reset  │
-│  ├─ 重新初始化 IP Blocks       │
-│  ├─ 恢复 ring buffers          │
-│  └─ 重新调度排队的 jobs         │
-│                                │
-│  [drm] GPU reset succeeded     │
-│                                │
-└────────────────────────────────┘`,
+│　　　　　　　                              │
+│  amdgpu_device_gpu_recover()　　　　　　　 │
+│  ├─ 通知所有客户端                         │
+│  ├─ 停止所有 ring 调度　                   │
+│  ├─ Mode 1: GRBM_SOFT_RST　　　　　　　    │
+│  │  └─ 如果失败 →　　　                    │
+│  │     Mode 2: PSP full reset　　　　　　　│
+│  ├─ 重新初始化 IP Blocks　　               │
+│  ├─ 恢复 ring buffers　　　　　            │
+│  └─ 重新调度排队的 jobs                    │
+│　　　　　　　                              │
+│  [drm] GPU reset succeeded　　　　　　　   │
+│　　　　　　　                              │
+└────────────────────────────────────────────┘`,
             caption: 'GPU Hang 的完整处理流程：timeout 检测 → 状态采集（GRBM_STATUS, RPTR/WPTR）→ dmesg 记录 → GPU reset 恢复。每个阶段的信息都对诊断 hang 原因至关重要。',
           },
           codeWalk: {
@@ -972,10 +972,10 @@ int amdgpu_device_gpu_recover(struct amdgpu_device *adev,
         ┌─────────┬───────────┼───────────┬──────────┐
         │         │           │           │          │
         ▼         ▼           ▼           ▼          ▼
-   ┌─────────┐ ┌─────────┐ ┌──────────┐ ┌────────┐ ┌────────┐
-   │寄存器读写│ │Ring 分析│ │VRAM 读写 │ │Wave    │ │VM 页表 │
-   │         │ │         │ │          │ │状态    │ │解析    │
-   └────┬────┘ └────┬────┘ └────┬─────┘ └───┬────┘ └───┬────┘
+   ┌──────────┐ ┌─────────┐ ┌──────────┐ ┌────────┐ ┌────────┐
+   │寄存器读写│ │Ring 分析│ │VRAM 读写 │ │Wave　　│ │VM 页表 │
+   │　　　　　│ │　　     │ │　　      │ │状态    │ │解析    │
+   └────┬────┘ └────┬────┘ └────┬─────┘ └───┬────┘ └───┬─────┘
         │         │         │          │         │
         ▼         ▼         ▼          ▼         ▼
 
@@ -999,13 +999,13 @@ int amdgpu_device_gpu_recover(struct amdgpu_device *adev,
     引擎卡住     hang的命令   缓冲内容   住的shader  page fault
 
 常用 5 个关键寄存器:
-┌────────────────────────────────────────────────────────┐
-│  1. GRBM_STATUS    — GPU 全局引擎忙碌状态              │
-│  2. CP_RB_RPTR     — Ring Buffer 读指针（CP 当前位置）  │
-│  3. CP_RB_WPTR     — Ring Buffer 写指针（最新命令位置）  │
-│  4. SRBM_STATUS    — System Register Bus Manager 状态  │
-│  5. CP_STALLED_STAT— CP 阻塞原因详情                   │
-└────────────────────────────────────────────────────────┘`,
+┌────────────────────────────────────────────────────────────────────────┐
+│  1. GRBM_STATUS    — GPU 全局引擎忙碌状态　　　                        │
+│  2. CP_RB_RPTR     — Ring Buffer 读指针（CP 当前位置）　　             │
+│  3. CP_RB_WPTR     — Ring Buffer 写指针（最新命令位置）                │
+│  4. SRBM_STATUS    — System Register Bus Manager 状态　　　　　　　　　│
+│  5. CP_STALLED_STAT— CP 阻塞原因详情　　　　　                         │
+└────────────────────────────────────────────────────────────────────────┘`,
             caption: 'umr 提供五种核心调试能力：寄存器读写、ring buffer 命令流分析、VRAM 内容访问、shader wave 状态查看、GPU 虚拟内存页表解析。这些覆盖了 GPU 硬件调试的所有维度。',
           },
           codeWalk: {

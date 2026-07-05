@@ -70,7 +70,7 @@ $ git commit -s                              #-s automatically adds Signed-off-b
   │  │ a TLB flush after unmapping pages,       │
   │  │ causing stale mappings that lead to      │
   │  │ GPU page faults on RDNA3 hardware.       │
-  │  │                                         │
+  │  │                                          │
   │  │ Fixes: abc123def ("drm/amdgpu: ...")    │ ←Reference the commit that introduced the bug
   │  │ Signed-off-by: You <you@email.com>      │ ←Legal statement
   │  └─────────────────────────────────────────┘
@@ -609,7 +609,7 @@ Blog (blog.yourname.com or GitHub Pages)
 └── "RDNA3 GFX Ring Buffer Complete Guide"
 
 LinkedIn Profile
-┌─────────────────────────────────────────────┐
+┌──────────────────────────────────────────────┐
 │ Your Name                                    │
 │ GPU Driver Engineer | Linux Kernel           │
 │ AMD amdgpu | DRM | Mesa                      │
@@ -617,14 +617,14 @@ LinkedIn Profile
 │ Summary:                                     │
 │ Linux kernel contributor focused on GPU      │
 │ driver development. Submitted patches to     │
-│ amd-gfx mailing list. Deep knowledge of     │
+│ amd-gfx mailing list. Deep knowledge of      │
 │ amdgpu driver internals (VM, GFX, PM).       │
 │                                              │
 │ Open Source Contributions:                   │
 │ • Linux kernel amdgpu driver (patches)       │
-│ • IGT GPU test suite (new tests)            │
-│ • Technical blog on GPU driver internals    │
-└─────────────────────────────────────────────┘
+│ • IGT GPU test suite (new tests)             │
+│ • Technical blog on GPU driver internals     │
+└──────────────────────────────────────────────┘
 
 Mailing list records (publicly verifiable)
 lore.kernel.org/amd-gfx/?q=your@email.com

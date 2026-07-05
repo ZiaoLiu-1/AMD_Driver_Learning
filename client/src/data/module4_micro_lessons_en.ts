@@ -90,11 +90,11 @@ Kernel Space
   amdgpu_device (embeds drm_device)
   ┌───────────────────────────────────────────────────┐
   │  struct amdgpu_device {                           │
-  │      struct drm_device        ddev;  ← DRM core  │
+  │      struct drm_device        ddev;  ← DRM core   │
   │      struct amdgpu_ring       gfx_ring[...];      │
   │      struct amdgpu_vm_manager vm_manager;         │
-  │      struct amdgpu_gmc        gmc;   ← VRAM/GTT  │
-  │      void __iomem            *rmmio; ← reg BAR   │
+  │      struct amdgpu_gmc        gmc;   ← VRAM/GTT   │
+  │      void __iomem            *rmmio; ← reg BAR    │
   │      ...                                          │
   │  };                                               │
   └───────────────────────────────────────────────────┘`,
@@ -310,7 +310,7 @@ Framebuffer (VRAM)         DRM/KMS Objects               Physical Hardware
                                   ▼
                            ┌──────────────┐     DCN Hardware
                            │   CRTC 0     │     ┌──────────┐
-                           │ 1920x1080    │────▶│ OTG 0    │
+                           │ 1920x1080    │────▶│ OTG 0     │
                            │ @60Hz        │     │(scan eng) │
                            │ VBlank IRQ ──│──┐  └────┬─────┘
                            └──────────────┘  │       │
@@ -559,39 +559,39 @@ Kernel Space (DRM → amdgpu)
   drm_mode_atomic_ioctl()                  (drm_atomic_uapi.c)
      │
      ▼
-  ┌─────────────────────────────────────────────────┐
+  ┌──────────────────────────────────────────────────┐
   │  Phase 1: atomic_check (validation phase)        │
   │                                                  │
   │  drm_atomic_helper_check_modeset()               │
-  │  ├─ Per CRTC: mode_changed? active_changed?     │
-  │  ├─ Bandwidth check: total CRTC BW ≤ GPU limit  │
-  │  └─ Clock check: pixel clock ≤ max HW supports  │
+  │  ├─ Per CRTC: mode_changed? active_changed?      │
+  │  ├─ Bandwidth check: total CRTC BW ≤ GPU limit   │
+  │  └─ Clock check: pixel clock ≤ max HW supports   │
   │                                                  │
   │  drm_atomic_helper_check_planes()                │
   │  ├─ Per Plane: FB format supported? rect valid?  │
   │  ├─ Scale ratio: within hardware scaler limits   │
-  │  └─ Bandwidth: active Planes BW ≤ available BW  │
+  │  └─ Bandwidth: active Planes BW ≤ available BW   │
   │                                                  │
-  │  amdgpu_dm_atomic_check()  ← amdgpu-specific    │
+  │  amdgpu_dm_atomic_check()  ← amdgpu-specific     │
   │  └─ DC validation: dc_validate_global_state()    │
   │                                                  │
   │  If TEST_ONLY → return here, no hardware change  │
-  └──────────────────────┬──────────────────────────┘
+  └──────────────────────┬───────────────────────────┘
                          │ check passed
                          ▼
-  ┌─────────────────────────────────────────────────┐
-  │  Phase 2: atomic_commit (commit phase)           │
-  │                                                  │
-  │  If NONBLOCK:                                    │
-  │    enqueue to workqueue, return to user space    │
-  │                                                  │
-  │  amdgpu_dm_atomic_commit_tail()                  │
-  │  ├─ Update dc_stream (CRTC mode changes)        │
-  │  ├─ Update dc_plane (Plane property changes)    │
+  ┌───────────────────────────────────────────────────┐
+  │  Phase 2: atomic_commit (commit phase)            │
+  │                                                   │
+  │  If NONBLOCK:                                     │
+  │    enqueue to workqueue, return to user space     │
+  │                                                   │
+  │  amdgpu_dm_atomic_commit_tail()                   │
+  │  ├─ Update dc_stream (CRTC mode changes)          │
+  │  ├─ Update dc_plane (Plane property changes)      │
   │  ├─ dc_commit_streams() → write DCN registers     │
-  │  ├─ Wait for VBlank (page flip)                 │
-  │  └─ drm_crtc_send_vblank_event() → notify USpace│
-  └─────────────────────────────────────────────────┘
+  │  ├─ Wait for VBlank (page flip)                   │
+  │  └─ drm_crtc_send_vblank_event() → notify USpace  │
+  └───────────────────────────────────────────────────┘
                          │
                          ▼
   User space receives DRM_EVENT_FLIP_COMPLETE
@@ -790,7 +790,7 @@ Kernel Space
 ┌─────────────────────────────────────────────────────────┐
 │  GEM layer (drm_gem.c)                                  │
 │  ├─ drm_gem_object: handle management, refcount, mmap   │
-│  └─ GEM ioctls: CREATE, MMAP, CLOSE, WAIT_IDLE         │
+│  └─ GEM ioctls: CREATE, MMAP, CLOSE, WAIT_IDLE          │
 └─────────────────────┬───────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────┐
@@ -803,9 +803,9 @@ Kernel Space
                       │
 ┌─────────────────────▼───────────────────────────────────┐
 │  amdgpu TTM backend (amdgpu_ttm.c)                      │
-│  ├─ amdgpu_bo_move(): DMA transfer via SDMA engine     │
-│  ├─ amdgpu_ttm_io_mem_reserve(): map VRAM BAR          │
-│  └─ amdgpu_ttm_backend_bind(): bind GART page table    │
+│  ├─ amdgpu_bo_move(): DMA transfer via SDMA engine      │
+│  ├─ amdgpu_ttm_io_mem_reserve(): map VRAM BAR           │
+│  └─ amdgpu_ttm_backend_bind(): bind GART page table     │
 └─────────────────────────────────────────────────────────┘
 
 Memory Domains & BO Migration:
@@ -1078,30 +1078,30 @@ Video Player Process                       Wayland Compositor Process
                                             Zero copy!
 
 Physical Memory Perspective:
-┌──────────────────────────────────────────────────────┐
+┌───────────────────────────────────────────────────────┐
 │  VRAM                                                 │
 │                                                       │
 │  ┌─────────┐                                          │
-│  │ Video   │ ← VCN decoded output (exporter's BO)   │
-│  │ frame   │ ← also compositor's texture (importer)  │
-│  │ 1920x   │                                         │
-│  │ 1080    │                                         │
-│  │ NV12    │                                         │
+│  │ Video   │ ← VCN decoded output (exporter's BO)     │
+│  │ frame   │ ← also compositor's texture (importer)   │
+│  │ 1920x   │                                          │
+│  │ 1080    │                                          │
+│  │ NV12    │                                          │
 │  └─────────┘                                          │
 │  Same physical memory; two processes access via       │
 │  different BOs — data was never copied                │
-└──────────────────────────────────────────────────────┘
+└───────────────────────────────────────────────────────┘
 
 DMA-BUF sg_table (scatter-gather table):
-  ┌────────────────────────────────────────┐
-  │  entry[0]: phys=0x80001000, len=4096   │
-  │  entry[1]: phys=0x80005000, len=4096   │
-  │  entry[2]: phys=0x80002000, len=8192   │
+  ┌─────────────────────────────────────────┐
+  │  entry[0]: phys=0x80001000, len=4096    │
+  │  entry[1]: phys=0x80005000, len=4096    │
+  │  entry[2]: phys=0x80002000, len=8192    │
   │  ...                                    │
-  │  → Importer's IOMMU/GART maps these   │
-  │    scattered pages into a contiguous   │
-  │    device virtual address space        │
-  └────────────────────────────────────────┘`,
+  │  → Importer's IOMMU/GART maps these     │
+  │    scattered pages into a contiguous    │
+  │    device virtual address space         │
+  └─────────────────────────────────────────┘`,
             caption: 'The complete zero-copy flow with DMA-BUF. The video decoder (VCN) decodes frame data into VRAM and shares it with the compositor via a DMA-BUF fd; the compositor uses the same VRAM data directly as a texture — the data never leaves VRAM.',
           },
           codeWalk: {

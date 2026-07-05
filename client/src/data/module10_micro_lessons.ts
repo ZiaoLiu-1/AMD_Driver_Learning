@@ -294,28 +294,28 @@ tests/amdgpu/
 Step 2: 测试文件结构
 ─────────────────────
 amd_vram_stress.c
-┌──────────────────────────────────────────────┐
-│ #include "igt.h"                              │
-│ #include <amdgpu.h>                           │
-│                                               │
-│ igt_main {                                    │
-│   igt_fixture { /* 打开设备 */ }              │
-│                                               │
-│   /* 正面测试 */                               │
-│   igt_subtest("basic-alloc")      → PASS ✓    │
-│   igt_subtest("multi-size-alloc") → PASS ✓    │
-│   igt_subtest("vram-gtt-both")    → PASS ✓    │
-│                                               │
-│   /* 负面测试 */                               │
-│   igt_subtest("zero-size-negative")  → PASS ✓ │
-│   igt_subtest("oversize-negative")   → PASS ✓ │
-│                                               │
-│   /* 压力测试 */                               │
-│   igt_subtest("stress-1000-allocs")  → PASS ✓ │
-│                                               │
-│   igt_fixture { /* 关闭设备 */ }              │
-│ }                                             │
-└──────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ #include "igt.h"　　　　                             │
+│ #include <amdgpu.h>　　　　                          │
+│　　　　                                              │
+│ igt_main {　　　　                                   │
+│   igt_fixture { /* 打开设备 */ }                     │
+│　　　　                                              │
+│   /* 正面测试 */                                     │
+│   igt_subtest("basic-alloc")      → PASS ✓　　　　   │
+│   igt_subtest("multi-size-alloc") → PASS ✓　　　　   │
+│   igt_subtest("vram-gtt-both")    → PASS ✓　　　　   │
+│　　　　                                              │
+│   /* 负面测试 */                                     │
+│   igt_subtest("zero-size-negative")  → PASS ✓　　　　│
+│   igt_subtest("oversize-negative")   → PASS ✓　　　　│
+│　　　　                                              │
+│   /* 压力测试 */                                     │
+│   igt_subtest("stress-1000-allocs")  → PASS ✓　　　　│
+│　　　　                                              │
+│   igt_fixture { /* 关闭设备 */ }                     │
+│ }　　　　                                            │
+└──────────────────────────────────────────────────────┘
 
 Step 3: 注册到构建系统
 ─────────────────────
@@ -570,26 +570,26 @@ kselftest (tools/testing/selftests/drm/)
 ┌──────────────────────────────────────┐
 │  drm_mm.c     → 测试 DRM 内存管理器  │  ← 通过 ioctl
 │  drm_buddy.c  → 测试伙伴分配器 API   │  ← 通过 ioctl
-│  ...                                  │
+│  ...　　                              │
 │  编译: make -C tools/testing/         │
-│        selftests/drm                  │
+│        selftests/drm　　              │
 │  运行: sudo ./drm_mm                  │
-└──────────────────────────────────────┘
+└───────────────────────────────────────┘
 
 KUnit (drivers/gpu/drm/tests/)
 ┌──────────────────────────────────────┐
 │  drm_buddy_test.c  → 内部分配算法    │  ← 直接调用
 │  drm_format_test.c → 像素格式转换    │    内核函数
-│  drm_rect_test.c   → 矩形裁剪算法   │
-│  drm_mm_test.c     → 内存管理器      │
-│                                       │
-│  运行方式 1: insmod drm_buddy_test.ko │
-│             dmesg | grep "TAP"        │
-│                                       │
-│  运行方式 2: python3 tools/testing/   │
-│    kunit/kunit.py run                 │
-│    --kconfig_add CONFIG_DRM_BUDDY=y   │
-└──────────────────────────────────────┘
+│  drm_rect_test.c   → 矩形裁剪算法              │
+│  drm_mm_test.c     → 内存管理器　              │
+│　　　　　　                                    │
+│  运行方式 1: insmod drm_buddy_test.ko　　      │
+│             dmesg | grep "TAP"　　　　　　     │
+│　　　　　　                                    │
+│  运行方式 2: python3 tools/testing/　　        │
+│    kunit/kunit.py run　　　　　　              │
+│    --kconfig_add CONFIG_DRM_BUDDY=y　　　　　　│
+└────────────────────────────────────────────────┘
 
 TAP 输出格式示例：
 ┌────────────────────────────────────┐
@@ -823,55 +823,55 @@ ok 4 drm_buddy_test_free_merge`,
 开发者提交 MR (Merge Request)
          │
          ▼
-┌─────────────────────────────────────────────────────────┐
-│  Stage 1: Build （编译检查）                ~5 min       │
-│                                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │ x86_64-gcc   │  │ x86_64-clang │  │ arm64-cross  │  │
-│  │ -Werror      │  │ -Werror      │  │ -Werror      │  │
-│  │  PASS ✓      │  │  PASS ✓      │  │  PASS ✓      │  │
-│  └──────────────┘  └──────────────┘  └──────────────┘  │
-└──────────────────────────┬──────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│  Stage 1: Build （编译检查）                ~5 min                 │
+│　　　　　　                                                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐　　　　　　  │
+│  │ x86_64-gcc   │  │ x86_64-clang │  │ arm64-cross  │　　　　　　  │
+│  │ -Werror      │  │ -Werror      │  │ -Werror      │　　　　　　  │
+│  │  PASS ✓      │  │  PASS ✓      │  │  PASS ✓      │　　　　　　  │
+│  └──────────────┘  └──────────────┘  └──────────────┘　　　　　　  │
+└──────────────────────────┬─────────────────────────────────────────┘
                            │ 全部 PASS 才继续
                            ▼
-┌─────────────────────────────────────────────────────────┐
-│  Stage 2: Static Analysis （静态分析）      ~10 min      │
-│                                                          │
-│  ┌──────────────────┐  ┌─────────────┐  ┌────────────┐ │
-│  │ sparse           │  │ smatch      │  │ checkpatch │ │
-│  │ __user/__iomem   │  │ Bug patterns│  │ Code style │ │
-│  │ 类型检查         │  │ NULL deref  │  │ 格式/命名  │ │
-│  │  PASS ✓          │  │  PASS ✓     │  │ 1 WARNING  │ │
-│  └──────────────────┘  └─────────────┘  └────────────┘ │
-└──────────────────────────┬──────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│  Stage 2: Static Analysis （静态分析）      ~10 min　　               │
+│　　　　　　　　                                                       │
+│  ┌──────────────────┐  ┌─────────────┐  ┌────────────┐　　　　　　　　│
+│  │ sparse　　　　        │  │ smatch      │  │ checkpatch　　　　│    │
+│  │ __user/__iomem　　　　│  │ Bug patterns│  │ Code style　　　　│    │
+│  │ 类型检查              │  │ NULL deref  │  │ 格式/命名         │    │
+│  │  PASS ✓　　　　       │  │  PASS ✓     │  │ 1 WARNING　　　　 │    │
+│  └──────────────────┘  └─────────────┘  └────────────┘　　　　　　　　│
+└──────────────────────────┬────────────────────────────────────────────┘
                            │ 无 ERROR 才继续
                            ▼
-┌─────────────────────────────────────────────────────────┐
-│  Stage 3: Hardware Testing （硬件测试）     ~30-60 min   │
-│                                                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │ RDNA3 Farm   │  │ RDNA2 Farm   │  │ GCN5 Farm    │  │
-│  │ (RX 7600)    │  │ (RX 6800)    │  │ (Vega 56)    │  │
-│  │              │  │              │  │              │  │
-│  │ IGT tests:   │  │ IGT tests:   │  │ IGT tests:   │  │
-│  │ 245 PASS     │  │ 238 PASS     │  │ 210 PASS     │  │
-│  │   3 SKIP     │  │  10 SKIP     │  │  38 SKIP     │  │
-│  │   1 FAIL *   │  │   1 FAIL *   │  │   1 FAIL *   │  │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
-│         └──────────────────┼──────────────────┘          │
-│                            ▼                             │
-│         ┌─────────────────────────────────┐              │
-│         │   Baseline Comparison           │              │
-│         │                                 │              │
-│         │ expected-failures.txt:          │              │
-│         │   kms_cursor@pipe-A  FAIL       │              │
-│         │   gem_exec@hang      FLAKE      │              │
-│         │                                 │              │
-│         │ 实际 FAIL vs expected:          │              │
-│         │   kms_cursor@pipe-A → KNOWN ✓   │              │
-│         │   amd_basic@query   → NEW!! ✗   │              │
-│         └─────────────────────────────────┘              │
-└──────────────────────────┬──────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│  Stage 3: Hardware Testing （硬件测试）     ~30-60 min             │
+│　　　　　　                                                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐　　　　　　  │
+│  │ RDNA3 Farm   │  │ RDNA2 Farm   │  │ GCN5 Farm    │　　　　　　  │
+│  │ (RX 7600)    │  │ (RX 6800)    │  │ (Vega 56)    │　　　　　　  │
+│  │              │  │              │  │              │　　　　　　  │
+│  │ IGT tests:   │  │ IGT tests:   │  │ IGT tests:   │　　　　　　  │
+│  │ 245 PASS     │  │ 238 PASS     │  │ 210 PASS     │　　　　　　  │
+│  │   3 SKIP     │  │  10 SKIP     │  │  38 SKIP     │　　　　　　  │
+│  │   1 FAIL *   │  │   1 FAIL *   │  │   1 FAIL *   │　　　　　　  │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘　　　　　　  │
+│         └──────────────────┼──────────────────┘　　　　　　        │
+│                            ▼　　　　　　                           │
+│         ┌─────────────────────────────────┐　　　　　　            │
+│         │   Baseline Comparison　　        │　　　　               │
+│         │　　                              │　　　　               │
+│         │ expected-failures.txt:　　       │　　　　               │
+│         │   kms_cursor@pipe-A  FAIL　　    │　　　　               │
+│         │   gem_exec@hang      FLAKE　　   │　　　　               │
+│         │　　                              │　　　　               │
+│         │ 实际 FAIL vs expected:           │　　　　               │
+│         │   kms_cursor@pipe-A → KNOWN ✓　　│　　　　               │
+│         │   amd_basic@query   → NEW!! ✗　　│　　　　               │
+│         └─────────────────────────────────┘　　　　　　            │
+└──────────────────────────┬─────────────────────────────────────────┘
                            │
                            ▼
               ┌─────────────────────────┐

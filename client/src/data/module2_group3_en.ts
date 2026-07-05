@@ -21,27 +21,27 @@ export const module2Group3En: MicroLessonModule = {
     diagram: {
       title: "AMDGPU Memory Domain Architecture",
       content: `
-  ┌─────────────────────────────────────────────────────────┐
+  ┌──────────────────────────────────────────────────────────┐
   │                    GPU Address Space                     │
-  │  ┌─────────────────┐    ┌──────────────────────────┐   │
-  │  │   VRAM Domain   │    │      GTT Domain           │   │
-  │  │  (Local VRAM)   │    │  (System RAM via GART)    │   │
-  │  │                 │    │                           │   │
-  │  │  ● Fastest      │    │  ● CPU/GPU shared         │   │
-  │  │  ● GPU-private  │    │  ● Mapped via IOMMU       │   │
-  │  │  ● Via BAR0     │    │  ● DMA transfers          │   │
-  │  │                 │    │                           │   │
-  │  └────────┬────────┘    └──────────┬───────────────┘   │
-  │           │                        │                    │
-  └───────────┼────────────────────────┼────────────────────┘
+  │  ┌─────────────────┐    ┌──────────────────────────┐     │
+  │  │   VRAM Domain   │    │      GTT Domain           │    │
+  │  │  (Local VRAM)   │    │  (System RAM via GART)    │    │
+  │  │                 │    │                           │    │
+  │  │  ● Fastest      │    │  ● CPU/GPU shared         │    │
+  │  │  ● GPU-private  │    │  ● Mapped via IOMMU       │    │
+  │  │  ● Via BAR0     │    │  ● DMA transfers          │    │
+  │  │                 │    │                           │    │
+  │  └────────┬────────┘    └──────────┬───────────────┘     │
+  │           │                        │                     │
+  └───────────┼────────────────────────┼─────────────────────┘
               │ PCIe BAR0              │ IOMMU/GART
   ┌───────────▼────────────────────────▼────────────────────┐
   │                    Physical Memory                       │
-  │  ┌─────────────────┐    ┌──────────────────────────┐   │
-  │  │  GPU VRAM       │    │    System RAM (DDR)       │   │
-  │  │  (GDDR6/HBM)    │    │    (CPU main memory)      │   │
-  │  └─────────────────┘    └──────────────────────────┘   │
-  └─────────────────────────────────────────────────────────┘
+  │  ┌─────────────────┐    ┌──────────────────────────┐     │
+  │  │  GPU VRAM       │    │    System RAM (DDR)       │    │
+  │  │  (GDDR6/HBM)    │    │    (CPU main memory)      │    │
+  │  └─────────────────┘    └──────────────────────────┘     │
+  └──────────────────────────────────────────────────────────┘
 
   Domain priority in amdgpu_bo_create:
   VRAM > GTT > System RAM
@@ -272,21 +272,21 @@ void submit_commands(struct amdgpu_ring *ring, int count)
   Performance comparison (RX 7600 XT):
 
   VRAM (GDDR6):
-  ┌─────────────────────────────────────────────────┐
-  │  GPU Read/Write Bandwidth: ~288 GB/s            │
-  │  GPU Latency: ~100 ns                           │
-  │  CPU Access: via PCIe BAR (slow, ~32 GB/s)      │
+  ┌──────────────────────────────────────────────────┐
+  │  GPU Read/Write Bandwidth: ~288 GB/s             │
+  │  GPU Latency: ~100 ns                            │
+  │  CPU Access: via PCIe BAR (slow, ~32 GB/s)       │
   │  Use Case: textures, framebuffers, frequent GPU  │
-  │            access                               │
-  └─────────────────────────────────────────────────┘
+  │            access                                │
+  └──────────────────────────────────────────────────┘
 
   GTT (System RAM via GART):
-  ┌─────────────────────────────────────────────────┐
-  │  GPU Read/Write Bandwidth: ~32 GB/s (PCIe cap)  │
+  ┌──────────────────────────────────────────────────┐
+  │  GPU Read/Write Bandwidth: ~32 GB/s (PCIe cap)   │
   │  CPU Access: ~50 GB/s (DDR5 bandwidth)           │
   │  GPU Latency: ~1000 ns (PCIe latency)            │
   │  Use Case: uniform buffers, staging, shared data │
-  └─────────────────────────────────────────────────┘
+  └──────────────────────────────────────────────────┘
 
   Resizable BAR (ReBAR):
   ┌─────────────────────────────────────────────────┐
@@ -540,7 +540,7 @@ snprintf(fw_name, sizeof(fw_name),
   ┌─────────────────────────────────────────────────┐
   │  1. Attempt Soft Reset                          │
   │     ├── Stop all rings                          │
-  │     ├── Reset each IP module (GFX/SDMA/VCN)    │
+  │     ├── Reset each IP module (GFX/SDMA/VCN)     │
   │     └── Reinitialize rings                      │
   └──────────────────┬──────────────────────────────┘
                      │ Failure

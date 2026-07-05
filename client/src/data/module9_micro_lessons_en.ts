@@ -52,9 +52,9 @@ export const module9MicroLessonsEn: MicroLessonModule = {
 
 HIP source code (vector_add.hip)
  ┌──────────────────────────────────────────────────────────────┐
- │ __global__ void vector_add(float *a, float *b, float *c) {  │
- │   int i = blockIdx.x * blockDim.x + threadIdx.x;            │
- │   c[i] = a[i] + b[i];                                       │
+ │ __global__ void vector_add(float *a, float *b, float *c) {   │
+ │   int i = blockIdx.x * blockDim.x + threadIdx.x;             │
+ │   c[i] = a[i] + b[i];                                        │
  │ }                                                            │
  └────────────────────────┬─────────────────────────────────────┘
                           │

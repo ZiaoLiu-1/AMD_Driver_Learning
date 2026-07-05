@@ -193,7 +193,7 @@ Phase 1: 基础                Phase 2: 内核         Phase 3: 驱动        Ph
             type: 'ascii',
             content: `Linux GPU 内核驱动栈分层模型
 
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │ User Space                                                   │
 │                                                              │
 │  Applications (Games / AI Training / Video Editing)          │
@@ -210,32 +210,32 @@ Phase 1: 基础                Phase 2: 内核         Phase 3: 驱动        Ph
 │ Kernel Space                                                 │
 │       │                                                      │
 │       ▼                                                      │
-│  DRM Core (drivers/gpu/drm/drm_*.c)                         │
-│  ├── Device Mgmt (drm_device, drm_driver)                   │
-│  ├── File Ops (drm_file, drm_ioctl)                         │
-│  ├── GEM Memory Mgmt Framework                              │
-│  └── KMS Display Mgmt Framework                             │
+│  DRM Core (drivers/gpu/drm/drm_*.c)                          │
+│  ├── Device Mgmt (drm_device, drm_driver)                    │
+│  ├── File Ops (drm_file, drm_ioctl)                          │
+│  ├── GEM Memory Mgmt Framework                               │
+│  └── KMS Display Mgmt Framework                              │
 │       │                                                      │
 │       ▼                                                      │
-│  amdgpu Driver (drivers/gpu/drm/amd/)                       │
-│  ├── amdgpu_drv.c     → PCI Driver Entry                    │
-│  ├── amdgpu_device.c  → GPU Device Init                     │
-│  ├── gfx_v11_0.c      → GFX IP (Your RDNA3)                │
-│  ├── sdma_v6_0.c      → DMA Engine                          │
+│  amdgpu Driver (drivers/gpu/drm/amd/)                        │
+│  ├── amdgpu_drv.c     → PCI Driver Entry                     │
+│  ├── amdgpu_device.c  → GPU Device Init                      │
+│  ├── gfx_v11_0.c      → GFX IP (Your RDNA3)                  │
+│  ├── sdma_v6_0.c      → DMA Engine                           │
 │  ├── dc/              → Display Core                         │
-│  └── amdkfd/          → Compute Interface (KFD/ROCm)        │
+│  └── amdkfd/          → Compute Interface (KFD/ROCm)         │
 │       │                                                      │
 ├───────┼──────────────────────────────────────────────────────┤
 │       │  MMIO / PCIe                                         │
 ├───────┼──────────────────────────────────────────────────────┤
 │       ▼                                                      │
-│  GPU Hardware (RX 7600 XT / Navi33 / gfx1102)               │
+│  GPU Hardware (RX 7600 XT / Navi33 / gfx1102)                │
 │  ├── GFX Engine (Shader Cores)                               │
 │  ├── SDMA Engine (DMA Transfer)                              │
 │  ├── Display Engine (DCN Display Controller)                 │
 │  ├── VCN (Video Codec)                                       │
 │  └── VRAM (16GB GDDR6)                                       │
-└─────────────────────────────────────────────────────────────┘`,
+└──────────────────────────────────────────────────────────────┘`,
             caption: 'Linux GPU 驱动栈完整分层图。每一层都对应学习路径中的一个或多个模块。这张图是你整个学习过程的"地图"。',
           },
         },
@@ -1252,21 +1252,21 @@ static int amdgpu_pci_probe(struct pci_dev *pdev,
 └──────────────────────┬───────────────────────────┘
                        │
 ┌──────────────────────▼───────────────────────────┐
-│  DRM file_operations (drm_fops.c)                 │
+│  DRM file_operations (drm_fops.c)                  │
 │                                                    │
-│  .open    = drm_open      → Create drm_file       │
-│  .release = drm_release   → Cleanup drm_file      │
-│  .unlocked_ioctl = drm_ioctl → Dispatch DRM Cmd   │
-│  .mmap    = drm_gem_mmap  → Map GEM BO            │
-└──────────────────────┬───────────────────────────┘
+│  .open    = drm_open      → Create drm_file        │
+│  .release = drm_release   → Cleanup drm_file       │
+│  .unlocked_ioctl = drm_ioctl → Dispatch DRM Cmd    │
+│  .mmap    = drm_gem_mmap  → Map GEM BO             │
+└──────────────────────┬─────────────────────────────┘
                        │ drm_ioctl dispatch
 ┌──────────────────────▼───────────────────────────┐
-│  amdgpu ioctl Table (amdgpu_ioctls.c)             │
+│  amdgpu ioctl Table (amdgpu_ioctls.c)              │
 │                                                    │
-│  DRM_IOCTL_AMDGPU_GEM_CREATE → amdgpu_gem_create │
-│  DRM_IOCTL_AMDGPU_CS         → amdgpu_cs_ioctl   │
-│  DRM_IOCTL_AMDGPU_INFO       → amdgpu_info_ioctl │
-└──────────────────────────────────────────────────┘`,
+│  DRM_IOCTL_AMDGPU_GEM_CREATE → amdgpu_gem_create   │
+│  DRM_IOCTL_AMDGPU_CS         → amdgpu_cs_ioctl     │
+│  DRM_IOCTL_AMDGPU_INFO       → amdgpu_info_ioctl   │
+└────────────────────────────────────────────────────┘`,
             caption: '从用户空间 open() 到 amdgpu 驱动的完整调用路径。DRM 框架提供通用的 file_operations，amdgpu 通过 ioctl 表注册驱动特定的操作。',
           },
         },
@@ -1554,17 +1554,17 @@ module_exit(amdgpu_exit);`,
                    │ DRM ioctl / libdrm
   ┌────────────────▼────────────────────────┐
   │        Kernel DRM Subsystem              │
-  │  ┌──────────┐  ┌──────────────────────┐ │
-  │  │  KMS     │  │  GEM/TTM Memory Mgmt │ │
-  │  │(Display) │  │  (VRAM/GTT alloc)    │ │
-  │  └──────────┘  └──────────────────────┘ │
+  │  ┌──────────┐  ┌──────────────────────┐  │
+  │  │  KMS     │  │  GEM/TTM Memory Mgmt │  │
+  │  │(Display) │  │  (VRAM/GTT alloc)    │  │
+  │  └──────────┘  └──────────────────────┘  │
   │        amdgpu Driver                     │
-  └────────────────┬────────────────────────┘
+  └────────────────┬─────────────────────────┘
                    │ PCIe / MMIO / DMA
   ┌────────────────▼────────────────────────┐
   │        AMD GPU Hardware                  │
-  │  (RX 7600 XT - Navi33)                  │
-  └─────────────────────────────────────────┘`,
+  │  (RX 7600 XT - Navi33)                   │
+  └──────────────────────────────────────────┘`,
             caption: 'Linux 图形栈的层次结构。DRM 是内核与用户空间图形库之间的桥梁，amdgpu 是 DRM 框架下的具体 GPU 驱动实现。',
           },
         },
@@ -1974,29 +1974,29 @@ static int amdgpu_device_ip_init(struct amdgpu_device *adev)
             type: 'ascii',
             content: `内核调试输出层次
 
-┌─────────────────────────────────────────────────────────────┐
-│  Log Level         │  Macro             │  Typical Use       │
-├─────────────────────┼───────────────────┼───────────────────┤
-│  0 KERN_EMERG       │  pr_emerg()       │  Crash imminent   │
-│  1 KERN_ALERT       │  pr_alert()       │  Immediate action │
-│  2 KERN_CRIT        │  pr_crit()        │  Critical error   │
-│  3 KERN_ERR         │  pr_err()         │  GPU hang/reset   │
-│  4 KERN_WARNING     │  pr_warn()        │  Resource warning │
-│  5 KERN_NOTICE      │  pr_notice()      │  Notable info     │
-│  6 KERN_INFO        │  pr_info()        │  Drv load/unload  │
-│  7 KERN_DEBUG       │  pr_debug()       │  Debug (dflt off) │
-└─────────────────────┴───────────────────┴───────────────────┘
+┌───────────────────────────────────────────────────────────────┐
+│  Log Level          │  Macro             │  Typical Use       │
+├─────────────────────┼────────────────────┼────────────────────┤
+│  0 KERN_EMERG       │  pr_emerg()        │  Crash imminent    │
+│  1 KERN_ALERT       │  pr_alert()        │  Immediate action  │
+│  2 KERN_CRIT        │  pr_crit()         │  Critical error    │
+│  3 KERN_ERR         │  pr_err()          │  GPU hang/reset    │
+│  4 KERN_WARNING     │  pr_warn()         │  Resource warning  │
+│  5 KERN_NOTICE      │  pr_notice()       │  Notable info      │
+│  6 KERN_INFO        │  pr_info()         │  Drv load/unload   │
+│  7 KERN_DEBUG       │  pr_debug()        │  Debug (dflt off)  │
+└─────────────────────┴────────────────────┴────────────────────┘
 
 amdgpu 特有的调试接口：
-┌─────────────────────────────────────────────────────────────┐
-│  DRM_DEBUG_DRIVER()    → drm.debug=0x1  (driver info)       │
-│  DRM_DEBUG_KMS()       → drm.debug=0x4  (KMS/display info)  │
+┌──────────────────────────────────────────────────────────────┐
+│  DRM_DEBUG_DRIVER()    → drm.debug=0x1  (driver info)        │
+│  DRM_DEBUG_KMS()       → drm.debug=0x4  (KMS/display info)   │
 │  amdgpu debugfs         → /sys/kernel/debug/dri/0/           │
 │  ├── amdgpu_gpu_recover → Manual GPU reset trigger           │
 │  ├── amdgpu_fence_info → View fence status                   │
 │  ├── amdgpu_sa_info    → View suballoc memory                │
 │  └── amdgpu_vram_mm    → View VRAM usage                     │
-└─────────────────────────────────────────────────────────────┘`,
+└──────────────────────────────────────────────────────────────┘`,
             caption: 'Linux 内核日志级别和 amdgpu 特有的调试接口。日常调试首先查看 dmesg（级别 0-6），深入分析时使用 debugfs 和动态调试。',
           },
         },
@@ -2104,16 +2104,16 @@ dmesg: "amdgpu: GPU hang detected!"
          │
          ▼
 检查 Ring 状态
-┌────────────────────────────────────────────────┐
-│  CP_RB_RPTR == CP_RB_WPTR                       │
-│  → Ring empty, GPU idle but still Hang          │
-│  → Possibly firmware Bug or HW issue            │
+┌──────────────────────────────────────────────────┐
+│  CP_RB_RPTR == CP_RB_WPTR                        │
+│  → Ring empty, GPU idle but still Hang           │
+│  → Possibly firmware Bug or HW issue             │
 │                                                  │
-│  CP_RB_RPTR != CP_RB_WPTR                       │
-│  → Ring has pending commands                    │
-│  → GPU stuck on a command                       │
-│  → Analyze PM4 command at RPTR                  │
-└────────────────────────────────────────────────┘
+│  CP_RB_RPTR != CP_RB_WPTR                        │
+│  → Ring has pending commands                     │
+│  → GPU stuck on a command                        │
+│  → Analyze PM4 command at RPTR                   │
+└──────────────────────────────────────────────────┘
          │
          ▼
 使用 umr 工具深入分析
@@ -2267,20 +2267,20 @@ TRACE_EVENT(amdgpu_sched_run_job,
                    │
   ┌────────────────▼────────────────────────┐
   │        ROCm Runtime                      │
-  │  HSA Runtime (libhsa-runtime64.so)      │
-  │  HIP Runtime (libamdhip64.so)           │
-  └────────────────┬────────────────────────┘
+  │  HSA Runtime (libhsa-runtime64.so)       │
+  │  HIP Runtime (libamdhip64.so)            │
+  └────────────────┬─────────────────────────┘
                    │ ioctl
   ┌────────────────▼────────────────────────┐
   │        Kernel KFD Driver                 │
-  │  /dev/kfd  (HSA Kernel Interface)       │
-  │  Queue Mgmt | Memory Mgmt | Signals     │
-  └────────────────┬────────────────────────┘
+  │  /dev/kfd  (HSA Kernel Interface)        │
+  │  Queue Mgmt | Memory Mgmt | Signals      │
+  └────────────────┬─────────────────────────┘
                    │
   ┌────────────────▼────────────────────────┐
   │        amdgpu Driver Core                │
-  │  (KFD accesses GPU HW via amdgpu)       │
-  └─────────────────────────────────────────┘`,
+  │  (KFD accesses GPU HW via amdgpu)        │
+  └──────────────────────────────────────────┘`,
             caption: 'ROCm/KFD 软件栈。KFD 通过 /dev/kfd 设备节点向用户空间暴露 HSA 接口，ROCm 运行时通过 ioctl 调用 KFD 来管理 GPU 资源。',
           },
         },
@@ -3050,46 +3050,46 @@ vector_add:
 开发者提交补丁
      │
      ▼
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │  Stage 1: Build & Compile                                    │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                  │
-│  │ x86_64   │  │ arm64    │  │ allconfig │                  │
-│  │ defconfig │  │ build    │  │ variants │                  │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘                  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐                    │
+│  │ x86_64    │  │ arm64    │  │ allconfig │                  │
+│  │ defconfig │  │ build    │  │ variants  │                  │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘                    │
 │       └──────────────┴─────────────┘                         │
 │                      │ PASS?                                 │
-└──────────────────────┼──────────────────────────────────────┘
+└──────────────────────┼───────────────────────────────────────┘
                        ▼
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │  Stage 2: Static Analysis                                    │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐                  │
-│  │ sparse   │  │ smatch   │  │checkpatch│                  │
-│  │ TypeCheck │  │BugPattern│  │StyleCheck│                  │
-│  └────┬─────┘  └────┬─────┘  └────┬─────┘                  │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐                    │
+│  │ sparse    │  │ smatch   │  │checkpatch│                   │
+│  │ TypeCheck │  │BugPattern│  │StyleCheck│                   │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘                    │
 │       └──────────────┴─────────────┘                         │
 │                      │ PASS?                                 │
-└──────────────────────┼──────────────────────────────────────┘
+└──────────────────────┼───────────────────────────────────────┘
                        ▼
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │  Stage 3: Hardware Testing (IGT)                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ RDNA2 Farm   │  │ RDNA3 Farm   │  │ GCN Farm     │      │
-│  │ (RX 6800)    │  │ (RX 7600)    │  │ (Vega 56)    │      │
-│  │ IGT amdgpu   │  │ IGT amdgpu   │  │ IGT amdgpu   │      │
-│  │ IGT kms_*    │  │ IGT kms_*    │  │ IGT kms_*    │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐        │
+│  │ RDNA2 Farm   │  │ RDNA3 Farm   │  │ GCN Farm     │        │
+│  │ (RX 6800)    │  │ (RX 7600)    │  │ (Vega 56)    │        │
+│  │ IGT amdgpu   │  │ IGT amdgpu   │  │ IGT amdgpu   │        │
+│  │ IGT kms_*    │  │ IGT kms_*    │  │ IGT kms_*    │        │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘        │
 │         └──────────────────┴─────────────────┘               │
 │                      │ PASS?                                 │
-└──────────────────────┼──────────────────────────────────────┘
+└──────────────────────┼───────────────────────────────────────┘
                        ▼
-┌─────────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────────┐
 │  Stage 4: Regression Analysis                                │
-│  ┌──────────────────────────────────────────┐               │
-│  │  vs baseline: new FAIL → mark regression │               │
-│  │  new PASS → mark as fixed               │               │
-│  │  SKIP change → check removed feature    │               │
-│  └──────────────────────────────────────────┘               │
-└──────────────────────┬──────────────────────────────────────┘
+│  ┌──────────────────────────────────────────┐                │
+│  │  vs baseline: new FAIL → mark regression │                │
+│  │  new PASS → mark as fixed                │                │
+│  │  SKIP change → check removed feature     │                │
+│  └──────────────────────────────────────────┘                │
+└──────────────────────┬───────────────────────────────────────┘
                        ▼
               ┌───────────────────┐
               │ All PASS          │
@@ -3108,39 +3108,39 @@ vector_add:
             type: 'ascii',
             content: `高质量 Bug 报告结构
 
-┌─────────────────────────────────────────────────────────────┐
-│  Bug Title: [amdgpu] GPU hang on RX 7600 XT with KMS        │
-├─────────────────────────────────────────────────────────────┤
+┌──────────────────────────────────────────────────────────────┐
+│  Bug Title: [amdgpu] GPU hang on RX 7600 XT with KMS         │
+├──────────────────────────────────────────────────────────────┤
 │                                                              │
 │  1. System Info                                              │
-│  ┌────────────────────────────────────────┐                 │
-│  │ Kernel: 6.8.0-rc3                      │                 │
-│  │ GPU:    AMD Navi33 [RX 7600 XT] (7480) │                 │
-│  │ Driver: amdgpu (modinfo: version X)    │                 │
-│  │ Distro: Ubuntu 24.04                   │                 │
-│  └────────────────────────────────────────┘                 │
+│  ┌────────────────────────────────────────┐                  │
+│  │ Kernel: 6.8.0-rc3                       │                 │
+│  │ GPU:    AMD Navi33 [RX 7600 XT] (7480)  │                 │
+│  │ Driver: amdgpu (modinfo: version X)     │                 │
+│  │ Distro: Ubuntu 24.04                    │                 │
+│  └────────────────────────────────────────┘                  │
 │                                                              │
 │  2. Steps to Reproduce (minimal)                             │
-│  ┌────────────────────────────────────────┐                 │
-│  │ $ sudo igt_runner -t kms_atomic        │                 │
+│  ┌────────────────────────────────────────┐                  │
+│  │ $ sudo igt_runner -t kms_atomic         │                 │
 │  │ → Hangs at subtest atomic-setmode       │                 │
-│  └────────────────────────────────────────┘                 │
+│  └────────────────────────────────────────┘                  │
 │                                                              │
 │  3. Actual Behavior + dmesg Output                           │
-│  ┌────────────────────────────────────────┐                 │
-│  │ [drm] GPU hang detected!               │                 │
-│  │ [drm] GRBM_STATUS=0x00000300           │                 │
-│  │ [drm] ring gfx timeout                 │                 │
-│  └────────────────────────────────────────┘                 │
+│  ┌────────────────────────────────────────┐                  │
+│  │ [drm] GPU hang detected!                │                 │
+│  │ [drm] GRBM_STATUS=0x00000300            │                 │
+│  │ [drm] ring gfx timeout                  │                 │
+│  └────────────────────────────────────────┘                  │
 │                                                              │
 │  4. Regression Info                                          │
-│  ┌────────────────────────────────────────┐                 │
-│  │ Good: v6.7   Bad: v6.8-rc1             │                 │
-│  │ Bisect → commit abc123 caused issue    │                 │
-│  └────────────────────────────────────────┘                 │
+│  ┌────────────────────────────────────────┐                  │
+│  │ Good: v6.7   Bad: v6.8-rc1              │                 │
+│  │ Bisect → commit abc123 caused issue     │                 │
+│  └────────────────────────────────────────┘                  │
 │                                                              │
 │  5. Attachments: dmesg full, gpu_metrics, IGT log            │
-└─────────────────────────────────────────────────────────────┘`,
+└──────────────────────────────────────────────────────────────┘`,
             caption: '一个完整的 GPU 驱动 Bug 报告应包含这 5 个核心部分。回归信息（git bisect 结果）对维护者定位问题最有价值。',
           },
         },

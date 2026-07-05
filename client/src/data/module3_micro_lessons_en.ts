@@ -67,13 +67,13 @@ User Space                                      Kernel Space
        │
        ▼
   Call module_init function
-  ┌─────────────────────────────┐
+  ┌──────────────────────────────────────────────┐
   │ static int __init hello_init(void)           │
   │ {                                            │
-  │     printk(KERN_INFO "Hello!\\n");           │
+  │     printk(KERN_INFO "Hello!\\n");            │
   │     return 0;  // success                    │
   │ }                                            │
-  └─────────────────────────────┘
+  └──────────────────────────────────────────────┘
        │
        ▼
   __init section freed  ← saves kernel memory
@@ -85,12 +85,12 @@ User Space                                      Kernel Space
        │
        ▼
   Call module_exit function
-  ┌─────────────────────────────┐
+  ┌──────────────────────────────────────────────┐
   │ static void __exit hello_exit(void)          │
   │ {                                            │
-  │     printk(KERN_INFO "Bye!\\n");             │
+  │     printk(KERN_INFO "Bye!\\n");              │
   │ }                                            │
-  └─────────────────────────────┘
+  └──────────────────────────────────────────────┘
        │
        ▼
   All module memory freed, symbols removed
@@ -488,48 +488,48 @@ err_disable:
             content: `Comparing two error-handling styles: nested if-else vs goto chain cleanup
 
 Style A: Nested if-else (userspace style, not recommended in the kernel)
-┌──────────────────────────────────────────────┐
-│ int init() {                                  │
-│     a = alloc_a();                            │
-│     if (a) {                                  │
-│         b = alloc_b();                        │
-│         if (b) {                              │
-│             c = alloc_c();                    │
-│             if (c) {                          │
-│                 return 0;   /* success */     │
-│             }                                 │
-│             free_b(b);      // indentation    │
+┌────────────────────────────────────────────────┐
+│ int init() {                                   │
+│     a = alloc_a();                             │
+│     if (a) {                                   │
+│         b = alloc_b();                         │
+│         if (b) {                               │
+│             c = alloc_c();                     │
+│             if (c) {                           │
+│                 return 0;   /* success */      │
+│             }                                  │
+│             free_b(b);      // indentation     │
 │         }                   // hell            │
-│         free_a(a);                            │
-│     }                                         │
-│     return -ENOMEM;                           │
-│ }                                             │
-│  Problem: deep nesting, repetition, fragile   │
-└──────────────────────────────────────────────┘
+│         free_a(a);                             │
+│     }                                          │
+│     return -ENOMEM;                            │
+│ }                                              │
+│  Problem: deep nesting, repetition, fragile    │
+└────────────────────────────────────────────────┘
 
 Style B: goto chain cleanup (kernel recommended pattern)
-┌──────────────────────────────────────────────┐
-│ int init() {                                  │
-│     a = alloc_a();                            │
-│     if (!a) { ret = -ENOMEM; goto err_a; }   │
-│                                               │
-│     b = alloc_b();                            │
-│     if (!b) { ret = -ENOMEM; goto err_b; }   │
-│                                               │
-│     c = alloc_c();                            │
-│     if (!c) { ret = -ENOMEM; goto err_c; }   │
-│                                               │
-│     return 0;          /* success — flat */   │
-│                                               │
-│ err_c:                 // reverse-order labels│
-│     free_b(b);                                │
-│ err_b:                                        │
-│     free_a(a);                                │
-│ err_a:                                        │
-│     return ret;                               │
-│ }                                             │
+┌────────────────────────────────────────────────┐
+│ int init() {                                   │
+│     a = alloc_a();                             │
+│     if (!a) { ret = -ENOMEM; goto err_a; }     │
+│                                                │
+│     b = alloc_b();                             │
+│     if (!b) { ret = -ENOMEM; goto err_b; }     │
+│                                                │
+│     c = alloc_c();                             │
+│     if (!c) { ret = -ENOMEM; goto err_c; }     │
+│                                                │
+│     return 0;          /* success — flat */    │
+│                                                │
+│ err_c:                 // reverse-order labels │
+│     free_b(b);                                 │
+│ err_b:                                         │
+│     free_a(a);                                 │
+│ err_a:                                         │
+│     return ret;                                │
+│ }                                              │
 │  Advantages: flat, clear, correct, maintainable│
-└──────────────────────────────────────────────┘
+└────────────────────────────────────────────────┘
 
 In practice inside amdgpu_device_init:
 init_doorbell → init_amdgpu_vram_mgr → ip_discovery →
@@ -777,16 +777,16 @@ Simple counter or flag?
          (lock-free, CPU atomic instruction)
 
 Actual usage in amdgpu:
-┌─────────────────────────────────────────────────────────┐
+┌──────────────────────────────────────────────────────────┐
 │ Data Structure        Primitive           Reason         │
-│─────────────────────────────────────────────────────────│
+│───────────────────────────────────────────────────────── │
 │ VRAM manager          mutex              alloc may sleep │
 │ Ring buffer write ptr spinlock           interrupt access│
 │ IRQ source registry   spin_lock_irqsave  used in IRQ hdlr│
 │ BO reference count    atomic_t           simple inc/dec  │
 │ GPU VM page tables    rw_semaphore       many-read (CS)  │
 │ Fence signaling       spinlock           signal in IRQ   │
-└─────────────────────────────────────────────────────────┘`,
+└──────────────────────────────────────────────────────────┘`,
             caption: 'The core questions for picking a synchronization primitive: are you in interrupt context? Does the critical section need to sleep? Is it many-reads-few-writes? Answering these three questions leads you to the right choice.',
           },
           codeWalk: {
@@ -983,15 +983,15 @@ GFP flag selection:
 └─────────────────────────────────────────────────┘
 
 amdgpu memory allocation examples:
-┌───────────────────────────────────────────────────────┐
+┌────────────────────────────────────────────────────────┐
 │ Use Case              Allocator               GFP      │
-│───────────────────────────────────────────────────────│
-│ fence objects         kmem_cache_alloc        KERNEL  │
-│ Ring buffer           dma_alloc_coherent      KERNEL  │
-│ Temp command bufs     kzalloc                 KERNEL  │
-│ Interrupt data        kzalloc                 ATOMIC  │
-│ Large lookup tables   vzalloc (vmalloc+zero)   —      │
-└───────────────────────────────────────────────────────┘`,
+│─────────────────────────────────────────────────────── │
+│ fence objects         kmem_cache_alloc        KERNEL   │
+│ Ring buffer           dma_alloc_coherent      KERNEL   │
+│ Temp command bufs     kzalloc                 KERNEL   │
+│ Interrupt data        kzalloc                 ATOMIC   │
+│ Large lookup tables   vzalloc (vmalloc+zero)   —       │
+└────────────────────────────────────────────────────────┘`,
             caption: 'Core questions for choosing a memory allocator: does it need to be physically contiguous? Is it used for DMA? Is this an interrupt context? Is it the same type of object being allocated frequently? Answering these determines the right API.',
           },
           codeWalk: {
