@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-12T06:16:11.577Z",
+  "generatedAt": "2026-07-13T06:25:09.241Z",
   "windowDays": 14,
   "sources": {
     "gitlab": {
@@ -11,12 +11,44 @@
     },
     "lore": {
       "ok": true,
-      "count": 135,
+      "count": 133,
       "error": null,
       "url": "https://lore.kernel.org/amd-gfx/"
     }
   },
   "issues": [
+    {
+      "iid": 5479,
+      "title": "RX 9070 XT (Navi 48): SMU driver/firmware interface mismatch (0x2e vs 0x32/0x33) causes hard hangs on GPU load, suspend/resume, and possibly awake-idle",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5479",
+      "createdAt": "2026-07-12T17:23:33.439Z",
+      "updatedAt": "2026-07-12T17:23:33.439Z",
+      "labels": [],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "keigimada",
+      "description": "**Summary** \n\nThe RX 9070 XT ships with SMU firmware reporting interface version 0x32/0x33, while the amdgpu kernel driver expects interface version 0x2e. This mismatch is logged as a warning but does not appear to be handled gracefully — it correlates with hard system hangs under several different conditions, requiring a hard power-off to recover.\n\n**Kernel log signature**\n\namdgpu 0000:03:00.0: amdgpu: smu driver if version = 0x0000002e, smu fw if version = 0x00000033 amdgpu 0000:03:00.0: amdgpu: SMU driver if version not matched\n\n**Hardware** \n\nGPU: AMD Radeon RX 9070 XT (Navi 48 / GFX1201, device ID 7550) Motherboard: MSI PRO B650-S WiFi OS: Bazzite (Fedora Atomic/ostree-based) \n\n**Observed failure modes on my system**\n\n1\\. Suspend/resume hang: amdgpu_device_ip_resume fails during resume from suspend, with an SMU handshake error (SMU: I'm not done with your previous command, Failed to setup smc hw!, resume of IP block failed -62), followed by a GPU reset attempt that also fails (ring sdma0 timeout, VRAM is lost), ending in complete hard hang requiring a physical power-off. \n\n2\\. Awake-idle hang: separately, a hard hang also occurred while the system was awake and idle (not suspending), with no OS update or other change occurring at the time — kernel logs confirmed no other state change coincided with the freeze. \n\n**Troubleshooting already attempted (no fix)** \n\n1\\. Permanently disabling GFXOFF via amdgpu.ppfeaturemask=0xfff7bdff kernel parameter — did not prevent the susp",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5447,
+      "title": "amdgpu: BUG_ON in amdgpu_device_mm_access on re-probe of Navi 48 after VFIO passthrough",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5447",
+      "createdAt": "2026-07-03T09:32:23.006Z",
+      "updatedAt": "2026-07-12T15:32:51.059Z",
+      "labels": [
+        "9000 dGPU series"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 9,
+      "author": "Faruk Aydin",
+      "description": "## Summary\n\nRe-probing a Navi 48 (RX 9070 XT, 1002:7550) with amdgpu after the card has been used by a VM via vfio-pci hits:\n\n```\nkernel BUG at drivers/gpu/drm/amd/amdgpu/amdgpu_device.c:720!\n```\n\nwhich is\n\n```c\nBUG_ON(!IS_ALIGNED(pos, 4) || !IS_ALIGNED(size, 4));\n```\n\nin `amdgpu_device_mm_access()`, called from `amdgpu_discovery_init()` while reading the IP-discovery table out of VRAM. After a VM has run on the card, the discovery TMR location/size the driver computes from device state is garbage (unaligned), and the driver BUG()s instead of failing probe.\n\nThis worked on v7.0.12 (same card, same reclaim flow, dozens of cycles) and regressed by v7.1.2.\n\n## Impact goes beyond the crash\n\nThe BUG kills the probing task mid-`really_probe()`. Since the driver core sets `dev->driver` and creates the sysfs driver link _before_ calling probe, the device is left as a zombie: `lspci -k` / sysfs claim \"Kernel driver in use: amdgpu\", but no DRM device exists (no `drm/` sysfs dir, no /dev/dri node) and probe's error path never ran. Any later interaction with\n\nthis half-bound device (including a subsequent unbind) operates on inconsistent state. Only a reboot recovers the GPU for host use.\n\nRequested behavior: validate the discovery blob location/size read from the device and fail probe with an error (as other discovery-validation paths already do) instead of BUG_ON on device-provided data.\n\n## Oops\n\n```\nkernel BUG at drivers/gpu/drm/amd/amdgpu/amdgpu_device.c:720!\nOops: invalid opcode: 0",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
     {
       "iid": 5478,
       "title": "Troubleshooting System Freezes and High GPU Usage",
@@ -116,23 +148,6 @@
       "comments": 2,
       "author": "Arny80Hexa",
       "description": "### Summary\n\nRX 9070 XT (Navi 48, gfx12, `1002:7550`) connected as eGPU over Thunderbolt 5 experiences multiple failure modes related to the MES scheduler and DMCUB firmware initialization. The GPU works for desktop compositing and display output but crashes under 3D gaming load, cannot survive hot-unplug, and fails to re-initialize after PCI remove + rescan within the same boot session. Windows 11 with the same hardware works flawlessly under sustained gaming load, confirming hardware is not at fault.\n\n### Hardware\n\n| Component | Detail |\n|-----------|--------|\n| Laptop | ASUS Zenbook S 16 UM5606WA |\n| CPU | AMD Ryzen AI 9 HX 370 |\n| iGPU | Radeon 890M (`1002:150E`, `c4:00.0`) |\n| eGPU | ASUS PRIME RX 9070 XT OC 16GB (`1002:7550`, `05:00.0`) |\n| eGPU Dock | Minisforum DEG2 (TBGAA, TB5-capable) |\n| TB Link | 40 Gb/s (2 lanes × 20 Gb/s), laptop side is USB4/TB4 |\n| RAM | 32 GB LPDDR5 |\n| Connection | USB4 port on laptop, TB5 on dock |\n\n### Software\n\n| Component | Version |\n|-----------|---------|\n| Kernel | 6.19.9-arch1-1 |\n| Mesa | 26.0.3-1 |\n| amdgpu | built-in (kernel module) |\n| linux-firmware | 20260221-1 |\n| DMUB version | 0x0A000800 |\n| Desktop | KDE Plasma 6, KWin 6.6.2, Wayland |\n| Distro | Arch Linux (rolling) |\n\n### Kernel parameters\n\n```\namdgpu.dcdebugmask=0x600\n```\n\nNo other amdgpu-related parameters. `pci=realloc` and `amdgpu.resize_bar=0` were tested but break Thunderbolt PCIe tunneling entirely (GPU never detected on hot-plug) and have been reverted.\n\n### Issue",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5447,
-      "title": "amdgpu: BUG_ON in amdgpu_device_mm_access on re-probe of Navi 48 after VFIO passthrough",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5447",
-      "createdAt": "2026-07-03T09:32:23.006Z",
-      "updatedAt": "2026-07-11T10:33:44.507Z",
-      "labels": [
-        "9000 dGPU series"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 8,
-      "author": "Faruk Aydin",
-      "description": "## Summary\n\nRe-probing a Navi 48 (RX 9070 XT, 1002:7550) with amdgpu after the card has been used by a VM via vfio-pci hits:\n\n```\nkernel BUG at drivers/gpu/drm/amd/amdgpu/amdgpu_device.c:720!\n```\n\nwhich is\n\n```c\nBUG_ON(!IS_ALIGNED(pos, 4) || !IS_ALIGNED(size, 4));\n```\n\nin `amdgpu_device_mm_access()`, called from `amdgpu_discovery_init()` while reading the IP-discovery table out of VRAM. After a VM has run on the card, the discovery TMR location/size the driver computes from device state is garbage (unaligned), and the driver BUG()s instead of failing probe.\n\nThis worked on v7.0.12 (same card, same reclaim flow, dozens of cycles) and regressed by v7.1.2.\n\n## Impact goes beyond the crash\n\nThe BUG kills the probing task mid-`really_probe()`. Since the driver core sets `dev->driver` and creates the sysfs driver link _before_ calling probe, the device is left as a zombie: `lspci -k` / sysfs claim \"Kernel driver in use: amdgpu\", but no DRM device exists (no `drm/` sysfs dir, no /dev/dri node) and probe's error path never ran. Any later interaction with\n\nthis half-bound device (including a subsequent unbind) operates on inconsistent state. Only a reboot recovers the GPU for host use.\n\nRequested behavior: validate the discovery blob location/size read from the device and fail probe with an error (as other discovery-validation paths already do) instead of BUG_ON on device-provided data.\n\n## Oops\n\n```\nkernel BUG at drivers/gpu/drm/amd/amdgpu/amdgpu_device.c:720!\nOops: invalid opcode: 0",
       "descriptionTruncated": true,
       "patchMatches": []
     },
@@ -1350,21 +1365,6 @@
       "author": "Adolfo Rodrigues",
       "description": "I'm raising awareness on this issue early on the HDMI 2.1 public release because I suspected this would happen.\n\nI don't have this issue on an nvidia gpu. \n\n9070XT -> LG C1 -> AVR via eARC; I'm limited to stereo sound. I can select 5.1 or 7.1 but only stereo works. The AVR does not change modes.\n\nNvidia 3090 -> LG C1 -> AVR via eARC everything works correctly.",
       "descriptionTruncated": false,
-      "patchMatches": []
-    },
-    {
-      "iid": 5401,
-      "title": "Display corruption: drm_prime.c:1089 at drm_prime_sg_to_dma_addr_array+0x83/0xb0, kwin_wayland",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5401",
-      "createdAt": "2026-06-18T19:11:57.729Z",
-      "updatedAt": "2026-07-01T15:13:30.241Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 3,
-      "author": "Richard May",
-      "description": "```\n$ lspci -nn | grep VGA\n01:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Ellesmere [Radeon RX 470/480/570/570X/580/580X/590] [1002:67df] (rev ef)\n03:00.0 VGA compatible controller [0300]: NVIDIA Corporation GA106 [GeForce RTX 3060 Lite Hash Rate] [10de:2504] (rev a1)\n0c:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Raphael [1002:164e] (rev c6)\n```\n\n* **CPU**: Ryzen 5 7600\n* **Display Connections**: 3x DP, 1x HDMI -- All on RX570\n* **Distro**: Fedora 44\n* **Kernel**: 7.0.12-201.fc44.x86_64\n* **Custom kernel**: N/A\n* **Driver**: 26.0.8-1.fc44\n* **KWin**: 6.7.0\n* **Qt**: 6.11.1\n* **Qt compile**: 6.11.1\n* **XCB compile**: 1.17.0\n\nCompositing is active \\\nCompositing Type: OpenGL \\\nOpenGL vendor string: AMD \\\nOpenGL renderer string: AMD Radeon RX 570 Series (radeonsi, polaris10, ACO, DRM 3.64, 7.0.12-201.fc44.x86_64) \\\nOpenGL version string: 4.6 (Core Profile) Mesa 26.0.8 \\\nOpenGL platform interface: EGL \\\nOpenGL shading language version string: 4.60 \\\nOpenGL version: 4.6 \\\nGLSL version: 4.60 \\\nMesa version: 26.0.8 \\\nX server version: 1.24.1 \\\nLinux kernel version: 7.0.12 \\\nDirect rendering: Requires strict binding: no \\\nVirtual Machine:  no \\\nOpenGL 2 Shaders are used\n\n## How to reproduce the issue:\n\nMaximize any Qt/KDE native app on a ~~2x-scaled~~ DP output; NOT reproducible on ~~unscaled~~ the HDMI output. Un-maximize (window restore) returns the window to a healthy state.\n\n### ![image.png](/uploads/5f3b0c522d6c",
-      "descriptionTruncated": true,
       "patchMatches": []
     },
     {
@@ -2703,6 +2703,48 @@
   ],
   "patches": [
     {
+      "subject": "[PATCH] drm/amd/pm/ci: Don't disable MCLK DPM on Bonaire 0x6658 (R7 260X)",
+      "url": "https://lore.kernel.org/amd-gfx/20260713061443.32561-1-timur.kristof@gmail.com/",
+      "date": "2026-07-13T06:14:52Z",
+      "author": "Timur Kristóf"
+    },
+    {
+      "subject": "[PATCH] drm/amd/pm: Fix pp_entries_max() bios check",
+      "url": "https://lore.kernel.org/amd-gfx/20260713042902.2220454-1-asad.kamal@amd.com/",
+      "date": "2026-07-13T04:29:26Z",
+      "author": "Asad Kamal"
+    },
+    {
+      "subject": "[PATCH v2] PCI: Fix BAR resize for devices on a root bus",
+      "url": "https://lore.kernel.org/amd-gfx/20260712-pci-rebar-root-bus-v2-1-a1b9107a82dc@honeycomb.io/",
+      "date": "2026-07-12T21:49:55Z",
+      "author": "Liz Fong-Jones via B4 Relay"
+    },
+    {
+      "subject": "[PATCH 3/3] drm/amd/pm/smu7: Fix AC/DC switch notification",
+      "url": "https://lore.kernel.org/amd-gfx/20260712173928.259701-3-timur.kristof@gmail.com/",
+      "date": "2026-07-12T17:39:38Z",
+      "author": "Timur Kristóf"
+    },
+    {
+      "subject": "[PATCH 2/3] drm/amd/pm/si: Fix AC/DC switch notification",
+      "url": "https://lore.kernel.org/amd-gfx/20260712173928.259701-2-timur.kristof@gmail.com/",
+      "date": "2026-07-12T17:39:37Z",
+      "author": "Timur Kristóf"
+    },
+    {
+      "subject": "[PATCH 1/3] drm/amd/pm/si: Don't schedule thermal work when queue isn't initialized",
+      "url": "https://lore.kernel.org/amd-gfx/20260712173928.259701-1-timur.kristof@gmail.com/",
+      "date": "2026-07-12T17:39:35Z",
+      "author": "Timur Kristóf"
+    },
+    {
+      "subject": "[PATCH drm-amd] drm/amd/display: dce100: skip non-DP stream encoders for DP MST",
+      "url": "https://lore.kernel.org/amd-gfx/CAOidqQDq6khYfEjSz8=FHNBnR_nd17WYZDn7OdWOPG4BgPtTwQ@mail.gmail.com/",
+      "date": "2026-07-12T15:22:50Z",
+      "author": "Andriy Korud"
+    },
+    {
       "subject": "[PATCH 2/3] drm/amdgpu/ttm: Make buffer copy source readonly",
       "url": "https://lore.kernel.org/amd-gfx/20260711115000.40655-2-timur.kristof@gmail.com/",
       "date": "2026-07-11T11:50:09Z",
@@ -2755,6 +2797,12 @@
       "url": "https://lore.kernel.org/amd-gfx/20260711033159.3096477-1-alex.hung@amd.com/",
       "date": "2026-07-11T03:33:05Z",
       "author": "Alex Hung"
+    },
+    {
+      "subject": "[PATCH] drm/amd/display: Shorten KUnit exported symbol names",
+      "url": "https://lore.kernel.org/amd-gfx/20260711032956.87948-1-venkat88@linux.ibm.com/",
+      "date": "2026-07-12T15:22:45Z",
+      "author": "Venkat Rao Bagalkote"
     },
     {
       "subject": "[PATCH v3 33/33] drm/amdgpu: Preallocate system BO pages outside the reservation lock",
@@ -2877,12 +2925,6 @@
       "author": "Timur Kristóf"
     },
     {
-      "subject": "[PATCH drm-amd] drm/amd/display: dce100: skip non-DP stream encoders for DP MST",
-      "url": "https://lore.kernel.org/amd-gfx/CAOidqQCv-M7oHt9jMMGo2LvhGyXDfNwjfeP+2tASOvg+yRF9mg@mail.gmail.com/",
-      "date": "2026-07-10T07:19:20Z",
-      "author": "Andriy Korud"
-    },
-    {
       "subject": "[PATCH] drm/amd/display: fix __udivdi3 link error",
       "url": "https://lore.kernel.org/amd-gfx/tencent_C3A258C2204BBB82CD35C736076BFC07F806@qq.com/",
       "date": "2026-07-10T07:19:12Z",
@@ -2899,48 +2941,6 @@
       "url": "https://lore.kernel.org/amd-gfx/20260710063946.2262582-4-airlied@gmail.com/",
       "date": "2026-07-10T06:46:11Z",
       "author": "Dave Airlie"
-    },
-    {
-      "subject": "[PATCH 2/3] amd/dc: drop spl copies of custom float and fixed pt libraries",
-      "url": "https://lore.kernel.org/amd-gfx/20260710063946.2262582-3-airlied@gmail.com/",
-      "date": "2026-07-10T06:46:09Z",
-      "author": "Dave Airlie"
-    },
-    {
-      "subject": "[PATCH] drm/amdgpu: Fix lockdep false positive in amdgpu_lockdep_init",
-      "url": "https://lore.kernel.org/amd-gfx/20260710025232.208861-1-vitaly.prosyak@amd.com/",
-      "date": "2026-07-10T02:52:47Z",
-      "author": "vitaly.prosyak"
-    },
-    {
-      "subject": "[PATCH 2/2] drm/amdgpu: Pack nested ucode_info struct",
-      "url": "https://lore.kernel.org/amd-gfx/20260709223312.475563-2-alex.hung@amd.com/",
-      "date": "2026-07-09T22:43:15Z",
-      "author": "Alex Hung"
-    },
-    {
-      "subject": "[PATCH 1/2] drm/amdgpu: Fix __rcu fence pointer accesses",
-      "url": "https://lore.kernel.org/amd-gfx/20260709223312.475563-1-alex.hung@amd.com/",
-      "date": "2026-07-09T22:43:02Z",
-      "author": "Alex Hung"
-    },
-    {
-      "subject": "[PATCH 73/80] drm/amd/display: Fix DMSS not triggering for HDR to SDR transition",
-      "url": "https://lore.kernel.org/amd-gfx/20260709205936.5719-74-george.zhang@amd.com/",
-      "date": "2026-07-09T21:03:04Z",
-      "author": "George Zhang"
-    },
-    {
-      "subject": "[PATCH 77/80] drm/amd/display: add DST_Y_DELTA_DRQ_LIMIT reg macro for later use",
-      "url": "https://lore.kernel.org/amd-gfx/20260709205936.5719-78-george.zhang@amd.com/",
-      "date": "2026-07-09T21:03:03Z",
-      "author": "George Zhang"
-    },
-    {
-      "subject": "[PATCH 80/80] drm/amd/display: Promote DC to 3.2.389",
-      "url": "https://lore.kernel.org/amd-gfx/20260709205936.5719-81-george.zhang@amd.com/",
-      "date": "2026-07-09T21:03:01Z",
-      "author": "George Zhang"
     }
   ]
 }
