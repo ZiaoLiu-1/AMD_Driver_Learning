@@ -3,6 +3,8 @@
 // Module 0.7: C/C++ 基础速成 (C/C++ Foundations)
 // Group 1: C 语言核心复习 (C Core Review) — 7 lessons
 // Group 2: C++ 训练 (C++ Training) — 6 lessons
+// Group 3: 内核 C 惯用法实战 (Kernel C Idioms) — 6 lessons
+// 每节课配套 Code Lab 刷题 (/code-lab, 40 题在线编译运行)。
 // Style: 以基础为主，驱动相关案例作为拓展与关联 (foundations-first,
 //        amdgpu/kernel cases as extensions). Format A.
 // ============================================================
@@ -33,12 +35,16 @@ export const cCppMicroLessons: MicroLessonModule = {
               '编译与汇编（cc1 + as）：每个翻译单元被独立编译成目标文件（.o）。关键点是“独立”——编译 amdgpu_device.c 时，编译器并不知道 amdgpu_ring.c 里函数的具体实现，它只需要看到一个“声明”就能生成对该函数的调用，把符号解析推迟到链接阶段。',
               '链接（ld）：链接器把多个 .o 中的符号（函数名、全局变量名）匹配起来。某个 .o 调用了 foo()，另一个 .o 定义了 foo()，链接器把它们绑定。找不到定义就报 “undefined reference to foo”；找到两个定义就报 “multiple definition”。',
               '声明（declaration）告诉编译器“这个名字存在、类型是什么”，定义（definition）才真正分配实体（函数体、变量存储）。约定：头文件里放声明，.c 文件里放定义。这就是“一处定义原则”（ODR）的工程化体现。',
+              'static 与 extern 的链接语义值得单独强调：static 修饰的文件级函数/变量具有内部链接（internal linkage），符号不进入全局符号表，多个 .c 里的同名 static 函数互不冲突——这是内核在没有命名空间的 C 里管理名字污染的主要手段，amdgpu 里大量以 IP 块名开头的 static 函数（如 gfx_v10_0_ring_emit_ib）只对本文件可见。extern 声明则宣告"定义在别处"，链接器负责最终绑定；内核模块还多一层 EXPORT_SYMBOL 机制——只有显式导出的符号才能被其他模块引用，这是比 extern 更严格的边界。',
+              '两个高频误区：其一，把定义写进头文件——头文件被多个 .c 包含后每个翻译单元都产生一份定义，链接期爆 multiple definition（static inline 函数是例外：每个翻译单元一份私有拷贝且不导出符号，内核头文件里大量使用）；其二，以为头文件守卫能防链接冲突——守卫只防同一翻译单元内的重复包含，防不了跨翻译单元的重复定义。排查这类问题的实用工具是 nm 和 objdump -t，直接看 .o 的符号表：大写 T/D 是导出定义，小写 t/d 是 static，U 是未解析引用。',
+              '配套刷题提示：本课没有专属题目——但整个 Code Lab（/code-lab）的判题过程就是一次真实的"单翻译单元编译 + 链接"：你的代码与判题 main 拼成同一个源文件交给 gcc，undefined reference、multiple definition、类型不匹配这些本课讲的错误会原样出现在编译输出里。刷任何一题遇到链接类报错时，回到本课对号入座。',
             ],
             keyPoints: [
               '翻译单元 = 一个 .c + 它递归 #include 的所有头文件',
               '每个 .o 独立编译，符号解析推迟到链接期',
               'undefined reference = 链接期找不到定义；multiple definition = 重复定义',
               '头文件守卫 #ifndef/#define/#endif 或 #pragma once 防止重复包含',
+              'static = 内部链接（文件私有），extern = 引用别处定义；内核用 EXPORT_SYMBOL 控制模块间可见性',
             ],
           },
           diagram: {
@@ -174,18 +180,21 @@ int g_debug_level = 0;   /* 注意：这是定义，不是声明 */
           duration: 17,
           tags: ['C', 'types', 'integer'],
           concept: {
-            summary: 'C 基本整数类型的大小是“实现定义”的；表达式里窄整数会被自动提升为 int；驱动用定宽类型（u8/u16/u32/u64）来保证与硬件寄存器一致的确定宽度。',
+            summary: 'C 基本整数类型的大小是“实现定义”的；表达式里窄整数会先做整数提升（一般提升为 int；int 装不下其全部取值时为 unsigned int）；驱动用定宽类型（u8/u16/u32/u64）来保证与硬件寄存器一致的确定宽度。',
             explanation: [
               'char/short/int/long/long long 的字节数由平台 ABI 决定。Linux x86-64 用 LP64：int=4、long=8、指针=8。正因为“不确定”，内核绝不用裸 int 去描述硬件，而用 u8/u16/u32/u64（等价于 uint8_t…）这些定宽类型——GPU 寄存器是 32 位，就必须是 u32，少一位多一位都会读错。',
-              '整数提升（integer promotion）：任何比 int 窄的整数（char、short、位域、u8、u16）在参与算术运算前，都会先被提升为 int。所以 u8 a=200, b=100; a+b 实际上是在 int 里算 300，不会回绕——这常常出乎意料。',
-              '常规算术转换（usual arithmetic conversions）：当有符号和无符号混在一起运算，通常有符号一方被转成无符号。经典陷阱：unsigned a=0; a-1 不是 -1 而是 0xFFFFFFFF；if (a - b < 0) 当 a、b 都是无符号时永远为假。',
+              '整数提升（integer promotion）：任何比 int 窄的整数（char、short、位域、u8、u16）在参与算术运算前都会先被提升——若 int 能表示原类型的全部取值（char/short/u8/u16 皆如此）就提升为 int，否则提升为 unsigned int。所以 u8 a=200, b=100; a+b 实际上是在 int 里算 300，不会回绕——这常常出乎意料。',
+              '常规算术转换（usual arithmetic conversions）：当有符号和无符号混在一起运算，若无符号一方的秩（rank）不低于有符号一方，有符号被转成无符号（int 对 unsigned int 即是）；若有符号秩更高且能表示无符号的全部值（如 long long 对 unsigned int），转向该有符号类型；若秩更高却装不下（如 32 位平台的 long 对 unsigned int），双方转向该有符号类型对应的无符号类型。经典陷阱：unsigned a=0; a-1 不是 -1 而是 0xFFFFFFFF；if (a - b < 0) 当 a、b 都是无符号时永远为假。',
               '溢出语义：有符号整数溢出是“未定义行为”（UB，编译器可据此激进优化甚至删代码）；无符号溢出有明确定义，就是对 2^n 取模回绕。所以做位掩码、移位、哈希时要用无符号类型。',
+              '整数提升的规则要说准确：比 int 窄的类型（char、short、位域）参与运算前先提升——int 能装下其全部取值就提升为 int，否则为 unsigned int。类型不同的两个操作数再按"常规算术转换"找公共类型：同秩的有符号遇上无符号，有符号一方转成无符号；无符号一方的秩更高时同样是无符号赢；只有当有符号类型的秩更高**且能表示无符号类型的全部值**时（如 long long 对 unsigned int），才统一向有符号转换；若秩更高却仍装不下（32 位平台的 long 对 unsigned int），双方转向该有符号类型对应的无符号类型。事故几乎全部来自"无符号赢"的分支：size_t（无符号）与 int 相减、u32 和 -1 比较，负数瞬间变成天文数字。读驱动代码时看到 (int) 或 (s32) 的显式转换，多半是作者在手动掐断这条规则。',
+              '给自己立三条 UB 红线：有符号整数溢出是 UB（无符号回绕是良定义的模运算——ring 与 fence 正是靠它工作）；移位量大于等于左操作数位宽是 UB（32 位值移 32 位）；窄类型移位前已被提升为 int，所以 1 << 31 也是 UB（要写 1u << 31 或 BIT(31)）。配套刷题：Code Lab 的 c-02（高低 32 位）、c-03（size_t 下溢）、c-04/c-05（掩码与位域）、c-06（fls）、k-05（环形缓冲）、k-10（fence 回绕）全部围绕本课展开，在浏览器里即可编译运行。',
             ],
             keyPoints: [
               'int/long 大小平台相关；硬件相关数据一律用定宽 u8/u16/u32/u64',
-              '窄于 int 的整数运算前被提升为 int',
-              '有符号⊕无符号混合运算→通常转无符号，易出负数变巨大正数的 bug',
+              '窄于 int 的整数运算前先做整数提升：一般到 int，int 装不下才到 unsigned int',
+              '有符号⊕无符号同秩混合运算→转无符号（负数变巨大正数的高发地）；仅当有符号秩更高且装得下全部无符号值时才向有符号转换',
               '有符号溢出=UB，无符号溢出=按 2^n 回绕；位运算用 unsigned',
+              '常规算术转换中无符号会"传染"有符号；无符号回绕合法、有符号溢出是 UB——ring/fence 的回绕数学全靠前者',
             ],
           },
           diagram: {
@@ -319,12 +328,15 @@ void dump_regs(uint32_t *regs, size_t count) {
               'NULL 与未初始化：NULL（值为 0 的地址）表示“不指向任何对象”，解引用它会崩溃。未初始化的指针（野指针）指向随机地址，解引用是 UB——比 NULL 更危险，因为它可能“碰巧不崩”。',
               '数组与指针：数组名在大多数表达式里会“退化”成指向首元素的指针，所以 arr[i] 等价于 *(arr + i)，&arr[i] 等价于 arr + i。但数组不是指针——sizeof(arr) 是整个数组大小，sizeof(p) 永远是一个指针的大小（8 字节）。',
               '输出参数（out-param）：C 函数只能返回一个值，于是“通过指针参数把结果写回调用者”成为标准模式。内核函数普遍返回 int 错误码（0 成功、负的 -Exxx 失败），把真正的结果通过指针参数传出。',
+              '指针算术的单位是"元素"而不是字节：p+1 前进 sizeof(*p) 个字节，两个同型指针相减得到元素个数（类型 ptrdiff_t）。这也解释了为什么 void* 不能做算术——它不知道元素多大；需要字节视角时先转 unsigned char*，这是 C 标准唯一保证可以别名访问任何对象的类型。顺带认识严格别名规则：通过不兼容类型的指针访问对象是 UB（*(u32*)&float_var 这类写法）。内核编译时用 -fno-strict-aliasing 关闭了该优化假设，但用户态代码要老实用 memcpy。',
+              '输出参数的防御纪律：进函数先判 NULL；失败路径绝不写输出（调用方可能拿它当"有效性"信号）；成功才写、写完才返回 0。另一个隐形陷阱是"指针的指针"层级搞错——传 int* 能改调用方的 int，但要改调用方的 int* 就得传 int**。配套刷题：c-07（错误码与输出参数）、c-08（手写 memcpy——void* 到字节指针的完整肌肉记忆）。',
             ],
             keyPoints: [
               '指针是存地址的变量；*p 读/写所指对象，&x 取地址',
               '解引用 NULL 必崩；解引用野指针是 UB（可能更隐蔽）',
               'arr[i] ≡ *(arr+i)；但 sizeof(数组) ≠ sizeof(指针)',
               '内核惯例：返回 int 错误码，结果用指针参数传出',
+              '指针算术按元素步长；unsigned char* 是唯一合法的"万能字节视角"；跨类型重解释用 memcpy 而非指针强转',
             ],
           },
           diagram: {
@@ -457,12 +469,15 @@ int main(void) {
               'strcpy/strcat 不知道目标缓冲区有多大，会一直写到源串的 \\0 为止——源比目标长就溢出，覆盖相邻内存，是经典的缓冲区溢出漏洞。',
               'strncpy 看似安全，却有两个坑：如果源长度 >= n，它不会写终止符（结果不是合法字符串）；如果源较短，它会把剩余空间全填 \\0。所以内核改用 strscpy：保证终止、返回拷贝长度或 -E2BIG。',
               '生成字符串优先用 snprintf/scnprintf：它接收缓冲区大小、保证不溢出、并始终写入 \\0。sysfs 的 show() 回调就是用 sysfs_emit/scnprintf 往 PAGE_SIZE 缓冲区里安全地格式化输出。',
+              '"数组退化为指针"有三处不发生：sizeof(arr) 返回整个数组的字节数（这是 ARRAY_SIZE 宏能工作的根基）；&arr 得到"指向整个数组的指针"（类型 T(*)[N]，步长是整个数组）；字符串字面量初始化 char arr[] 时是逐字符拷贝而非指针赋值。函数参数里写 int arr[64] 纯属注释——编译器一律按 int* 处理，64 不参与任何检查，这就是为什么内核接口总是"指针 + 长度"成对出现。',
+              '缓冲区安全的历史包袱要认清楚：strcpy 无界（CVE 制造机）；strncpy 源太长时不写结尾 0，还会把剩余空间全部清零（性能陷阱 + 静默截断）；strlcpy 返回源长度导致读越界风险（内核已弃用）；strscpy 是现役标准答案。sprintf 同理让位给 snprintf/scnprintf。配套刷题：c-01（snprintf 寄存器转储）、c-09（亲手实现 strscpy）、c-10（安全解析十六进制输入）。',
             ],
             keyPoints: [
               'C 字符串 = 以 \\0 结尾的 char 数组；存储要为 \\0 多留 1 字节',
               'strcpy/strcat 无边界检查，是缓冲区溢出的常见根源',
               'strncpy 可能不写终止符；内核偏好 strscpy（保证终止 + 返回截断信息）',
               '格式化输出用 snprintf/scnprintf（带大小、保证 \\0）',
+              'sizeof、&arr、字面量初始化三处不退化；函数参数里的数组长度只是注释——安全接口 = 指针 + 长度 + 有界拷贝',
             ],
           },
           diagram: {
@@ -590,12 +605,15 @@ int main(void) {
               'offsetof 与 sizeof：offsetof(type, member) 给出字段在结构体内的字节偏移，sizeof(type) 给出含 padding 的总大小。这两个宏是分析内存布局的标准工具，也是 container_of（模块 1）的基础。',
               'union（联合体）：所有成员共享同一块内存，大小等于最大成员。常用于“同一段内存的多种视角”，比如把一个 u32 寄存器既当整数、又当一组位域来访问。',
               '位域（bitfield）：可以声明 “unsigned busy : 1;” 让字段只占若干 bit，适合紧凑表达标志位；但位域的内存布局（位序、跨字节填充）是实现定义的，跨平台/对硬件寄存器并不可移植，硬件寄存器更稳妥的做法是用掩码+移位（见 cc-c-2）。',
+              '对齐要求的根源是硬件：多数体系结构上 N 字节的标量要求地址是 N 的倍数，未对齐访问轻则变慢（拆成两次访存）重则异常（某些 ARM）。编译器于是在成员之间插 padding，并把结构体总大小补齐到最大成员对齐的倍数（这样数组元素才能逐个对齐）。实用推论：把成员按对齐从大到小排列通常最省空间；pahole 工具能直接展示内核结构体的空洞分布，amdgpu 的性能敏感结构体都被这样审视过。',
+              '位域的两大坑要牢记：位的分配顺序（从低位还是高位开始）是实现定义，跨编译器/跨大小端不可移植——所以映射硬件寄存器时内核宁可用掩码+移位（REG_GET_FIELD）也不用位域；位域成员也不能取地址。union 的合法用途是"同一块内存的多种解释"（类型双关在 C 里合法、在 C++ 里是 UB），但跨越 ABI 边界仍推荐 memcpy。配套刷题：c-11（小端序列化——绕开 padding 与字节序的正解）、c-12（float 位型拆解）、k-01（container_of 依赖 offsetof，本课的直接延伸）。',
             ],
             keyPoints: [
               '对齐要求导致编译器插入 padding；字段顺序影响 sizeof',
               'offsetof 给偏移、sizeof 给含 padding 的总大小',
               'union 让多个成员共享内存，大小=最大成员',
               '位域紧凑但布局实现定义；映射硬件寄存器优先用掩码+移位或 __packed',
+              '成员按对齐降序排列可最小化 padding；位域顺序是实现定义——ABI/寄存器映射用掩码+移位；pahole 可视化结构体空洞',
             ],
           },
           diagram: {
@@ -732,12 +750,15 @@ uint32_t read_size(const void *raw) {
               '动态存储（堆）：malloc 申请一块生命周期由你掌控的内存，必须配对 free 释放。三大经典错误：内存泄漏（忘了 free）、悬空/二次释放（free 后又用或又 free）、释放后使用（use-after-free）。',
               '所有权（ownership）：每块堆内存都该有明确的“谁负责释放它”。接口要在文档/命名上说清楚是“调用者拥有”还是“被调用者拥有”。所有权混乱是 C 项目最大的内存 bug 来源。',
               '内核里没有 libc 的 malloc/free，而是 kmalloc/kzalloc/kfree（还要带 GFP 标志说明能否睡眠）。更进一步，devm_kzalloc 等“设备托管”分配会在设备卸载时自动释放——这其实就是内核版的 RAII 思路。',
+              '把"所有权"当成一等概念来读 C 代码：每块堆内存在任何时刻必须有且只有一个明确的负责人（函数、结构体或调用方），API 命名会暗示所有权转移——create/alloc 返回的内存归调用方管，add/register 通常只是借用，destroy/free 收回所有权。内核代码评审的很多来回，本质都是在争论"这块内存现在归谁"。realloc 的经典陷阱（p = realloc(p, n) 失败时旧块泄漏）也属于所有权问题：失败时所有权没有转移，旧负责人仍要负责到底。',
+              '三大内存病及其检测工具：泄漏（忘 free）——用户态 ASan/Valgrind、内核 kmemleak；使用后释放 UAF——KASAN 能在内核态抓；双重释放——free 后立即置 NULL 是最廉价的疫苗（free(NULL) 是合法空操作）。练驱动的黄金习惯：先在用户态用 -fsanitize=address 把数据结构逻辑跑干净再进内核。配套刷题：c-15（realloc 动态数组）、c-16（嵌套资源 create/destroy）、k-04（kref 引用计数）、k-07（goto 阶梯）、k-11（devres 清理栈）——五题连起来就是内核内存管理的进化史。',
             ],
             keyPoints: [
               '栈变量随作用域自动生灭；不可返回其地址',
               '堆内存 malloc/free 配对；泄漏/二次释放/释放后使用是三大杀手',
               '每块内存都要有明确的所有者负责释放',
               '内核用 kmalloc/kzalloc/kfree + GFP 标志；devm_* 提供自动释放',
+              '每块堆内存任一时刻只有一个所有者；realloc 失败时旧块仍有效；free 后置 NULL——三条纪律防住大半内存事故',
             ],
           },
           diagram: {
@@ -875,12 +896,15 @@ int ctx_init(struct ctx *c, int n) {
               '回调（callback）：把函数指针作为参数传给另一个函数，让对方在合适时机“回调”你的逻辑。qsort 的比较函数、内核的中断处理、定时器回调都是这种模式。',
               'ops 结构体 = C 的多态：把同一类操作（init/fini/read/write…）声明成一组函数指针字段，不同的“对象”填入不同实现，调用方只通过统一的 ops 接口分发。这就是面向对象“虚函数表”在 C 里的手写版。',
               '调用前必须判空：ops 里的某个函数指针可能是 NULL（该对象不支持此操作）。内核惯例是 `if (ops->foo) ops->foo(...)`，既支持“可选操作”，也避免调用空指针崩溃。',
+              '函数指针声明的读法可以机械化：从名字出发向右再向左——int (*submit)(void *ctx, int job) 读作"submit 是指针，指向接收 (void*, int)、返回 int 的函数"。复杂签名用 typedef 拆解是内核惯例（typedef int (*handler_fn)(...)）。调用语法上 ops->submit(ctx, job) 与 (*ops->submit)(ctx, job) 完全等价——函数指针的解引用是可选的，这一点常让初读者困惑。',
+              '工程细节两则：其一，ops 表几乎总是声明成 static const——const 让整张表进 .rodata，运行期不可篡改（安全加固：函数指针是攻击者最爱的劫持目标），编译器还能借此做去虚拟化优化；其二，"一类对象共享一张 ops 表"（amdgpu_ring_funcs 模式）比"每个对象各存一把函数指针"省内存且缓存友好——这正是 C++ vtable 的布局逻辑：对象里只存一个指向类级共享表的 vptr。配套刷题：c-13（qsort 比较器）、c-14（ops 双引擎多态）、k-11（fn+data 闭包）、k-12（opcode 分发表综合战）。',
             ],
             keyPoints: [
               '函数指针保存函数入口地址，可存储/传递/替换',
               '回调 = 把函数指针传给别人，由对方择机调用',
               'ops 结构体把一组函数指针打包，实现 C 的多态分发',
               '调用前判空：if (ops->fn) ops->fn(...)，支持可选操作并防崩溃',
+              'ops 表声明为 static const 使其进入只读段——既是安全加固也是优化提示；对象存表指针而非整张表，正是 vtable 的内存布局',
             ],
           },
           diagram: {
@@ -1035,12 +1059,15 @@ void init_all(struct ip_block *blocks, int n) {
               '函数重载（overloading）：同名函数可以有不同参数列表，编译器按实参类型选择匹配的版本。C 不支持（链接器只认函数名），C++ 通过“名字改写”（name mangling）把参数类型编码进符号名，于是 print(int) 和 print(double) 是两个不同符号。',
               '命名空间（namespace）把名字分组，避免大型项目里的符号冲突：amd::compute::launch 与 mesa::launch 互不干扰。用 :: 限定访问，或用 using 引入。它取代了 C 里“给每个函数加模块前缀”（如 amdgpu_xxx）的手工做法。',
               '其它 C→C++ 的直接升级：true/false 的 bool 类型；用 nullptr 取代 NULL（类型更安全）；用 auto 让编译器推导类型（写迭代器、模板返回值时尤其有用）；new/delete 取代 malloc/free（且会调用构造/析构函数，见下一课）。',
+              '引用的本质是"初始化后不可重绑定的别名"：没有空引用、没有引用算术、不能改指向——这三条"不可能"正是它比指针安全的全部来源。const T& 还有一个特权：绑定到临时对象并把临时的生命周期延长到引用作用域结束（函数参数写 const std::string& 能直接接住字符串字面量就是这个机制）。选择引用还是指针的经验法则：可空或需要中途重定向用指针，其余一律引用。',
+              'extern "C" 的机制值得说透：C++ 为支持重载把参数类型编进符号名（name mangling，clamp_val(int,int,int) 变成 _Z9clamp_valiii），而 C 符号就是裸名字。extern "C" 关闭改编，让 C++ 代码能链接 C 库、C 代码能调用 C++ 实现的接口。整个 GPU 用户态栈靠它缝合：libdrm 暴露 C 接口，Mesa 内部是 C++，边界上全是 extern "C"。配套刷题：cpp-01（重载与引用交换）。',
             ],
             keyPoints: [
               '引用是别名：必须初始化、不可改绑、无需解引用、正常不为 NULL',
               '函数重载靠 name mangling 实现；C 不支持同名函数',
               'namespace 分组名字，取代 C 的手工前缀，避免符号冲突',
               'bool/true/false、nullptr、auto、new/delete 是常用的 C→C++ 升级',
+              '引用 = 不可重绑定的非空别名，const& 可延长临时对象生命周期；extern "C" 关闭 name mangling——C/C++ 边界的缝合线',
             ],
           },
           diagram: {
@@ -1167,12 +1194,15 @@ int main() {
               '构造函数在对象创建时自动调用，负责把对象置于有效状态（常用成员初始化列表 : a_(x), b_(y) 直接初始化成员）；析构函数 ~T() 在对象销毁时自动调用，负责释放它持有的资源。两者都不用手动调用。',
               'RAII（Resource Acquisition Is Initialization）：让对象的“构造”获取资源（内存、锁、文件、GPU buffer），“析构”释放资源。由于栈对象在离开作用域时一定会析构（包括正常返回、break、甚至抛异常），资源释放就被语言机制保证了——不会忘、顺序还自动逆序。',
               '对比 C 的 goto 清理（cc-c-6）：RAII 把那套“手工逆序释放”交给编译器自动完成。一个函数里即便有十个提前返回点，每个栈对象的析构也都会被正确触发，从根上消灭“忘记清理/漏一级”的 bug。',
+              '构造与析构的顺序规则要背到条件反射：成员按"声明顺序"构造（与初始化列表里的书写顺序无关——两者不一致时 GCC 会给 -Wreorder 警告），析构严格逆序；基类构造先于成员、析构晚于成员。这条规则决定了成员之间的依赖只能"后面依赖前面"。局部对象则按定义顺序构造、作用域退出时逆序析构。',
+              'RAII 与异常安全的连带关系：栈展开（stack unwinding）时析构函数被自动执行，这是 RAII 能守住资源的根基；但如果析构函数自己再抛异常、且此时已有异常在飞行，程序直接 std::terminate——所以析构函数默认 noexcept，清理代码必须"不会失败"或把失败吞掉记日志。GPU 用户态栈（Mesa/ROCm）大多禁用异常，但 RAII 的价值不减：提前 return 与错误路径同样触发析构。配套刷题：cpp-02（构造析构顺序追踪）、cpp-03（RegionGuard 三路径平衡）。',
             ],
             keyPoints: [
               '类 = 数据 + 方法 + 访问控制；成员函数隐含 this',
               '构造函数初始化对象（优先用成员初始化列表），析构函数清理资源',
               'RAII：构造获取资源、析构释放资源，绑定到对象生命周期',
               '栈对象离开作用域必定析构 → 资源释放被语言保证，取代 goto 清理',
+              '成员按声明序构造、逆序析构（与初始化列表书写顺序无关）；析构函数默认 noexcept——清理逻辑不允许失败',
             ],
           },
           diagram: {
@@ -1330,12 +1360,15 @@ void f() {
               'Rule of Three：如果你需要自定义析构函数（因为类管理资源），那通常也需要自定义拷贝构造和拷贝赋值（做“深拷贝”：各自分配、各自拥有），三者要么都写、要么都用编译器默认。',
               '移动语义（move）：很多时候我们不想“复制资源”，只想把所有权从一个对象“转移”给另一个（如函数返回一个大对象、把对象放进容器）。移动构造/移动赋值接收右值引用 T&&，把源对象的指针“偷”过来、再把源置空，实现 O(1) 的所有权转移。',
               'std::move 只是把对象“标记为可被移动”（转成右值引用），真正的搬运由移动构造/赋值完成。Rule of Five：管理资源的类通常要考虑析构 + 拷贝构造 + 拷贝赋值 + 移动构造 + 移动赋值。现实中更推荐：用 vector/unique_ptr 等已实现好这些的类型作成员，自己就一个都不用写。',
+              '特殊成员函数的生成规则是本课的题眼：写了析构/拷贝构造/拷贝赋值中的任何一个，编译器就不再自动生成移动操作（退回逐成员拷贝）；写了移动操作，拷贝操作被隐式删除。所以现代守则是两个极端：要么什么都不写（Rule of Zero，让 vector/unique_ptr 成员代劳），要么五个全写（Rule of Five）。中间态"只写析构"是性能陷阱——类悄悄失去移动能力，push_back 全变深拷贝。',
+              '被移动对象的标准约定是"有效但未指定"（valid but unspecified）：必须仍可安全析构和赋新值，但不承诺具体内容——所以移动构造里把源指针置 nullptr 不是可选项而是义务（源的析构还会执行）。noexcept 的商业价值再强调一次：vector 扩容在移动可能抛异常时退回拷贝（强异常安全要求），漏标 noexcept 会静默丢掉全部移动收益——可以用 static_assert(std::is_nothrow_move_constructible_v<T>) 上保险。配套刷题：cpp-04（Rule of Three 深拷贝）、cpp-05（移动语义）、cpp-06（手搓 UniquePtr）。',
             ],
             keyPoints: [
               '默认拷贝是浅拷贝；持有裸指针的类浅拷贝 → 二次释放',
               'Rule of Three：要析构就通常也要拷贝构造 + 拷贝赋值（深拷贝）',
               '移动语义转移所有权（偷指针 + 源置空），O(1) 而非复制',
               'std::move 只是转成右值引用；优先用 vector/unique_ptr 免写这些',
+              '声明了析构就不再自动生成移动——Rule of Zero 或 Rule of Five，别停在中间；移动后的源对象必须仍可安全析构',
             ],
           },
           diagram: {
@@ -1490,12 +1523,15 @@ int main(){
               '虚函数与动态分发：基类把接口方法声明为 virtual，派生类用 override 覆盖。通过基类指针/引用调用该方法时，实际执行的是对象真实类型的版本（运行时决定），这叫动态分发；非虚函数则在编译期按静态类型绑定。',
               '虚表（vtable）：编译器为每个含虚函数的类生成一张函数地址表，对象头部藏一个 vptr 指向它；virtual 调用经 vptr 间接跳转。把它和 cc-c-7 的 ops 结构体对照：obj->vptr->method() 正对应 obj->ops->method(obj)——只是 C++ 自动建表、填表并做类型检查。',
               '纯虚函数与虚析构：= 0 的纯虚函数使类成为抽象基类（接口，不能实例化），强制派生类实现。极其重要的一条：当你可能通过基类指针 delete 派生对象时，基类析构函数必须是 virtual，否则只调用基类析构、派生部分不被清理，导致泄漏/UB。',
+              '虚调用的真实开销要量化理解：一次虚调用 = 读 vptr → 查 vtable 槽位 → 间接跳转，比直接调用多一两次访存，且通常无法内联——不可内联才是主要代价（内联是后续一切优化的入口）。因此性能热路径上 C++ 还有一套"静态多态"工具（模板/CRTP，编译期绑定零开销），虚函数用于真正需要运行时可替换的边界：插件、后端、测试注入。LLVM 和 Mesa 的设计里两者的分界非常清晰。',
+              '对象切片（slicing）是继承体系的第一杀手：把派生类对象按值赋给基类变量，派生部分被无声切掉，vptr 也变回基类——多态失效且数据丢失。防御手段：多态类型永远经由指针/引用/智能指针传递；基类把拷贝构造声明为 protected 或直接 delete；接口类（纯虚）天然不可实例化因此免疫。配套刷题：cpp-07（虚函数引擎）、cpp-08（IAllocator 接口注入）——对照 c-14 的 ops 表，体会"同一设计的两种拼写"。',
             ],
             keyPoints: [
               'public 继承表达 is-a；派生类复用并扩展基类',
               'virtual + override → 通过基类指针调用执行派生实现（动态分发）',
               '机制是 vtable + vptr，等价于自动化的 ops 结构体（对照 cc-c-7）',
               '纯虚函数(=0)构成抽象接口；经基类指针删除时基类析构必须 virtual',
+              '虚调用的主要代价是不可内联而非跳转本身；多态对象永远按指针/引用传递——按值传递即切片',
             ],
           },
           diagram: {
@@ -1650,12 +1686,15 @@ int main() {
               '类模板：template <typename T> class Array { T *data; ... }。Array<int> 与 Array<float> 是两个独立的类。STL 的 vector<T>、map<K,V> 都是类模板。',
               '模板是编译期机制：实例化在编译时完成，生成的代码和手写具体类型版本一样高效（无运行时开销），且有完整类型检查——这正是它优于 C 宏（纯文本替换、无类型检查、调试困难）和 void*（丢失类型、需强转、易错）的地方。',
               '一个工程要点：模板的定义通常要放在头文件里。因为编译器只有在“看到用什么类型实例化”时才能生成代码，如果把模板定义藏在某个 .cpp 里，其它翻译单元实例化时找不到定义，就会链接报错。',
+              '模板的编译模型解释了它的一切怪癖：模板本身不是代码而是"生成代码的配方"，只有被具体类型使用（实例化）时编译器才为该类型生成一份函数/类。这带来三个推论：定义必须对使用点可见（所以模板放头文件）；每个用到的类型各产出一份机器码（代码膨胀的来源，资源受限场景要节制）；错误在实例化点才爆发（报错信息又长又深）。static_assert 是给模板加"前门检查"的工具——把违约在第一行用人话报出来。',
+              '"隐式约束"是读懂泛型代码的钥匙：max3 只要求类型支持 <，clamp_t 只要求可比较可拷贝——模板对类型的要求写在用法里而非签名里。C++20 的 concepts 把这些要求显式化（requires std::totally_ordered<T>），LLVM 代码库已大量使用。读 Mesa/ROCm 的模板代码时先问"这个 T 被要求会做什么"，答案通常藏在函数体的操作符里。配套刷题：cpp-09（函数模板三件套）、cpp-10（RingBuffer 类模板，static_assert 实战）。',
             ],
             keyPoints: [
               '模板对类型参数化；编译器按使用处推导并实例化具体版本',
               '函数模板与类模板；STL 容器都是类模板',
               '编译期实例化：零运行时开销 + 完整类型检查（优于宏/void*）',
               '模板定义通常放头文件，否则实例化时链接找不到定义',
+              '模板定义必须放头文件（实例化需可见）；错误爆发在实例化点——用 static_assert 把契约前置到第一行',
             ],
           },
           diagram: {
@@ -1783,12 +1822,15 @@ int main() { return square(5); }   // 链接：undefined reference to square<int
               '迭代器与算法：容器用迭代器统一遍历（begin()/end()），范围 for（for (auto &x : v)）是其语法糖；<algorithm> 提供 sort、find、count_if 等通用算法，常配合 lambda（[](auto&a,auto&b){return ...;}）定制行为。',
               'unique_ptr<T>：独占所有权的智能指针，不可拷贝、只能移动；离开作用域自动 delete。它是“裸 new/delete”的现代替代，零额外开销，表达“这块资源只有一个主人”。用 std::make_unique<T>(...) 创建。',
               'shared_ptr<T>：引用计数的共享所有权，最后一个持有者销毁时才释放；适合多方共享同一资源，但有计数开销，且要警惕循环引用（用 weak_ptr 打破）。经验法则：默认 unique_ptr，确有共享需求才上 shared_ptr。',
+              'vector 的增长契约与迭代器失效规则必须一起记：push_back 超过 capacity 时重新分配并搬移全部元素——所有指向元素的指针/引用/迭代器同时失效；reserve 能一次性预留、避免反复搬家。map 是有序结构（红黑树，按 key 序迭代，O(log n)），unordered_map 是哈希（均摊 O(1) 但迭代序不定）——选容器的第一问永远是"我需要什么样的遍历顺序与失效保证"。',
+              '智能指针的成本模型：unique_ptr 是零开销抽象（大小与裸指针相同、无运行时代价），默认选它；shared_ptr 有控制块 + 原子计数（每次拷贝一次原子操作，多线程下还有缓存行竞争），只在所有权真正需要共享时用；weak_ptr 用于打破 shared_ptr 的循环引用。make_unique/make_shared 优先于裸 new：异常安全，且 make_shared 能把对象与控制块合并分配。配套刷题：cpp-11（map+sort+lambda）、cpp-12（unique_ptr 组合，Rule of Zero 实战）；对照 k-04——shared_ptr 就是自动化的 kref。',
             ],
             keyPoints: [
               'vector：连续存储、size vs capacity、扩容会使迭代器失效',
               '迭代器 + 范围 for + <algorithm>（sort/find）+ lambda',
               'unique_ptr：独占、只能移动、自动释放，取代裸 new/delete',
               'shared_ptr：引用计数共享，注意开销与循环引用；默认优先 unique_ptr',
+              'vector 扩容使所有迭代器失效——能预估就先 reserve；unique_ptr 零开销默认选，shared_ptr 付原子计数成本，weak_ptr 破环',
             ],
           },
           diagram: {
@@ -1946,6 +1988,7 @@ int main() {
               '三件套怎么用：BIT(25) 展开为 (1UL << 25)——注意是 1UL，用 int 的 1 左移 31 位是未定义行为（符号位），这是面试和 review 的高频陷阱。GENMASK(15, 12) 生成 0x0000F000，即 [15:12] 四个位全 1，参数顺序是"高位在前"。FIELD_GET(mask, reg) 从 reg 里按 mask 抽出字段值并右移对齐（编译期由掩码自动算出移位量），FIELD_PREP(mask, val) 反向把值放进字段位置。掩码用 _MASK 结尾的常量命名，一处定义、处处引用。',
               'amdgpu 因为历史与代码生成的原因有自己的一套：寄存器头文件（asic_reg/ 目录）为每个字段生成 REG__FIELD__SHIFT 和 _MASK 两个常量，配套 REG_GET_FIELD(value, REG, FIELD) 与 REG_SET_FIELD(orig, REG, FIELD, val) 宏。原理与 FIELD_GET 完全相同——你在 amdgpu 里会更常见到这套，读法一样：先找 _MASK/_SHIFT 定义，字段语义就清楚了。',
               '还有一族朋友按需认识：set_bit/clear_bit/test_bit 操作的是内存里的位图（bitmap，原子版本用于并发场景），hweight32 数 1 的个数（上一模块 setup_rb 数 RB 就用它），ffs/fls 找第一个/最后一个置位。位图在驱动里管理资源分配表（哪个 doorbell 被占用、哪些 CU 被 harvest）非常常见。',
+              '配套刷题（/code-lab，浏览器内编译运行）：c-04（set/clear/test 掩码基本功）、c-05（GET_FIELD/SET_FIELD 复刻）、c-06（fls 与 2 的幂）、k-08（128 位 doorbell 位图）、k-09（ioctl 四段位打包）——本课的每个宏你都会亲手实现一遍。',
             ],
             keyPoints: [
               'BIT(n) = (1UL << n)——UL 后缀避免 int 左移 31 位的未定义行为。',
@@ -2086,6 +2129,7 @@ void broken_enable_intr(struct my_dev *dev, int ring_size)
               '代价是"从节点找回宿主"需要一步反向运算——这正是模块 1 教过的 container_of：已知成员地址和成员在结构体里的偏移，减回去就是宿主地址。list_entry(ptr, type, member) 就是 container_of 的别名，而 list_for_each_entry(pos, head, member) 把"遍历节点 + 还原宿主"打包成一个循环宏，pos 直接就是宿主指针。',
               '几个必须内化的操作语义：头节点用 LIST_HEAD(name) 或 INIT_LIST_HEAD 初始化成"指向自己"的空环（内核链表是双向循环链表，判空是 head->next == head）；list_add 头插、list_add_tail 尾插；list_del 摘除后节点指针被写成毒值（LIST_POISON）帮你抓 use-after-delete，若节点还要复用应使用 list_del_init；遍历中要删除节点必须用 list_for_each_entry_safe——它提前缓存 next，普通版在删除后继续走就是 use-after-free。',
               '在 amdgpu 里认门牌：amdgpu_vm 用多条链表给 BO 分状态（idle/evicted/moved/invalidated——BO 状态机就是"在哪条链上"）；TTM 的 LRU 驱逐扫描就是链表遍历；fence 的回调列表、ctx 的实体列表同理。读驱动代码遇到 list_for_each_entry 时，第一件事永远是看第三个参数（member 名），再去宿主结构体定义里找那个 list_head 成员的注释——那里写着这条链的语义。',
+              '配套刷题（/code-lab）：k-01（container_of 从零实现）、k-02（哨兵环形双链的四个核心操作）、k-03（list_for_each_entry 遍历与 _safe 安全删除）——三题连做，本课的链表 API 就从"看得懂"升级为"写得出"。',
             ],
             keyPoints: [
               '侵入式：list_head 嵌进宿主结构体——零分配、O(1) 摘除、一个对象可同时上多条链。',
@@ -2235,6 +2279,7 @@ struct bo {
               '参数重复求值是第二类事故：#define MAX(a,b) ((a)>(b)?(a):(b)) 遇到 MAX(i++, j) 时 i++ 被求值两次。内核的 min()/max() 用语句表达式（GNU 扩展 ({ ... })）把参数先存进局部变量再比较，同时用类型检查宏拒绝有符号/无符号混比。你自己写宏时的纪律：要么保证每个参数只出现一次，要么改用 static inline 函数（有类型检查、无重复求值，内联后零开销——内核风格文档明确偏好后者）。',
               'ARRAY_SIZE(arr) 展开为 sizeof(arr)/sizeof((arr)[0])，但内核版多一层 __must_be_array 检查：数组传进函数退化成指针后，sizeof(指针)/sizeof(元素) 会得到一个荒谬但能编译的数字——内核版让这种误用直接编译失败。凡是遍历固定表（IP block 列表、寄存器初始化表）都用它，手写长度常量迟早和数组本体失去同步。',
               'C99 指定初始化器（.field = value）是 ops 表的标准写法：字段名显式、顺序无关、漏掉的成员自动清零（函数指针为 NULL，调用前判空即可实现"可选回调"）。对比按位置初始化：结构体加一个字段，所有按位置写的初始化全部错位——amdgpu 里几百张 funcs 表全靠指定初始化器才能安全演进。这也解释了为什么内核结构体可以频繁加字段而不炸掉全树。',
+              '配套刷题（/code-lab）：k-01 的 container_of 宏正是"宏卫生学"的综合应用（参数加括号、char* 转换）；c-07 的静态 match table 与 c-14 的 ops 表都依赖指定初始化器——写题时留意这些细节如何防住隐蔽 bug。',
             ],
             keyPoints: [
               '多语句宏必须 do{...}while(0)：让宏成为单语句，if/else 下不解体。',
@@ -2386,6 +2431,7 @@ int init_regs(struct my_dev *dev,
               'goto 分层清理在 cc-c-6 里见过雏形，这里补齐工程细节。核心不变式：标签按资源获取的逆序排列，err_N 标签意味着"第 1..N 步已成功、从第 N 步开始回滚"。失败时 goto 到"自己那一层的下一个标签"——第 3 步失败跳 err_2（回滚 1、2 步），而不是 err_3。常见变体：unwind 标签共用（部分驱动用 amdgpu 的 ip_block 逆序 fini 模式）；成功路径和错误路径共享尾部时用 out: 标签 + ret 变量。评判标准只有一条：每条失败路径上，已获取的每样资源恰好被释放一次。',
               '溢出检查针对一类真实漏洞：kmalloc(count * size, GFP_KERNEL) 中 count 来自用户态时，乘法可以回绕成一个很小的数——分配成功但远小于预期，随后的写入就是堆溢出（历史上大量 CVE 属于此类）。防御工具：kmalloc_array(count, size, flags)（内部检查乘法溢出，溢出返回 NULL）、struct_size(ptr, member, count)（算"结构体+柔性数组"的安全尺寸）、check_add_overflow/check_mul_overflow（通用算术检查，溢出返回 true）。纪律：任何来自用户态、固件、硬件寄存器的数值参与尺寸/偏移运算前必须过检查——amdgpu 的 ioctl 入口处处是这种代码。',
               '把三套连成一个模板：入口先校验参数（含溢出检查）→ 逐步获取资源，每步失败 goto 对应层 → 成功 return 0 → 标签区逆序释放。这个骨架在 amdgpu 的每个 init/create 函数里重复出现，读熟一个等于读熟一百个。顺带一提 C++ 对照：这套手工纪律正是 RAII 自动化掉的东西（cc-cpp 组讲过）——理解 goto 清理，才真正理解 RAII 在解决什么。',
+              '配套刷题（/code-lab）：k-06（ERR_PTR/PTR_ERR/IS_ERR 全套实现 + 应用）、k-07（三资源 goto 阶梯 + 失败注入）、c-10（溢出预判解析器）——错误处理三件套每件都有一道专属练习题。',
             ],
             keyPoints: [
               'ERR_PTR：错误码藏进指针顶端页；IS_ERR 判断、PTR_ERR 解码；NULL=没有不算错，ERR_PTR=失败有原因。',
@@ -2554,6 +2600,7 @@ err_all:
               '两个高频陷阱：其一"借用逃逸"——函数收到调用方持有的指针（借用），却把它存进了长生命周期的结构（如全局链表）而不 get，调用方 put 后链表里就是悬空指针；其二"归零后复活"——release 已跑，另一个线程还想 kref_get，为此查找路径必须用 kref_get_unless_zero（典型于"从链表找 fence"的场景），这也是为什么查找和释放通常要在同一把锁下协调。refcount_t 相比裸 atomic_t 的价值：饱和语义——计数溢出时卡死在饱和值并 WARN，把"计数回绕导致提前释放"这类可利用漏洞降级为拒绝服务。',
               'devm_（device-managed）是另一根支柱，解决的是 probe/remove 的对称性：驱动 probe 要申请十几种资源（内存、ioremap、中断、时钟），任何一步失败都要把前面的全撤销，remove 时还要再写一遍同样的撤销——两处极易失去同步。devm_kzalloc/devm_ioremap/devm_request_irq 把资源挂到 struct device 的托管链表上，probe 失败或设备移除时框架自动逆序释放，错误路径从 goto 阶梯十几层缩成 return。',
               'devm 的边界同样重要：只适用于"与设备同生共死"的资源；生命周期更短的（一次 ioctl 内的临时缓冲）用普通 kmalloc/kfree，更长的（跨设备共享、被用户态引用的对象如 fence/BO）用 kref——用 devm 管理它们会在设备拔出瞬间从用户态脚下抽走内存。另一个细节是释放顺序：devm 按注册的逆序释放，若手动 free 了一个 devm 资源就是未来的双重释放。经验分配：设备骨架 devm、共享对象 kref、临时缓冲手动——三分天下，各司其职。',
+              '配套刷题（/code-lab）：k-04（kref_get/put 与 release 回调，用 container_of 回收宿主）、k-11（devres 清理栈——注册即忘的用户态复刻）、c-16（手动 create/destroy 对照组）——三题做完，三代资源管理的取舍自然清晰。',
             ],
             keyPoints: [
               'kref 三铁律：存起来先 get；用完 put(release)；put 后指针立即失效。',
@@ -2715,6 +2762,7 @@ struct fence *cache_lookup(int slot)
               '两把锁的选择树由此而来。spinlock：忙等（不睡眠），加锁解锁纳秒级，可用于任何上下文——但临界区必须极短（别的 CPU 在烧电空转），区内绝不能调用任何可能睡眠的函数。与中断共享数据时用 spin_lock_irqsave（顺手关本地中断）：否则持锁时被同一把锁的中断处理打断 = 单核自死锁。mutex：等不到就睡，去调度别人——临界区可以长、可以在区内睡眠（比如区内再拿别的 mutex、做分配），但只能在进程上下文用。经验法则：保护"改几个指针/标志"的短临界区用 spinlock，保护"一整段可能睡眠的复杂操作"用 mutex；amdgpu 里 fence 列表用 spinlock、BO 预留和大结构初始化用 mutex/dma-resv。',
               '中断上下文干不了重活怎么办？内核的标准逃生通道是 workqueue：中断处理只做最小急救（读状态寄存器、确认中断、记下要干什么），然后 schedule_work 把重活扔给 worker 线程——它在进程上下文里跑，能睡眠能加 mutex 能分配 GFP_KERNEL。amdgpu 的节奏就是如此：GPU 中断 → amdgpu_irq 分发 → fence 处理快速完成，而 GPU reset 这种大手术全部走 work（amdgpu_device_gpu_recover 由专门的 work 触发）。C 语言层面注意 work 的模式：struct work_struct 嵌进你的结构体，handler 里 container_of 找回宿主——又是第 2 课的侵入式设计。',
               '无锁的轻武器也要认识：atomic_t/atomic64_t 适合独立计数器（统计、序号发生器），单个操作原子但"读-判断-写"的组合不原子——需要组合语义时用 atomic_cmpxchg 或回到锁；refcount_t（上一课）是它的引用计数特化。最后是纪律性的三条：数据和保护它的锁声明在一起并写注释（/* protected by @lock */）；多把锁固定获取顺序（文档化，防 AB-BA 死锁）；临界区里的代码当成"借来的时间"——能挪出去的全挪出去。这些规则贯穿你将读到的每一个 amdgpu 文件。',
+              '配套刷题提示：并发原语无法在单线程判题环境里真实演练，但 k-05（环形缓冲 wptr/rptr）与 k-10（fence 序号回绕）正是本课并发结构的单线程骨架——先把这两题的内存模型吃透，模块 1 的原子操作与锁会顺滑得多。',
             ],
             keyPoints: [
               '两类上下文：进程上下文可睡眠；原子上下文（中断、持 spinlock）绝不可睡——每行代码先问自己在哪。',
@@ -2840,7 +2888,7 @@ static void amdgpu_reset_work_handler(
             hint: '两条死锁链：跨 CPU 忙等等不到 + 单核中断重入；irqsave 的判据是"这把锁是否也在中断路径使用"。',
             answer:
               '持自旋锁睡眠的两条死路：(1) 跨 CPU——其他 CPU 在忙等这把锁（自旋不让出 CPU），你却睡了且可能长时间不被调度回来，等锁的 CPU 空转到系统瘫痪；若调度器把另一个也要这把锁的任务放上你的 CPU，永久死锁。(2) 配置层——持锁区在多数配置下关闭抢占，睡眠触发调度直接违反调度器不变式，内核报 "BUG: scheduling while atomic"。因此自旋锁临界区必须短且区内只调用绝不睡眠的函数。irqsave 的选择判据一句话：这把锁保护的数据是否也会在中断（或软中断）路径被访问？会——进程侧必须 spin_lock_irqsave（关本地中断再拿锁），否则进程侧持锁时本 CPU 来了中断、中断处理再拿同一把锁，就是单核自死锁；不会——普通 spin_lock 即可，少关中断降低延迟。补充加分：irqsave 保存并恢复中断状态（flags），使其可嵌套在"中断可能已关"的路径里安全使用；软中断场景对应 spin_lock_bh。面试展开时配 amdgpu 实例：fence 的 lock 用 irqsave 系（中断路径 amdgpu_fence_process 会碰），而纯进程侧的结构用普通 spinlock 或 mutex。',
-            amdContext: '并发上下文题是 AMD 内核岗电面的固定环节，常见形式就是给一段中断处理代码找错——本课 debug 练习那四类错覆盖了 90% 的考点；能主动说出 amdgpu 的 irq→work 分离设计会显著加分。',
+            amdContext: '并发上下文题是 AMD 内核岗电面的固定环节，常见形式就是给一段中断处理代码找错——本课 debug 练习的四类错误覆盖了最常被考察的出错模式；能主动说出 amdgpu 的 irq→work 分离设计会显著加分。',
           },
         },
       ],
