@@ -21,6 +21,8 @@ const GlossaryPage = lazy(() => import("./pages/GlossaryPage"));
 const PracticePage = lazy(() => import("./pages/PracticePage"));
 const LabsListPage = lazy(() => import("./pages/LabsListPage"));
 const LabDetailPage = lazy(() => import("./pages/LabDetailPage"));
+const CodeLabPage = lazy(() => import("./pages/CodeLabPage"));
+const CodeProblemPage = lazy(() => import("./pages/CodeProblemPage"));
 const AssessmentPage = lazy(() => import("./pages/AssessmentPage"));
 const SourceGuidePage = lazy(() => import("./pages/SourceGuidePage"));
 const RadarPage = lazy(() => import("./pages/RadarPage"));
@@ -46,6 +48,8 @@ function InnerRoutes() {
         <Route path="/practice" component={PracticePage} />
         <Route path="/labs" component={LabsListPage} />
         <Route path="/labs/:labId" component={LabDetailPage} />
+        <Route path="/code-lab" component={CodeLabPage} />
+        <Route path="/code-lab/:problemId" component={CodeProblemPage} />
         <Route path="/assessment" component={AssessmentPage} />
         <Route path="/source-guide" component={SourceGuidePage} />
         <Route path="/radar" component={RadarPage} />

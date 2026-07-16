@@ -42,18 +42,18 @@ export function PageShell({
             containerWidthClassName
           )}
         >
-          <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+          <div className="flex min-w-0 flex-1 items-center gap-2 text-xs text-muted-foreground/60">
             <Link href={backHref}>
-              <span className="flex min-h-[44px] items-center gap-1 transition-colors hover:text-foreground cursor-pointer">
+              <span className="flex min-h-[44px] shrink-0 items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground cursor-pointer">
                 <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
                 {backLabel}
               </span>
             </Link>
-            <ChevronRight className="h-3 w-3" aria-hidden="true" />
-            <span className="font-medium text-foreground/80">{currentLabel}</span>
+            <ChevronRight className="h-3 w-3 shrink-0" aria-hidden="true" />
+            <span className="min-w-0 truncate font-medium text-foreground/80">{currentLabel}</span>
           </div>
 
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             {headerMeta}
 
             <button
