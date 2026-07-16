@@ -1,10 +1,11 @@
 // ============================================================
 // AMD Linux Driver Learning Platform - Module 0.7 Micro-Lessons
 // Module 0.7: C/C++ 基础速成 (C/C++ Foundations)
+// Group 0: C 从零起步 (C from Zero) — 7 lessons
 // Group 1: C 语言核心复习 (C Core Review) — 7 lessons
 // Group 2: C++ 训练 (C++ Training) — 6 lessons
 // Group 3: 内核 C 惯用法实战 (Kernel C Idioms) — 6 lessons
-// 每节课配套 Code Lab 刷题 (/code-lab, 40 题在线编译运行)。
+// 每节课配套 Code Lab 刷题 (/code-lab, 72 题在线编译运行)。
 // Style: 以基础为主，驱动相关案例作为拓展与关联 (foundations-first,
 //        amdgpu/kernel cases as extensions). Format A.
 // ============================================================
@@ -14,12 +15,723 @@ export const cCppMicroLessons: MicroLessonModule = {
   moduleId: 'c-cpp',
   groups: [
     {
+      id: 'cc-c0',
+      number: '0.7.0',
+      title: 'C 从零起步',
+      titleEn: 'C from Zero',
+      icon: 'BookOpen',
+      description: '不预设任何编程经验的 C 入门：从第一个函数、表达式与 printf 开始，经分支循环、数组、指针与字符串，到堆内存与所有权。每节课配套 Code Lab 热身题（/code-lab 的 C 基础热身轨道），学一节、练一节。已能独立写 C 函数的读者可直接进入 0.7.1 的系统性复习。',
+      lessons: [
+        {
+          id: 'cc-c0-1',
+          number: '0.7.0.1',
+          title: '第一段 C：函数、变量、return 与 printf',
+          titleEn: 'First C: Functions, Variables, return & printf',
+          duration: 14,
+          tags: ['C', 'basics', 'functions'],
+          concept: {
+            summary: '一段 C 程序由函数组成；函数接收参数、算出结果、用 return 交回。变量要先声明类型再使用；printf 负责把值排版成文字输出。main 只是程序的运行入口。',
+            explanation: [
+              '把函数想成一台小机器：左边投入原料（参数），右边掉出成品（返回值）。int add3(int a, int b, int c) 这行"铭牌"（签名）说明：投入三个 int，产出一个 int。函数体写在花括号里，return 表达式; 负责把成品交出去——return 一执行，这台机器立即停机，后面的代码不再运行。',
+              '变量是"带名字的储物格"，使用前必须声明它装什么类型：int count = 0; 声明了一个装整数的格子并放入 0。声明（int count）、初始化（= 0）、赋值（count = 5）是三个动作；只声明不初始化的局部变量里是垃圾值——读它是 bug 的常见源头，本课组的习惯是声明时就初始化。',
+              'printf("count = %d\\n", count) 把变量排版成文字：格式串里的 %d 是"这里插一个整数"的占位符，后面的参数按顺序填坑。常用四个：%d 整数、%f 小数（double）、%s 字符串、%c 单个字符；\\n 表示换行。占位符类型必须和实参匹配——%d 配上 double 是错误，编译器会警告（-Wall 时）。printf 成功时返回实际输出的字符数，输出失败时返回负数；入门题 w-04 暂时只关注精确文本，真实程序可用返回值发现 I/O 错误。',
+              'main 是程序的运行入口：操作系统从 main 开始执行。在 Code Lab 里判题器已经替你写好了 main（它调用你的函数、检查结果），所以你只需要专注实现题目要求的那个函数——这也正是真实工程的日常：绝大多数时候你写的是"被别人调用的函数"，不是 main。',
+              '编译是把 .c 文本翻译成可执行程序的过程：gcc prog.c -o prog && ./prog 两步完成。看不懂报错时先抓两样：文件名:行号 和第一条错误（后面的错误常常是第一条的连锁反应）。',
+            ],
+            keyPoints: [
+              '函数签名 = 使用契约：返回类型 + 函数名 + 参数表',
+              'return 立即结束函数并交回结果',
+              '局部变量声明时就初始化；未初始化的值是垃圾',
+              'printf 占位符要与参数类型匹配；成功返回输出字符数，失败返回负数',
+            ],
+          },
+          diagram: {
+            title: '一个 C 源文件的解剖',
+            content: `  #include <stdio.h>        ← 引入标准库声明(printf 在这里)
+
+  int add3(int a, int b, int c)   ← 签名: 返回类型 名字(参数表)
+  {                                ← 函数体开始
+      int sum = a + b + c;         ← 声明 + 初始化
+      return sum;                  ← 交回结果, 函数结束
+  }
+
+  int main(void)                   ← 程序运行入口
+  {
+      printf("%d\\n", add3(1, 2, 3));  ← 调用函数, 打印返回值
+      return 0;                    ← 告诉操作系统: 正常结束
+  }`,
+            caption: '自上而下：include 引声明、普通函数干活、main 只是入口。Code Lab 判题时 main 由判题器提供。',
+          },
+          codeWalk: {
+            title: '从调用到返回：值是怎么流动的',
+            file: 'first.c',
+            language: 'c',
+            code: `#include <stdio.h>
+
+int square_plus(int x, int bonus)   /* 1 签名: 两个 int 进, 一个 int 出 */
+{
+    int result = x * x + bonus;     /* 2 局部变量: 声明即初始化 */
+    return result;                  /* 3 交回; 函数到此为止 */
+}
+
+int main(void)
+{
+    int a = 4;
+    int r = square_plus(a, 10);     /* 4 实参 a 的"值"被拷给形参 x */
+    printf("r = %d\\n", r);          /* 5 %d 处填入 r 的值 -> 打印 r = 26 */
+    return 0;
+}`,
+            annotations: [
+              '签名读法：int(出) square_plus(名) (int x, int bonus)(进)。',
+              '形参 x/bonus 是函数自己的储物格，装的是调用时拷来的值。',
+              'return 后写任何代码都不会执行（编译器常会警告 unreachable）。',
+              '调用处 square_plus(a, 10)：先求值、再拷贝、后进入函数。',
+              '%d 与 int 匹配；想打印 double 要换 %f。',
+            ],
+            explanation: '记住"值的旅行"：调用方的 a 只是把值 4 拷给了形参 x——函数里怎么改 x 都不影响 a。这一点在阶段 4 学指针时会成为主角：想让函数改到调用方的变量，就要把"地址"递进去。',
+          },
+          miniLab: {
+            title: '在 Code Lab 写下你的第一个函数',
+            objective: '完成热身题 w-01（三数之和）与 w-04（打印一行加法），体验"实现函数 → 编译 → 判题"的完整循环。',
+            steps: [
+              '打开 /code-lab，进入「C 基础热身」轨道的阶段 0。',
+              '先做 w-01：只改 return 那一行，点「编译运行」。',
+              '故意删掉分号再运行一次，读一读编译错误的 文件名:行号 格式。',
+              '再做 w-04：注意 printf 的格式串要和期望输出一字不差（包括空格和换行）。',
+            ],
+            expectedOutput: 'w-01 与 w-04 判题全绿（RESULT n/n + exit 0）。',
+            hint: '编译错误看第一条；输出不匹配时逐字符对比空格与 \\n。',
+          },
+          debugExercise: {
+            title: '两处新手错误',
+            language: 'c',
+            question: '下面的函数想返回两数平均值的整数部分，其中有两处错误，另有一处值得改进的写法。都找出来。',
+            buggyCode: `int average(int a, int b)
+{
+    int sum;
+    sum = a + b
+    return Sum / 2;
+}`,
+            hint: '一处标点、一处大小写、一处"读了什么值"。',
+            answer: '两处错误：(1) sum = a + b 缺分号；(2) C 区分大小写，Sum 不是 sum，是未声明的名字。一处改进：int sum; 先声明后赋值合法，但声明时直接初始化 int sum = a + b; 更不易漏。修正后：int sum = a + b; return sum / 2;（整数除法向零截断，10/4 得 2——这是特性不是错误，w-02 会专门练它。）',
+          },
+          interviewQ: {
+            question: '入门自查：int add3(int a, int b, int c) 这行里，每个部分分别告诉了调用者什么？如果把函数体写成 return a + b; c 会怎样？',
+            difficulty: 'easy',
+            hint: '签名 = 契约；return 的行为。',
+            answer: '返回类型 int 告诉调用者"会拿回一个整数"；函数名 add3 是调用时用的名字；参数表 (int a, int b, int c) 说明要传三个整数、顺序即含义。写成 return a + b; 后 c 完全没参与——编译器可能给"未使用参数"的警告，函数会安静地返回错误结果。签名没变，契约却被实现悄悄违反了：这就是为什么判题器（和真实项目的测试）要对行为做检查，而不是只看签名。',
+          },
+        },
+        {
+          id: 'cc-c0-2',
+          number: '0.7.0.2',
+          title: '表达式、类型与转换',
+          titleEn: 'Expressions, Types & Conversions',
+          duration: 14,
+          tags: ['C', 'types', 'operators'],
+          concept: {
+            summary: '运算符把值组合成表达式；操作数的类型决定运算的规则。最大的新手陷阱只有一个：两个整数相除还是整数——小数部分直接扔掉。',
+            explanation: [
+              '四类常用运算符：算术 + - * / %；比较 == != < <= > >=（结果是 1 或 0）；逻辑 && || !（组合条件，短路求值：左边已能定结论时右边不执行）；赋值 =。注意 == 是"比较"而 = 是"赋值"——if (x = 5) 是合法但几乎总是写错的代码（-Wall 会提醒）。',
+              '整型除法：5 / 9 的两个操作数都是 int，结果按 int 规则算——0.555 被截断成 0，方向是"向零"（-7/2 得 -3）。配套的 % 取余数：17 % 5 得 2。想要小数结果，至少一个操作数得是浮点：5.0 / 9 或 (double)5 / 9。这条规则藏在无数换算 bug 里（w-02 会让你亲手踩一次再修好）。',
+              '类型转换两种：隐式——int 和 double 混算时 int 自动升成 double；显式——(double)x 强制转换（cast）。反向 (int)3.9 直接截断成 3，不是四舍五入。原则：让转换显式可见，读代码的人不用猜。',
+              'bool：C99 起 #include <stdbool.h> 提供 bool/true/false。本质仍是整数（0 假、非 0 真），但把"这是个是否"写进类型让签名更诚实：bool is_even(int n) 比 int is_even(int n) 表达得更清楚。',
+              '给 w-30 的最短位运算桥：^ 是按位异或——相同为 0、不同为 1。三条推论够用：x ^ x == 0、x ^ 0 == x、异或满足交换结合律。更完整的位操作世界在 0.7.1.2 与 c-04~c-06。',
+            ],
+            keyPoints: [
+              '整数 / 整数 = 整数（向零截断）；% 取余数',
+              '想要小数：让至少一个操作数是浮点，或显式 (double) 转换',
+              '== 比较、= 赋值；比较结果是 1/0',
+              '<stdbool.h> 的 bool 让"是否"进入类型系统',
+            ],
+          },
+          diagram: {
+            title: '整型除法：值在哪一步丢失',
+            content: `  c * 9 / 5 + 32     (c 是 double)          c * (9 / 5) + 32
+      │                                          │
+      ▼ 从左往右                                 ▼ 括号先算
+  (c*9) -> double ✓                        9 / 5 -> int 除法 = 1 ✗
+      │                                          │
+  double / 5 -> double ✓                    c * 1 + 32  -> 错误结果
+      │
+  正确: 100C -> 212F                        错误: 100C -> 132F
+
+  规则: 运算一次看一步, 谁参与谁定类型`,
+            caption: 'c * 9 / 5 逐步都有 double 参与，安全；一旦写成 (9 / 5)，括号里是纯 int 除法，1.8 被截断成 1，错误从此定型。',
+          },
+          codeWalk: {
+            title: '同一个公式的三种写法',
+            file: 'convert.c',
+            language: 'c',
+            code: `double c2f_ok(double c)
+{
+    return c * 9 / 5 + 32;        /* 1 c 是 double, 逐步"传染"整个表达式 */
+}
+
+double c2f_also_ok(double c)
+{
+    return c * (9.0 / 5.0) + 32;  /* 2 括号里已是浮点除法 = 1.8 */
+}
+
+double c2f_wrong(double c)
+{
+    return c * (9 / 5) + 32;      /* 3 BUG: 9/5 是 int 除法 = 1 */
+}`,
+            annotations: [
+              '乘法先发生：double * int 时 int 升成 double。',
+              '9.0 的小数点让它是 double 字面量。',
+              '括号改变了求值顺序——纯 int 相除先被算成 1。',
+            ],
+            explanation: '三个函数签名一样，第三个悄悄错——这类 bug 编译器不报错（类型全部合法），只能靠判题/测试抓行为。w-02 的判题用容差比较浮点（不做 == 精确相等），这也是浮点的通用纪律。',
+          },
+          miniLab: {
+            title: '踩一次整型除法',
+            objective: '完成 w-02（摄氏转华氏）与 w-03（判断偶数），亲手经历"写错→读失败输出→修正"。',
+            steps: [
+              '打开热身轨道阶段 0 的 w-02，先按直觉写 c * (9 / 5) + 32，运行看哪些用例挂。',
+              '修成任一正确写法，全绿后读题解里的三种写法对比。',
+              'w-03：用 % 实现 is_even，注意负偶数 -4 也要返回 true。',
+            ],
+            expectedOutput: 'w-02 第一次运行 -40/37 等用例失败；修正后 RESULT 全绿。',
+            hint: '看到 0/100 通过而 37 失败？说明只有整数部分对了。',
+          },
+          debugExercise: {
+            title: '平均分为什么总是整数',
+            language: 'c',
+            question: '这个函数想返回三门课的平均分（可以有小数），却总是返回整数值。为什么？怎么改？',
+            buggyCode: `double average3(int a, int b, int c)
+{
+    return (a + b + c) / 3;
+}`,
+            hint: '返回类型是 double 没错——问题出在 return 后面的表达式内部。',
+            answer: '(a+b+c) 与 3 都是 int，除法按 int 规则先把小数扔掉，然后才把"已经截断的整数"转成 double 返回——转换发生得太晚。修法任选：除以 3.0；或 (double)(a + b + c) / 3。教训：返回类型不会拯救表达式内部的整型除法。',
+          },
+          interviewQ: {
+            question: '入门自查：-7 / 2 和 -7 % 2 在 C11 里分别是多少？为什么？',
+            difficulty: 'easy',
+            hint: '除法向哪个方向截断？余数公式 a == (a/b)*b + a%b 恒成立。',
+            answer: 'C11 规定整数除法向零截断：-7 / 2 = -3（不是向下取整的 -4）。余数满足恒等式 a == (a/b)*b + a%b，所以 -7 % 2 = -7 - (-3)*2 = -1——余数符号跟着被除数。推论：判断奇偶写 n % 2 != 0 比 n % 2 == 1 更稳，因为负奇数的 n % 2 是 -1。',
+          },
+        },
+        {
+          id: 'cc-c0-3',
+          number: '0.7.0.3',
+          title: '分支与循环',
+          titleEn: 'Branches & Loops',
+          duration: 15,
+          tags: ['C', 'if', 'loops'],
+          concept: {
+            summary: 'if/else 让程序按条件走不同的路；while/for 让一段代码重复执行。写循环的功夫全在边界：从哪开始、到哪结束、会不会一次都不执行。',
+            explanation: [
+              '分支：if (条件) { ... } else if (另一条件) { ... } else { ... }。条件是任意表达式，非 0 即真。多路等值分派可用 switch (x) { case 1: ...; break; ... default: ...; }——记得每个 case 结尾的 break，漏掉会"穿透"到下一个 case（偶尔是故意技巧，通常是 bug）。',
+              '循环两兄弟：while (条件) { ... } 先判后做，可能一次都不执行；for (初始化; 条件; 步进) { ... } 把计数三件套写在一行，是"重复 n 次"的标准形态：for (int i = 0; i < n; i++)。do { ... } while (条件); 先做后判，至少执行一次——用得少但要认得。',
+              'break 立即跳出整个循环；continue 跳过本轮剩余部分直接进入下一轮判断。两者只作用于最内层循环。',
+              '循环的正确性靠两问：终止吗（条件最终会变假吗）？边界对吗？经典口诀 i < n 而非 i <= n：前者恰好执行 n 次。"差一错误"（off-by-one）是全宇宙最常见的 bug——检验办法是拿最小输入走一遍：n=0 应该一次都不进循环，n=1 应该恰好一次。',
+              '空转是合法状态：sum_to(0) 的循环体执行 0 次、返回初始值 0——这不是特例而是设计。让"零次循环"自然正确，代码就少一半 if。',
+            ],
+            keyPoints: [
+              'if/else if/else 自上而下找第一个为真的分支；switch 记得 break',
+              'for (int i = 0; i < n; i++) 恰好执行 n 次——i < n 不是 i <= n',
+              'break 出整个循环，continue 进下一轮',
+              '用 n=0 和 n=1 检验边界；零次循环应当自然正确',
+            ],
+          },
+          diagram: {
+            title: 'while 与 for：同一个循环的两种写法',
+            content: `  int i = 0;                       for (int i = 0; i < n; i++) {
+  while (i < n) {                      /* 循环体 */
+      /* 循环体 */                  }
+      i++;                          ┌─────────────────────────┐
+  }                                 │ 初始化 -> 判断 -> 体 -> │
+                                    │      步进 -> 判断 -> ...│
+  n=3 的轨迹:                        └─────────────────────────┘
+  i=0 判(0<3)真 -> 体 -> i=1
+  i=1 判(1<3)真 -> 体 -> i=2        n=0 的轨迹:
+  i=2 判(2<3)真 -> 体 -> i=3        i=0 判(0<0)假 -> 一次都不进
+  i=3 判(3<3)假 -> 结束             (这是正确行为, 不是 bug)`,
+            caption: 'for 只是把 while 的三件套折进一行。先判后做意味着零次循环天然合法——好的循环让 n=0 自动正确。',
+          },
+          codeWalk: {
+            title: '一个循环的四个部件',
+            file: 'digits.c',
+            language: 'c',
+            code: `int count_digits(int n)      /* 约定: n >= 0 */
+{
+    if (n == 0)               /* 1 边界: 0 也占一位 */
+        return 1;
+
+    int count = 0;            /* 2 累计变量: 初始化 */
+    while (n > 0) {           /* 3 条件: n 终将变 0 */
+        n = n / 10;           /* 4 步进: 每轮砍掉一位 */
+        count++;
+    }
+    return count;
+}`,
+            annotations: [
+              '0 需要特判：不特判的话循环零次、错误返回 0 位。',
+              '累计变量声明时初始化——垃圾值 + 循环 = 随机结果。',
+              '每轮 n/10 严格变小，保证终止。',
+              '步进和计数放在一起，读起来是"砍一位、数一位"。',
+            ],
+            explanation: '读任何循环都按这四件套拆：初始状态、继续条件、每轮做什么、什么保证终止。w-08~w-10 各练一个变体；到阶段 3 数组遍历时，这套框架原样复用。',
+          },
+          miniLab: {
+            title: '分支与循环六连',
+            objective: '按顺序完成 w-05（两数取大）、w-06（区间夹取）、w-07（符号函数）、w-08（1 加到 n）、w-09（数位个数）、w-10（整数幂）。',
+            steps: [
+              '阶段 1 三题全是分支：注意 w-07 的三分支必须互斥完整。',
+              '阶段 2 三题全是循环：写完先自问 n=0（或 exp=0）时走几轮。',
+              '任何一题挂了，用失败信息里的输入值在纸上人肉跑一遍你的循环。',
+            ],
+            expectedOutput: '六题全绿；w-09 的 0 用例与 w-10 的 exp=0 用例是边界思维的试金石。',
+            hint: '纸上跑循环 = 一列 i、一列条件真假、一列累计值。',
+          },
+          debugExercise: {
+            title: '这个循环差在哪一？',
+            language: 'c',
+            question: '想计算 1+2+...+n，但 sum_to(3) 返回了 3 而不是 6。哪里错了？',
+            buggyCode: `long sum_to(int n)
+{
+    long sum = 0;
+    for (int i = 1; i < n; i++)
+        sum = sum + i;
+    return sum;
+}`,
+            hint: '把 n=3 的每一轮写下来：i 取到了哪些值？',
+            answer: 'i < n 让循环在 i==n 前停下：n=3 时 i 只取 1、2，漏掉了 3 本身——返回 1+2=3。要么 i <= n，要么 i < n + 1。这就是差一错误的标准长相：题意是"含 n"，条件写成了"不含 n"。口诀"i < n 执行 n 次"针对的是从 0 开始数 n 个的场景；从 1 数到 n 含两端，就是 i <= n。边界永远回到题意本身。',
+          },
+          interviewQ: {
+            question: '入门自查：while (条件) 和 do { } while (条件); 的本质区别是什么？各举一个自然的使用场景。',
+            difficulty: 'easy',
+            hint: '判断发生在体之前还是之后？最少执行几次？',
+            answer: 'while 先判后做，最少 0 次；do-while 先做后判，最少 1 次。自然场景：while 适合"可能根本无事可做"——处理队列里的元素（队列可能是空的）；do-while 适合"至少要做一次再看要不要继续"——向用户请求输入直到合法。经验法则：默认 while；只有当"第一次执行无条件发生"是题意本身时才用 do-while。',
+          },
+        },
+        {
+          id: 'cc-c0-4',
+          number: '0.7.0.4',
+          title: '数组、值传递与长度参数',
+          titleEn: 'Arrays, Pass-by-Value & Length Parameters',
+          duration: 15,
+          tags: ['C', 'arrays', 'functions'],
+          concept: {
+            summary: '数组是一排连续的同类型元素，用下标 0..n-1 访问。C 的数组不记得自己多长，所以函数接收数组时永远同时接收长度。参数传递是"拷贝值"——但数组参数拷贝的是位置，不是内容。',
+            explanation: [
+              '声明与访问：int a[5] 开出连续 5 个 int，下标从 0 到 4——a[0] 是第一个，a[4] 是最后一个，a[5] 不存在。越界访问属于未定义行为（UB）：C 不保证替你报错，它可能静默破坏内存、读到怪值，也可能直接崩溃。习惯必须从第一天养成：下标合法范围永远是 0 <= i < n。',
+              '遍历就是 cc-c0-3 的循环骨架套上下标：for (int i = 0; i < n; i++) 用 a[i]。i < n 在这里不再是口诀而是安全线。',
+              '值传递：普通参数是拷贝。void f(int x) 里改 x，调用方的变量纹丝不动（cc-c0-1 的 codeWalk 已见过）。这既是保护也是限制——想让函数改动调用方的数据，之后要靠指针（下一课）。',
+              '数组作参数的特殊性：int a[] 写在参数表里时，传的不是 5 个元素的拷贝，而是数组的**位置**——所以函数里改 a[i] 会真正改到调用方的数组（w-14 原地反转正是靠这一点）。也因为只传了位置，长度信息丢了：C 的约定是数组参数永远配一个长度参数 int n。签名里的 a[] 与指针写法等价，细节留到下一课揭开。',
+              '空数组（n==0）是合法输入：循环零次、返回初始值。计数/求和的初始值答案（0）、找最大值时"用第一个元素而非 0 初始化"（w-12 专练），这些边界选择就是数组题的全部难点。',
+            ],
+            keyPoints: [
+              '下标合法范围 0 <= i < n；越界是 UB，可能静默破坏也可能崩溃',
+              '遍历模板：for (int i = 0; i < n; i++) 用 a[i]',
+              '普通参数是值拷贝；数组参数传的是位置——函数能改到真数组',
+              '数组不自带长度：签名永远是 (类型 a[], int n) 成对出现',
+            ],
+          },
+          diagram: {
+            title: '值传递 vs 数组参数',
+            content: `  void twice(int x)  { x *= 2; }        void fill7(int a[], int n) { a[0] = 7; }
+
+  int v = 10;                            int arr[3] = {1, 2, 3};
+  twice(v);        v 还是 10             fill7(arr, 3);   arr[0] 变成 7 !
+      │                                      │
+      ▼                                      ▼
+  ┌────────┐   拷贝值    ┌────────┐      ┌───────────┐  拷贝"位置"  ┌────┐
+  │ v = 10 │ ─────────> │ x = 10 │      │ [1][2][3] │ <──────────  │ a ●│
+  └────────┘  改x不回传  └────────┘      └───────────┘   改a[i]落在  └────┘
+                                          原数组上`,
+            caption: '普通参数拷贝"值"，函数里怎么改都是自己的副本；数组参数拷贝"位置"，函数隔空操作的是调用方那排真实元素。',
+          },
+          codeWalk: {
+            title: '一个数组函数的标准长相',
+            file: 'scan.c',
+            language: 'c',
+            code: `int array_max(const int a[], int n)   /* 1 约定: n >= 1 */
+{
+    int best = a[0];                   /* 2 用首元素初始化, 不是 0 */
+    for (int i = 1; i < n; i++) {      /* 3 从 1 开始: a[0] 已经看过 */
+        if (a[i] > best)
+            best = a[i];               /* 4 打擂台: 见强者就换 */
+    }
+    return best;
+}`,
+            annotations: [
+              'const 表示"本函数承诺只读不改"——能写 const 就写，是给调用者的免费保险。',
+              '用 0 初始化在全负数组上必错：{-5,-2,-9} 的最大值是 -2，不是 0。',
+              '从 i=1 起步避免和初始化重复比较（从 0 也对，只是多一次）。',
+              '"擂台变量"模式：找最大/最小/最长……全是同一个模子。',
+            ],
+            explanation: '数组题的骨架 = 循环骨架 + 两个决定：累计/擂台变量初始化成什么、空或单元素输入走什么路。w-11~w-15 五题各拧一个旋钮：求和、找最大、计数、原地改、查找。',
+          },
+          miniLab: {
+            title: '数组五连',
+            objective: '完成 w-11（求和）、w-12（最大值）、w-13（统计正数）、w-14（原地反转）、w-15（线性查找）。',
+            steps: [
+              'w-11 到 w-13 是只读遍历：签名里的 const 帮你自查"没打算改却改了"。',
+              'w-14 是第一次原地修改：先纸上画 5 个格子推双下标怎么相遇。',
+              'w-15 找到就 return——体会"提前退出"和"扫完全场"的区别。',
+            ],
+            expectedOutput: '五题全绿；w-12 的全负用例与 w-14 的奇偶长度用例是本课边界思维的验收点。',
+            hint: '每题动手前先答两问：n==0 时返回什么？初始值为什么是它？',
+          },
+          debugExercise: {
+            title: '最大值哪里错了',
+            language: 'c',
+            question: 'array_max({-5, -2, -9}, 3) 返回了 0，而不是 -2。找出两处问题。',
+            buggyCode: `int array_max(const int a[], int n)
+{
+    int best = 0;
+    for (int i = 0; i <= n; i++) {
+        if (a[i] > best)
+            best = a[i];
+    }
+    return best;
+}`,
+            hint: '初始值遇上全负数组会怎样？i <= n 的最后一轮读了哪里？',
+            answer: '两处：(1) best 初始化为 0——全负数组里没有元素能打赢 0，返回了根本不在数组里的值；应初始化为 a[0]（题目保证 n>=1）。(2) i <= n 让最后一轮访问 a[n]——越界读，结果不可预测（这次"碰巧没炸"恰恰是越界最危险的形态）。修正：best = a[0]，循环 i = 1; i < n。',
+          },
+          interviewQ: {
+            question: '入门自查：为什么 C 的数组函数签名总是 (int a[], int n) 成对出现？sizeof 能在函数里算出数组长度吗？',
+            difficulty: 'easy',
+            hint: '数组参数传的是什么？sizeof 作用在"位置"上得到多少？',
+            answer: '因为数组作参数传递的只是首元素的位置，长度信息不随行——函数内 sizeof(a) 得到的是"一个位置"的大小（指针大小，比如 8），不是整个数组的字节数，所以除以 sizeof(a[0]) 得不到元素个数。长度必须由调用方显式递进来。这也是内核接口"指针 + 长度"惯例的根源；下一课会把"位置"这个词换成它的真名：指针。',
+          },
+        },
+        {
+          id: 'cc-c0-5',
+          number: '0.7.0.5',
+          title: '指针与 C 字符串',
+          titleEn: 'Pointers & C Strings',
+          duration: 16,
+          tags: ['C', 'pointers', 'strings'],
+          concept: {
+            summary: '指针就是"存着地址的变量"：& 取地址，* 顺着地址找到本体。有了它，函数才能修改调用方的变量。C 字符串是 char 数组加一个结尾标记 \\0。',
+            explanation: [
+              '每个变量都住在内存的某个地址上。&v 取出 v 的地址；int *p = &v 声明一个指针存下它；*p 是"顺着 p 找到的那个变量本体"——读 *p 就是读 v，写 *p = 9 就是写 v。这一对操作互为逆运算：*(&v) 就是 v。',
+              '指针补上了值传递的缺口：swap(int *a, int *b) 接到两个地址，通过 *a、*b 直接操作调用方的变量——这正是上一课"数组参数传位置"的普遍化。调用时写 swap(&x, &y)：把地址递进去。',
+              'NULL 是“不指向任何对象”的特殊空指针值。解引用 NULL 属于未定义行为（UB）；常见系统往往会崩溃，但 C 语言不保证以某一种方式失败。纪律：接收指针的函数，契约里要么保证非 NULL，要么在使用前检查。',
+              'C 字符串 = char 数组 + 结尾哨兵 \\0（数值为 0 的字符）。"gfx" 在内存里是 4 个字节：g f x \\0。所有字符串函数都靠 \\0 知道哪里结束——strlen 数到 \\0 为止（不含它）。丢了 \\0，字符串函数会一路读进不属于你的内存。',
+              '上一课的悬念揭晓：参数表里的 int a[] 其实就是 int *a——数组作参数"退化"成指向首元素的指针。a[i] 与 *(a + i) 完全等价（指针加 i 前进 i 个元素）。这也再次解释了为什么长度必须另传。',
+              '预告：w-23 的签名是 int **arr——指向指针的指针。逻辑不变：想改 int 传 int*，想改 int* 就传 int**。到堆内存课（下一课）它会派上用场。',
+            ],
+            keyPoints: [
+              '& 取地址，* 解引用；*(&v) 就是 v',
+              '想让函数改调用方的变量：传地址，函数里用 * 操作',
+              '解引用 NULL 是 UB（常见表现为崩溃）；契约要么保证非 NULL 要么先检查',
+              'C 字符串以 \\0 结尾；数组参数退化为指针，a[i] == *(a+i)',
+            ],
+          },
+          diagram: {
+            title: 'swap 的地址之旅',
+            content: `  main:  int x = 3, y = 9;      swap(&x, &y);
+
+     地址 0x100   地址 0x104          swap 的形参
+    ┌─────────┐ ┌─────────┐       ┌──────────┐ ┌──────────┐
+    │ x = 3   │ │ y = 9   │       │ a = 0x100│ │ b = 0x104│
+    └────▲────┘ └────▲────┘       └────│─────┘ └────│─────┘
+         │           │                 │            │
+         └───────────┼─────── *a ──────┘            │
+                     └─────── *b ───────────────────┘
+
+  swap 里: int t = *a;  *a = *b;  *b = t;
+  结果:    x == 9, y == 3   (真的变了!)`,
+            caption: '指针 a、b 是"遥控器"：函数拿到的是地址的拷贝，但顺着地址按下 * 键，操作的就是 main 里的真实变量。',
+          },
+          codeWalk: {
+            title: '手写 strlen：\\0 的发现之旅',
+            file: 'strlen.c',
+            language: 'c',
+            code: `#include <stddef.h>
+
+size_t my_strlen(const char *s)   /* 1 字符串参数就是 char 指针 */
+{
+    size_t len = 0;               /* 2 size_t: 标准库的"长度类型" */
+    while (s[len] != '\\0')        /* 3 哨兵未现, 继续数 */
+        len++;
+    return len;                   /* 4 len 恰好是不含 \0 的字符数 */
+}`,
+            annotations: [
+              '"gfx" 传进来时, s 指向字符 g。',
+              'size_t 是无符号的、专门装"大小/长度"的类型——标准 strlen 的返回类型就是它。',
+              "'\\0' 就是数值 0, 条件也可以写 while (s[len])。",
+              '对空串 "" 而言 s[0] 就是 \\0, 循环零次, 返回 0。',
+            ],
+            explanation: '同一份代码可以从两个视角读：下标视角 s[len]（上一课的习惯）或指针视角 *(s + len)——两者等价。真实工程里读到哪种都要认识。字符串遍历的一切（w-17~w-19）都是这一个循环的变体。',
+          },
+          miniLab: {
+            title: '指针与字符串四连',
+            objective: '完成 w-16（指针交换）、w-17（手写 strlen）、w-18（统计字符）、w-19（字符串相等）。',
+            steps: [
+              'w-16：注意签名里没有数组——纯指针。写完想想 swap(&x, &x) 为什么也对。',
+              'w-17：先写 while 版，再试试指针步进版（p 一路走到 \\0）。',
+              'w-18/w-19：都是"遍历到 \\0 停"的变体；w-19 要同时推进两个指针。',
+            ],
+            expectedOutput: '四题全绿；w-19 的"前缀不相等"用例（"abc" vs "abcd"）是常见翻车点。',
+            hint: '纸上画格子：把字符串画成带 \\0 的字节序列再走指针。',
+          },
+          debugExercise: {
+            title: '这个 swap 为什么没交换',
+            language: 'c',
+            question: '调用 swap(x, y) 后 x、y 纹丝不动。两处错误在哪里？',
+            buggyCode: `void swap(int a, int b)
+{
+    int t = a;
+    a = b;
+    b = t;
+}
+
+/* 调用处: swap(x, y); */`,
+            hint: '参数是什么类型？函数里交换的是谁？',
+            answer: '(1) 参数是 int 而非 int*——值传递拷贝了 x、y 的值，函数里交换的是自己的两个副本，调用方毫发无损；(2) 对应地，调用处也只是传了值。修正：void swap(int *a, int *b) 配合 *a、*b 操作，调用处 swap(&x, &y)。判断口诀：函数想"改到外面"，签名里必须出现 *，调用处必须出现 &（数组因为天然传位置而例外）。',
+          },
+          interviewQ: {
+            question: '入门自查：char s[4] = "gfx" 在内存里是哪 4 个字节？strlen(s) 是多少？如果把数组开成 char s[3] 会发生什么？',
+            difficulty: 'easy',
+            hint: '字符串字面量自带什么结尾？strlen 数到哪停？',
+            answer: '4 个字节是 g、f、x、\\0——字面量 "gfx" 自带结尾哨兵。strlen(s) 是 3：数到 \\0 停且不含它。char s[3] = "gfx" 在 C 里合法但危险：三个字符恰好填满、\\0 被挤掉——它不再是合法的 C 字符串，strlen/printf 会越过末尾一路读到"碰巧遇到的下一个 0"。教训：给字符串开数组永远多留 1 个字节；这也是 c-09 里 strscpy 容量语义的源头。',
+          },
+        },
+        {
+          id: 'cc-c0-6',
+          number: '0.7.0.6',
+          title: '堆内存与所有权',
+          titleEn: 'Heap Memory & Ownership',
+          duration: 16,
+          tags: ['C', 'malloc', 'ownership'],
+          concept: {
+            summary: '局部变量在函数结束时消失；要让数据活得比函数久、或大小在运行时才知道，就向堆"租"内存：malloc 租、free 还。谁负责还，就是"所有权"。',
+            explanation: [
+              '到目前为止你的变量都住在"栈"上：函数返回，它们就消失。堆是另一块内存：用 malloc(字节数) 手动租用，用 free(指针) 手动归还，生命周期完全由你掌控。租 10 个 int 的标准写法：int *p = malloc(10 * sizeof(int));——sizeof 让字节数跟着类型走。',
+              'malloc 可能失败：内存不足时返回 NULL。所以每次租用后的第一件事是检查：if (!p) return NULL;（或其他失败处理）。用完必须 free(p) 归还——忘了还叫"泄漏"；还了两次叫"double free"（严重错误）；还了之后再用叫"使用已释放内存"（UAF，同样严重）。一个便宜的疫苗：free 之后立刻 p = NULL;，因为 free(NULL) 是合法的空操作。',
+              '三个亲戚：calloc(n, size) 租 n 个元素并全部清零（malloc 租来的内容是垃圾值）；realloc(p, 新字节数) 把已租的块改大小——成功返回新地址（内容自动搬家），失败返回 NULL 而旧块原封不动。realloc 的铁律：结果必须先接在临时指针里，if (!tmp) 时旧指针还活着；直接写 p = realloc(p, n) 会在失败时把唯一的地址弄丢——既泄漏又再也拿不回数据。',
+              '"所有权"是读写 C 代码的核心问句：这块内存现在归谁管、谁负责 free？两个常见契约：函数返回 malloc 出来的指针 = 所有权移交给调用方（调用方负责 free，就像 w-20 的 make_range）；函数只是读写你传入的指针 = 借用，不许 free。函数命名常暗示契约：create/make/dup 移交，而 print/sum/find 只是借用。',
+              '判断内存 bug 的工具以后会学（ASan、valgrind）；现阶段 Code Lab 的判题器扮演这个角色：它统计每一次 malloc/free 是否配平、注入 realloc 失败检查你的失败路径。',
+            ],
+            keyPoints: [
+              'malloc 租 / free 还；租后判 NULL，还后置 NULL',
+              'calloc = 租 + 清零；realloc 改大小，失败时旧块仍有效',
+              'realloc 结果先进临时指针——p = realloc(p, n) 是经典事故',
+              '所有权问句：这块内存谁负责 free？返回指针=移交，传入指针=借用',
+            ],
+          },
+          diagram: {
+            title: '栈与堆：两种生命周期',
+            content: `  函数调用中                     函数返回后
+  ┌─栈──────────────┐            ┌─栈──────────────┐
+  │ int n = 4;      │  ->        │ (自动消失)       │
+  │ int *p = ●──┐   │            │                  │
+  └─────────────│───┘            └──────────────────┘
+  ┌─堆──────────▼───┐            ┌─堆──────────────┐
+  │ [0][1][2][3]    │  ->        │ [0][1][2][3]     │ <- 还活着!
+  │ malloc(4*sizeof(int))│        │ 直到有人 free    │
+  └─────────────────┘            └──────────────────┘
+  栈: 自动管理, 函数结束即回收    堆: 手动管理, free 才回收`,
+            caption: '指针 p 本身住在栈上，它指向的内存在堆上。函数返回后 p 消失，但堆块仍在——所以"谁拿着地址、谁负责 free"必须在契约里说清。',
+          },
+          codeWalk: {
+            title: '一次完整的租-用-还，含失败路径',
+            file: 'own.c',
+            language: 'c',
+            code: `#include <stdlib.h>
+
+int *make_squares(int n)            /* 契约: 所有权移交调用方 */
+{
+    int *p = malloc((size_t)n * sizeof(int));  /* 1 租 */
+    if (!p)                          /* 2 可能失败: 先检查 */
+        return NULL;
+    for (int i = 0; i < n; i++)
+        p[i] = i * i;                /* 3 用 */
+    return p;                        /* 4 移交: 调用方负责 free */
+}
+
+int use_it(void)
+{
+    int *sq = make_squares(8);
+    if (!sq)
+        return -1;                   /* 5 失败向上传递 */
+    int last = sq[7];
+    free(sq);                        /* 6 还 */
+    sq = NULL;                       /* 7 疫苗: 防误用 */
+    return last;
+}`,
+            annotations: [
+              'sizeof(int) 让字节数计算不依赖平台记忆。',
+              '每个 malloc 都可能返回 NULL——失败路径是契约的一部分。',
+              '租来的内容是垃圾值，必须自己填。',
+              '返回堆指针 = 明确告诉调用方"你来 free"。',
+              '调用方检查 NULL 后再用。',
+              'free 只能对 malloc 家族租来的地址调用一次。',
+              'free 后置 NULL：free(NULL) 合法，误 free 第二次也无害。',
+            ],
+            explanation: '这套"租-查-用-还-置空"的节奏就是 C 内存管理的全部骨架。realloc 只是在"用"的中途改大小——它的临时指针纪律在 w-23 单独隔离训练，然后 c-15/c-16 把同样的纪律放进真实数据结构。',
+          },
+          miniLab: {
+            title: '在 Code Lab 完成堆内存四连',
+            objective: '按顺序完成 w-20（malloc 造数组）、w-21（calloc 清零）、w-22（复制数组）、w-23（安全 realloc）——判题器会统计配平并注入失败。',
+            steps: [
+              '打开 /code-lab 热身轨道阶段 5。',
+              'w-20/w-21：注意 n==0 的约定返回 NULL；malloc 失败时透传 NULL。',
+              'w-22：复制后改副本，原件必须不动——这就是"深拷贝"的最小版。',
+              'w-23：先写"临时指针三行诀"，再故意改成 *arr = realloc(*arr, ...) 跑一次，看判题的注入失败怎么抓你。',
+            ],
+            expectedOutput: '四题全绿；w-23 的 "pointer untouched on failure" 与 "allocator fully balanced" 通过。',
+            hint: '所有大小计算写成 n * sizeof(类型)；释放后的指针不要再读。',
+          },
+          debugExercise: {
+            title: '找出四处内存问题',
+            language: 'c',
+            question: '这段代码有两条不同的泄漏路径、一次 UAF 读取和一次 double free。把四处都指出来。',
+            buggyCode: `int demo(int n)
+{
+    int *a = malloc(n * sizeof(int));
+    int *b = malloc(n * sizeof(int));
+    if (!a || !b)
+        return -1;
+    a[0] = 1;
+    free(a);
+    int x = a[0];
+    free(a);
+    return x;
+}`,
+            hint: '失败路径漏了什么？free 之后发生了什么？b 去哪了？',
+            answer: '四处：(1) if (!a || !b) return -1 时，可能其中一个已经分配成功——直接返回会在失败路径泄漏（free(a); free(b); 对 NULL 调用是安全的）；(2) 即使两个分配都成功，b 在正常路径也从未 free，是另一条泄漏；(3) int x = a[0] 在 free(a) 后读取，是使用已释放内存（UAF）；(4) 第二次 free(a) 是 double free。修正思路：检查分配后走统一清理出口，每个成功分配恰好释放一次，释放后不再读取。',
+          },
+          interviewQ: {
+            question: '为什么 p = realloc(p, n) 是危险写法？失败时到底丢了什么？',
+            difficulty: 'easy',
+            hint: 'realloc 失败返回什么？旧块此时什么状态？',
+            answer: 'realloc 失败返回 NULL，但旧块仍然有效。p = realloc(p, n) 在失败时把 NULL 覆盖进 p——旧块的地址是你手里唯一的钥匙，覆盖后这块内存既无法访问也无法 free：数据丢失 + 永久泄漏。正确姿势：int *tmp = realloc(p, n); if (!tmp) return 错误; p = tmp;。这条纪律从 w-23 到 c-15 再到内核 krealloc 评审一路通用。',
+          },
+        },
+        {
+          id: 'cc-c0-7',
+          number: '0.7.0.7',
+          title: 'POSIX Bridge：页、mmap 与 munmap',
+          titleEn: 'POSIX Bridge: Pages, mmap & munmap',
+          duration: 14,
+          tags: ['POSIX', 'mmap', 'pages'],
+          concept: {
+            summary: 'malloc/free 是 C 标准库的语言层接口；mmap/munmap 是 POSIX/Linux 的系统层接口，按"页"为单位直接向内核要内存。分清这两层，是从 C 语言迈向系统编程的第一步。',
+            explanation: [
+              '层次先分清：malloc 属于 ISO C 标准库，任何平台的 C 都有；mmap 属于 POSIX（Unix 系家族的系统接口标准），Linux/macOS 有、裸机和 Windows 原生没有。两者不是竞争关系而是上下游——许多 libc 的 malloc 实现会在底层按策略使用 mmap 向内核批发内存，但这是实现细节，不是 ISO C 的保证。',
+              '页（page）是内核管理内存的最小单位，常见 4096 字节但**不可硬编码**——运行时用 sysconf(_SC_PAGESIZE) 查询（返回 long，需检查 > 0）。GPU 显存、DMA 缓冲、内核映射全都以页为粒度思考，这个词从此会一直伴随你。',
+              '匿名映射的调用形态：mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0)——向内核直接要 len 字节可读写内存（不背靠任何文件，故曰"匿名"）。两个与 malloc 判若两人的细节：失败返回 **MAP_FAILED（(void *)-1）而不是 NULL**，判错必须比对 MAP_FAILED；归还用 munmap(p, len)——要把长度带回去，且 munmap 自己也可能失败（返回 -1）。',
+              '何时用哪个：日常分配一律 malloc/free（快、带缓存、任意大小）；mmap 的舞台是页对齐的大块内存、进程间共享、把文件映射进地址空间——以及本课程真正的目的地：GPU 驱动把显存/BO 映射给用户态（模块 4 的 GEM/TTM）正是 mmap 语义的延伸。注意匿名映射**不是** PCI BAR/MMIO——寄存器映射另有一套机制，到模块 2/4 再见分晓。',
+              '实操说明：判题沙箱已用仓库 scripts/probe-mmap-backends.mjs 预检，Godbolt 与 Wandbox 双后端都通过最终 harness；热身题 w-32 已上线，可在浏览器里完成同一套完整往返。本地 Linux/macOS 仍可用本课 MiniLab 观察自己机器的真实页大小。',
+            ],
+            keyPoints: [
+              'malloc = ISO C 库函数；mmap = POSIX 系统接口——分层，不是替代',
+              '页大小用 sysconf(_SC_PAGESIZE) 查询，不硬编码 4096',
+              'mmap 失败返回 MAP_FAILED（不是 NULL）；munmap 需要长度且可能失败',
+              '匿名映射 ≠ MMIO/PCI BAR；GPU 的 BO 映射是 mmap 语义的延伸（模块 4）',
+            ],
+          },
+          diagram: {
+            title: '两层内存接口',
+            content: `  你的代码
+     │ malloc(37)          任意字节数, 快, 带缓存
+     ▼
+  ┌─────────────────┐
+  │ libc 分配器      │  ← ISO C 标准库层
+  │ (堆管理/缓存)    │
+  └───────┬─────────┘
+          │ 大块/批发时按策略使用
+          ▼
+  ┌─────────────────┐
+  │ mmap / munmap   │  ← POSIX 系统层 (页粒度)
+  └───────┬─────────┘
+          ▼
+  ┌─────────────────┐
+  │ Linux 内核       │  页表 / 物理内存
+  └─────────────────┘`,
+            caption: '许多 Linux libc 分配器会按策略把大块请求交给 mmap（这是实现细节，不是 ISO C 保证）；直接调用 mmap 绕过的是 libc 分配器策略，而不是绕过 libc 本身。',
+          },
+          codeWalk: {
+            title: '一页匿名内存的完整往返',
+            file: 'page.c',
+            language: 'c',
+            code: `#define _DEFAULT_SOURCE          /* 1 必须在任何 #include 之前 */
+#include <sys/mman.h>
+#include <unistd.h>
+
+int page_roundtrip(void)
+{
+    long raw = sysconf(_SC_PAGESIZE);   /* 2 询问页大小 */
+    if (raw <= 0)
+        return -1;
+    size_t page = (size_t)raw;
+
+    unsigned char *p = mmap(NULL, page,
+                            PROT_READ | PROT_WRITE,
+                            MAP_PRIVATE | MAP_ANONYMOUS,
+                            -1, 0);
+    if (p == MAP_FAILED)                /* 3 不是 NULL! */
+        return -1;
+
+    for (size_t i = 0; i < page; i++)   /* 4 整页可读写 */
+        p[i] = 0xAB;
+
+    if (munmap(p, page) != 0)           /* 5 归还也要判错 */
+        return -1;
+    return 0;
+}`,
+            annotations: [
+              '_DEFAULT_SOURCE 是 glibc 的 feature-test macro：在严格标准模式下恢复默认/BSD 派生定义（包括 MAP_ANONYMOUS）；它不是 POSIX 标准宏，必须放在任何系统头之前。',
+              'sysconf 返回 long；-1 表示查询失败。',
+              'MAP_FAILED 是 (void *)-1——用 NULL 判错会漏掉真正的失败。',
+              'PROT_* 声明访问权限，MAP_PRIVATE|MAP_ANONYMOUS 表示私有匿名页。',
+              'munmap 的长度以页为粒度；本例归还与映射一致的整页长度（按页对齐的部分解除映射也是合法的，见 MiniLab）。',
+            ],
+            explanation: '这套"查页长 → 映射 → 判 MAP_FAILED → 使用 → munmap"的往返，是所有 mmap 使用场景的公共骨架。到模块 4 你会看到同一骨架的 GPU 版：用户态 mmap 一个 BO，读写的却是显存。',
+          },
+          miniLab: {
+            title: '本地验证一页内存',
+            objective: '在任意 Linux 环境（或 macOS 终端）编译运行上面的往返代码，并观察页大小。',
+            steps: [
+              '把 codeWalk 的代码存为 page.c，加一个 main 打印 page_roundtrip() 的返回值与 sysconf(_SC_PAGESIZE)。',
+              '编译运行：gcc -std=c11 -Wall -Wextra page.c -o page && ./page。',
+              '把 mmap 的长度改成 2*page（映射两页），先用 munmap(p, page) 归还第一页，再用 munmap(p + page, page) 归还第二页——体会部分解除映射时起始地址必须落在页边界。普通页的 munmap 长度本身不要求是整页倍数；系统会解除覆盖该范围的整页，因此工程上仍应传回清晰、匹配的映射区间。',
+              '进入 Code Lab 的 w-32，在浏览器里完成带双后端判题、失败注入与资源配平检查的在线版。',
+            ],
+            expectedOutput: '返回 0；页大小通常打印 4096（Apple Silicon 上是 16384——这就是不硬编码的理由）。',
+            hint: 'macOS 上 MAP_ANONYMOUS 拼作 MAP_ANON 也通；Linux 两者皆可。',
+          },
+          debugExercise: {
+            title: '三处系统层误用',
+            language: 'c',
+            question: '这段代码能编译，但有三处对 mmap 语义的误用。找出来。',
+            buggyCode: `#include <sys/mman.h>
+
+void *get_page(void)
+{
+    void *p = mmap(NULL, 4096, PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (p == NULL)
+        return NULL;
+    return p;   /* 调用方用完后 free(p) */
+}`,
+            hint: '判错判的是什么值？4096 从哪来？归还用什么函数？',
+            answer: '(1) mmap 失败返回 MAP_FAILED（(void*)-1），p == NULL 无法识别这个失败哨兵——失败的映射会被当成功传出去；(2) 4096 是硬编码的页大小假设，应 sysconf(_SC_PAGESIZE)；(3) 注释让调用方 free()——mmap 的内存必须 munmap(p, len) 归还，free 一个非 malloc 的指针是未定义行为。另外在 glibc 的 -std=c11 严格模式下，缺 _DEFAULT_SOURCE 可能看不到 MAP_ANONYMOUS。',
+          },
+          interviewQ: {
+            question: '入门自查：为什么说"malloc 底层就是 mmap"是不准确的？两者各自的失败返回值是什么？',
+            difficulty: 'easy',
+            hint: '标准与实现的边界；NULL vs MAP_FAILED。',
+            answer: 'ISO C 只规定 malloc 的行为（返回可用内存或 NULL），不规定实现手段；glibc 等实现确实会对大块分配使用 mmap、小块用 brk/堆缓存，但那是实现策略，换个 libc 或阈值就变——教学与代码都不应依赖它。失败返回值：malloc → NULL；mmap → MAP_FAILED（(void*)-1）。把 mmap 的错误当 NULL 判，是跨这两层时最典型的移植性 bug。',
+          },
+        },
+        // [c0-lessons-end]
+      ],
+    },
+    {
       id: 'cc-c',
       number: '0.7.1',
       title: 'C 语言核心复习',
       titleEn: 'C Core Review',
       icon: 'Terminal',
-      description: '从底层原理把驱动开发需要的 C 知识点系统过一遍：编译链接、类型与整数、指针、字符串、结构体、内存生命周期、函数指针。每个概念先讲清原理，再关联到真实 amdgpu 代码。',
+      description: '系统性复习：从底层原理把驱动开发需要的 C 知识点过一遍——编译链接、类型与整数、指针、字符串、结构体、内存生命周期、函数指针。如果这些词里有第一次见的，先回 0.7.0「C 从零起步」和 Code Lab 的 C 基础热身轨道打底。',
       lessons: [
         {
           id: 'cc-c-1',
@@ -325,7 +1037,7 @@ void dump_regs(uint32_t *regs, size_t count) {
             summary: '指针就是“存着某个内存地址的变量”。掌握取地址、解引用、指针类型、数组退化与输出参数，是读写一切内核代码的地基。（更进阶的 container_of 等技巧见模块 1。）',
             explanation: [
               '取地址 & 和解引用 *：&x 得到变量 x 的地址，*p 访问 p 所指地址处的值。指针有类型，int* 和 char* 都存地址，但解引用时按各自类型解释那块内存（读几个字节、如何理解这些字节）。',
-              'NULL 与未初始化：NULL（值为 0 的地址）表示“不指向任何对象”，解引用它会崩溃。未初始化的指针（野指针）指向随机地址，解引用是 UB——比 NULL 更危险，因为它可能“碰巧不崩”。',
+              'NULL 与未初始化指针：空指针表示“不指向任何对象”，解引用是 UB，常见表现是崩溃但并非语言保证。未初始化的指针（野指针）含不确定值，解引用同样是 UB——往往更隐蔽，因为它可能“碰巧不崩”。',
               '数组与指针：数组名在大多数表达式里会“退化”成指向首元素的指针，所以 arr[i] 等价于 *(arr + i)，&arr[i] 等价于 arr + i。但数组不是指针——sizeof(arr) 是整个数组大小，sizeof(p) 永远是一个指针的大小（8 字节）。',
               '输出参数（out-param）：C 函数只能返回一个值，于是“通过指针参数把结果写回调用者”成为标准模式。内核函数普遍返回 int 错误码（0 成功、负的 -Exxx 失败），把真正的结果通过指针参数传出。',
               '指针算术的单位是"元素"而不是字节：p+1 前进 sizeof(*p) 个字节，两个同型指针相减得到元素个数（类型 ptrdiff_t）。这也解释了为什么 void* 不能做算术——它不知道元素多大；需要字节视角时先转 unsigned char*，这是 C 标准唯一保证可以别名访问任何对象的类型。顺带认识严格别名规则：通过不兼容类型的指针访问对象是 UB（*(u32*)&float_var 这类写法）。内核编译时用 -fno-strict-aliasing 关闭了该优化假设，但用户态代码要老实用 memcpy。',
@@ -333,7 +1045,7 @@ void dump_regs(uint32_t *regs, size_t count) {
             ],
             keyPoints: [
               '指针是存地址的变量；*p 读/写所指对象，&x 取地址',
-              '解引用 NULL 必崩；解引用野指针是 UB（可能更隐蔽）',
+              '解引用 NULL 或野指针都是 UB；常见表现包括崩溃，也可能更隐蔽',
               'arr[i] ≡ *(arr+i)；但 sizeof(数组) ≠ sizeof(指针)',
               '内核惯例：返回 int 错误码，结果用指针参数传出',
               '指针算术按元素步长；unsigned char* 是唯一合法的"万能字节视角"；跨类型重解释用 memcpy 而非指针强转',

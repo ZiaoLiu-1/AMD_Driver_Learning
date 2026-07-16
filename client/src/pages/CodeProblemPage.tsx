@@ -9,10 +9,10 @@ import { useTranslation } from "react-i18next";
 import { useLocale } from "@/contexts/LocaleContext";
 import { PageShell } from "@/components/layout/PageShell";
 import { Button } from "@/components/ui/button";
-import { DifficultyBadge, interviewDifficultyTones } from "@/components/ui/difficulty-badge";
+import { DifficultyBadge, codeLabDifficultyTones } from "@/components/ui/difficulty-badge";
 import { CodeEditor } from "@/components/codelab/CodeEditor";
 import { useCodeLabProgress } from "@/hooks/useCodeLabProgress";
-import { loadAllProblems } from "@/data/code_problems_index";
+import { loadAllProblems, cSystemsRecommendedOrder } from "@/data/code_problems_index";
 import {
   runCode, assembleSource, parseTestOutput, isAccepted,
   type JudgeResult, type ParsedTests,
@@ -56,18 +56,37 @@ export default function CodeProblemPage() {
   const { getStatus, getSavedCode, saveCode, setStatus } = useCodeLabProgress();
 
   const problem = problems.find((p) => p.id === params.problemId);
-  const idx = problem ? problems.indexOf(problem) : -1;
-  const next = idx >= 0 && idx + 1 < problems.length ? problems[idx + 1] : undefined;
+  // Primary CTA: the next problem in the current track's teaching
+  // sequence (C Systems follows its recommended order; others by number).
+  const next = useMemo(() => {
+    if (!problem) return undefined;
+    const sameTrack = problems.filter((p) => p.track === problem.track);
+    if (problem.track === "c") {
+      const rank = new Map(cSystemsRecommendedOrder.map((id, i) => [id, i]));
+      sameTrack.sort((a, b) => (rank.get(a.id) ?? 99) - (rank.get(b.id) ?? 99));
+    } else {
+      sameTrack.sort((a, b) => a.number - b.number);
+    }
+    const i = sameTrack.findIndex((p) => p.id === problem.id);
+    return i >= 0 && i + 1 < sameTrack.length ? sameTrack[i + 1] : undefined;
+  }, [problems, problem]);
 
   // Starter code follows the UI language (identical code, translated comments).
   const isEn = locale === "en";
   const starterOf = (p: NonNullable<typeof problem>) =>
     isEn && p.starterCodeEn ? p.starterCodeEn : p.starterCode;
+  // "Pristine" = still one of the two locale starters, i.e. the learner has
+  // not actually edited. Pristine code follows the UI language on locale
+  // switches; genuine edits are always preserved verbatim.
+  const isPristine = (p: NonNullable<typeof problem>, c: string) =>
+    c === p.starterCode || c === p.starterCodeEn;
 
   const [code, setCode] = useState<string>(() => {
     if (!problem) return "";
     const saved = getSavedCode(problem.id);
-    return saved !== undefined ? saved : starterOf(problem); // "" must restore too
+    // A saved pristine starter must not pin the wrong language.
+    if (saved !== undefined && !isPristine(problem, saved)) return saved;
+    return starterOf(problem);
   });
   const [running, setRunning] = useState(false);
   const [outcome, setOutcome] = useState<RunOutcome | null>(null);
@@ -94,7 +113,7 @@ export default function CodeProblemPage() {
       saveCode(activeIdRef.current, codeRef.current);
     activeIdRef.current = problem.id;
     const saved = getSavedCode(problem.id);
-    setCode(saved !== undefined ? saved : starterOf(problem));
+    setCode(saved !== undefined && !isPristine(problem, saved) ? saved : starterOf(problem));
     setOutcome(null);
     setNetError(null);
     setHintsShown(0);
@@ -102,6 +121,14 @@ export default function CodeProblemPage() {
     setShowHarness(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [problem?.id]);
+
+  // Locale switch: if the editor still holds a pristine starter, swap it to
+  // the new language's starter so English users never see Chinese comments.
+  useEffect(() => {
+    if (!problem) return;
+    setCode((cur) => (isPristine(problem, cur) ? starterOf(problem) : cur));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEn, problem?.id]);
 
   // Debounced persistence while typing. The activeIdRef guard means a
   // timer scheduled just before a route change can never write the old
@@ -141,7 +168,10 @@ export default function CodeProblemPage() {
         <div className="mx-auto max-w-2xl px-4 py-20 text-center text-sm text-foreground/75">
           {t("codelab.notFound")}
           <div className="mt-4">
-            <Link href="/code-lab" className="cl-link hover:underline">
+            <Link
+              href="/code-lab"
+              className="cl-link inline-flex min-h-[44px] items-center px-2 hover:underline"
+            >
               {t("codelab.backToList")}
             </Link>
           </div>
@@ -160,9 +190,9 @@ export default function CodeProblemPage() {
     setOutcome(null);
     saveCode(problem.id, code);
     try {
-      const source = assembleSource(problem.harness, code);
+      const { source, runToken } = assembleSource(problem.harness, code);
       const judge = await runCode(problem.language, source);
-      const tests = parseTestOutput(judge.stdout);
+      const tests = parseTestOutput(judge.stdout, runToken);
       setOutcome({ judge, tests });
       setStatus(problem.id, isAccepted(judge, tests) ? "solved" : "attempted");
     } catch (err) {
@@ -206,8 +236,8 @@ export default function CodeProblemPage() {
 
             <div className="mb-6 flex flex-wrap items-center gap-2.5 text-xs">
               <DifficultyBadge
-                className={`cl-diff-${problem.difficulty}`}
-                tone={interviewDifficultyTones[problem.difficulty]}
+                className={problem.difficulty !== "warmup" ? `cl-diff-${problem.difficulty}` : undefined}
+                tone={codeLabDifficultyTones[problem.difficulty]}
               >
                 {t(`codelab.difficulty.${problem.difficulty}`)}
               </DifficultyBadge>
@@ -237,12 +267,13 @@ export default function CodeProblemPage() {
             </div>
 
             {problem.lessonId && (
-              <Link href={`/module/c-cpp/lesson/${problem.lessonId}`}>
-                <span className="cl-link mt-5 inline-flex cursor-pointer items-center gap-1.5 text-xs hover:underline">
-                  <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
-                  {t("codelab.relatedLesson")}
-                  <ChevronRight className="h-3 w-3" aria-hidden="true" />
-                </span>
+              <Link
+                href={`/module/c-cpp/lesson/${problem.lessonId}`}
+                className="cl-link mt-3 inline-flex min-h-[44px] items-center gap-1.5 px-1 text-xs hover:underline"
+              >
+                <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
+                {t("codelab.relatedLesson")}
+                <ChevronRight className="h-3 w-3" aria-hidden="true" />
               </Link>
             )}
 
@@ -262,7 +293,7 @@ export default function CodeProblemPage() {
               {hintsShown < hints.length && (
                 <button
                   onClick={() => setHintsShown((n) => n + 1)}
-                  className="flex min-h-[36px] items-center gap-1.5 text-xs text-foreground/75 transition-colors hover:text-foreground"
+                  className="flex min-h-[44px] items-center gap-1.5 text-xs text-foreground/75 transition-colors hover:text-foreground"
                 >
                   <Lightbulb className="h-3.5 w-3.5" aria-hidden="true" />
                   {t("codelab.showHint", { current: hintsShown + 1, total: hints.length })}
@@ -275,7 +306,7 @@ export default function CodeProblemPage() {
               <button
                 onClick={() => setShowHarness((v) => !v)}
                 aria-expanded={showHarness}
-                className="flex min-h-[36px] items-center gap-1.5 text-xs text-foreground/75 transition-colors hover:text-foreground"
+                className="flex min-h-[44px] items-center gap-1.5 text-xs text-foreground/75 transition-colors hover:text-foreground"
               >
                 <TerminalSquare className="h-3.5 w-3.5" aria-hidden="true" />
                 {showHarness ? t("codelab.hideHarness") : t("codelab.showHarness")}
@@ -290,7 +321,7 @@ export default function CodeProblemPage() {
             {/* solution */}
             <div className="mt-6 border-t border-border/40 pt-6">
               {!showSolution ? (
-                <Button variant="outline" size="sm" onClick={() => setShowSolution(true)}>
+                <Button variant="outline" size="sm" className="min-h-[44px]" onClick={() => setShowSolution(true)}>
                   <Eye className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
                   {t("codelab.showSolution")}
                 </Button>
@@ -317,7 +348,7 @@ export default function CodeProblemPage() {
                 {t("codelab.yourCode")}
               </div>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={handleReset} disabled={running}>
+                <Button variant="ghost" size="sm" className="min-h-[44px]" onClick={handleReset} disabled={running}>
                   <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden="true" />
                   {t("codelab.reset")}
                 </Button>
@@ -325,7 +356,7 @@ export default function CodeProblemPage() {
                   size="sm"
                   onClick={handleRun}
                   disabled={running}
-                  className="bg-[oklch(0.50_0.20_35)] text-white hover:bg-[oklch(0.44_0.20_35)]"
+                  className="min-h-[44px] bg-[oklch(0.50_0.20_35)] text-white hover:bg-[oklch(0.44_0.20_35)]"
                 >
                   {running ? (
                     <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -337,17 +368,17 @@ export default function CodeProblemPage() {
               </div>
             </div>
 
-            <p className="mb-2 text-[11px] leading-relaxed text-foreground/70">
-              {t("codelab.privacyNote")}{" "}
+            <div className="mb-2 flex min-h-[44px] flex-wrap items-center gap-x-1 text-[11px] leading-relaxed text-foreground/70">
+              <span>{t("codelab.privacyNote")}</span>
               <a
                 href="https://shop.compiler-explorer.com/privacy-policy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline decoration-foreground/40 underline-offset-2 hover:text-foreground"
+                className="inline-flex min-h-[44px] items-center px-1 underline decoration-foreground/40 underline-offset-2 hover:text-foreground"
               >
                 {t("codelab.privacyPolicy")}
               </a>
-            </p>
+            </div>
             <CodeEditor
               value={code}
               onChange={setCode}
@@ -465,15 +496,44 @@ export default function CodeProblemPage() {
                 </div>
               )}
 
-              {passedAll && next && (
-                <div className="mt-4 flex items-center justify-between rounded-xl border border-success/25 bg-success/5 px-4 py-3">
-                  <span className="text-sm text-foreground/80">{t("codelab.nicework")}</span>
-                  <Link href={`/code-lab/${next.id}`}>
-                    <span className="cl-link flex cursor-pointer items-center gap-1 text-sm font-medium hover:underline">
-                      {t("codelab.nextProblem")}
-                      <ChevronRight className="h-4 w-4" aria-hidden="true" />
-                    </span>
-                  </Link>
+              {passedAll && (
+                <div className="mt-4 rounded-xl border border-success/25 bg-success/5 px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm text-foreground/80">{t("codelab.nicework")}</span>
+                    {next && (
+                      <Link
+                        href={`/code-lab/${next.id}`}
+                        className="cl-link -mr-2 inline-flex min-h-[44px] items-center gap-1 px-2 text-sm font-medium hover:underline"
+                      >
+                        {t("codelab.nextProblem")}
+                        <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                      </Link>
+                    )}
+                  </div>
+                  {problem.nextSteps && problem.nextSteps.length > 0 && (
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-success/15 pt-2 text-xs">
+                      <span className="text-foreground/70">{t("codelab.nextUp")}</span>
+                      {problem.nextSteps.map((step, i) =>
+                        step.kind === "problem" ? (
+                          <Link
+                            key={i}
+                            href={`/code-lab/${step.id}`}
+                            className="cl-link inline-flex min-h-[44px] items-center px-2 font-mono hover:underline"
+                          >
+                            {step.id.toUpperCase()}
+                          </Link>
+                        ) : (
+                          <Link
+                            key={i}
+                            href={`/module/${step.moduleId}/lesson/${step.lessonId}`}
+                            className="cl-link inline-flex min-h-[44px] items-center px-2 hover:underline"
+                          >
+                            {t("codelab.relatedLesson")}
+                          </Link>
+                        ),
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

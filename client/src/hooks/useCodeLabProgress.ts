@@ -18,12 +18,14 @@ const STORAGE_KEY = "amd-driver-learning-codelab-v1";
 
 const VALID_STATUS = new Set<ProblemStatus>(["unsolved", "attempted", "solved"]);
 
-/* Known problem-id space (c-01..c-16, cpp-01..cpp-12, k-01..k-12).
+/* Known problem-id space (w-01..w-32, c-01..c-16, cpp-01..cpp-12,
+   k-01..k-12). The POSIX mmap probe passed on both judge backends, so
+   w-32 is part of the shipped bank.
    Kept as a cheap static rule so this hook never has to import the
    (lazily chunked) problem bank; the data test asserts the ranges
    stay in sync with the actual bank. */
-const ID_RE = /^(c|cpp|k)-(\d{2})$/;
-const TRACK_MAX: Record<string, number> = { c: 16, cpp: 12, k: 12 };
+const ID_RE = /^(w|c|cpp|k)-(\d{2})$/;
+const TRACK_MAX: Record<string, number> = { w: 32, c: 16, cpp: 12, k: 12 };
 
 export function isKnownProblemId(id: string): boolean {
   const m = ID_RE.exec(id);

@@ -6,7 +6,8 @@ export type DifficultyTone =
   | "info"
   | "warning"
   | "destructive"
-  | "accent";
+  | "accent"
+  | "neutral";
 
 const difficultyToneClasses: Record<DifficultyTone, string> = {
   success: "border-success/20 bg-success/10 text-success",
@@ -14,6 +15,7 @@ const difficultyToneClasses: Record<DifficultyTone, string> = {
   warning: "border-warning/20 bg-warning/10 text-warning",
   destructive: "border-destructive/20 bg-destructive/10 text-destructive",
   accent: "border-chart-4/20 bg-chart-4/10 text-chart-4",
+  neutral: "border-border bg-muted text-foreground/80",
 };
 
 export const moduleDifficultyTones = {
@@ -31,6 +33,17 @@ export const lessonDifficultyTones = {
 } as const satisfies Record<string, DifficultyTone>;
 
 export const interviewDifficultyTones = {
+  easy: "success",
+  medium: "warning",
+  hard: "destructive",
+} as const satisfies Record<string, DifficultyTone>;
+
+/** Code Lab difficulty map — includes the c0 track's "warmup" level.
+    Centralized here so pages never hand-roll warmup styling. Text colors
+    for easy/medium/hard get their AA-safe overrides from the paired
+    `.cl-diff-*` utility classes; neutral/warmup is AA-safe as-is. */
+export const codeLabDifficultyTones = {
+  warmup: "neutral",
   easy: "success",
   medium: "warning",
   hard: "destructive",
@@ -64,7 +77,7 @@ export function DifficultyBadge({
         difficultyToneClasses[tone],
         mono && "font-mono",
         uppercase && "uppercase",
-        className
+        className,
       )}
       {...props}
     >

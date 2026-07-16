@@ -14,14 +14,15 @@
        pnpm verify:problems
 
    Two phases:
-   1. Reference solutions: all 40 must compile, run to completion,
-      print a full `RESULT n/n`, and exit 0 — both plain and under
-      AddressSanitizer (catches UAF, and leaks where the platform
-      supports LeakSanitizer).
+   1. Reference solutions: every problem in the bank must compile, run,
+      print a full `RESULT n/n`, and exit 0 — once plain and once under
+      combined AddressSanitizer + UndefinedBehaviorSanitizer (catches
+      memory errors, bad shifts and signed overflow; leaks where the
+      platform supports LeakSanitizer).
    2. Mutation regression: known-bad implementations (the exact
       failure modes found in the 2026-07-16 review) must be KILLED
       by the harnesses — either failing to compile or failing at
-      runtime (mutants run under ASan so memory bugs die loudly).
+      runtime (mutants run under ASan+UBSan so memory/UB bugs die loudly).
    ============================================================ */
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, writeFileSync, rmSync } from "node:fs";
@@ -50,7 +51,7 @@ async function loadProblems() {
 }
 
 /* ---------- compile & run helpers ---------- */
-function compileAndRun(problem, userCode, { asan = false } = {}) {
+function compileAndRun(problem, userCode, { asan = false, ubsan = false } = {}) {
   const ext = problem.language === "c" ? "c" : "cpp";
   const cc = problem.language === "c" ? "gcc" : "g++";
   const std = problem.language === "c" ? "-std=c11" : "-std=c++17";
@@ -58,14 +59,21 @@ function compileAndRun(problem, userCode, { asan = false } = {}) {
   const binPath = join(work, "case.bin");
   writeFileSync(srcPath, problem.harness.replace("{{USER_CODE}}", userCode));
   const flags = [std, "-O1", "-Wall", "-Wextra", "-o", binPath, srcPath];
-  if (asan) flags.unshift("-fsanitize=address", "-g");
+  const san = [];
+  if (asan) san.push("address");
+  if (ubsan) san.push("undefined");
+  // UBSan must abort (not just warn) so a signed-overflow etc. fails the run.
+  const env = ubsan
+    ? { ...process.env, UBSAN_OPTIONS: "halt_on_error=1:abort_on_error=1" }
+    : process.env;
+  if (san.length) flags.unshift(`-fsanitize=${san.join(",")}`, "-g");
   try {
     execFileSync(cc, flags, { stdio: ["ignore", "pipe", "pipe"] });
   } catch (e) {
     return { stage: "compile", ok: false, detail: String(e.stderr).slice(0, 800) };
   }
   try {
-    const stdout = execFileSync(binPath, { encoding: "utf8", timeout: 10_000 });
+    const stdout = execFileSync(binPath, { encoding: "utf8", timeout: 10_000, env });
     const m = stdout.match(/RESULT (\d+)\/(\d+)/);
     const accepted = !!m && m[1] === m[2] && Number(m[2]) > 0;
     return { stage: "run", ok: accepted, detail: m ? m[0] : "(no RESULT trailer)", stdout };
@@ -80,6 +88,63 @@ function compileAndRun(problem, userCode, { asan = false } = {}) {
    silently retire a mutant). A mutant is KILLED when it fails to
    compile or fails the harness. */
 const MUTANTS = [
+  {
+    id: "w-21",
+    name: "frees a decoy calloc then returns a manually-zeroed malloc block at a reused address",
+    patch: (s) =>
+      s.replace(
+        "return calloc((size_t)n, sizeof(int));",
+        `int *decoy = calloc((size_t)n, sizeof(int));
+    if (!decoy)
+        return NULL;
+    free(decoy);
+    int *p = malloc((size_t)n * sizeof(int));
+    if (!p)
+        return NULL;
+    for (int i = 0; i < n; i++)
+        p[i] = 0;
+    return p;`,
+      ),
+  },
+  {
+    id: "w-14",
+    name: "reverse walks only half-heartedly (i <= j self-swap masks nothing, i < j-1 skips pairs)",
+    patch: (s) => s.replace("while (i < j) {", "while (i < j - 1) {"),
+  },
+  {
+    id: "w-23",
+    name: "realloc overwrites *arr directly (caller pointer corrupted on failure)",
+    patch: (s) =>
+      s.replace(
+        "int *tmp = realloc(*arr, (size_t)new_n * sizeof(int));\n    if (!tmp)\n        return -ENOMEM;",
+        "*arr = realloc(*arr, (size_t)new_n * sizeof(int));\n    if (!*arr)\n        return -ENOMEM;\n    int *tmp = *arr;",
+      ),
+  },
+  {
+    id: "w-27",
+    name: "binary search keeps mid in the interval (no shrink -> hangs; killed by timeout)",
+    patch: (s) => s.replace("lo = mid + 1;", "lo = mid;"),
+  },
+  {
+    id: "w-32",
+    name: "checks mmap against NULL and skips munmap (failure path + resource leak)",
+    patch: (s) =>
+      s
+        .replace("if (p == MAP_FAILED)", "if (p == NULL)")
+        .replace("return munmap(p, page) == 0 ? 0 : -1;", "return 0;"),
+  },
+  {
+    id: "w-32",
+    name: "queries page size but maps, writes, verifies and unmaps only one byte",
+    patch: (s) =>
+      s
+        .replace(
+          "mmap(NULL, page, PROT_READ | PROT_WRITE,",
+          "mmap(NULL, 1, PROT_READ | PROT_WRITE,",
+        )
+        .replaceAll("i < page", "i < 1")
+        .replaceAll("munmap(p, page)", "munmap(p, 1)"),
+  },
   {
     id: "k-12",
     name: "unmasked ring writes + no completeness check (original review finding)",
@@ -161,26 +226,34 @@ const MUTANTS = [
   },
 ];
 
-/* ---------- main ---------- */
+/* ---------- main ----------
+   Env knobs for chunked runs on slow machines/CI:
+     ONLY=<regex>   verify only matching problem ids (phase 1)
+     SKIP_MUTANTS=1 skip phase 2 */
 const problems = await loadProblems();
+const only = process.env.ONLY ? new RegExp(process.env.ONLY) : null;
+const phase1 = only ? problems.filter((p) => only.test(p.id)) : problems;
 let failures = 0;
 
-console.log("== Phase 1: reference solutions (plain + ASan) ==");
-for (const p of problems) {
+console.log("== Phase 1: reference solutions (plain + ASan + UBSan) ==");
+for (const p of phase1) {
   const plain = compileAndRun(p, p.solution);
-  const san = compileAndRun(p, p.solution, { asan: true });
+  // ASan + UBSan together: catches memory errors AND undefined behavior
+  // (signed overflow, bad shifts) that the plain build silently tolerates.
+  const san = compileAndRun(p, p.solution, { asan: true, ubsan: true });
   const ok = plain.ok && san.ok;
   if (!ok) {
     failures++;
-    console.log(`  FAIL ${p.id}: plain=${plain.stage}:${plain.detail} asan=${san.stage}:${san.detail}`);
+    console.log(`  FAIL ${p.id}: plain=${plain.stage}:${plain.detail} san=${san.stage}:${san.detail}`);
     if (plain.stdout) console.log(String(plain.stdout).slice(0, 600));
+    if (san.stdout) console.log(String(san.stdout).slice(0, 600));
   } else {
     console.log(`  ok ${p.id} ${plain.detail}`);
   }
 }
 
 console.log("== Phase 2: mutation regression (every mutant must be killed) ==");
-for (const m of MUTANTS) {
+for (const m of process.env.SKIP_MUTANTS ? [] : MUTANTS) {
   const p = problems.find((x) => x.id === m.id);
   const mutated = m.patch(p.solution);
   if (mutated === p.solution) {
@@ -188,7 +261,7 @@ for (const m of MUTANTS) {
     console.log(`  ERROR ${m.id}: mutant anchor not found — "${m.name}"`);
     continue;
   }
-  const res = compileAndRun(p, mutated, { asan: true });
+  const res = compileAndRun(p, mutated, { asan: true, ubsan: true });
   if (res.ok) {
     failures++;
     console.log(`  SURVIVED ${m.id}: "${m.name}" — harness must be strengthened`);
@@ -202,4 +275,7 @@ if (failures > 0) {
   console.error(`\n${failures} failure(s).`);
   process.exit(1);
 }
-console.log(`\nAll ${problems.length} solutions verified, all ${MUTANTS.length} mutants killed.`);
+console.log(
+  `\nVerified ${phase1.length}/${problems.length} solutions` +
+    (process.env.SKIP_MUTANTS ? " (mutants skipped)." : `; all ${MUTANTS.length} mutants killed.`),
+);

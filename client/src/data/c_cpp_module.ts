@@ -8,10 +8,11 @@ export const cCppModule: Module = {
   title: 'C/C++ 基础速成',
   titleEn: 'C/C++ Foundations',
   icon: 'Braces',
-  description: '在啃内核代码之前，先把驱动开发真正用得上的 C 系统性过一遍，再循序学习与 GPU 软件栈相关的 C++ 核心，最后用一组内核惯用法实战课收尾。以基础为主、深度优先，19 节微课配套 40 道可以在浏览器里直接编译运行的 Code Lab 刷题（零环境搭建），并把每个概念关联到真实的 amdgpu / Mesa / ROCm / LLVM 代码。',
-  estimatedHours: 56,
+  description: '零基础可入：先用「C 从零起步」和 32 道热身题建立手感，再把驱动开发真正用得上的 C 系统性过一遍，循序学习与 GPU 软件栈相关的 C++ 核心，最后用一组内核惯用法实战课收尾。26 节微课配套 72 道可在浏览器里直接编译运行的 Code Lab 刷题（零环境搭建），从普通函数与数组一路桥接到真实的 amdgpu / Mesa / ROCm / LLVM 工程语境。',
+  estimatedHours: 64,
   difficulty: 'beginner',
   subModules: [
+    { id: 'cc-c0', title: 'C 从零起步', titleEn: 'C from Zero' },
     { id: 'cc-compile', title: '编译、链接与翻译单元', titleEn: 'Compilation, Linking & Translation Units' },
     { id: 'cc-types', title: '类型、整数与定宽类型', titleEn: 'Types, Integers & Fixed-Width' },
     { id: 'cc-pointer', title: '指针、字符串与内存模型', titleEn: 'Pointers, Strings & Memory Model' },
@@ -21,7 +22,7 @@ export const cCppModule: Module = {
     { id: 'cc-kernel', title: '内核 C 惯用法实战', titleEn: 'Kernel C Idioms in Practice' },
   ],
   theory: {
-    overview: '这条学习路径后续的模块会大量直接阅读内核源码，而读懂代码的前提是扎实的语言基础。这个模块的定位是“语言地基”：先用 7 节课系统复习驱动开发真正需要的 C（编译链接、类型与整数、指针、字符串、结构体与对齐、内存生命周期、函数指针与 ops 多态），再用 6 节课循序训练与 GPU 软件栈相关的 C++ 核心（引用与重载、类与 RAII、拷贝/移动、继承与虚函数、模板、STL 与智能指针），最后用 6 节内核惯用法实战课（位操作宏、侵入式链表、宏卫生学、错误处理三件套、kref 与 devm、并发上下文）把语言知识落到真实驱动代码的方言上。每节课都有配套的 Code Lab 刷题（/code-lab）：40 道内核风味的 LeetCode 式练习，在浏览器里用真实 gcc/g++ 编译运行，写完即判，无需搭建任何本地环境——强烈建议每学完一节课就把对应题目做掉，用手指记住语法。一条重要的认知主线贯穿全程：内核态的 amdgpu 驱动是纯 C，用手写的 ops 结构体实现多态、用 goto 阶梯做资源清理；而用户态的 Mesa、ROCm/HIP 运行时、LLVM 编译器栈是 C++，把这两件事变成了语言原生的虚函数与 RAII。学完本模块，你既能读懂内核 C 的惯用法，也能读懂用户态 C++ 的资源管理与多态，为后续所有模块打好语言底子。',
+    overview: '这条学习路径后续的模块会大量直接阅读内核源码，而读懂代码的前提是扎实的语言基础。这个模块的定位是“语言地基”：先用 7 节「C 从零起步」从函数、表达式、分支循环、数组、指针字符串走到堆内存与 mmap；再用 7 节课系统复习驱动开发真正需要的 C（编译链接、类型与整数、指针、字符串、结构体与对齐、内存生命周期、函数指针与 ops 多态）；接着用 6 节课循序训练与 GPU 软件栈相关的 C++ 核心（引用与重载、类与 RAII、拷贝/移动、继承与虚函数、模板、STL 与智能指针）；最后用 6 节内核惯用法实战课（位操作宏、侵入式链表、宏卫生学、错误处理三件套、kref 与 devm、并发上下文）把语言知识落到真实驱动代码的方言上。每节课都有配套的 Code Lab 刷题（/code-lab）：72 道练习——32 道 C 基础热身（w-01~w-32，其中综合练习与 POSIX Bridge 明确标为可选）加 40 道内核风味训练——在浏览器里用真实 gcc/g++ 编译运行，写完即判，无需搭建任何本地环境。强烈建议每学完一节课就把对应题目做掉，用手指记住语法。一条重要的认知主线贯穿全程：内核态的 amdgpu 驱动是纯 C，用手写的 ops 结构体实现多态、用 goto 阶梯做资源清理；而用户态的 Mesa、ROCm/HIP 运行时、LLVM 编译器栈是 C++，把这两件事变成了语言原生的虚函数与 RAII。学完本模块，你既能读懂内核 C 的惯用法，也能读懂用户态 C++ 的资源管理与多态，为后续所有模块打好语言底子。',
     sections: [
       {
         title: '为什么驱动开发要同时懂 C 和 C++',

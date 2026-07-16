@@ -64,6 +64,8 @@ describe("sanitizeProgress", () => {
   });
 
   it("id ranges cover the full real bank", () => {
+    expect(isKnownProblemId("w-01") && isKnownProblemId("w-32")).toBe(true);
+    expect(isKnownProblemId("w-33")).toBe(false);
     expect(isKnownProblemId("c-01") && isKnownProblemId("c-16")).toBe(true);
     expect(isKnownProblemId("cpp-01") && isKnownProblemId("cpp-12")).toBe(true);
     expect(isKnownProblemId("k-01") && isKnownProblemId("k-12")).toBe(true);

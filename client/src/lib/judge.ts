@@ -34,8 +34,15 @@ export interface ParsedTests {
   cases: TestCaseResult[];
   passed: number;
   total: number;
-  /** true when a `RESULT p/t` trailer line was found. */
+  /** true when a tokenized `RESULT p/t` trailer was found AS THE LAST LINE
+      and its numbers agree with the tokenized [PASS]/[FAIL] lines. */
   complete: boolean;
+}
+
+export interface AssembledSource {
+  source: string;
+  /** Per-run capability used to authenticate the harness output protocol. */
+  runToken: string;
 }
 
 const TIMEOUT_MS = 25_000;
@@ -131,6 +138,61 @@ const WANDBOX_COMPILER: Record<JudgeLanguage, string> = {
   cpp: "gcc-13.2.0",
 };
 
+export interface WandboxApiResponse {
+  status?: string;
+  compiler_error?: string;
+  compiler_output?: string;
+  program_output?: string;
+  program_error?: string;
+}
+
+export interface WandboxExecutionResult {
+  compiled: boolean;
+  exitCode: number | null;
+  stdout: string;
+  stderr: string;
+}
+
+/**
+ * Convert Wandbox's ambiguous response shape into build/runtime semantics.
+ * Wandbox puts warnings and errors in `compiler_error`, while `status` is the
+ * compiler's status when compilation fails and the program's status when it
+ * runs. GCC diagnostic severity is therefore the discriminator.
+ */
+export function interpretWandboxResponse(data: WandboxApiResponse): WandboxExecutionResult {
+  const diagnostics = [data.compiler_error, data.compiler_output].filter(Boolean).join("\n");
+  const hasCompilerError = diagnostics
+    .split("\n")
+    .some((line) => /^(?:[^:\n]+:)+\s*(?:fatal\s+)?error:/i.test(line));
+
+  if (hasCompilerError) {
+    return {
+      compiled: false,
+      exitCode: null,
+      stdout: "",
+      stderr: diagnostics || "compile failed",
+    };
+  }
+
+  const hasStatus = data.status != null && data.status !== "";
+  if (!hasStatus) {
+    return {
+      compiled: false,
+      exitCode: null,
+      stdout: "",
+      stderr: diagnostics || "compile failed",
+    };
+  }
+
+  const parsedStatus = Number(data.status);
+  return {
+    compiled: true,
+    exitCode: Number.isFinite(parsedStatus) ? parsedStatus : null,
+    stdout: data.program_output ?? "",
+    stderr: data.program_error ?? "",
+  };
+}
+
 async function runWandbox(language: JudgeLanguage, source: string): Promise<JudgeResult> {
   const started = performance.now();
   const res = await fetch("https://wandbox.org/api/compile.json", {
@@ -144,21 +206,12 @@ async function runWandbox(language: JudgeLanguage, source: string): Promise<Judg
     }),
   });
   if (!res.ok) throw new Error(`wandbox HTTP ${res.status}`);
-  const data = (await res.json()) as {
-    status?: string;
-    compiler_error?: string;
-    compiler_output?: string;
-    program_output?: string;
-    program_error?: string;
-  };
+  const data = (await res.json()) as WandboxApiResponse;
   const durationMs = performance.now() - started;
-  const compiled = !data.compiler_error;
+  const execution = interpretWandboxResponse(data);
   return {
     ok: true,
-    compiled,
-    exitCode: compiled && data.status != null ? Number(data.status) : null,
-    stdout: data.program_output ?? "",
-    stderr: compiled ? (data.program_error ?? "") : (data.compiler_error ?? ""),
+    ...execution,
     backend: "wandbox",
     durationMs,
   };
@@ -183,36 +236,68 @@ export async function runCode(language: JudgeLanguage, source: string): Promise<
   throw lastError instanceof Error ? lastError : new Error("all judge backends failed");
 }
 
-/** Substitute the user's code into a problem's test harness. */
-export function assembleSource(harness: string, userCode: string): string {
-  return harness.replace("{{USER_CODE}}", userCode);
+function createRunToken(): string {
+  const bytes = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Authenticate harness protocol markers, then substitute the user's code.
+ * Applying the token before substitution ensures user-authored marker strings
+ * are never silently upgraded into trusted harness output.
+ */
+export function assembleSource(harness: string, userCode: string): AssembledSource {
+  const runToken = createRunToken();
+  const authenticatedHarness = harness
+    .replaceAll("[PASS]", `[PASS ${runToken}]`)
+    .replaceAll("[FAIL]", `[FAIL ${runToken}]`)
+    .replaceAll("RESULT %d/%d", `RESULT ${runToken} %d/%d`);
+  return {
+    source: authenticatedHarness.replace("{{USER_CODE}}", userCode),
+    runToken,
+  };
 }
 
 /**
  * Parse the harness protocol from stdout:
- *   [PASS] label            — one line per passing check
- *   [FAIL] label (detail)   — one line per failing check
- *   RESULT passed/total     — trailer emitted by the harness
+ *   [PASS token] label          — one line per passing check
+ *   [FAIL token] label (detail) — one line per failing check
+ *   RESULT token passed/total   — trailer emitted by the harness
  */
-export function parseTestOutput(stdout: string): ParsedTests {
+export function parseTestOutput(stdout: string, runToken: string): ParsedTests {
   const cases: TestCaseResult[] = [];
   let passed = 0;
   let total = 0;
   let complete = false;
-  for (const raw of stdout.split("\n")) {
-    const line = raw.trimEnd();
-    if (line.startsWith("[PASS] ")) {
-      cases.push({ ok: true, label: line.slice(7) });
-    } else if (line.startsWith("[FAIL] ")) {
-      const rest = line.slice(7);
+
+  if (!/^[0-9a-f]{32}$/.test(runToken)) return { cases, passed, total, complete };
+
+  const passPrefix = `[PASS ${runToken}] `;
+  const failPrefix = `[FAIL ${runToken}] `;
+  const resultPrefix = `RESULT ${runToken} `;
+
+  const lines = stdout.split("\n").map((l) => l.trimEnd());
+  // The trailer must be the LAST non-empty line — a mid-stream RESULT
+  // (e.g. printed by user code before more output, or an early exit)
+  // does not count. This closes the `puts("RESULT 1/1"); exit(0)` forgery.
+  let lastIdx = lines.length - 1;
+  while (lastIdx >= 0 && lines[lastIdx] === "") lastIdx--;
+
+  for (let i = 0; i <= lastIdx; i++) {
+    const line = lines[i];
+    if (line.startsWith(passPrefix)) {
+      cases.push({ ok: true, label: line.slice(passPrefix.length) });
+    } else if (line.startsWith(failPrefix)) {
+      const rest = line.slice(failPrefix.length);
       const paren = rest.indexOf(" (");
       cases.push(
         paren > 0
           ? { ok: false, label: rest.slice(0, paren), detail: rest.slice(paren + 2, -1) }
           : { ok: false, label: rest },
       );
-    } else {
-      const m = /^RESULT (\d+)\/(\d+)$/.exec(line);
+    } else if (i === lastIdx && line.startsWith(resultPrefix)) {
+      const m = /^(\d+)\/(\d+)$/.exec(line.slice(resultPrefix.length));
       if (m) {
         passed = Number(m[1]);
         total = Number(m[2]);
@@ -220,7 +305,15 @@ export function parseTestOutput(stdout: string): ParsedTests {
       }
     }
   }
-  if (!complete) {
+
+  // Consistency audit: the trailer's numbers must match the case lines
+  // actually seen. A forged trailer with no (or mismatched) [PASS]/[FAIL]
+  // lines is downgraded to incomplete.
+  if (complete) {
+    const seenPassed = cases.filter((c) => c.ok).length;
+    if (cases.length !== total || seenPassed !== passed) complete = false;
+  }
+  if (!complete && cases.length > 0) {
     passed = cases.filter((c) => c.ok).length;
     total = cases.length;
   }

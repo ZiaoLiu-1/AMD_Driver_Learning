@@ -1,9 +1,11 @@
 // ============================================================
 // AMD Linux Driver Learning Platform - Module 0.7 Micro-Lessons (EN)
 // Module 0.7: C/C++ Foundations
+// Group 0: C from Zero — 7 lessons
 // Group 1: C Core Review — 7 lessons
 // Group 2: C++ Training — 6 lessons
 // Group 3: Kernel C Idioms in Practice — 6 lessons
+// Every lesson pairs with Code Lab practice (/code-lab, 72 problems).
 // Foundations-first; amdgpu/kernel cases as extensions. Format A.
 // Mirrors c_cpp_micro_lessons.ts (same ids, same order).
 // ============================================================
@@ -13,12 +15,723 @@ export const cCppMicroLessonsEn: MicroLessonModule = {
   moduleId: 'c-cpp',
   groups: [
     {
+      id: 'cc-c0',
+      number: '0.7.0',
+      title: 'C from Zero',
+      titleEn: 'C from Zero',
+      icon: 'BookOpen',
+      description: 'A C on-ramp that assumes no programming experience: from your first function, expressions and printf, through branches, loops, arrays, pointers and strings, to heap memory and ownership. Every lesson pairs with Code Lab warm-up drills (the C Preflight track at /code-lab) — learn one lesson, drill it immediately. If you already write C functions on your own, skip straight to the systematic review in 0.7.1.',
+      lessons: [
+        {
+          id: 'cc-c0-1',
+          number: '0.7.0.1',
+          title: 'First C: Functions, Variables, return & printf',
+          titleEn: 'First C: Functions, Variables, return & printf',
+          duration: 14,
+          tags: ['C', 'basics', 'functions'],
+          concept: {
+            summary: 'A C program is made of functions; a function takes parameters, computes a result, and hands it back with return. Variables must be declared with a type before use; printf typesets values into text output. main is merely the program entry point.',
+            explanation: [
+              'Think of a function as a small machine: raw material goes in on the left (parameters), the product drops out on the right (the return value). The nameplate line int add3(int a, int b, int c) — the signature — says: three ints in, one int out. The body lives inside braces, and return expression; delivers the product — the instant return runs, the machine stops; nothing after it executes.',
+              'A variable is a named storage slot, and you must declare what type it holds before using it: int count = 0; declares an integer slot and puts 0 in it. Declaration (int count), initialization (= 0) and assignment (count = 5) are three distinct acts; a local variable that is declared but never initialized holds garbage — reading it is a classic bug source, so the habit in this course is to initialize at declaration.',
+              'printf("count = %d\\n", count) typesets a value into text: %d inside the format string is a placeholder meaning "insert an integer here", and the following arguments fill the slots in order. Four to know: %d for int, %f for double, %s for strings, %c for a single character; \\n is a newline. Placeholder and argument types must match — %d fed a double is a bug, and the compiler warns about it under -Wall. On success printf returns the number of characters written; an output error returns a negative value. Warm-up w-04 focuses only on exact text, while real programs can inspect that return to catch I/O failure.',
+              'main is the entry point: the operating system starts your program at main. In the Code Lab the judge already provides main (it calls your function and checks the results), so you focus on implementing the one function the problem asks for — which mirrors real engineering: most days you write functions that other code calls, not main.',
+              'Compilation translates the .c text into an executable: gcc prog.c -o prog && ./prog. When an error message looks scary, grab two things first: the file:line pair, and the FIRST error — later errors are often a chain reaction of the first one.',
+            ],
+            keyPoints: [
+              'A signature is a usage contract: return type + name + parameter list',
+              'return ends the function immediately and delivers the result',
+              'Initialize locals at declaration; uninitialized values are garbage',
+              'printf placeholders must match argument types; success returns a character count, failure a negative value',
+            ],
+          },
+          diagram: {
+            title: 'Anatomy of a C source file',
+            content: `  #include <stdio.h>        <- pull in library declarations (printf)
+
+  int add3(int a, int b, int c)   <- signature: return type name(params)
+  {                                <- body begins
+      int sum = a + b + c;         <- declare + initialize
+      return sum;                  <- deliver result, function ends
+  }
+
+  int main(void)                   <- program entry point
+  {
+      printf("%d\\n", add3(1, 2, 3));  <- call the function, print the result
+      return 0;                    <- tell the OS: clean exit
+  }`,
+            caption: 'Top to bottom: include brings declarations, ordinary functions do the work, main is just the entry. In the Code Lab, main is supplied by the judge.',
+          },
+          codeWalk: {
+            title: 'From call to return: how values travel',
+            file: 'first.c',
+            language: 'c',
+            code: `#include <stdio.h>
+
+int square_plus(int x, int bonus)   /* 1 signature: two ints in, one int out */
+{
+    int result = x * x + bonus;     /* 2 local variable: initialized at declaration */
+    return result;                  /* 3 deliver; the function is over */
+}
+
+int main(void)
+{
+    int a = 4;
+    int r = square_plus(a, 10);     /* 4 the VALUE of a is copied into parameter x */
+    printf("r = %d\\n", r);          /* 5 %d receives r -> prints r = 26 */
+    return 0;
+}`,
+            annotations: [
+              'Reading the signature: int (out) square_plus (name) (int x, int bonus) (in).',
+              'Parameters x/bonus are the function’s own slots, holding values copied at the call.',
+              'Code after return never runs (compilers often warn: unreachable).',
+              'At the call site square_plus(a, 10): evaluate first, copy, then enter the function.',
+              '%d pairs with int; printing a double takes %f.',
+            ],
+            explanation: 'Remember the journey of a value: the caller’s a merely copies 4 into parameter x — however the function changes x, a is untouched. That fact becomes the protagonist in Stage 4: to let a function modify the caller’s variable, you hand over its address.',
+          },
+          miniLab: {
+            title: 'Write your first function in the Code Lab',
+            objective: 'Solve warm-ups w-01 (sum of three) and w-04 (print one addition line) to feel the full implement → compile → judge loop.',
+            steps: [
+              'Open /code-lab and enter Stage 0 of the C Preflight track.',
+              'Do w-01 first: change only the return line, then hit Run.',
+              'Deliberately delete a semicolon and run once more — read the file:line format of the compile error.',
+              'Then do w-04: the printf format string must match the expected output character for character (spaces and newline included).',
+            ],
+            expectedOutput: 'w-01 and w-04 fully green (RESULT n/n + exit 0).',
+            hint: 'Read the first compile error first; on output mismatches, compare spaces and \\n character by character.',
+          },
+          debugExercise: {
+            title: 'Two beginner mistakes',
+            language: 'c',
+            question: 'This function should return the integer part of the average of two numbers. It contains two mistakes plus one habit worth improving. Find them all.',
+            buggyCode: `int average(int a, int b)
+{
+    int sum;
+    sum = a + b
+    return Sum / 2;
+}`,
+            hint: 'One punctuation, one capitalization, one "what value gets read".',
+            answer: 'Two mistakes: (1) sum = a + b is missing its semicolon; (2) C is case-sensitive — Sum is not sum, it is an undeclared name. One improvement: int sum; followed by assignment is legal, but int sum = a + b; at declaration is harder to get wrong. Fixed: int sum = a + b; return sum / 2; (integer division truncates toward zero — 10/4 gives 2; a feature, not a bug, drilled in w-02.)',
+          },
+          interviewQ: {
+            question: 'Self-check: in int add3(int a, int b, int c), what does each part tell the caller? And what happens if the body is written as return a + b;?',
+            difficulty: 'easy',
+            hint: 'Signature = contract; behavior of return.',
+            answer: 'The return type int promises the caller an integer back; the name add3 is what you call; the parameter list (int a, int b, int c) says pass three integers whose order carries meaning. With return a + b;, parameter c never participates — the compiler may warn about an unused parameter, and the function quietly returns a wrong result. The signature is unchanged, yet the implementation silently broke the contract: exactly why the judge (and real-world tests) check behavior, not just signatures.',
+          },
+        },
+        {
+          id: 'cc-c0-2',
+          number: '0.7.0.2',
+          title: 'Expressions, Types & Conversions',
+          titleEn: 'Expressions, Types & Conversions',
+          duration: 14,
+          tags: ['C', 'types', 'operators'],
+          concept: {
+            summary: 'Operators combine values into expressions; the operand types decide the rules of the operation. There is exactly one giant beginner trap: dividing two integers stays an integer — the fraction is simply thrown away.',
+            explanation: [
+              'Four operator families you will use daily: arithmetic + - * / %; comparison == != < <= > >= (result is 1 or 0); logical && || ! (combining conditions, with short-circuit evaluation: the right side never runs when the left side already decides); assignment =. Note that == compares while = assigns — if (x = 5) is legal C and almost always a bug (-Wall warns).',
+              'Integer division: in 5 / 9 both operands are int, so the result follows int rules — 0.555 truncates to 0, toward zero (-7/2 gives -3). Its sibling % yields the remainder: 17 % 5 is 2. For a fractional result, at least one operand must be floating point: 5.0 / 9, or (double)5 / 9. This one rule hides inside countless conversion bugs (w-02 has you step in it once, then fix it).',
+              'Conversions come in two kinds: implicit — mixing int with double promotes the int to double; explicit — (double)x, a cast. The reverse (int)3.9 truncates to 3; it does not round. Principle: make conversions visible so readers never have to guess.',
+              'bool: since C99, #include <stdbool.h> provides bool/true/false. Underneath they are still integers (0 false, nonzero true), but putting yes/no into the type makes signatures honest: bool is_even(int n) says more than int is_even(int n).',
+              'The minimal XOR bridge for w-30: ^ is bitwise exclusive-or — equal bits give 0, differing bits give 1. Three corollaries suffice: x ^ x == 0, x ^ 0 == x, and XOR is commutative and associative. The full bit-ops world lives in 0.7.1.2 and c-04~c-06.',
+            ],
+            keyPoints: [
+              'int / int = int (truncated toward zero); % yields the remainder',
+              'Want fractions? Make one operand floating point, or cast explicitly with (double)',
+              '== compares, = assigns; comparisons evaluate to 1/0',
+              'bool from <stdbool.h> puts yes/no into the type system',
+            ],
+          },
+          diagram: {
+            title: 'Integer division: where the value is lost',
+            content: `  c * 9 / 5 + 32     (c is double)          c * (9 / 5) + 32
+      |                                          |
+      v left to right                            v parentheses first
+  (c*9) -> double OK                       9 / 5 -> int division = 1 BUG
+      |                                          |
+  double / 5 -> double OK                  c * 1 + 32  -> wrong result
+      |
+  right: 100C -> 212F                      wrong: 100C -> 132F
+
+  rule: evaluate one step at a time; the operands set the type`,
+            caption: 'In c * 9 / 5 every step involves a double — safe; the moment you write (9 / 5), the parentheses hold a pure int division, 1.8 collapses to 1, and the bug is baked in.',
+          },
+          codeWalk: {
+            title: 'Three spellings of one formula',
+            file: 'convert.c',
+            language: 'c',
+            code: `double c2f_ok(double c)
+{
+    return c * 9 / 5 + 32;        /* 1 c is double and "infects" each step */
+}
+
+double c2f_also_ok(double c)
+{
+    return c * (9.0 / 5.0) + 32;  /* 2 the parentheses already hold 1.8 */
+}
+
+double c2f_wrong(double c)
+{
+    return c * (9 / 5) + 32;      /* 3 BUG: 9/5 is int division = 1 */
+}`,
+            annotations: [
+              'Multiplication happens first: double * int promotes the int.',
+              'The decimal point makes 9.0 a double literal.',
+              'Parentheses reorder evaluation — the pure-int division becomes 1 first.',
+            ],
+            explanation: 'Three identical signatures; the third is silently wrong — no compiler error (every type is legal), only behavior checks catch it. w-02’s judge compares floats with a tolerance rather than exact == — the universal floating-point discipline.',
+          },
+          miniLab: {
+            title: 'Step in integer division once',
+            objective: 'Solve w-02 (Celsius to Fahrenheit) and w-03 (even check), experiencing the write-wrong → read-failures → fix loop.',
+            steps: [
+              'Open w-02 in Stage 0, write the intuitive c * (9 / 5) + 32 first, run, and see which cases fail.',
+              'Fix it with either correct spelling; once green, read the three-way comparison in the solution notes.',
+              'w-03: implement is_even with % — negative evens like -4 must return true too.',
+            ],
+            expectedOutput: 'w-02 first run fails cases like -40/37; after the fix, RESULT fully green.',
+            hint: '0 and 100 pass while 37 fails? Then only the integer part is right.',
+          },
+          debugExercise: {
+            title: 'Why is the average always whole',
+            language: 'c',
+            question: 'This function should return the average of three scores (fractions allowed) yet always returns a whole number. Why, and how to fix it?',
+            buggyCode: `double average3(int a, int b, int c)
+{
+    return (a + b + c) / 3;
+}`,
+            hint: 'The double return type is fine — the problem lives inside the expression after return.',
+            answer: 'Both (a+b+c) and 3 are int, so the division truncates first, and only the already-truncated integer is converted to double on return — the conversion arrives too late. Fix either way: divide by 3.0, or (double)(a + b + c) / 3. Lesson: a return type cannot rescue an integer division buried inside the expression.',
+          },
+          interviewQ: {
+            question: 'Self-check: what are -7 / 2 and -7 % 2 in C11, and why?',
+            difficulty: 'easy',
+            hint: 'Which way does division truncate? The identity a == (a/b)*b + a%b always holds.',
+            answer: 'C11 defines integer division as truncation toward zero: -7 / 2 = -3 (not floor’s -4). The remainder satisfies a == (a/b)*b + a%b, so -7 % 2 = -7 - (-3)*2 = -1 — the remainder takes the dividend’s sign. Corollary: test oddness with n % 2 != 0 rather than n % 2 == 1, because a negative odd n gives n % 2 == -1.',
+          },
+        },
+        {
+          id: 'cc-c0-3',
+          number: '0.7.0.3',
+          title: 'Branches & Loops',
+          titleEn: 'Branches & Loops',
+          duration: 15,
+          tags: ['C', 'if', 'loops'],
+          concept: {
+            summary: 'if/else routes the program down different paths; while/for repeats a block. All the craft in loops lives at the boundaries: where you start, where you stop, and whether zero iterations is handled.',
+            explanation: [
+              'Branching: if (condition) { ... } else if (another) { ... } else { ... }. A condition is any expression; nonzero means true. Multi-way dispatch on equal values can use switch (x) { case 1: ...; break; ... default: ...; } — remember the break ending each case; omitting it "falls through" into the next case (occasionally a deliberate trick, usually a bug).',
+              'The loop brothers: while (condition) { ... } tests first, runs after — possibly zero times; for (init; condition; step) { ... } folds the counting trio into one line and is the standard "repeat n times" shape: for (int i = 0; i < n; i++). do { ... } while (condition); runs first, tests after — at least once; rarer, but recognize it.',
+              'break exits the whole loop immediately; continue skips the rest of this iteration and proceeds to the next test. Both act on the innermost loop only.',
+              'Loop correctness rests on two questions: does it terminate (does the condition eventually turn false)? and are the boundaries right? The classic chant i < n, not i <= n: the former runs exactly n times. Off-by-one is the most common bug in the universe — the antidote is walking the smallest inputs: n=0 should never enter the loop, n=1 exactly once.',
+              'Zero iterations is a legal state: sum_to(0) runs the body 0 times and returns the initial 0 — by design, not as a special case. When zero-trip loops are naturally correct, half your ifs disappear.',
+            ],
+            keyPoints: [
+              'if/else if/else takes the first true branch top-down; switch needs break',
+              'for (int i = 0; i < n; i++) runs exactly n times — i < n, not i <= n',
+              'break leaves the loop; continue starts the next iteration',
+              'Validate boundaries with n=0 and n=1; zero-trip loops should be naturally correct',
+            ],
+          },
+          diagram: {
+            title: 'while and for: two spellings of one loop',
+            content: `  int i = 0;                       for (int i = 0; i < n; i++) {
+  while (i < n) {                      /* body */
+      /* body */                    }
+      i++;                          +-------------------------+
+  }                                 | init -> test -> body -> |
+                                    |    step -> test -> ...  |
+  trace for n=3:                    +-------------------------+
+  i=0 test(0<3) T -> body -> i=1
+  i=1 test(1<3) T -> body -> i=2    trace for n=0:
+  i=2 test(2<3) T -> body -> i=3    i=0 test(0<0) F -> never enters
+  i=3 test(3<3) F -> done           (correct behavior, not a bug)`,
+            caption: 'for merely folds while’s trio into one line. Test-before-body means zero iterations is naturally legal — a good loop makes n=0 correct automatically.',
+          },
+          codeWalk: {
+            title: 'The four parts of a loop',
+            file: 'digits.c',
+            language: 'c',
+            code: `int count_digits(int n)      /* contract: n >= 0 */
+{
+    if (n == 0)               /* 1 boundary: zero still has one digit */
+        return 1;
+
+    int count = 0;            /* 2 accumulator: initialized */
+    while (n > 0) {           /* 3 condition: n will reach 0 */
+        n = n / 10;           /* 4 step: shave one digit per pass */
+        count++;
+    }
+    return count;
+}`,
+            annotations: [
+              '0 needs its own case: otherwise the loop runs zero times and wrongly reports 0 digits.',
+              'Initialize the accumulator at declaration — garbage plus a loop equals random results.',
+              'n/10 strictly shrinks n each pass, guaranteeing termination.',
+              'Step and count sit together; it reads as "shave a digit, count a digit".',
+            ],
+            explanation: 'Read every loop through this four-piece frame: initial state, continue-condition, per-pass work, and what guarantees termination. w-08~w-10 each drill one variant; the same frame is reused verbatim for array traversal in Stage 3.',
+          },
+          miniLab: {
+            title: 'The branch-and-loop six-pack',
+            objective: 'Solve, in order: w-05 (max of two), w-06 (clamp), w-07 (sign), w-08 (sum to n), w-09 (digit count), w-10 (integer power).',
+            steps: [
+              'Stage 1’s three are pure branching: w-07’s three branches must be exclusive and exhaustive.',
+              'Stage 2’s three are pure loops: after writing each, ask how many passes n=0 (or exp=0) takes.',
+              'When one fails, take the input from the failure message and hand-run your loop on paper.',
+            ],
+            expectedOutput: 'All six green; w-09’s 0 case and w-10’s exp=0 case are the boundary-thinking litmus tests.',
+            hint: 'Paper-running a loop = one column for i, one for the test result, one for the accumulator.',
+          },
+          debugExercise: {
+            title: 'Where is this loop off by one?',
+            language: 'c',
+            question: 'This should compute 1+2+...+n, yet sum_to(3) returns 3 instead of 6. What went wrong?',
+            buggyCode: `long sum_to(int n)
+{
+    long sum = 0;
+    for (int i = 1; i < n; i++)
+        sum = sum + i;
+    return sum;
+}`,
+            hint: 'Write out every pass for n=3: which values did i actually take?',
+            answer: 'i < n stops the loop before i==n: for n=3, i takes only 1 and 2, skipping 3 itself — returning 1+2=3. Either i <= n, or i < n + 1. This is the standard face of off-by-one: the intent says "including n", the condition says "excluding n". The chant "i < n runs n times" applies to counting n items from 0; counting 1 through n inclusive is i <= n. Boundaries always come back to the problem statement.',
+          },
+          interviewQ: {
+            question: 'Self-check: what is the essential difference between while (cond) and do { } while (cond);? Give one natural use case for each.',
+            difficulty: 'easy',
+            hint: 'Does the test happen before or after the body? What is the minimum number of executions?',
+            answer: 'while tests first — minimum zero runs; do-while runs first — minimum one. Natural fits: while suits "there may be nothing to do at all" — processing items from a possibly-empty queue; do-while suits "act once, then decide whether to repeat" — prompting for input until it is valid. Rule of thumb: default to while; reach for do-while only when "the first execution happens unconditionally" is itself the requirement.',
+          },
+        },
+        {
+          id: 'cc-c0-4',
+          number: '0.7.0.4',
+          title: 'Arrays, Pass-by-Value & Length Parameters',
+          titleEn: 'Arrays, Pass-by-Value & Length Parameters',
+          duration: 15,
+          tags: ['C', 'arrays', 'functions'],
+          concept: {
+            summary: 'An array is a row of same-typed elements accessed by indices 0..n-1. C arrays do not know their own length, so functions that take arrays always take a length too. Parameters are passed by copying values — but an array parameter copies the location, not the contents.',
+            explanation: [
+              'Declaration and access: int a[5] lays out five consecutive ints, indexed 0 through 4 — a[0] is first, a[4] is last, a[5] does not exist. Out-of-bounds access is undefined behavior (UB): C promises no diagnostic, so it may silently corrupt memory, produce strange values, or crash. Start the habit on day one: the legal range is always 0 <= i < n.',
+              'Traversal is cc-c0-3’s loop skeleton wearing an index: for (int i = 0; i < n; i++) using a[i]. Here i < n stops being a chant and becomes the safety line.',
+              'Pass-by-value: ordinary parameters are copies. Changing x inside void f(int x) leaves the caller’s variable untouched (seen in cc-c0-1’s code walk). Protection and limitation at once — making a function modify the caller’s data will take pointers (next lesson).',
+              'The array-parameter exception: with int a[] in a parameter list, what travels is not a copy of five elements but the array’s **location** — so assigning a[i] inside the function really changes the caller’s array (w-14’s in-place reverse depends on it). And because only the location traveled, the length is lost: C’s convention pairs every array parameter with a length parameter int n. The a[] spelling is equivalent to a pointer — the details are unveiled next lesson.',
+              'An empty array (n==0) is legal input: zero loop trips, return the initial value. Picking initial values — 0 for sums/counts, and first-element-not-zero for maxima (w-12 drills it) — plus the empty/single-element paths are the entire difficulty of array problems.',
+            ],
+            keyPoints: [
+              'Legal indices: 0 <= i < n; out of bounds is UB and may corrupt silently or crash',
+              'The traversal template: for (int i = 0; i < n; i++) with a[i]',
+              'Ordinary parameters copy values; array parameters carry the location — functions can modify the real array',
+              'Arrays carry no length: signatures always pair (type a[], int n)',
+            ],
+          },
+          diagram: {
+            title: 'Pass-by-value vs an array parameter',
+            content: `  void twice(int x)  { x *= 2; }        void fill7(int a[], int n) { a[0] = 7; }
+
+  int v = 10;                            int arr[3] = {1, 2, 3};
+  twice(v);        v is still 10         fill7(arr, 3);   arr[0] becomes 7 !
+      |                                      |
+      v                                      v
+  +--------+   copy value +--------+      +-----------+ copy "location" +----+
+  | v = 10 | -----------> | x = 10 |      | [1][2][3] | <-------------- | a *|
+  +--------+  x's changes +--------+      +-----------+  a[i] lands on  +----+
+               stay local                   the original array`,
+            caption: 'Ordinary parameters copy the value — the function edits its own duplicate; array parameters copy the location — the function reaches back into the caller’s real row of elements.',
+          },
+          codeWalk: {
+            title: 'The standard face of an array function',
+            file: 'scan.c',
+            language: 'c',
+            code: `int array_max(const int a[], int n)   /* 1 contract: n >= 1 */
+{
+    int best = a[0];                   /* 2 seed with the first element, not 0 */
+    for (int i = 1; i < n; i++) {      /* 3 start at 1: a[0] is already seen */
+        if (a[i] > best)
+            best = a[i];               /* 4 the champion swaps on any stronger challenger */
+    }
+    return best;
+}`,
+            annotations: [
+              'const declares "this function promises read-only" — write it whenever true; free insurance for callers.',
+              'Seeding with 0 fails on all-negative arrays: the max of {-5,-2,-9} is -2, never 0.',
+              'Starting at i=1 avoids re-comparing the seed (0 also works, one wasted pass).',
+              'The champion-variable pattern: max, min, longest… all cast from this mold.',
+            ],
+            explanation: 'An array problem = the loop skeleton + two decisions: what seeds the accumulator/champion, and which path empty or single-element input takes. w-11~w-15 each turn one knob: sum, max, count, in-place mutation, search.',
+          },
+          miniLab: {
+            title: 'The array five-pack',
+            objective: 'Solve w-11 (sum), w-12 (max), w-13 (count positives), w-14 (in-place reverse), w-15 (linear search).',
+            steps: [
+              'w-11 through w-13 are read-only traversals: the const in the signature audits "changed what I only meant to read".',
+              'w-14 is your first in-place mutation: draw five boxes on paper and walk the two indices toward the middle first.',
+              'w-15 returns upon finding — feel the difference between early exit and full scan.',
+            ],
+            expectedOutput: 'All five green; w-12’s all-negative case and w-14’s odd/even-length cases are this lesson’s boundary checkpoints.',
+            hint: 'Before coding each: what does n==0 return, and why is the seed what it is?',
+          },
+          debugExercise: {
+            title: 'Where the max went wrong',
+            language: 'c',
+            question: 'array_max({-5, -2, -9}, 3) returned 0 instead of -2. Find both problems.',
+            buggyCode: `int array_max(const int a[], int n)
+{
+    int best = 0;
+    for (int i = 0; i <= n; i++) {
+        if (a[i] > best)
+            best = a[i];
+    }
+    return best;
+}`,
+            hint: 'What happens to that seed on an all-negative array? And where does the final i <= n pass read?',
+            answer: 'Two problems: (1) best starts at 0 — no element of an all-negative array beats 0, so the function returns a value that is not even in the array; seed with a[0] (n>=1 is guaranteed). (2) i <= n makes the last pass read a[n] — out of bounds, unpredictable ("happened not to crash" is precisely the most dangerous form of OOB). Fix: best = a[0], loop i = 1; i < n.',
+          },
+          interviewQ: {
+            question: 'Self-check: why do C array functions always pair (int a[], int n)? Can sizeof recover the length inside the function?',
+            difficulty: 'easy',
+            hint: 'What does an array parameter actually carry? What does sizeof measure on a "location"?',
+            answer: 'Because an array argument passes only the location of its first element — the length does not travel. Inside the function, sizeof(a) measures the size of a location (a pointer, e.g. 8 bytes), not the array’s byte count, so dividing by sizeof(a[0]) cannot yield the element count. The caller must pass the length explicitly. This is the root of the kernel’s pointer-plus-length interface convention; next lesson replaces the word "location" with its real name: a pointer.',
+          },
+        },
+        {
+          id: 'cc-c0-5',
+          number: '0.7.0.5',
+          title: 'Pointers & C Strings',
+          titleEn: 'Pointers & C Strings',
+          duration: 16,
+          tags: ['C', 'pointers', 'strings'],
+          concept: {
+            summary: 'A pointer is a variable that stores an address: & takes an address, * follows it back to the real thing. Pointers are how functions modify the caller’s variables. A C string is a char array with a terminating \\0 marker.',
+            explanation: [
+              'Every variable lives at some memory address. &v extracts v’s address; int *p = &v declares a pointer holding it; *p is "the variable found by following p" — reading *p reads v, writing *p = 9 writes v. The two operators are inverses: *(&v) is v.',
+              'Pointers close the gap pass-by-value left open: swap(int *a, int *b) receives two addresses and, via *a and *b, operates directly on the caller’s variables — the generalization of last lesson’s "array parameters carry a location". Call it as swap(&x, &y): hand the addresses in.',
+              'NULL is the special null-pointer value meaning “points at no object”. Dereferencing NULL is undefined behavior (UB); common systems often crash, but C does not guarantee one particular failure mode. Discipline: a function taking pointers either guarantees non-NULL in its contract or checks before use.',
+              'A C string = a char array + the terminating sentinel \\0 (the character with value 0). "gfx" occupies four bytes: g f x \\0. Every string function relies on \\0 to know where the string ends — strlen counts up to (not including) it. Lose the \\0 and string functions read straight into memory that is not yours.',
+              'Last lesson’s cliffhanger resolved: int a[] in a parameter list IS int *a — array parameters "decay" into a pointer to the first element. a[i] and *(a + i) are fully equivalent (pointer plus i advances i elements). Which re-explains why the length must travel separately.',
+              'Preview: w-23’s signature is int **arr — a pointer to a pointer. Same logic throughout: to modify an int pass int*; to modify an int* pass int**. It earns its keep in the heap lesson (next).',
+            ],
+            keyPoints: [
+              '& takes an address, * dereferences; *(&v) is v',
+              'To let a function change the caller’s variable: pass the address, operate through *',
+              'Dereferencing NULL is UB (often a crash); contracts either guarantee non-NULL or check first',
+              'C strings end at \\0; array parameters decay to pointers, a[i] == *(a+i)',
+            ],
+          },
+          diagram: {
+            title: 'The address journey of swap',
+            content: `  main:  int x = 3, y = 9;      swap(&x, &y);
+
+    addr 0x100    addr 0x104          swap's parameters
+    +---------+  +---------+       +----------+ +----------+
+    | x = 3   |  | y = 9   |       | a = 0x100| | b = 0x104|
+    +----^----+  +----^----+       +----|-----+ +----|-----+
+         |            |                 |            |
+         +------------+------ *a -------+            |
+                      +------ *b --------------------+
+
+  inside swap: int t = *a;  *a = *b;  *b = t;
+  result:      x == 9, y == 3   (really changed!)`,
+            caption: 'Pointers a and b are remote controls: the function holds copies of the addresses, but pressing * follows them back to the real variables in main.',
+          },
+          codeWalk: {
+            title: 'strlen by hand: discovering \\0',
+            file: 'strlen.c',
+            language: 'c',
+            code: `#include <stddef.h>
+
+size_t my_strlen(const char *s)   /* 1 a string parameter is a char pointer */
+{
+    size_t len = 0;               /* 2 size_t: the standard "length type" */
+    while (s[len] != '\\0')        /* 3 sentinel not seen yet: keep counting */
+        len++;
+    return len;                   /* 4 len is the count excluding the \0 */
+}`,
+            annotations: [
+              'When "gfx" is passed, s points at the character g.',
+              'size_t is the unsigned type dedicated to sizes/lengths — standard strlen returns it.',
+              "'\\0' is just the value 0, so the condition can read while (s[len]).",
+              'For the empty string "", s[0] is already \\0: zero trips, return 0.',
+            ],
+            explanation: 'Read the same code through two lenses: the index lens s[len] (last lesson’s habit) or the pointer lens *(s + len) — equivalent. Real codebases use both, so recognize both. Everything in string traversal (w-17~w-19) is a variation of this one loop.',
+          },
+          miniLab: {
+            title: 'The pointer-and-string four-pack',
+            objective: 'Solve w-16 (pointer swap), w-17 (strlen by hand), w-18 (count a character), w-19 (string equality).',
+            steps: [
+              'w-16: no arrays in this signature — pure pointers. Afterwards, reason out why swap(&x, &x) is also correct.',
+              'w-17: write the while version first, then try the pointer-stepping version (p walks until \\0).',
+              'w-18/w-19: both are "traverse until \\0" variants; w-19 advances two pointers in lock-step.',
+            ],
+            expectedOutput: 'All four green; w-19’s prefix case ("abc" vs "abcd") is the classic slip.',
+            hint: 'Draw boxes on paper: sketch the string as bytes ending in \\0, then walk the pointer.',
+          },
+          debugExercise: {
+            title: 'Why did this swap not swap',
+            language: 'c',
+            question: 'After calling swap(x, y), x and y are unchanged. Where are the two mistakes?',
+            buggyCode: `void swap(int a, int b)
+{
+    int t = a;
+    a = b;
+    b = t;
+}
+
+/* call site: swap(x, y); */`,
+            hint: 'What type are the parameters? Whose values actually got exchanged?',
+            answer: '(1) The parameters are int, not int* — pass-by-value copied x and y, so the function swapped its own two copies while the caller’s variables never moved; (2) correspondingly the call site passed values. Fix: void swap(int *a, int *b) operating via *a and *b, called as swap(&x, &y). The rule of thumb: for a function to reach outside, the signature must show * and the call site must show & (arrays are the exception, carrying their location by nature).',
+          },
+          interviewQ: {
+            question: 'Self-check: which 4 bytes does char s[4] = "gfx" occupy? What is strlen(s)? And what happens with char s[3]?',
+            difficulty: 'easy',
+            hint: 'What terminator does a string literal carry? Where does strlen stop?',
+            answer: 'The four bytes are g, f, x, \\0 — the literal "gfx" carries its own sentinel. strlen(s) is 3: it stops at \\0 and excludes it. char s[3] = "gfx" is legal C but dangerous: the three characters fill the array exactly and the \\0 is squeezed out — it is no longer a valid C string, and strlen/printf will read past the end until they happen upon some other zero byte. Lesson: size string arrays with one extra byte, always; this is also the origin of strscpy’s capacity semantics in c-09.',
+          },
+        },
+        {
+          id: 'cc-c0-6',
+          number: '0.7.0.6',
+          title: 'Heap Memory & Ownership',
+          titleEn: 'Heap Memory & Ownership',
+          duration: 16,
+          tags: ['C', 'malloc', 'ownership'],
+          concept: {
+            summary: 'Locals vanish when their function returns; for data that must outlive a function — or whose size is only known at runtime — you rent memory from the heap: malloc rents, free returns. Whoever must return it holds the "ownership".',
+            explanation: [
+              'So far your variables lived on the stack: the function returns, they vanish. The heap is different memory: you rent it explicitly with malloc(byte_count) and return it explicitly with free(pointer); its lifetime is entirely yours. Renting 10 ints, canonically: int *p = malloc(10 * sizeof(int)); — sizeof keeps the byte math tied to the type.',
+              'malloc can fail: when memory is short it returns NULL, so the first act after renting is a check: if (!p) return NULL; (or another failure path). What you rent you must free — forgetting is a leak; freeing twice is a double free (serious); using after freeing is use-after-free (UAF, equally serious). A cheap vaccine: set p = NULL; right after free, because free(NULL) is a legal no-op.',
+              'Three relatives: calloc(n, size) rents n elements AND zeroes them (malloc contents are garbage); realloc(p, new_bytes) resizes a rented block — success returns the new address (contents moved for you), failure returns NULL while the old block stays intact. The realloc iron rule: catch the result in a temporary pointer first; with if (!tmp) the old pointer is still alive. Writing p = realloc(p, n) loses your only copy of the address on failure — a leak, and the data becomes unreachable.',
+              '"Ownership" is the core question when reading C: who manages this block right now, and who must free it? Two everyday contracts: a function returning a malloc’d pointer = ownership transferred to the caller (caller frees — w-20’s make_range); a function that merely reads/writes a pointer you passed = borrowing, and must not free. Names hint at contracts: create/make/dup transfer; print/sum/find merely borrow.',
+              'The professional tools for hunting memory bugs (ASan, valgrind) come later; for now the Code Lab judge plays that role — it counts whether every malloc/free balances, and injects a realloc failure to inspect your failure path.',
+            ],
+            keyPoints: [
+              'malloc rents / free returns; check NULL after renting, set NULL after freeing',
+              'calloc = rent + zero; realloc resizes and leaves the old block valid on failure',
+              'realloc lands in a temporary first — p = realloc(p, n) is the classic accident',
+              'The ownership question: who frees this block? Returned pointer = transfer; passed-in pointer = borrow',
+            ],
+          },
+          diagram: {
+            title: 'Stack vs heap: two lifetimes',
+            content: `  during the call                 after the function returns
+  +-stack-----------+             +-stack-----------+
+  | int n = 4;      |   ->        | (gone, automatic)|
+  | int *p = *----+ |             |                  |
+  +---------------|-+             +------------------+
+  +-heap----------v-+             +-heap------------+
+  | [0][1][2][3]    |   ->        | [0][1][2][3]     | <- still alive!
+  | malloc(4*sizeof(int))|        | until someone    |
+  +-----------------+             |      frees it    |
+  stack: automatic reclaim        heap: manual, free reclaims`,
+            caption: 'The pointer p itself lives on the stack; the memory it points to lives on the heap. After return, p is gone but the block remains — which is why "who holds the address, who frees" must be part of the contract.',
+          },
+          codeWalk: {
+            title: 'One full rent-use-return cycle, failure path included',
+            file: 'own.c',
+            language: 'c',
+            code: `#include <stdlib.h>
+
+int *make_squares(int n)            /* contract: ownership transfers to caller */
+{
+    int *p = malloc((size_t)n * sizeof(int));  /* 1 rent */
+    if (!p)                          /* 2 may fail: check first */
+        return NULL;
+    for (int i = 0; i < n; i++)
+        p[i] = i * i;                /* 3 use */
+    return p;                        /* 4 transfer: caller must free */
+}
+
+int use_it(void)
+{
+    int *sq = make_squares(8);
+    if (!sq)
+        return -1;                   /* 5 propagate failure upward */
+    int last = sq[7];
+    free(sq);                        /* 6 return the memory */
+    sq = NULL;                       /* 7 vaccine: no accidental reuse */
+    return last;
+}`,
+            annotations: [
+              'sizeof(int) keeps byte math independent of platform trivia.',
+              'Every malloc may return NULL — the failure path is part of the contract.',
+              'Rented contents are garbage; fill them yourself.',
+              'Returning a heap pointer says explicitly: you free it.',
+              'The caller checks NULL before using.',
+              'free applies exactly once, and only to addresses from the malloc family.',
+              'NULL after free: free(NULL) is legal, so an accidental second free is harmless.',
+            ],
+            explanation: 'This rent-check-use-return-null rhythm is the whole skeleton of C memory management. realloc merely resizes mid-"use" — its temporary-pointer discipline is drilled in isolation in w-23, and then c-15/c-16 put the same discipline inside real data structures.',
+          },
+          miniLab: {
+            title: 'The heap four-pack in the Code Lab',
+            objective: 'Solve w-20 (malloc an array), w-21 (calloc zeroing), w-22 (duplicate an array), w-23 (safe realloc) in order — the judge counts allocator balance and injects failures.',
+            steps: [
+              'Open Stage 5 of the C Preflight track at /code-lab.',
+              'w-20/w-21: mind the n==0 convention (return NULL); pass malloc failure through as NULL.',
+              'w-22: after copying, mutate the copy — the original must not move; this is the minimal form of a deep copy.',
+              'w-23: write the three-line temporary-pointer pattern first; then deliberately change it to *arr = realloc(*arr, ...) and watch the injected failure catch you.',
+            ],
+            expectedOutput: 'All four green; w-23 passes "pointer untouched on failure" and "allocator fully balanced".',
+            hint: 'Write every size as n * sizeof(type); never read a pointer after freeing it.',
+          },
+          debugExercise: {
+            title: 'Find four memory problems',
+            language: 'c',
+            question: 'This code has two distinct leak paths, one use-after-free read, and one double free. Find all four.',
+            buggyCode: `int demo(int n)
+{
+    int *a = malloc(n * sizeof(int));
+    int *b = malloc(n * sizeof(int));
+    if (!a || !b)
+        return -1;
+    a[0] = 1;
+    free(a);
+    int x = a[0];
+    free(a);
+    return x;
+}`,
+            hint: 'What does the failure path forget? What happens after free? Where did b go?',
+            answer: 'Four: (1) at if (!a || !b) return -1, one allocation may already have succeeded, so the failure path leaks it (free(a); free(b); is safe even when one is NULL); (2) even when both allocations succeed, b is never freed on the normal path, a second leak; (3) int x = a[0] reads after free(a), a use-after-free; (4) the second free(a) is a double free. Repair with one cleanup exit, exactly one free per successful allocation, and no reads after free.',
+          },
+          interviewQ: {
+            question: 'Why is p = realloc(p, n) dangerous? Exactly what is lost when it fails?',
+            difficulty: 'easy',
+            hint: 'What does realloc return on failure, and what state is the old block in?',
+            answer: 'On failure realloc returns NULL while the old block remains valid. p = realloc(p, n) overwrites p with NULL — and the old address was the only key you had: the block becomes unreachable and unfreeable. Data lost, memory permanently leaked. The correct stance: int *tmp = realloc(p, n); if (!tmp) return error; p = tmp;. This one discipline carries from w-23 through c-15 all the way to kernel krealloc reviews.',
+          },
+        },
+        {
+          id: 'cc-c0-7',
+          number: '0.7.0.7',
+          title: 'POSIX Bridge: Pages, mmap & munmap',
+          titleEn: 'POSIX Bridge: Pages, mmap & munmap',
+          duration: 14,
+          tags: ['POSIX', 'mmap', 'pages'],
+          concept: {
+            summary: 'malloc/free are the C standard library’s language-level interface; mmap/munmap are POSIX/Linux system-level interfaces that request memory from the kernel in page units. Separating these two layers is step one from C-the-language into systems programming.',
+            explanation: [
+              'Layers first: malloc belongs to ISO C — every platform’s C has it; mmap belongs to POSIX (the Unix-family system interface standard) — Linux/macOS have it, bare metal and native Windows do not. They are not rivals but upstream/downstream: many libc malloc implementations use mmap underneath, by policy, to buy memory wholesale from the kernel — an implementation detail, never an ISO C guarantee.',
+              'A page is the kernel’s smallest unit of memory management — commonly 4096 bytes but **never to be hardcoded**: query it at runtime with sysconf(_SC_PAGESIZE) (returns long; check > 0). GPU VRAM, DMA buffers and kernel mappings all think in pages; the word stays with you from here on.',
+              'The anonymous-mapping call shape: mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0) — ask the kernel directly for len bytes of read-write memory (backed by no file, hence "anonymous"). Two details that differ sharply from malloc: failure returns **MAP_FAILED ((void *)-1), not NULL**, so error checks must compare against MAP_FAILED; and you return memory with munmap(p, len) — carrying the length back, with munmap itself able to fail (returns -1).',
+              'Which to use when: everyday allocation is always malloc/free (fast, cached, any size); mmap’s stage is page-aligned bulk memory, inter-process sharing, and mapping files into the address space — plus this course’s true destination: GPU drivers exposing VRAM/BOs to userspace (Module 4’s GEM/TTM) are an extension of mmap semantics. Note an anonymous mapping is **not** a PCI BAR/MMIO — register mappings use different machinery, unveiled in Modules 2/4.',
+              'Practical note: scripts/probe-mmap-backends.mjs exercised the final harness on both judge sandboxes, and Godbolt plus Wandbox passed. Warm-up w-32 is therefore live in the browser with the same complete round trip. The local MiniLab remains useful for observing your own Linux/macOS page size.',
+            ],
+            keyPoints: [
+              'malloc = ISO C library; mmap = POSIX system interface — layers, not substitutes',
+              'Query page size via sysconf(_SC_PAGESIZE); never hardcode 4096',
+              'mmap fails with MAP_FAILED (not NULL); munmap takes the length and can fail',
+              'Anonymous mappings ≠ MMIO/PCI BARs; GPU BO mapping extends mmap semantics (Module 4)',
+            ],
+          },
+          diagram: {
+            title: 'Two layers of memory interface',
+            content: `  your code
+     | malloc(37)          any byte count, fast, cached
+     v
+  +------------------+
+  | libc allocator   |  <- ISO C library layer
+  | (heap mgmt/cache)|
+  +--------+---------+
+           | uses it by policy for big/bulk cases
+           v
+  +------------------+
+  | mmap / munmap    |  <- POSIX system layer (page granularity)
+  +--------+---------+
+           v
+  +------------------+
+  | Linux kernel     |  page tables / physical memory
+  +------------------+`,
+            caption: 'Many Linux libc allocators hand large allocations to mmap by policy (an implementation detail, not an ISO C guarantee); calling mmap directly bypasses the libc allocator and requests pages straight from the kernel.',
+          },
+          codeWalk: {
+            title: 'A full round trip through one anonymous page',
+            file: 'page.c',
+            language: 'c',
+            code: `#define _DEFAULT_SOURCE          /* 1 must precede every #include */
+#include <sys/mman.h>
+#include <unistd.h>
+
+int page_roundtrip(void)
+{
+    long raw = sysconf(_SC_PAGESIZE);   /* 2 ask for the page size */
+    if (raw <= 0)
+        return -1;
+    size_t page = (size_t)raw;
+
+    unsigned char *p = mmap(NULL, page,
+                            PROT_READ | PROT_WRITE,
+                            MAP_PRIVATE | MAP_ANONYMOUS,
+                            -1, 0);
+    if (p == MAP_FAILED)                /* 3 not NULL! */
+        return -1;
+
+    for (size_t i = 0; i < page; i++)   /* 4 the whole page is writable */
+        p[i] = 0xAB;
+
+    if (munmap(p, page) != 0)           /* 5 returning memory can fail too */
+        return -1;
+    return 0;
+}`,
+            annotations: [
+              '_DEFAULT_SOURCE is a glibc feature-test macro that restores default/BSD-derived definitions (including MAP_ANONYMOUS) in strict standard modes; it is not a POSIX macro and must precede every system header.',
+              'sysconf returns long; -1 signals query failure.',
+              'MAP_FAILED is (void *)-1 — checking NULL misses real failures.',
+              'PROT_* declares access rights; MAP_PRIVATE|MAP_ANONYMOUS means a private anonymous page.',
+              'munmap works at page granularity; this example returns the same whole-page length it mapped (page-aligned partial unmapping is legal too — see the MiniLab).',
+            ],
+            explanation: 'This query-map-check-use-unmap round trip is the shared skeleton of every mmap scenario. Module 4 shows the GPU edition of the same skeleton: userspace mmaps a BO, and the reads and writes land in video memory.',
+          },
+          miniLab: {
+            title: 'Verify a page locally',
+            objective: 'Compile and run the round-trip code in any Linux environment (or a macOS terminal) and observe your page size.',
+            steps: [
+              'Save the code walk as page.c, add a main that prints page_roundtrip()’s return and sysconf(_SC_PAGESIZE).',
+              'Build and run: gcc -std=c11 -Wall -Wextra page.c -o page && ./page.',
+              'Map 2*page (two pages), return the first with munmap(p, page), then the second with munmap(p + page, page) — feel that a partial unmap must start on a page boundary. For ordinary pages, munmap’s length itself need not be a whole-page multiple; the system unmaps every page touched by the range, so production code should still pass a clear interval matching its mapping.',
+              'Open Code Lab w-32 and repeat the round trip online with dual-backend judging, injected failure, and resource-balance checks.',
+            ],
+            expectedOutput: 'Returns 0; the page size usually prints 4096 (16384 on Apple Silicon — exactly why it is never hardcoded).',
+            hint: 'On macOS the flag spells MAP_ANON as well; Linux accepts both.',
+          },
+          debugExercise: {
+            title: 'Three system-layer misuses',
+            language: 'c',
+            question: 'This compiles, yet misuses mmap semantics in three places. Find them.',
+            buggyCode: `#include <sys/mman.h>
+
+void *get_page(void)
+{
+    void *p = mmap(NULL, 4096, PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (p == NULL)
+        return NULL;
+    return p;   /* caller should free(p) when done */
+}`,
+            hint: 'What value does the error check test? Where does 4096 come from? What returns the memory?',
+            answer: '(1) mmap fails with MAP_FAILED ((void*)-1); p == NULL does not recognize that failure sentinel, so a failed mapping is handed out as a success; (2) 4096 hardcodes a page-size assumption — use sysconf(_SC_PAGESIZE); (3) the comment tells the caller to free() — mmap’d memory must be returned with munmap(p, len); freeing a non-malloc pointer is undefined behavior. Additionally, glibc’s strict -std=c11 mode may hide MAP_ANONYMOUS unless _DEFAULT_SOURCE is defined first.',
+          },
+          interviewQ: {
+            question: 'Self-check: why is "malloc is just mmap underneath" inaccurate? What are the failure returns of each?',
+            difficulty: 'easy',
+            hint: 'The standard/implementation boundary; NULL vs MAP_FAILED.',
+            answer: 'ISO C specifies malloc’s behavior (usable memory or NULL), not its mechanism; glibc-class implementations do use mmap for large blocks and brk/heap caches for small ones, but that is implementation policy — swap the libc or a threshold and it changes, so neither teaching nor code should rely on it. Failure returns: malloc → NULL; mmap → MAP_FAILED ((void*)-1). Treating mmap errors as NULL is the classic portability bug at this layer boundary.',
+          },
+        },
+        // [c0-lessons-end]
+      ],
+    },
+    {
       id: 'cc-c',
       number: '0.7.1',
       title: 'C Core Review',
       titleEn: 'C Core Review',
       icon: 'Terminal',
-      description: 'A systematic pass over the C you actually need for driver work, from first principles: compilation & linking, types & integers, pointers, strings, structs, memory lifetime, and function pointers. Each idea is taught from the ground up, then connected to real amdgpu code.',
+      description: 'A systematic REVIEW of the C you actually need for driver work: compilation & linking, types & integers, pointers, strings, structs, memory lifetime, and function pointers. If any of those words is new to you, start with 0.7.0 (C from Zero) and the C Preflight track in the Code Lab first.',
       lessons: [
         {
           id: 'cc-c-1',
@@ -324,7 +1037,7 @@ void dump_regs(uint32_t *regs, size_t count) {
             summary: 'A pointer is just "a variable that stores a memory address". Mastering address-of, dereference, pointer types, array decay, and output parameters is the bedrock for reading and writing any kernel code. (More advanced tricks like container_of are in Module 1.)',
             explanation: [
               'Address-of & and dereference *: &x gives the address of variable x; *p accesses the value at the address p holds. Pointers have types: int* and char* both store addresses, but dereferencing interprets that memory per its type (how many bytes to read, how to interpret them).',
-              'NULL and uninitialized pointers: NULL (an address whose value is 0) means "points to no object"; dereferencing it crashes. An uninitialized (wild) pointer points to a random address, and dereferencing it is UB — more dangerous than NULL because it may "happen not to crash".',
+              'NULL and uninitialized pointers: a null pointer means “points to no object”; dereferencing it is UB, commonly a crash but not guaranteed to fail in one particular way. An uninitialized (wild) pointer has an indeterminate value, and dereferencing it is also UB — often subtler because it may happen not to crash.',
               'Arrays and pointers: in most expressions an array name "decays" to a pointer to its first element, so arr[i] is equivalent to *(arr + i) and &arr[i] equals arr + i. But an array is not a pointer — sizeof(arr) is the whole array\'s size, while sizeof(p) is always one pointer\'s size (8 bytes).',
               'Output parameters: a C function can return only one value, so "write the result back to the caller through a pointer parameter" is the standard pattern. Kernel functions generally return an int error code (0 = success, negative -Exxx = failure) and pass the real result out via a pointer.',
               'Pointer arithmetic counts in elements, not bytes: p+1 advances by sizeof(*p) bytes, and subtracting two same-typed pointers yields an element count (type ptrdiff_t). That is also why void* has no arithmetic — it does not know its element size; for a byte view, convert to unsigned char* first, the one type the C standard guarantees may alias any object. Meet strict aliasing while you are here: accessing an object through an incompatible pointer type is UB (the *(u32*)&float_var pattern). The kernel builds with -fno-strict-aliasing to switch that optimizer assumption off, but userspace code should honestly use memcpy.',
@@ -332,7 +1045,7 @@ void dump_regs(uint32_t *regs, size_t count) {
             ],
             keyPoints: [
               'A pointer stores an address; *p reads/writes the pointee, &x takes the address',
-              'Dereferencing NULL always crashes; dereferencing a wild pointer is UB (often subtler)',
+              'Dereferencing NULL or a wild pointer is UB; either may crash or fail more subtly',
               'arr[i] ≡ *(arr+i); but sizeof(array) ≠ sizeof(pointer)',
               'Kernel convention: return an int error code, pass results out via pointer parameters',
               'Pointer arithmetic strides by element; unsigned char* is the only sanctioned universal byte view; reinterpret across types with memcpy, not pointer casts',
