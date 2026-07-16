@@ -97,6 +97,7 @@ export default function Home() {
             </div>
 
             <nav className="hidden xl:flex items-center gap-4 text-sm text-muted-foreground" aria-label="Main navigation">
+              <Link href="/code-lab" className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><Code2 className="w-3.5 h-3.5" aria-hidden="true" />{t("nav.codelab") || 'Code Lab'}</Link>
               <Link href="/labs" className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><FlaskConical className="w-3.5 h-3.5" aria-hidden="true" />{t("nav.labs") || 'Labs'}</Link>
               <Link href="/radar" className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><Radar className="w-3.5 h-3.5" aria-hidden="true" />{t("nav.radar") || 'Radar'}</Link>
               <Link href="/assessment" className="hover:text-foreground transition-colors cursor-pointer flex items-center gap-1.5"><ClipboardCheck className="w-3.5 h-3.5" aria-hidden="true" />{t("nav.assessment") || 'Assessment'}</Link>
@@ -173,6 +174,7 @@ export default function Home() {
           </div>
           <nav className="flex flex-col py-3" aria-label="Mobile navigation">
             {[
+              { href: "/code-lab", icon: Code2, label: t("nav.codelab") || "Code Lab" },
               { href: "/labs", icon: FlaskConical, label: t("nav.labs") || "Labs" },
               { href: "/radar", icon: Radar, label: t("nav.radar") || "Upstream Radar" },
               { href: "/assessment", icon: ClipboardCheck, label: t("nav.assessment") || "Assessment" },
