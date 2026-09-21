@@ -1,22 +1,157 @@
 {
-  "generatedAt": "2026-09-20T05:24:59.025Z",
+  "generatedAt": "2026-09-21T05:28:30.968Z",
   "windowDays": 14,
   "sources": {
     "gitlab": {
       "ok": true,
       "count": 150,
-      "totalOpen": 1796,
+      "totalOpen": 1802,
       "error": null,
       "url": "https://gitlab.freedesktop.org/drm/amd/-/issues"
     },
     "lore": {
       "ok": true,
-      "count": 125,
+      "count": 117,
       "error": null,
       "url": "https://lore.kernel.org/amd-gfx/"
     }
   },
   "issues": [
+    {
+      "iid": 4333,
+      "title": "Valve Index in bad state during shutdown/suspend sequence ( NO EDID until reconnect or reset)",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/4333",
+      "createdAt": "2025-06-17T13:14:16.194Z",
+      "updatedAt": "2026-09-21T04:59:51.647Z",
+      "labels": [
+        "6000 dGPU Series",
+        "DC"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 22,
+      "author": "Babble Bones",
+      "description": "## Brief summary of the problem:\namdgpu kernel driver confirmed, so far, on RDNA2 and RDNA3 type GPUs fails to actually find any display parameters until the replug of an HMD on boot or the very first plug into the system.\nSubsequently replugging the displayport or power cycling the unit makes the display parameters accessible.\n\nThis occurs on first plug as well so if the HMD is plugged into the system for the first time at runtime it must then be replugged or cycled to function.\n\nEDID file is null in sysfs and forcing EDID parameters in the kernel cmdline does not influence the outcome. Display still must be replugged.\n\nThis has been confirmed by multiple friends and LVRA members now and behavior appears to be a regression from some previous working state.\n\n## Hardware description:\n - CPU: Ryzen 7 7800X3D\n - GPU: Radeon Pro W6800\n - System Memory: 64GB\n - Display(s): 2 + Valve Index\n - Type of Display Connection: 1 miniDP -> dual link DVI active adapter, 1 DP monitor, 1 DP Valve Index HMD\n\n## System information:\n - Distro name and Version: Arch Linux\n - Kernel version: 6.14, 6.13, 6.15\n - Custom kernel: N/A\n - AMD official driver version: N/A\n\n## How to reproduce the issue:\n\n1. Boot system with HMD plugged in.\n2. dmesg will complain about a missing EDID at boot.\n3. Start monado or steamvr and observe the failure to acquire a display.\n4. Replug HMD or cycle power on it.\n5. Observe HMD now functional.",
+      "descriptionTruncated": false,
+      "patchMatches": [
+        {
+          "subject": "[PATCH] drm/amdgpu: skip the noirq suspend reset for a switcheroo-parked GPU",
+          "url": "https://lore.kernel.org/amd-gfx/20260917191512.38838-1-andersen.theo@gmail.com/",
+          "date": "2026-09-18T07:44:41Z",
+          "shared": [
+            "suspend",
+            "reset"
+          ]
+        }
+      ]
+    },
+    {
+      "iid": 5869,
+      "title": "RX 9070 XT (gfx1201): Ring gfx_0.0.0 reset failed → forced MODE1 / VRAM lost under vkd3d-proton",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5869",
+      "createdAt": "2026-09-20T14:04:50.289Z",
+      "updatedAt": "2026-09-20T22:14:57.356Z",
+      "labels": [],
+      "assigned": false,
+      "assignees": [],
+      "comments": 3,
+      "author": "maxivau",
+      "description": "**Brief summary of the problem:**\n\nRunning a sustained DirectX 12 workload (via vkd3d-proton) on the RX 9070 XT triggers a ring gfx_0.0.0 timeout that the driver cannot recover from with a soft/per-ring reset. The reset always fails (Ring gfx_0.0.0 reset failed, MES(1) failed to respond to msg=REMOVE_QUEUE, failed to unmap legacy queue), forcing a full MODE1 reset, which reports VRAM is lost due to GPU reset!. The desktop compositor (GNOME Shell/Xwayland) loses its GPU context and crashes with SIGABRT, killing the entire graphical session — even though the GPU itself does recover afterward (\"device wedged, but recovered through reset\").\n\nThis is fully reproducible: it has occurred in every sustained session over roughly a dozen occurrences, always exactly once per session, on three different kernels (Ubuntu HWE 7.0.0-30, and mainline stable builds up to 7.2.2). Onset is load-dependent rather than time-fixed — typically 20–90 minutes into a session. One dmesg line points at the likely root cause: The CPFW hasn't support pipe reset yet. — i.e. the current CP firmware doesn't support gfx12 pipe reset, so the driver has no soft-recovery path and must escalate straight to the VRAM-losing MODE1 reset.\n\n**Hardware description:**\n\n- CPU: AMD Ryzen 9 9950X3D 16-Core Processor\n- GPU: AMD Radeon RX 9070 XT \\[1002:7550\\] (also present: Ryzen 9950X3D iGPU \\[1002:13c0\\], unused/not involved in this bug)\n- System Memory: 64 GB\n- Display(s): 3 connected (DP-1, DP-2, HDMI-A-1)\n- Type of Displ",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5872,
+      "title": "RX 9070 XT (Navi 48) over USB4: pageflip timeout when set as primary display device — kernel 7.2.4-valve1",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5872",
+      "createdAt": "2026-09-20T20:40:33.972Z",
+      "updatedAt": "2026-09-20T20:40:33.972Z",
+      "labels": [],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "ZancudoRage",
+      "description": "When an RX 9070 XT is connected as an eGPU over USB4 and configured as the primary display device, KWin logs “Pageflip timed out! This is a bug in the amdgpu kernel driver” roughly once per second for \\~12 seconds, then tears down. The screen shows white, then black. The compositor never renders a frame.\n\nThe same GPU works correctly as a secondary render device on the same system.\n\nHardware\n\n● Lenovo Legion Go S (official SteamOS SKU), Ryzen Z1 Extreme, Phoenix1 iGPU at 0000:c3:00.0\n\n● AMD Radeon RX 9070 XT (Navi 48, gfx1201, ASRock) at 0000:09:00.0\n\n● AOOSTAR AG03 dock, USB4 (ASMedia 246x bridge)\n\n● Link status: LnkSta: Speed 32GT/s, Width x16\n\nSoftware\n\n● SteamOS 3.10, build 20260910.1000\n\n● Kernel: 7.2.4-valve1-1-neptune-72-g5ab4af5e2eb9\n\n● KWin/Wayland, Mesa radeonsi\n\n● Primary GPU set via all-ways-egpu (boot_vga flag + compositor variables)\n\nWhat works\n\n● Cold boot with dock attached: card enumerates, amdgpu binds cleanly\n\n● Thunderbolt auto-authorized, no manual step\n\n● DRI_PRIME=1 glxinfo returns: AMD Radeon RX 9070 XT (radeonsi, gfx1201, ACO, DRM 3.65, 7.2.4-valve1...)\n\n● Hot-plug into a running Desktop Mode session works\n\n● Full PCIe link speed and width\n\nWhat fails\n\nWith boot_vga set to 0000:09:00.0 and a display connected to the eGPU’s own output, the KWin session starts and immediately loops:\n\nkwin_wayland: Pageflip timed out! This is a bug in the amdgpu kernel driver\n\nkwin_wayland: Please report this at https://gitlab.freedesktop.org/drm/amd/-/issues\n\n \n\nAfter \\",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5861,
+      "title": "iMac 5K (17,1/18,3,...) firmware _BCL table caps backlight at 80% (400 nits instead of 500 nits)",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5861",
+      "createdAt": "2026-09-18T22:08:16.012Z",
+      "updatedAt": "2026-09-20T19:04:05.792Z",
+      "labels": [
+        "DC"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 3,
+      "author": "taprobane99",
+      "description": "I used a X-rite Colorimeter to verify that my 5K iMac has a max brightness in Linux of 400 nits, instead of 500 nits. Incidentally this is true whether using the mainline kernel 7.2/7.3, or one patched to offer 5K resolution.\n\nUsing the following I now get 500 nits brightness. How can this be made into a quirk? It probably affects all 5K iMacs.\n\nAlso, for anyone reading this with a 5K iMac, it would be good if you can dump your backlight data using the attached script to help understand this problem.\n\nWorkaround / Verification (ACPI Table Override):\n\nTo verify the hardware behavior, I created a script that overrides the GPU SSDT via an early-initrd CPIO archive (CONFIG_ACPI_TABLE_UPGRADE):\n\nExtracts & Disassembles: Dumps system ACPI tables and decompiles the graphics SSDT containing Method (ABCL).\n\nPatches Levels: Bumps the DefinitionBlock OEM revision by +1 and rewrites the package returned by ABCL from levels 1..80 to 4..100 (levels below 4 sit below macOS's usable floor (edit: not sure about this why not use 1).\n\nRecompiles & Injects: Recompiles the table with iasl, packages it into an uncompressed CPIO archive under kernel/firmware/acpi/, and sets GRUB to load it on early boot.\n\nResult:\n\nThe kernel successfully overrides the table on boot. Setting the backlight slider to 100% calls BSET(100), driving the PWM register to 65500 / 65535 (~99.9%) and restoring the panel's full native 500-nit luminance without issues.\n\n[AppleBrightnessTableDump.sh](/uploads/d4ffbda470210cb8c05",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5871,
+      "title": "[HawkPoint1/DCN 3.1.4] intermittent DMCUB stall during boot, backlight stuck at maximum",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5871",
+      "createdAt": "2026-09-20T16:40:31.054Z",
+      "updatedAt": "2026-09-20T16:40:31.054Z",
+      "labels": [],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "mhorst00",
+      "description": "## System\n\nLenovo ThinkPad T14 Gen 5 (21MDS2C800)\n\nGPU:\n\n```\nAMD HawkPoint1 [1002:1900] (rev d0)\nSubsystem: Lenovo [17aa:50ee]\n```\n\nBIOS:\n\n`R2LET40W (1.21), 2026-03-25\n`\n\nDistribution: ParticleOS, based on openSUSE Tumbleweed\n\nTested kernels:\n\n```\n7.2.4-1-default\n7.2.5-1-default\n7.2.6-1-default\n```\n\nThe issue reproduced with both:\n\n```\nkernel-firmware-amdgpu-20260829\nkernel-firmware-amdgpu-20260915\n```\n\nThe older failing captures report:\n\n```\nDisplay Core v3.2.384 initialized on DCN 3.1.4\nDMUB firmware: 0x08006000\nSMU firmware: 76.102.0\nVBIOS: 113-PHXGENERIC-001\n```\n\n## Problem\n\nSome boots enter a broken display state shortly after amdgpu display initialization.\n\nSymptoms:\n\n* internal eDP backlight is stuck at maximum brightness\n* brightness changes do not change the backlight\n* attempting to change brightness causes noticeable stalls/lag\n* kernel log continuously reports DMCUB/DMUB errors\n* suspend while already in this state has resulted in a black screen after resume\n\nThe problem is intermittent. Other boots with the same software work normally.\n\nThe DMCUB errors start during initial display setup, before any user brightness adjustment.\n\nTypical messages are:\n\n```\namdgpu 0000:c4:00.0: [drm] *ERROR* dc_dmub_srv_log_diagnostic_data: DMCUB error - collecting diagnostic data\n```\n\nand later:\n\n```\namdgpu 0000:c4:00.0: [drm] *ERROR* Error queueing DMUB command: status=2\n```\n\n## Detailed DMUB capture\n\nWith DRM debug logging enabled, a brightness operation on an affected boot produ",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5870,
+      "title": "[amdgpu] Oops: amdgpu_sync_add_later use-after-free (RX 9070 XT, 7.2.6)",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5870",
+      "createdAt": "2026-09-20T14:42:09.541Z",
+      "updatedAt": "2026-09-20T15:54:22.206Z",
+      "labels": [],
+      "assigned": false,
+      "assignees": [],
+      "comments": 4,
+      "author": "Mystical Maid",
+      "description": "Hi, Brave AI tells me (a Windows refugee gamer) via hours of discussion and troubleshooting, to report this gpu issue.  It has also advised me to set up gpu recover to stop full system lock during gaming, so it just crashes to desktop instead of forcing manual reboot, so done that and now bug reporting. I asked it to describe how to report this to you clearly.\n\n\\## Summary  Kernel oops (Oops: 0009) in \\`amdgpu_sync_add_later+0x1c\\` during Vulkan command buffer submission (\\`DRM_IOCTL_AMDGPU_CS\\`). Faulting read at offset 0x20 from a freed sync struct. GPU becomes unrecoverable — full system freeze, hard reboot required.  \n\n\\## Environment  - GPU: AMD Radeon RX 9070 XT (ASUS, PCI 0x1002:0x7550) - Kernel: 7.2.6-201.nobara.fc44.x86_64 - OS: Nobara Linux 44 (Fedora-based), Wayland/KWin 6.7.4 - BIOS: ASUS ROG STRIX Z690-F, 3802 - Taint: G OE (unsigned: razermouse)\n\n \\## Reproduction  - Sustained Vulkan rendering (Minecraft Java + Iris shaders, \\~1hr) - Also triggered by repeated launch/exit cycles (\\~10+ sessions) - Multiple occurrences in a single day \n\n\\## Full oops  (paste the entire raw oops block here)  \n\nPGD 5bba01067 P4D 5bba01067 PUD 104fb4063 PMD 17b66e063 PTE 800004017b4e2163 Oops: 0009 \\[#1\\] SMP NOPTI CPU: 12 UID: 1000 PID: 17221 Comm: java:cs0 Tainted: G OE 7.2.6-201.nobara.fc44.x86_64 #1 PREEMPT(lazy) 7d4b137b97f71840ab5399ba8f887f32b9546d87 Tainted: \\[O\\]=OOT_MODULE, \\[E\\]=UNSIGNED_MODULE Hardware name: ASUS System Product Name/ROG STRIX Z690-F GAMING WIFI, BIOS 380",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5868,
+      "title": "RX 9070 XT: HDMI disconnect/reconnect loop above 1080p, works fine on Windows",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5868",
+      "createdAt": "2026-09-20T11:38:38.285Z",
+      "updatedAt": "2026-09-20T15:25:46.077Z",
+      "labels": [],
+      "assigned": false,
+      "assignees": [],
+      "comments": 1,
+      "author": "Alex Ferm",
+      "description": "## Summary\n\nOn an AMD RX 9070 XT (RDNA4, DCN 4.0.1), HDMI output to a Samsung TV fails above 1080p — the display repeatedly disconnects/reconnects (\"searching for signal\" on the TV) and never holds a stable link at 1440p or 4K60, at either 8-bit or 10-bit color depth. The identical GPU, cable, and TV work correctly at full 4K60 under Windows with no issues.\n\n## System\n\n- GPU: AMD Radeon RX 9070 XT (RDNA4, device 0x7550)\n- Distro: CachyOS\n- Kernel: 7.2.6-1-cachyos\n- Mesa: 26.2.3-1\n- Desktop: KDE Plasma (Wayland), Plasma Login Manager\n- Display: Samsung TV, connected via native HDMI directly to the GPU (no adapter, dongle, or switch in the signal path; a soundbar is connected to the TV's separate ARC port, not in the video path)\n- Cable: single run, confirmed working at 1440p/4K on a different monitor over the same physical cable\n\n## Symptom\n\n- 1080p works reliably, at both 8-bit and 10-bit color depth.\n- 1440p and 4K60 both fail, at both 8-bit and 10-bit color depth.\n- Failure presents as repeated HDMI disconnect/reconnect cycling, and \"no signal.\" on TV.\n- This same GPU/cable/TV combination works at full 4K60 with no issues under Windows (AMD's proprietary driver), ruling out the cable, the TV's HDMI port, and the GPU's HDMI port as the root cause.\n\n## Already ruled out\n\n- **Cable**: works fine at 1440p/4K on a different monitor over the same physical cable.\n- **TV-side settings**: enabling the TV's \"HDMI UHD Color\" option made the problem worse (failed at an even lower resol",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5867,
+      "title": "amdgpu, suspend/resume, RX 6700 XT, affects linux-generic-7.0 package",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5867",
+      "createdAt": "2026-09-20T10:24:56.855Z",
+      "updatedAt": "2026-09-20T10:24:56.855Z",
+      "labels": [],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "Kevin O Connor",
+      "description": "Hardware: RX 6700 XT (RDNA2), amdgpu, X11/Cinnamon on Mint 22.3 Regression window: fails intermittently on 7.0.0-31-generic, rock-solid on 6.8.0-139-generic over multi-day testing Symptom: monitor fails to wake from sleep, intermittent First observed: shortly after 2026-09-11, coinciding with the 7.0.0-31 point release\n\n# fo\n\n```\n       PID: 8844 (sh)\n       UID: 1000 (kevin)\n       GID: 1000 (kevin)\n    Signal: 31 (SYS)\n Timestamp: Sat 2026-09-12 08:14:09 IST (4 days ago)\n```\n\nCommand Line: sh -c -- $'unset LD_PRELOAD; sed -n 's/PRETTY_NAME=\\\\(._\\\\)/\\\\1/p' /etc/_-release' Executable: /usr/bin/dash Control Group: /user.slice/user-1000.slice/session-c2.scope Unit: session-c2.scope Slice: user-1000.slice Session: c2 Owner UID: 1000 (kevin) Boot ID: 189d2688154b42ad989e93ceff570b53 Machine ID: 9d2f01b712b1465f9b1970ab70a7085d Hostname: System-Product-Name Storage: /var/lib/systemd/coredump/core.sh.1000.189d2688154b42ad989e93ceff570b53.8844.1789197249000000.zst (present) Size on Disk: 13.9K Message: Process 8844 (sh) of user 1000 dumped core.\n\n```\n            Stack trace of thread 8844:\n            #0  0x00007000cf591f37 n/a (/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 + 0x21f37)\n            #1  0x00007000cf58d2c8 n/a (/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 + 0x1d2c8)\n            ELF object binary architecture: AMD x86-64\n```\n\n# =================================================================== GDB Log\n\nwarning: core file may not match specified executable file. \\[New",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
     {
       "iid": 5723,
       "title": "[REGRESSION] AMDGPU internal display brightness reduced on Linux 7.2 with Ryzen 7 5700U on Lenovo IdeaPad 5 14ALC05",
@@ -240,23 +375,6 @@
       "comments": 0,
       "author": "Cifra Devynosto",
       "description": "## Brief summary of the problem:\n\nOn a PC with AMD Radeon RX 9070 XT (Navi 48, discrete GPU) connected via Ultra High Speed HDMI cable to an LG OLED TV (HDMI 2.1 sink, certified 1500 nits peak), the connector mode list exposed by amdgpu DC contains no 3840x2160 mode above 60 Hz. Modes like 2560x1440@120 and 1920x1080@120 are present and work correctly, which proves that the panel and \\>60 Hz timing path are functional — but the HDMI link is falling back to TMDS (Max TMDS Character Rate 600 MHz, per sink EDID) instead of training an FRL link. The sink's HF-VSDB explicitly advertises FRL up to 4 lanes @ 12 Gbps and VESA DSC 1.2a, both of which should allow 3840x2160@120.\n\nThe same PC, the same HDMI cable, and the same TV port successfully drive 3840x2160@120 @ 10-bit YCbCr444 HDR with VRR 40-120 Hz under Windows 11, so this is not a cable, sink, or physical-link limitation — the amdgpu FRL handshake with this particular sink fails.\n\nThe issue is reproduced at the DRM/sysfs level (the mode list in /sys/class/drm/card1-HDMI-A-1/modes already lacks 3840x2160@120), so KDE/KWin is not filtering anything out — it is simply being given no such mode by the driver.\n\nThe issue is persistent, not random. It reproduces on every boot with HDR on or off, with any color depth setting in KDE, and with the default Fedora 44 kernel (no custom amdgpu module parameters).\n\n## Hardware description:\n\n- CPU: AMD Ryzen 9 9950X3D 16-Core Processor (Zen 5, 16C/32T, with 2-CU iGPU present but unused for d",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5861,
-      "title": "iMac 5K (17,1/18,3,...) firmware _BCL table caps backlight at 80% (400 nits instead of 500 nits)",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5861",
-      "createdAt": "2026-09-18T22:08:16.012Z",
-      "updatedAt": "2026-09-19T08:59:36.145Z",
-      "labels": [
-        "DC"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 2,
-      "author": "taprobane99",
-      "description": "I used a X-rite Colorimeter to verify that my 5K iMac has a max brightness in Linux of 400 nits, instead of 500 nits. Incidentally this is true whether using the mainline kernel 7.2/7.3, or one patched to offer 5K resolution.\n\nUsing the following I now get 500 nits brightness. How can this be made into a quirk? It probably affects all 5K iMacs.\n\nAlso, for anyone reading this with a 5K iMac, it would be good if you can dump your backlight data using the attached script to help understand this problem.\n\nWorkaround / Verification (ACPI Table Override):\n\nTo verify the hardware behavior, I created a script that overrides the GPU SSDT via an early-initrd CPIO archive (CONFIG_ACPI_TABLE_UPGRADE):\n\nExtracts & Disassembles: Dumps system ACPI tables and decompiles the graphics SSDT containing Method (ABCL).\n\nPatches Levels: Bumps the DefinitionBlock OEM revision by +1 and rewrites the package returned by ABCL from levels 1..80 to 4..100 (levels below 4 sit below macOS's usable floor (edit: not sure about this why not use 1).\n\nRecompiles & Injects: Recompiles the table with iasl, packages it into an uncompressed CPIO archive under kernel/firmware/acpi/, and sets GRUB to load it on early boot.\n\nResult:\n\nThe kernel successfully overrides the table on boot. Setting the backlight slider to 100% calls BSET(100), driving the PWM register to 65500 / 65535 (~99.9%) and restoring the panel's full native 500-nit luminance without issues.\n\n[AppleBrightnessTableDump.sh](/uploads/d4ffbda470210cb8c05",
       "descriptionTruncated": true,
       "patchMatches": []
     },
@@ -1289,34 +1407,6 @@
       "description": "## Brief summary of the problem:\n\nWhen connected via HDMI, selecting a display mode which requires a YCbCr 4:2:0 signal will prevent the output from being displayed on the monitor.\n\nI have a mini PC that I use as a Smart TV box, connected to a Samsung UN65KU6290 TV. The TV, on the HDMI port that I use for this box, only supports YCbCr 4:2:0 for 4K output, as defined in its EDID data.\n\n```\n  YCbCr 4:2:0 Video Data Block:\n    VIC  96:  3840x2160   50.000000 Hz  16:9    112.500 kHz    594.000000 MHz\n    VIC  97:  3840x2160   60.000000 Hz  16:9    135.000 kHz    594.000000 MHz\n    VIC 101:  4096x2160   50.000000 Hz 256:135  112.500 kHz    594.000000 MHz\n    VIC 102:  4096x2160   60.000000 Hz 256:135  135.000 kHz    594.000000 MHz\n```\n\nEver since kernel 7.2, trying to output 3840x2160@60 causes the TV to display a \"No signal\" error. That mode works fine under kernel 7.1, and the current LTS kernel (`6.18.49-2-lts`) if I downgrade.\n\nFrom the perspective of the system, everything is fine, however. Connecting remotely using Sunshine/Moonshine reveals that the desktop is indeed rendering at the desired mode, and logs reveal no errors/warning, or that anything is improper. The system thinks the display works.\n\n## Hardware description:\n\n- CPU: AMD Ryzen 9 7940HS\n- GPU: AMD Radeon 780M Graphics (c5:00.0 VGA compatible controller \\[0300\\]: Advanced Micro Devices, Inc. \\[AMD/ATI\\] Phoenix1 \\[1002:15bf\\] (rev c1))\n- System Memory: 64GB\n- Display(s): Samsung UN65KU6290\n- Type of Display Conn",
       "descriptionTruncated": true,
       "patchMatches": []
-    },
-    {
-      "iid": 4333,
-      "title": "Valve Index in bad state during shutdown/suspend sequence ( NO EDID until reconnect or reset)",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/4333",
-      "createdAt": "2025-06-17T13:14:16.194Z",
-      "updatedAt": "2026-09-14T02:24:25.202Z",
-      "labels": [
-        "6000 dGPU Series",
-        "DC"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 20,
-      "author": "Babble Bones",
-      "description": "## Brief summary of the problem:\namdgpu kernel driver confirmed, so far, on RDNA2 and RDNA3 type GPUs fails to actually find any display parameters until the replug of an HMD on boot or the very first plug into the system.\nSubsequently replugging the displayport or power cycling the unit makes the display parameters accessible.\n\nThis occurs on first plug as well so if the HMD is plugged into the system for the first time at runtime it must then be replugged or cycled to function.\n\nEDID file is null in sysfs and forcing EDID parameters in the kernel cmdline does not influence the outcome. Display still must be replugged.\n\nThis has been confirmed by multiple friends and LVRA members now and behavior appears to be a regression from some previous working state.\n\n## Hardware description:\n - CPU: Ryzen 7 7800X3D\n - GPU: Radeon Pro W6800\n - System Memory: 64GB\n - Display(s): 2 + Valve Index\n - Type of Display Connection: 1 miniDP -> dual link DVI active adapter, 1 DP monitor, 1 DP Valve Index HMD\n\n## System information:\n - Distro name and Version: Arch Linux\n - Kernel version: 6.14, 6.13, 6.15\n - Custom kernel: N/A\n - AMD official driver version: N/A\n\n## How to reproduce the issue:\n\n1. Boot system with HMD plugged in.\n2. dmesg will complain about a missing EDID at boot.\n3. Start monado or steamvr and observe the failure to acquire a display.\n4. Replug HMD or cycle power on it.\n5. Observe HMD now functional.",
-      "descriptionTruncated": false,
-      "patchMatches": [
-        {
-          "subject": "[PATCH] drm/amdgpu: skip the noirq suspend reset for a switcheroo-parked GPU",
-          "url": "https://lore.kernel.org/amd-gfx/20260917191512.38838-1-andersen.theo@gmail.com/",
-          "date": "2026-09-18T07:44:41Z",
-          "shared": [
-            "suspend",
-            "reset"
-          ]
-        }
-      ]
     },
     {
       "iid": 5716,
@@ -2605,121 +2695,15 @@
       "description": "\n1. **Hardware:** Lenovo IdeaPad Slim 5 Pro 14AGP11, AMD Ryzen AI 9, Radeon 880M (gfx1150), BIOS T5CN19WW\n2. **OS/kernel:** Ubuntu 26.04, kernel 7.0.0-30-generic, GNOME on Wayland\n3. **Monitor:** https://www.dell.com/en-us/shop/dell-pro-32-plus-4k-usb-c-hub-monitor-p3225qe/apd/210-brjc/monitors-monitor-accessories, connection = USB-C to USB-C cable direct (no dock)\n4. **Reproduction steps:** connect monitor via USB-C, play video in Chrome (hardware acceleration on) for 10-20 minutes → hard freeze requiring power-cycle\n5. **Also note:** disconnecting the monitor's USB-C cable used to also instantly freeze the system\n6. **Workaround found:** disabling Chrome's hardware acceleration prevents the random freeze, not the one caused by unplugging USB-C\n7. **Diagnostics already ruled out:** persistent systemd journal + live-tailed log captured across multiple reproductions shows **zero** `amdgpu`/`drm`/GPU-reset trace at the point of freeze — log just stops mid-stream,\n8. **Already tried, no effect:** `amdgpu.dcdebugmask=0x10` (PSR disable) \n9. **Reference similar reports:** link https://gitlab.freedesktop.org/drm/amd/-/issues/1861 (same trigger pattern — USB-C DP monitor + Chromium — different AMD GPU generation) and mention the DSC-related issue https://gitlab.freedesktop.org/drm/amd/-/issues/3113 if your DSC test above turns out relevant",
       "descriptionTruncated": false,
       "patchMatches": []
-    },
-    {
-      "iid": 5713,
-      "title": "780M: Resume from s0ix: Blank screen, hang, `SMU: No response msg_reg: 1a resp_reg: 0`, `*ERROR* Failed to initialize parser -125!`, `*ERROR* [CRTC:369:crtc-0] hw_done or flip_done timed out` …",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5713",
-      "createdAt": "2026-08-29T00:49:32.708Z",
-      "updatedAt": "2026-09-02T18:11:13.797Z",
-      "labels": [
-        "BIOS",
-        "Phoenix / Hawk Point",
-        "s0ix"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 2,
-      "author": "Drei Eck",
-      "description": "### Short:\n\nAfter resume from s0ix, blank display, system hanged (maybe just on switching between different Linux virtual consoles), SysRq worked, kernel log contains amongst others:  \n* `SMU: No response msg_reg: 1a resp_reg: 0`\n* `Failed to disable gfxoff!`\n* `Failed to export SMU metrics table!`\n* `Ring gfx_0.0.0 reset failed`\n* `*ERROR* Failed to initialize parser -125!`\n* `*ERROR* [CRTC:369:crtc-0] hw_done or flip_done timed out`\n* `MES failed to respond to msg=REMOVE_QUEUE`\n* `amdgpu 0000:65:00.0: failed to unmap legacy queue`\n* `Mode2 reset failed!`\n\n### Long:\n\nI have a laptoi with AMD 8840U SoC with builtin AMD 780M GPU.\n\nI use(d) [vanilla Linux kernel 7.1.10 from kernel.org](https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.1.12.tar.xz), locally compiled (kernel configuration attached below).\n\nI use(d) X.org version 1.21.1.24 and Mesa version 26.2.1 installed from my distribution (Artix GNU/Linux) ([Artix' X.org](https://packages.artixlinux.org/packages/world/x86_64/xorg-server/), [Artix' Mesa](https://packages.artixlinux.org/packages/world/x86_64/mesa/)).\n\n*Most of the times, suspend to disk (S4) and resume, and modern standby  (s0ix) and resume work fine, sometimes on resume graphics and system crashes.*\n\nThis time, after resume from s0ix, screen stayed blank but system was not crashed completely; SysRq did still work this time as well as the Laptop's firmware Embedded Controller did still work (was able to toggle keyboard backlight by firmware interpreted `<Fn>",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5740,
-      "title": "[7.3-rc1 regression] HP OmniBook X Flip OLED stays black until VESA AUX luminance control is enabled",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5740",
-      "createdAt": "2026-09-02T12:22:29.091Z",
-      "updatedAt": "2026-09-02T12:58:43.497Z",
-      "labels": [
-        "DC",
-        "Strix / Kraken"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "David McKechnie",
-      "description": "Hardware:\n\n- HP OmniBook X Flip 14\n- subsystem 103c:8ea1\n- AMD GPU 1002:1902\n- internal 2880x1800 OLED eDP panel\n- Linux 7.2.2: works\n- Linux 7.3-rc1 / DC 3.2.392: internal OLED goes completely black when amdgpu takes over\n\nWhile black, DRM still reports eDP connected/enabled, DPMS On, active CRTC and a valid framebuffer.\n\nI tested the behaviour from:\n\ndrm/amd/display: Fix backlight control for luminance-capable OLED\n\nAfter amdgpu had loaded and the panel was black, I manually enabled VESA AUX panel luminance control via DPCD and set a target luminance. The OLED immediately came back on and displayed the existing framebuffer.\n\nThis seems to confirm that this HP panel requires the VESA AUX luminance path described by that patch.",
-      "descriptionTruncated": false,
-      "patchMatches": []
-    },
-    {
-      "iid": 5130,
-      "title": "Pageflip timed out! [Fedora 43 KDE Plasma / Radeon 780M]",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5130",
-      "createdAt": "2026-03-30T14:40:54.640Z",
-      "updatedAt": "2026-09-02T11:58:22.342Z",
-      "labels": [
-        "A+N",
-        "DC",
-        "Phoenix / Hawk Point"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 2,
-      "author": "Marko Totovski",
-      "description": "## Brief summary of the problem:\n\nComplete system freeze when going to sleep after idling.\n\n## Hardware description:\n\n**Lenovo Legion 5 15AHP10 laptop:**\n\n- CPU: AMD Ryzen 7 260 w/ Radeon 780M Graphics\n- GPU: \n- **VGA** compatible controller \\[0300\\]: NVIDIA Corporation GB206M \\[GeForce RTX 5060 Max-Q / Mobile\\] \\[10de:2d19\\] (rev a1) \\\n  **VGA** compatible controller \\[0300\\]: Advanced Micro Devices, Inc. \\[AMD/ATI\\] HawkPoint1 \\[1002:1900\\] (rev b6)\n- System Memory: 32 GiB of RAM\n- Display(s): Laptop screen\n\n## System information:\n\n- Distro name and Version: Fedora 43 KDE Plasma\n- Kernel version: 6.19.8-200.fc43.x86_64\n- Custom kernel: N/A\n- AMD official driver version: N/A\n\n## How to reproduce the issue:\n\nLeave system idling until it goes to sleep\n\n## Attached files:\n\n### Screenshots/video files\n\n\\[ TODO: For rendering errors, attach screenshots of the problem and (if possible) of how it should look. For freezes, it may be useful to provide a screenshot of the affected game scene. Prefer screenshots over videos. \\]\n\n### Log files (for system lockups / game freezes / crashes)\n\n- Dmesg log (full log):\n\n  [dmesg.log](/uploads/6b9210eee1190528ca8c7e8f7539a32e/dmesg.log)\n- journalctl system log:\n\n  [journalctl_system.log](/uploads/62b482ec9c52861e962c2a5954b9607f/journalctl_system.log)\n- journalctl --user-unit plasma-kwin_wayland\n\n  [pageflip_crash.log](/uploads/d6957dc36443a9066528a2378ad9106d/pageflip_crash.log)",
-      "descriptionTruncated": false,
-      "patchMatches": []
-    },
-    {
-      "iid": 5684,
-      "title": "amdgpu display core hangs in optc32_disable_crtc after HDMI hotplug, leads to full system hard-lock (RDNA3)",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5684",
-      "createdAt": "2026-08-24T11:15:39.109Z",
-      "updatedAt": "2026-09-02T11:16:50.139Z",
-      "labels": [
-        "7000 dGPU series",
-        "DC"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 3,
-      "author": "Scott Titus",
-      "description": "# amdgpu display core hangs in optc32_disable_crtc / generic_reg_wait after HDMI hotplug event, leading to full system hard-lock\n\n## Summary\n\n`kwin_wayland`'s atomic commit hangs indefinitely inside the amdgpu display core while disabling a CRTC (`optc32_disable_crtc` → `generic_reg_wait`), apparently triggered by an HDMI hotplug-detect (HPD) event from a downstream display in the HDMI chain. The hang first manifests as repeated kernel \"hung task\" warnings, later as a hard REG_WAIT timeout, at which point the compositor and the whole desktop lose all outputs. The GPU/kernel does not recover; the machine becomes fully unresponsive several hours later and requires a hard power-cycle. This has happened more than once, always overnight while the display was powered off.\n\n## Environment\n\n- GPU: AMD Radeon RX 7900 XTX (RDNA3, PCI 0000:03:00.0)\n- CPU: AMD Ryzen 7 7800X3D\n- Kernel: 7.2.0-1-cachyos (CachyOS's linux-cachyos package, latest available at time of incident)\n- Distro: CachyOS (Arch-based)\n- Desktop: KDE Plasma 6.7.4, KWin on Wayland\n- linux-firmware: 1:20260810-2\n- Display chain: GPU --HDMI--\\> Denon AVR (left in standby, HDMI passthrough active, EDID reports as \"DENON-AVR\") --HDMI passthrough--\\> Sony 65\" TV (actual display). Resolution 3840x2160 @ 60Hz HDR, 2x scaling.\n- The TV was switched off (source itself, not just standby) at approximately 21:30 the evening before the incident. The hang began roughly 3.5 hours later, consistent with a periodic HDMI re-handshake/EDID ",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 3731,
-      "title": "Random graphics freeze (Framework 16 - 780M/7700S combo)",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/3731",
-      "createdAt": "2024-11-02T16:18:45.680Z",
-      "updatedAt": "2026-09-02T09:40:24.112Z",
-      "labels": [
-        "7000 dGPU series",
-        "Phoenix / Hawk Point",
-        "hang/freeze"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 14,
-      "author": "Neal Gompa (ニール・ゴンパ)",
-      "description": "## Brief summary of the problem:\nI was navigating around between Element and Firefox and my desktop went to a black screen and then reloaded completely frozen.\n\n## Hardware description:\n - CPU: AMD Ryzen 9 7940HS w/ Radeon 780M Graphics\n - GPU: AMD Phoenix1 (780M?) / AMD Navi 33 (7700S?)\n - System Memory: 64GB\n - Display(s): Sceptre P30 (operating at 2560x1080 at 60Hz)\n - Type of Display Connection: HDMI\n\n## System information:\n - Distro name and Version: Fedora Linux 40 (KDE Plasma)\n - Kernel version: 6.10.12-200.fc40.x86_64 \n - Custom kernel: N/A\n - AMD official driver version: N/A\n\n## How to reproduce the issue:\n\nI do not know exactly how to reproduce it, it happens randomly as I work. \n\n## Attached files:\n\n### Log files (for system lockups / game freezes / crashes)\n\n#### Kernel log\n\n```\nNov 02 11:45:49 Skuld-Framework kernel: [drm:amdgpu_job_timedout [amdgpu]] *ERROR* ring gfx_0.0.0 timeout, signaled seq=63866456, emitted seq=63866458\nNov 02 11:45:49 Skuld-Framework kernel: [drm:amdgpu_job_timedout [amdgpu]] *ERROR* Process information: process firefox pid 5053 thread firefox:cs0 pid 5166\nNov 02 11:45:49 Skuld-Framework kernel: amdgpu 0000:c5:00.0: amdgpu: GPU reset begin!\nNov 02 11:45:51 Skuld-Framework kernel: amdgpu 0000:c5:00.0: amdgpu: MES failed to respond to msg=REMOVE_QUEUE\nNov 02 11:45:51 Skuld-Framework kernel: [drm:amdgpu_mes_unmap_legacy_queue [amdgpu]] *ERROR* failed to unmap legacy queue\nNov 02 11:45:51 Skuld-Framework kernel: [drm:gfx_v11_0_hw_fini [amdgpu]",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5712,
-      "title": "Pageflip timed out on 8945HS / 780M",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5712",
-      "createdAt": "2026-08-28T21:55:36.521Z",
-      "updatedAt": "2026-09-02T09:39:58.296Z",
-      "labels": [
-        "DC",
-        "Phoenix / Hawk Point",
-        "page flip timeout"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 1,
-      "author": "jansol",
-      "description": "## Brief summary of the problem:\n\nDisplay froze while scrolling through WiFi settings. Laptop still responded via SSH so I checked the journal and it told me to file a bug report. On a quick scan seems similar to #5130 and #3731 \n\n## Hardware description:\n\n- CPU:\n\n  ```\n  vendor_id\t: AuthenticAMD\n  cpu family\t: 25\n  model\t\t: 117\n  model name\t: AMD Ryzen 9 8945HS w/ Radeon 780M Graphics\n  stepping\t: 2\n  ```\n- GPU:\n\n  ```\n  01:00.0 VGA compatible controller [0300]: NVIDIA Corporation AD106M [GeForce RTX 4070 Max-Q / Mobile] [10de:2860] (rev a1)\n  65:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] HawkPoint1 [1002:1900] (rev cb)\n  ```\n- System Memory: 32 GiB LPDDR5\n- Display(s): laptop builtin\n- Type of Display Connection: eDP\n\n## System information:\n\n- Distro name and Version: NixOS 26.11 (Zokor) (nixos-unstable)\n- Kernel version: Linux 6.18.45 #1-NixOS SMP PREEMPT_DYNAMIC  x86_64 GNU/Linux\n- Custom kernel: N/A\n- GPU driver info (as per `vulkaninfo --summary`):\n\n  ```\n  GPU0:\n  \tapiVersion         = 1.4.354\n  \tdriverVersion      = 26.2.1\n  \tvendorID           = 0x1002\n  \tdeviceID           = 0x1900\n  \tdeviceType         = PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU\n  \tdeviceName         = AMD Radeon 780M Graphics (RADV PHOENIX)\n  \tdriverID           = DRIVER_ID_MESA_RADV\n  \tdriverName         = radv\n  \tdriverInfo         = Mesa 26.2.1\n  \tconformanceVersion = 1.4.5.3\n  GPU1:\n  \tapiVersion         = 1.4.329\n  \tdriverVersion      = 595.45.4.0\n  \tvendorID     ",
-      "descriptionTruncated": true,
-      "patchMatches": []
     }
   ],
   "patches": [
+    {
+      "subject": "[PATCH] drm/amd/display: fix dml-wrapper file discovery for out-of-tree builds",
+      "url": "https://lore.kernel.org/amd-gfx/20260920123555.1843011-1-Prike.Liang@amd.com/",
+      "date": "2026-09-20T12:37:05Z",
+      "author": "Prike Liang"
+    },
     {
       "subject": "[PATCH] drm/amdgpu/userq: reserve the VM root BO around CWSR param validation",
       "url": "https://lore.kernel.org/amd-gfx/20260918200444.450067-1-James.Zhu@amd.com/",
@@ -2953,12 +2937,6 @@
       "url": "https://lore.kernel.org/amd-gfx/20260917185311.195635-1-jinhuieric.huang@amd.com/",
       "date": "2026-09-17T18:53:34Z",
       "author": "Eric Huang"
-    },
-    {
-      "subject": "[PATCH] drm/amdgpu: Add pci_domain to struct kfd_dbg_device_info_entry",
-      "url": "https://lore.kernel.org/amd-gfx/20260917183220.622058-1-lancelot.six@amd.com/",
-      "date": "2026-09-17T18:32:48Z",
-      "author": "Lancelot SIX"
     }
   ]
 }
