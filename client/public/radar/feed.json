@@ -1,22 +1,433 @@
 {
-  "generatedAt": "2026-10-05T12:16:38.420Z",
+  "generatedAt": "2026-10-06T12:01:46.061Z",
   "windowDays": 14,
   "sources": {
     "gitlab": {
       "ok": true,
       "count": 150,
-      "totalOpen": 1855,
+      "totalOpen": 1853,
       "error": null,
       "url": "https://gitlab.freedesktop.org/drm/amd/-/issues"
     },
     "lore": {
       "ok": true,
-      "count": 95,
+      "count": 99,
       "error": null,
       "url": "https://lore.kernel.org/amd-gfx/"
     }
   },
   "issues": [
+    {
+      "iid": 5941,
+      "title": "KCQ enable failed / gfx_v10_0 resume failure (-110) after hibernate and s2idle suspend on Ryzen 3 7320U (Mendocino)",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5941",
+      "createdAt": "2026-10-05T21:02:48.463Z",
+      "updatedAt": "2026-10-06T11:48:53.458Z",
+      "labels": [
+        "Mendocino",
+        "S4",
+        "s0ix"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 3,
+      "author": "Vaibhav Shukla",
+      "description": "## \n\nBoth hibernate (`systemctl hibernate` and a direct `/sys/power/state` write) and plain suspend (`systemctl suspend`, s2idle) fail identically on this laptop. The system becomes unresponsive (black screen, no input response) and requires a hard reboot (SysRq REISUB). The common failure point in every case is the GPU (`gfx_v10_0`) failing to resume: its KCQ (Kernel Compute Queue) does not come back up, and the device ends up wedged.\n\nThis reproduces identically across Fedora 44 (kernel 7.2.7-200.fc44.x86_64) and Ubuntu 24.04 (kernel 6.14.0-37-generic), so it does not appear to be distro-specific.\n\n## Hardware\n\n* Laptop: Dell Inspiron 3535\n* CPU/APU: AMD Ryzen 3 7320U (\"Mendocino\")\n* GPU: integrated, PCI ID `1002:1506`\n* BIOS version: `<paste output of: sudo dmidecode -s bios-version>`\n* RAM: 7GB usable\n\n## Software\n\n* Kernel (Fedora): 7.2.7-200.fc44.x86_64\n* Also reproduced on Ubuntu 24.04, kernel 6.14.0-37-generic\n* `cat /sys/power/mem_sleep` → `[s2idle]` only, no `deep` (S3) option available at all on this firmware\n* amdgpu.gpu_recovery=1 is set on the kernel cmdline\n\n## Steps to reproduce\n\n1. `sudo systemctl suspend` (s2idle) — screen goes black, system never resumes, requires hard reboot.\n2. `sudo systemctl hibernate` — same result.\n3. Direct kernel test, bypassing systemd entirely: `echo disk | sudo tee /sys/power/state` — same result.\n4. Also tried forcing `SuspendState=freeze` via `/etc/systemd/sleep.conf.d/freeze.conf` — kernel still logged `PM: suspend entry (s2id",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5857,
+      "title": "[RX 7600 / Navi 33] DisplayPort monitor not rediscovered after disconnect; repeated dal_gpio_service_open WARN on HPD — kernel 7.2.5",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5857",
+      "createdAt": "2026-09-17T21:02:48.106Z",
+      "updatedAt": "2026-10-05T23:27:05.122Z",
+      "labels": [
+        "7000 dGPU series",
+        "DC"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 4,
+      "author": "John Calcote",
+      "description": "## System\n\nFedora Linux 44 x86_64\\\nKernel: 7.2.5-200.fc44.x86_64\\\nDesktop: KDE Plasma 6.7.5 / Wayland\\\nGPU: AMD Radeon RX 7600 (Navi 33)\\\nDriver: amdgpu\\\nMotherboard: Gigabyte Z790 AORUS ELITE AX\\\nTwo monitors connected to the RX 7600.\n\nThe system also has Intel UHD Graphics 770 (i915), but the monitors are connected to the RX 7600.\n\n## Problem\n\nOne of my two monitors became disconnected from the system. Previously, power-cycling the monitor was sufficient for it to be rediscovered by Plasma/AMDGPU.\n\nThis time, power-cycling the monitor did not restore it. Physically disconnecting and reconnecting the DisplayPort cable at the RX 7600 also did not restore it.\n\nThe problem appears to be below KDE/KWin. DRM reports only one connected display:\n\n`/sys/class/drm/card2-DP-2/status              connected\n/sys/class/drm/card2-DP-3/status              disconnected\n/sys/class/drm/card2-DP-4/status              disconnected\n/sys/class/drm/card2-HDMI-A-3/status          disconnected\n/sys/class/drm/card2-Writeback-1/status       unknown\n`\n\n`card2` is the RX 7600:\n\n`/sys/bus/pci/drivers/amdgpu\n03:00.0 VGA compatible controller: Advanced Micro Devices, Inc. [AMD/ATI] Navi 33 [Radeon RX 7600/7600 XT/7600M XT/7600S/7700S / PRO W7600] (rev cf)\n`\n\nI attempted to force connector detection with:\n\n`echo detect | sudo tee /sys/class/drm/card2-DP-3/status\necho detect | sudo tee /sys/class/drm/card2-DP-4/status\n`\n\nBoth remained `disconnected`.\n\nI then ran `dmesg -w` while physically unplugging and rec",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5779,
+      "title": "amdgpu/DC: EDID override is ignored when a hardware sink's EDID read returns `EDID_NO_RESPONSE`",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5779",
+      "createdAt": "2026-09-08T02:28:20.266Z",
+      "updatedAt": "2026-10-05T21:55:36.924Z",
+      "labels": [
+        "9000 dGPU series",
+        "DC"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 5,
+      "author": "Curtis Vogt",
+      "description": "## Brief summary of the problem:\n\namdgpu's Display Core supports the DRM EDID override layer (`drm.edid_firmware` / `edid_override`), but only consults it when it is _not_ doing its own hardware read. When it detects a present sink it reads the EDID over the wire (via `dm_helpers_read_local_edid`), and if that read returns `EDID_NO_RESPONSE` (logged as `EDID err: 2`) it synthesises a fallback mode rather than falling back to the override configured by the user. So `drm.edid_firmware=<conn>:<file>` (or debugfs `edid_override`) has no effect in the scenario where a user would reach for it: a present sink whose hardware EDID read failed. The override does take effect if the connector is also forced on via `video=<conn>:e` or `DRM_FORCE_ON`.\n\nI hit this issue when using a Valve Index HMD, whose EDID EEPROM stops answering after a DisplayPort PHY disable (a headset-side defect, filed [separately](https://github.com/ValveSoftware/SteamVR-for-Linux/issues/939)). However, the behavior is not specific to that device: it affects any AMD user trying to override a bad, empty, or unreadable EDID on a sink that is otherwise present.\n\n## Requested fix:\n\n**Respect the configured EDID override whenever it is set.** When a user has configured `drm.edid_firmware=<conn>:<file>` or a debugfs `edid_override`, DC should serve it and skip the hardware read. This is the behavior the generic DRM path (`drm_edid_read()` / `drm_edid_read_ddc()`) already gives to every other driver, and that amdgpu itsel",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5846,
+      "title": "[AMDGPU] Desktop Environment crash. Pageflip timed out!",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5846",
+      "createdAt": "2026-09-16T07:25:22.080Z",
+      "updatedAt": "2026-10-05T21:44:45.418Z",
+      "labels": [
+        "7000 dGPU series",
+        "DC",
+        "page flip timeout"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 6,
+      "author": "Stefan Harders",
+      "description": "#### Brief summary of the problem:\n\nWhen playing Deadlock sometimes (can not willingly reproduce) my desktop crashes. Most running application close. Desktop Environment restarts and comes back after a short while. My Browser does not seem to fully close, but Discord, Deadlock and pretty much everything else running does. The Error message I got from journalctl told me to report it here. I do not have this issue with any other game I have played over the last bit of time. (FF14, Epic Seven, Deadlock is the only one I run fullscreen though)\n\n#### Hardware description:\n\nCPU: AMD Ryzen 9 9950X (32) @ 5.76 GHz \n\nGPU: AMD Radeon RX 7900 XTX \\[Discrete\\] \n\nSystem Memory: 60 GB\n\nDisplay(s): Asus VG27AQL5A and Samsung Odyssey G9 LC49G95T. G9 is Main.\n\nType of Display Connection: DP both\n\n#### System information: \n\nDistro name and Version: Linux 7.2.5-1-cachyos \n\nKernel version: Linux Cachy-Lara 7.2.5-1-cachyos #'1 SMP PREEMPT_DYNAMIC Sun, 13 Sep 2026 08:30:47 +0000 x86_64 \n\nGNU/LinuxAMD official driver version: Mesa 26.2.2-arch3.2\n\n#### How to reproduce the issue:\n\nI can't quite do that. I can just start Deadlock and play and sometimes everything dies, sometimes I can play a whole evening without it happening and sometimes I can not play at all because it happens 5 times in the first match I play.\n\n#### Attached files:\n\nsudo dmesg -T output:\n\n[dmesg](/uploads/07469f6d292dfb1051e6d0189f818c1d/dmesg)\n\njournalctl --user-unit plasma-kwin_wayland --boot 0 output:\n\n[journalctl](/uploads/6e",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5923,
+      "title": "[gfx1036] GPU memory writes vanish after idle with agent-scope dispatch fences",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5923",
+      "createdAt": "2026-10-02T09:41:01.336Z",
+      "updatedAt": "2026-10-05T19:21:42.967Z",
+      "labels": [
+        "Raphael / Granite Ridge",
+        "amdkfd"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 7,
+      "author": "Tim Besard",
+      "description": "While testing out Julia's AMDGPU.jl package on the APU of my AMD 9950x CPU, I encountered data corruption issues that would only be remedied by setting `AMD_OPT_FLUSH=0`. That's not ideal, so I had my LLM investigate the underlying cause. Although the diagnosis looks reasonable, I'm not familiar with AMD hardware or its driver stack, so I can only verify as much as I can... In any case, a non-Julia reproducer is included, faithfully reproducing the issue.\n\nPlease let me know what else I can provide. I'd also be happy to let an agent try out potential fixes, so feel free to suggest any (e.g. kernel patches), but I didn't want to pollute the trackers here or on other repositories with slop PRs so I refrained from doing that right now.\n\n## Problem\n\nOn the integrated RDNA2 GPU of a Ryzen 9 9950X (gfx1036, PCI `1002:13c0`), a kernel's writes to GPU-allocated memory can silently disappear when the GPU is idle for about 200 µs before host synchronization. A subsequent system-scope HSA barrier does not recover the values. The result can be stale data with no HIP/HSA error or GPU reset.\n\nThis reproduces with direct HSA AQL dispatches, outside Julia and HIP launch code. System-scope **release on the kernel dispatch** prevents it. GFX profiling modes that ungate the GFX block also prevent it, while disabling GFXOFF alone does not. I suspect a GFX clock gating/cache interaction in the driver, firmware, or hardware, but cannot distinguish those layers yet.\n\nOther gfx1036 reports such as [",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5395,
+      "title": "drm-resident-vram shows impossibly high VRAM usage",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5395",
+      "createdAt": "2026-06-16T05:50:18.352Z",
+      "updatedAt": "2026-10-05T17:08:35.712Z",
+      "labels": [],
+      "assigned": false,
+      "assignees": [],
+      "comments": 8,
+      "author": "Leseratte10",
+      "description": "## Brief summary of the problem:\n\nI'm using the 3rd-party tool [amdgpu_top](https://github.com/Umio-Yasuno/amdgpu_top) to monitor the usage of my GPU. I have noticed that the per-application VRAM usage amount is vastly wrong, for example, on a card with only 24GB of VRAM, it reports that multiple applications would be using 40+GB each.\n\nI've reported this bug [to the developer](https://github.com/Umio-Yasuno/amdgpu_top/issues/167), who told me that this is most likely a driver bug and I need to report it here.\n\nThis app uses the drm-resident-vram key under /proc/x/fdinfo/* to determine VRAM usage per process, and I can confirm that that shows the same (too high) amount as the application.\n\n## Hardware description:\n - CPU: Intel i9-9900K\n - GPU: AMD Radeon RX 7900 XTX (`Advanced Micro Devices, Inc. [AMD/ATI] Navi 31 [Radeon RX 7900 XT/7900 XTX/7900 GRE/7900M] [1002:744c] (rev c8)`)\n - System Memory: 64 GB\n\n## System information:\n - Distro name and Version: Debian 13\n - Kernel version: 7.0.10+deb13-amd64\n - Custom kernel: N/A, straight from debian backports (7.0.10-1~bpo13+1)\n - AMD official driver version: N/A\n\n## How to reproduce the issue:\n\n- Start affected processes (like firefox-esr) and do something that uses the GPU a lot, like opening a bunch of youtube tabs.\n- Eventually, the key `drm-resident-vram`, which I understand is supposed to show the amount of VRAM currently actively in use by a particular application, shows way more VRAM than my GPU even has.\n\n## Attached fil",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5788,
+      "title": "gfx1152 / GC 11.5.2 (Krackan, Ryzen AI 7 350): mes_kiq_3.1.0 ring test fails (-110) on hibernate (S4) resume; gfx_v11_0 resume fails; MODE2 reset recovers hardware, session is lost",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5788",
+      "createdAt": "2026-09-09T06:36:04.410Z",
+      "updatedAt": "2026-10-05T16:54:12.458Z",
+      "labels": [
+        "S4",
+        "Strix / Kraken"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 1,
+      "author": "Tamer Avci",
+      "description": "Framework Laptop 13, AMD Ryzen AI 7 350 (Radeon 860M, gfx1152, GC 11.5.2). Hibernate (S4) resume intermittently fails: the MES KIQ ring test times out before any queue op, `gfx_v11_0` IP-block resume fails, `amdgpu_device_ip_resume` returns -110, in-flight SDMA then times out, the driver invokes a GPU reset, MODE2 succeeds, VRAM is lost, and the graphical session does not survive. System needs a hard reboot.\n\nSame chip and signature class as #5376 (runtime MES-ring-full display freeze) and `ROCm/legacy-rocm-build#5844` (runtime MES `MISC` hang), but this report is for the **S4 resume KIQ init path**. I have 22 devcoredumps captured by a udev auto-capture trap since 2026-05-28.\n\n## Configuration\n\n- Framework Laptop 13, BIOS 03.05\n- AMD Ryzen AI 7 350 / Radeon 860M\n- Arch Linux, kernel 7.0.9-arch2-1\n- All 12 linux-firmware packages at 20260519-1\n- Mesa 26.1.5, Hyprland 0.56.0-2\n- PCI `1002:1114`, subsystem `f111:000b`\n- Dump headers: GC 11.5.2, SDMA0 6.1.2, DCN 3.5.0, MES FW `0x88`\n- LUKS on Btrfs, swapfile resume, systemd `suspend-then-hibernate`, 15-min delay\n- Kernel cmdline: `amdgpu.ip_block_mask=0xfffff7ff amdgpu.gpu_recovery=1 amdgpu.noretry=0 amdgpu.sg_display=0 amdgpu.cwsr_enable=0`\n- `/sys/power/pm_async` pinned to `0`\n\n## Captured failure, 2026-09-07 21:20:24 PDT\n\n```\nACPI: PM: Waking up from system sleep state S4\namdgpu 0000:c1:00.0: PSP is resuming...\namdgpu 0000:c1:00.0: SMU is resuming...\namdgpu 0000:c1:00.0: SMU is resumed successfully!\namdgpu 0000:c1:00.0: [drm:",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5932,
+      "title": "[amdgpu][DC] Shutdown hangs every time when a monitor is connected through a USB4 dock (DMUB HPD RX IRQ), regression 7.1.8 -> 7.2.8",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5932",
+      "createdAt": "2026-10-03T18:12:57.705Z",
+      "updatedAt": "2026-10-05T14:54:57.376Z",
+      "labels": [
+        "DC",
+        "Strix / Kraken",
+        "usb4"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 1,
+      "author": "lunapura",
+      "description": "## Brief summary of the problem:\n\nOn kernel 7.2.8, shutdown hangs every time (a forced power off is needed) when an external monitor is connected through a Lenovo ThinkPad USB4 5000 dock. The dock is connected to the laptop via USB4 and the monitor is on the dock's DisplayPort. If only the monitor's DP cable is unplugged from the dock, shutdown completes normally. On another install with kernel 7.1.8 (believed), the same dock and monitor never hang.\n\nPossibly related to #5931 (boot-time kernel panic in dp_parse_link_loss_status with the same dock and monitor, in the same amdgpu HPD RX IRQ path).\n\nFindings so far (all with the same dock and monitor):\n- Without the dock: no hang.\n- Dock connected via USB4 with the monitor on the dock's DP: hangs on every shutdown (no exception so far).\n- Dock connected via USB4, but the monitor's DP cable unplugged from the dock: shutdown is normal.\n- Booted with the dock and monitor connected, then unplugged the dock before shutting down: still hangs (tested earlier).\n- Running `niri msg output \"Dell Inc. AW2725QF\" off` before shutting down: shutdown completed normally (tried only once).\n- 7.1.8 (believed) on another install (Arch + Hyprland): no hang.\n\nThe journal of a hung shutdown ends right after systemd-shutdown sends SIGTERM and journald stops, so nothing more is logged. The last lines were (MAC address masked):\n\n```\namdgpu 0000:c3:00.0: [drm] DMUB HPD RX IRQ callback: link_index=7   (repeated many times)\nwlp194s0: deauthenticating from ",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5931,
+      "title": "[amdgpu][DC] stack-protector panic in dp_parse_link_loss_status (HPD RX IRQ) when external monitor via USB4 dock comes up - 7.2.8",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5931",
+      "createdAt": "2026-10-03T17:11:21.487Z",
+      "updatedAt": "2026-10-05T14:40:18.203Z",
+      "labels": [
+        "DC",
+        "Strix / Kraken",
+        "usb4"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 1,
+      "author": "lunapura",
+      "description": "## Brief summary of the problem:\n\nOn a ThinkPad with a Lenovo ThinkPad USB4 5000 dock (connected via USB4), the kernel panicked at boot with \"stack-protector: Kernel stack is corrupted in: dp_parse_link_loss_status+0x158/0x160\" at the moment the external display (connected to the dock's DisplayPort) was being brought up. The internal display had been working normally until then.\n\nFrequency: happened once. It was the first boot after a shutdown where I had run `niri msg output \"Dell Inc. AW2725QF\" off` before powering off (a workaround for the shutdown hang described below). I have never seen this panic in many earlier boots with the same dock and monitor. I don't know whether the \"output off\" is related.\n\nAbout 25 s after boot, a burst of \"DMUB HPD RX IRQ callback: link_index=8\" (roughly every 5 ms) and \"pre_validate_dsc:1821 MST_DSC crtc[1] needs mode_change\" appeared, then:\n\n```\nKernel panic - not syncing: stack-protector: Kernel stack is corrupted in: dp_parse_link_loss_status+0x158/0x160\nCPU: 10 UID: 0 PID: 121 Comm: kworker/u64:2 Not tainted 7.2.8-1-cachyos #1 PREEMPT(full)\nHardware name: LENOVO 21RMCTO1WW/21RMCTO1WW, BIOS R32ET27W (1.10) 03/23/2026\nWorkqueue: amdgpu_dm_hpd_wq dm_handle_hpd_work [amdgpu]\n```\n\nCall trace (transcribed by hand from the attached photo, may contain typos):\n\n```\npanic -> __stack_chk_fail -> dp_parse_link_loss_status -> dp_handle_hpd_rx_irq\n-> handle_hpd_rx_irq -> dmub_hpd_callback -> dm_handle_hpd_work\n```\n\n(core_link_read_dpcd also appears as",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5929,
+      "title": "ThinkPad P14s Gen 6 AMD (Krackan Point): system never resumes from s2idle with IOMMU enabled",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5929",
+      "createdAt": "2026-10-03T12:55:36.416Z",
+      "updatedAt": "2026-10-05T14:35:55.750Z",
+      "labels": [
+        "Strix / Kraken",
+        "s0ix"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 1,
+      "author": "Fredrik Stipps",
+      "description": "## Brief summary of the problem:\n\nWith IOMMU enabled (default or iommu=pt), the system enters s2idle (power LED blinks as expected) but never resumes. No wake source works (power button, lid, keyboard). Only a forced power-off recovers it.\n\nThe issue is 100% reproducible on every suspend attempt, on both the current and the LTS kernel. BIOS is the latest available.\n\nFindings so far:\n\n- /sys/power/pm_test \"devices\" and \"platform\" both resume fine; the hang only occurs once the SoC actually enters hardware sleep.\n- Unloading mt7925e before suspend: no change.\n- amd_iommu=off: suspend/resume works reliably when undocked (attached amd-s2idle report: 66% HW sleep, no failures). With a USB4/TB dock attached, the system wakes immediately, and the dock no longer works (expected without IOMMU).\n- IVRS contains IVMD exclusion ranges for C1:00.0 (NVMe) and C4:00.7 (no such device present), possibly relevant.\n- The amd-s2idle run shows gpe14 increasing from 905 to 1179 during a 12 s cycle.\n- Same symptoms reported by other users of this model: https://bbs.archlinux.org/viewtopic.php?id=313173 https://www.reddit.com/r/thinkpad/comments/1rzzd0c/\n\n## Hardware description:\n\n- Lenovo ThinkPad P14s Gen 6 AMD (21QL), Ryzen AI 7 PRO 350 (family 1a model 60)\n- BIOS R2XET42W (1.22), 2026-09-07, EC 1.12\n- PMFW 101.26.0\n- WLAN: MediaTek MT7925 (mt7925e)\n- amd_s2idle report: attached (captured with amd_iommu=off, since with IOMMU enabled the system never resumes and no report can be written)\n\n## Syst",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5927,
+      "title": "RX 6800: ring sdma2 timeout under ROCm load, fence value comes back with bit 31 set",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5927",
+      "createdAt": "2026-10-03T06:09:42.072Z",
+      "updatedAt": "2026-10-05T14:01:37.797Z",
+      "labels": [
+        "6000 dGPU Series",
+        "amdkfd"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "安龙",
+      "description": "## Brief summary of the problem:\n\nRX 6800 running ComfyUI on ROCm (torch 2.12+rocm7.2) hangs with `ring sdma2\ntimeout` a few minutes into a run, sometimes already while models are being\nloaded. The ring reset says it succeeded, the same job times out again 2 s\nlater, KFD can't preempt the compute queues and we end up in a MODE1 reset\nthat takes the desktop with it.\n\nBackground: I got the card in 2022 and it was fine on Arch with whatever\nthe current kernel was back then. Some time in 2023 it started throwing random\n`[gfxhub] page fault` + gfx/compute timeouts under load, the RDNA2 thing the\nArch wiki talks about, and I've been running it with a capped core clock ever\nsince. Windows runs the same card at stock clocks without trouble. Since\n7.0.x the failure I actually see is the sdma2 timeout below, cap or no cap. I have it on\n7.0.5, 7.2.0, 7.2.6 and 7.2.8, linux-firmware 20260916.\n\nThe interesting part is that it is always sdma2, and always with bit 31 in the\nsignaled seq:\n\n```\nring sdma2 timeout, signaled seq=2147483999, emitted seq=353     7.0.5\nring sdma2 timeout, signaled seq=2147513348, emitted seq=29704   7.2.0\nring sdma2 timeout, signaled seq=2147484679, emitted seq=1035    7.2.6\nring sdma2 timeout, signaled seq=2147487803, emitted seq=4158    7.2.6\nring sdma2 timeout, signaled seq=2147484374, emitted seq=729     7.2.6\n```\n\n9 incidents since May, none on sdma0/1/3. The fence word is\n`0x80000000 | (emitted - 2..4)`. amdgpu_fence_process() only masks the\nvalue for the fe",
+      "descriptionTruncated": true,
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
+    },
+    {
+      "iid": 5938,
+      "title": "gfx1152 (Radeon 860M): ring gfx_0.0.0 timeout => unrecoverable system-wide soft lockup; apparent regression in Ubuntu kernel 7.0.0-38",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5938",
+      "createdAt": "2026-10-04T10:53:47.232Z",
+      "updatedAt": "2026-10-05T13:59:59.266Z",
+      "labels": [
+        "Strix / Kraken"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "EdizKesici",
+      "description": "## Summary\n\nSingle GPU ring hang on AMD Radeon 860M (gfx1152) that escalated into a total system freeze. The `ring gfx_0.0.0 timeout` never recovered (identical signaled/emitted seq on both timeout messages, no successful reset), and within \\~26 s the failure propagated into the CPU IPI/TLB-flush path (`smp_call_function_many_cond`), producing soft lockups on multiple CPUs and a complete freeze: no TTY, no SysRq response, forced power-off required. First and only occurrence in the retained journal history, \\~3 days after a routine kernel update.\n\n## Hardware\n\n- Laptop: Lenovo IdeaPad Pro 5 16AKP10 (LENOVO 83JN / LNVNB161216)\n- BIOS: R1CN56WW, 2025-08-13\n- GPU: AMD Radeon 860M (gfx1152), PCI 1002:1114, subsystem 17AA:3DC7, DCN 3.5, VBIOS 113-STRIXEMU-001, DRM 3.64, DMUB 0x09003F00\n- Memory: LPDDR5 (GTT 15.6 GB, VRAM 512 MB)\n- Panel: internal eDP, PSR capable (\"PSR support 1, DC PSR ver 0, sink PSR ver 1\")\n- Storage: UMIS RPJYJ1T24MML1AWY NVMe\n\n## Software at time of hang (2026-10-04 11:52 CEST)\n\n- OS: Zorin OS (Ubuntu 24.04 \"noble\" base)\n- Kernel: 7.0.0-38-generic #38\\~24.04.4-Ubuntu, PREEMPT(lazy); tainted L (SOFTLOCKUP)\n- Mesa: 25.2.8-0ubuntu0.24.04.2\n- Session: Xorg (amdgpu DDX), GNOME\n- Kernel cmdline: default (\"quiet splash\") — no amdgpu parameters at the time\n- Suspend: s2idle default (\"Low-power S0 idle used by default for system suspend\"); no suspend/resume involved in the incident\n- Load: light web browsing with a YouTube video playing in the background; GPU at 31 °C,",
+      "descriptionTruncated": true,
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
+    },
+    {
+      "iid": 5936,
+      "title": "Displayport monitor freezing with dual monitors - pageflip timed out",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5936",
+      "createdAt": "2026-10-04T08:36:27.681Z",
+      "updatedAt": "2026-10-05T13:59:30.703Z",
+      "labels": [
+        "9000 dGPU series",
+        "DC",
+        "page flip timeout"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "JuustoKakku",
+      "description": "## Brief summary of the problem:\n\nHave this happen a few times within the past few weeks since setting up a computer with Fedora + KDE on RX 9070 XT.\n\nI have two monitors, one is 4k 60Hz, one is 1440p 144Hz. The 1440p monitor suddenly freezes, appliactions on it seem to be running normally, but the picture won't update. The 2nd monitor works fine (which is where I'm now doing this bug report on). I can bring up terminal and try to reboot, but that usually hangs and I have to force shutdown by pressing the power button.\n\nIn journalctl I get\n\n```\nloka 04 11:18:11 afterlife kwin_wayland[2384]: Pageflip timed out! This is a bug in the amdgpu kernel driver\nloka 04 11:18:11 afterlife kwin_wayland[2384]: Please report this at https://gitlab.freedesktop.org/drm/amd/-/issues\nloka 04 11:18:11 afterlife kwin_wayland[2384]: With the output of 'sudo dmesg' and 'journalctl --user-unit plasma-kwin_wayland --boot 0'\n```\n\nWhich is how I ended up here. I've attached output of both commands.\n\n## Hardware description:\n\n- CPU: Ryzen 7 9800X3D\n- GPU: 03:00.0 VGA compatible controller \\[0300\\]: Advanced Micro Devices, Inc. \\[AMD/ATI\\] Navi 48 \\[Radeon RX 9070/9070 XT/9070 GRE\\] \\[1002:7550\\] (rev c0)\n- System Memory: 32 GiB\n- Display(s):\n  * DP 1440p 144Hz\n  * DP 4k 60Hz\n\n## System information:\n\n- Distro name and Version: Fedora KDE 44\n- Kernel version: Linux afterlife 7.2.8-200.fc44.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Sep 25 21:05:44 UTC 2026 x86_64 GNU/Linux\n- Custom kernel: N/A\n- AMD official driv",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5933,
+      "title": "[Rembrandt/DCN31] REG_WAIT timeout in dcn31_program_compbuf_size + WARNING at dcn31_hubbub.c:151 when a DP-MST display is unplugged while eDP is active; external monitor then flickers on every input until reboot",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5933",
+      "createdAt": "2026-10-03T21:24:32.419Z",
+      "updatedAt": "2026-10-05T13:52:03.299Z",
+      "labels": [
+        "DC",
+        "MST",
+        "Rembrandt"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "and wur",
+      "description": "Hardware / software\n\n- Lenovo Yoga 7 14ARB7 (82QF), BIOS K5CN48WW 12/06/2024\n- AMD Ryzen 7 6800U, Radeon 680M (Rembrandt, DCN 3.1.x)\n- Kernel 7.2.6-arch2-1 (Arch/EndeavourOS), mesa 26.2.3, libdrm 2.4.134, KWin 6.7.5 (Wayland)\n- linux-firmware-amdgpu 20260810-2 (DMUB 0x0400004C, DMCUB loads fine; 20260910-1 does not load DMCUB on this machine, so it is pinned to the older package)\n- Kernel not tainted by out-of-tree modules when reproduced (/proc/sys/kernel/tainted = 512, only the W from this warning)\n- Displays: internal eDP 2880x1800@90; external 3440x1440 monitor via Lenovo ThinkPad Universal USB-C Dock (DP-MST, Synaptics, DP14, 2-lane); also tested directly via the laptop HDMI port\n\nWhat happens\n\nWhen the external display goes away (dock unplugged / dock power lost) while the desktop is running and the internal panel is active, the kernel logs:\n\n\\[drm\\] DM_MST: stopping TM on aconnector ... amdgpu 0000:33:00.0: \\[drm\\] REG_WAIT timeout 1us \\* 100 tries - dcn31_program_compbuf_size line:141 WARNING: drivers/gpu/drm/amd/amdgpu/../display/dc/hubbub/dcn31/dcn31_hubbub.c:151 at dcn31_program_compbuf_size+0xd0/0x220 \\[amdgpu\\], CPU#3: kwin_wayland Call Trace: dcn20_optimize_bandwidth+0x104/0x260 \\[amdgpu\\] dc_commit_state_no_check+0xcbe/0xee0 \\[amdgpu\\] dc_commit_streams+0x297/0x560 \\[amdgpu\\] amdgpu_dm_atomic_commit_tail+0x34d/0x3640 \\[amdgpu\\] commit_tail+0xc1/0x160 drm_atomic_helper_commit+0x158/0x1a0 drm_atomic_commit+0xb1/0xe0 drm_mode_atomic_ioctl+0xbe7/0xe30 drm_ioctl_ker",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5935,
+      "title": "[RDNA4 / SMU 14.0.2] Raising power1_cap above the default after a pp_od_clk_voltage commit silently drops the voltage offset",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5935",
+      "createdAt": "2026-10-04T08:32:34.400Z",
+      "updatedAt": "2026-10-05T13:49:03.382Z",
+      "labels": [
+        "9000 dGPU series"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 1,
+      "author": "luigi-lauro",
+      "description": "## Summary\n\nOn an RX 9070 XT (Navi 48, SMU 14.0.2), a voltage offset committed through `pp_od_clk_voltage` stops taking effect once\n`power1_cap` is raised above its default afterwards. The firmware goes back to the stock voltage curve, while\n`pp_od_clk_voltage` still reads the offset. Setting the cap first and then the offset plus commit works. A `fan_ctrl` commit\nafter the offset does not drop it, so only the power-limit path is affected.\n\n## Hardware and software\n\n- GPU: Radeon RX 9070 XT, PCI 1002:7550 rev c0, subsystem 1002:0124, VBIOS 113-1E4893U-N8K\n- SMC firmware: 0x00684f00 (104.79.0)\n- Kernel: 7.2.7 (Fedora-based Bazzite, `amdgpu.ppfeaturemask=0xfff7ffff`)\n- `power1_cap_default` 330 W, `power1_cap_max` 374 W\n\n## Reproduction\n\nThe script below writes only sysfs and samples `freq1_input`, `in0_input` and `power1_average` for 15 s under a sustained\nload. Any sustained GPU load works; memtest_vulkan was used here. Stock is restored at the end.\n\n```bash\n#!/bin/bash\nD=/sys/class/drm/card1/device; H=$(ls -d $D/hwmon/hwmon*)\nLOAD=${LOAD:-\"timeout -s INT 35 memtest_vulkan\"}\nod(){ echo \"$1\" | sudo tee -a $D/pp_od_clk_voltage >/dev/null; }\ncap(){ echo \"$1\" | sudo tee $H/power1_cap >/dev/null; }\nDEF=$(cat $H/power1_cap_default); HI=$(( DEF + 22000000 ))\nstock(){ od r; od c; cap $DEF; }\ntrap stock EXIT\nrun(){ $LOAD >/dev/null 2>&1 & P=$!; sleep 15\n  for i in $(seq 15); do echo \"$(cat $H/freq1_input) $(cat $H/in0_input)\"; sleep 1; done |\n    awk -v n=\"$1\" '{f+=$1;v+=$2} END {print",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5934,
+      "title": "DCN 4.0.1 (RDNA4): recurring `enabling link 3 failed: 19` and  `CRB Config Warning` DSC buffer overflow on HDMI 2.1 FRL+DSC display,  intermittent white noise / failed link establishment",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5934",
+      "createdAt": "2026-10-04T08:05:04.499Z",
+      "updatedAt": "2026-10-05T13:47:13.699Z",
+      "labels": [
+        "9000 dGPU series",
+        "DC"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "K Tenon",
+      "description": "**Summary:** On a Radeon RX 9070-series GPU (DCN 4.0.1), connecting a Samsung Q90A OLED TV via a certified HDMI 2.1 Ultra High Speed cable (48Gbps, 2m) at 3840x2160@120Hz with the TV's Game Mode active (which engages VRR/ALLM signaling) produces intermittent white noise/static on the display, requiring 2-3 TV picture-mode switches to establish a stable picture. This occurs in both a KDE Plasma/KWin session and a Gamescope session — in the KWin case it can escalate to a full unresponsive session requiring recovery. Cable quality has been ruled out (tested with both a 6.1m and a verified-certified 2m 48Gbps cable, same behavior on both).\n\n**Kernel version:** `7.2.7-ogc1.1.fc44.x86_64`\n\n**GPU:** `Radeon RX 9070 XT` — DCN 4.0.1, PCI ID `0000:03:00.0`\n\n**Relevant dmesg output:**\n\n`amdgpu 0000:03:00.0: [drm] enabling link 3 failed: 19\namdgpu 0000:03:00.0: [drm] CRB Config Warning: DET size (3,14,8,0) + Compbuf size (1) > CRB segments (21)\n`\n\n(recurring throughout the session)\n\n**Display EDID:** `edid-decode` output — shows TV declares full HDMI 2.1 FRL support (`Max Fixed Rate Link: 3 and 6 Gbps per lane on 3 lanes, 6, 8 and 10 Gbps on 4 lanes`) and VESA DSC 1.2a support with a 4-slice, 6144-byte-per-line configuration.\n\n**Steps to reproduce:**\n\n1. Connect a DCN 4.0.1 (RDNA4) GPU to a display via a genuine HDMI 2.1 FRL+DSC-capable connection (verified via EDID, not just cable spec).\n2. Set the display to 3840x2160@120Hz.\n3. Trigger a signal-metadata change that re-negotiates the li",
+      "descriptionTruncated": true,
+      "patchMatches": [
+        {
+          "subject": "[PATCH 11/17] drm/amd/display: Update link training no timeout behaviour on HDMI",
+          "url": "https://lore.kernel.org/amd-gfx/20261002193240.3441018-12-Roman.Li@amd.com/",
+          "date": "2026-10-02T19:33:25Z",
+          "shared": [
+            "link",
+            "hdmi"
+          ]
+        }
+      ]
+    },
+    {
+      "iid": 5920,
+      "title": "Raphael iGPU (GC 10.3.6): recurring SQC (data) read faults at float-valued addresses; ring reset fails, MODE2 reset kills the compositor",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5920",
+      "createdAt": "2026-10-01T19:30:42.956Z",
+      "updatedAt": "2026-10-05T13:46:24.585Z",
+      "labels": [
+        "Raphael / Granite Ridge"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "Andrew Hacker",
+      "description": "### Summary\n\nThe Raphael iGPU on this laptop takes `[gfxhub]` page faults with an identical signature, all reads by the SQC (data) client with `PERMISSION_FAULTS: 0x3`: 147 of them between February and October 2026. Most recover. Seven times, a fault was followed by a gfx ring timeout and a MODE2 reset; on recent kernels the per-ring reset is tried first and fails. Each time gnome-shell lost its context (\"This context is innocent\"), Mesa aborted, and the Wayland session ended.\n\nThe faulting addresses look like **32-bit float values** used as addresses (details below). That suggests a shader is loading a descriptor or pointer from memory that holds float data.\n\n### Hardware and software\n\n|  |  |\n|--|--|\n| Machine | HP OMEN Gaming Laptop 16-ap0xxx, BIOS F.11 (2025-12-16) |\n| CPU / iGPU | AMD Ryzen 9 8940HX, Raphael iGPU `1002:164e` rev d8, GC 10.3.6, at `0000:06:00.0` |\n| dGPU | NVIDIA GeForce RTX 5060 Max-Q (`01:00.0`, proprietary driver). Not involved: every fault is on the AMD device |\n| Displays | Laptop panel, plus external monitors via an HP USB-C Dock G5 (DP MST with DSC), all driven by the iGPU |\n| Kernel | 7.2.6 (Debian `7.2.6+deb14-amd64`). Faults also seen on every kernel from 6.17.13 to 7.1.13 |\n| Mesa | 26.1.6. Faults also seen on every version from 25.3.3 to 26.1.5 |\n| linux-firmware | Debian `firmware-amd-graphics` 20260810-1 |\n| GPU firmware (from the devcoredump) | ME 0x0e, PFP 0x12, CE 0x03, RLC 0x20, MEC/MEC2 0x1c, SMC 84.105.101 |\n| libdrm | 2.4.134 |\n| Desk",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5939,
+      "title": "Panel Replay on DCN 3.5 (Strix Point, eDP): screen stops updating in Xorg without compositor, refreshes only on cursor movement",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5939",
+      "createdAt": "2026-10-04T15:44:25.390Z",
+      "updatedAt": "2026-10-05T13:43:31.618Z",
+      "labels": [
+        "DC",
+        "Strix / Kraken",
+        "panel-replay"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "slitte",
+      "description": "## **Brief summary of the problem:**\n\nOn a ThinkPad P14s Gen 7 AMD (Strix Point, Radeon 890M, DCN 3.5), the LightDM login screen using slick-greeter under Xorg without a compositor stops showing frame updates once Panel Replay appears to have entered its active state.\n\nTyped characters do not appear in the password field, although the keyboard input is delivered normally. The displayed frame can remain stale for tens of seconds.\n\nMoving the touchpad slightly immediately makes the panel show the current frame. After that, the stale-frame state can recur.\n\nThe issue is easily reproducible on every tested boot with the default configuration.\n\nBooting with:\n\n`amdgpu.dcdebugmask=0x400`\n\nwhich disables Panel Replay, fully resolves the issue while leaving PSR enabled.\n\nThis appears to be a remaining variant of #3682 / #3686, which were addressed by commit:\n\n`bd8a9576617439bdc907c9ce0875909aea4221cb` (“drm/amd/display: Fix Panel Replay not update screen correctly”)\n\nThat commit is already included in the kernel used here (7.2.8).\n\nThe greeter appears to perform several atomic commits during startup, allowing Replay to become enabled after the commit threshold, and afterwards apparently renders through front-buffer updates without further commits.\n\n### **Additional observations**\n\nWith the default configuration:\n\n`replay_capability:\n  Sink support: yes\n  Driver support: yes\n  Config support: yes\n\nreplay_state: 68\n\npsr_capability:\n  Sink support: yes [0x04]\n  Driver support: no\n`\n\nWith",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5930,
+      "title": "[amdgpu] no video output on HD-7850 since kernel 6.19",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5930",
+      "createdAt": "2026-10-03T16:15:48.739Z",
+      "updatedAt": "2026-10-05T13:36:56.563Z",
+      "labels": [
+        "DC",
+        "Southern Islands dGPU"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "Nicolas Masse",
+      "description": "## Brief summary of the problem:\n\nSince kernel 6.19, I get a black screen on one of my 2 monitors (no display output).\n\nIn the dmesg, I see the following error:\n\n```\n[    4.929456] amdgpu 0000:01:00.0: [drm:dc_create [amdgpu]] Display Core initialized\n[    4.929921] amdgpu 0000:01:00.0: [drm] Display Core v3.2.384 initialized on DCE 6.0\n[    5.129350] [drm:hwss_wait_for_blank_complete [amdgpu]] *ERROR* DC: failed to blank crtc!\n```\n\nThe issue is still present in the latest kernel.\n\n## Workaround :\n\ndeactivate dc by adding \"amdgpu.dc=0\" in the kernel command line.\n\nBoth monitors are working and I dont get the error message.\n\n## Hardware description:\n\n- CPU: Intel(R) Core(TM) i5-3570 CPU @ 3.40GHz\n- GPU: 01:00.0 VGA compatible controller \\[0300\\]: Advanced Micro Devices, Inc. \\[AMD/ATI\\] Pitcairn PRO \\[Radeon HD 7850 / R7 265 / R9 270 1024SP\\] \\[1002:6819\\]\n- System Memory: 16Go (4x4Go)\n- Display(s):\n  * Screen 0: minimum 320 x 200, current 5120 x 1440, maximum 16384 x 16384\n  * DisplayPort-0 connected primary 2560x1440+2560+0 (normal left inverted right x axis y axis) 597mm x 336mm\n  * HDMI-A-0 connected 2560x1440+0+0 (normal left inverted right x axis y axis) 597mm x 336mm\n\n## System information:\n\n- Distro name and Version: archlinux\n- Kernel version: Linux arch64 7.2.8-zen1-2-zen\n- Custom kernel: Problem already present in 6.19-rc1 (no problem with kernels 6.18.x)\n- AMD official driver version: n/a\n\n## How to reproduce the issue:\n\nThe problem appears systematically on boot.\n",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5928,
+      "title": "Phoenix (DCN 3.1.4): USB-C MST dock never link-trains at HBR3 after hotplug, no fallback, and HBR2 link loss is not retrained",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5928",
+      "createdAt": "2026-10-03T11:01:22.094Z",
+      "updatedAt": "2026-10-05T13:36:17.894Z",
+      "labels": [
+        "DC",
+        "MST",
+        "Phoenix / Hawk Point",
+        "usbc"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "Svenja Kernig",
+      "description": "## Summary\n\nA USB-C dock with an MST hub works on this laptop only when the firmware has trained the link at boot. Every link training the driver performs itself fails at HBR3 (0 of 356 attempts, 3 different USB-C ports), always at VS=0 PE=0, and the driver never falls back to a lower link rate, so the screens stay black. Forcing HBR2 through debugfs lets training pass, but the link then loses lock within seconds to minutes, and the driver logs the link loss without retraining. The same hardware works under Windows.\n\n## Hardware and software\n\n- Laptop: Framework Laptop 13 (AMD Ryzen 7040 Series), BIOS 03.20 (also reproduced on 03.03).\n- Kernel: 6.12.108 (Manjaro); also reproduced on 6.6.156.\n- DMUB firmware 0x08005E00, linux-firmware 20260810.\n- Compositor: KDE Plasma, Wayland.\n- Dock: AV Access iDock C10 (4KSW21-DK), USB-C DisplayPort alternate mode with 2 lanes plus USB 3.\n- MST branch: OUI 00:60:AD, device id `KT50X`, hardware 2.1, software 0.d.\n- Sinks: 2 × MSI G27CQ4 at 2560×1440, 100 Hz, DSC active at 9 bpp.\n- LTTPR capabilities (DPCD 0xF0000): `14 1e 80 55 04`, so one repeater, revision 1.4, maximum HBR3.\n- Driver choice: `chose LTTPR_MODE_NON_TRANSPARENT by default due to VBIOS not set DCE_INFO_CAPS_LTTPR_SUPPORT_ENABLE set to 1.`\n\n## Observations\n\n1. After hotplug, HBR3x2 training fails on every attempt (`EQ failed`, `CR failed in EQ`, `CR failed lane0`), always at `VS=0, PE=0`. Over 356 attempts on three USB-C ports, none passed. The driver keeps retrying at HBR3 an",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
+    {
+      "iid": 5940,
+      "title": "amdgpu: Since 7.2, firmware brightness curve causes large steps near 0%",
+      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5940",
+      "createdAt": "2026-10-04T20:46:06.313Z",
+      "updatedAt": "2026-10-05T13:12:53.902Z",
+      "labels": [
+        "DC",
+        "Phoenix / Hawk Point"
+      ],
+      "assigned": false,
+      "assignees": [],
+      "comments": 0,
+      "author": "mvn23",
+      "description": "Before updating my Arch install from kernel 7.1.9 to 7.2.x, I could control my screen brightness in hundreds (thousands? Didn't really count them at the time) of small steps, even at values close to 0%. Since upgrading to 7.2.x this behavior has changed.\n\nNow it seems that the brightness control is limited to 101 discrete steps, with some very large jumps in brightness between the first 2 steps. Initially these jumps seemed to happen around 10-15% when using `xbacklight` to set the value, but after searching online and adding `amdgpu.dcdebugmask=0x40000` to my kernel cmdline they align with 0% and 1% when using `xbacklight`.\n\nTo be precise, the first 5 discrete brightness steps and their input values are:\n\n```\n# values taken from /sys/class/backlight/amdgpu_bl1\n# /brightness  /actual_brightness\n0-327          0\n328-983        1799\n984-1638       3598\n1639-2293      3855\n2294-2949      4112\n```\n\nMy `max_brightness` is reported as `65535`.\n\nDigging deeper, I stumbled upon #5723, which inspired me to look into the brightness curve reported by the firmware. I used a function from one of the patch files in that issue and added `drm.debug=0x04` to my cmdline to dump the curve values and got the following:\n\n```\n[ 1558.769454] amdgpu 0000:c1:00.0: [drm:amdgpu_dm_update_backlight_caps [amdgpu]] ACPI backlight curve: bl_idx=0, points=49\n[ 1558.769726] amdgpu 0000:c1:00.0: [drm:amdgpu_dm_update_backlight_caps [amdgpu]]   point[0]: input_signal=14, luminance=2%\n[ 1558.769964] amdgpu 0000",
+      "descriptionTruncated": true,
+      "patchMatches": []
+    },
     {
       "iid": 5754,
       "title": "[REGRESSION] AMDGPU / KWin crash with VM Page Fault and ring gfx timeout on Linux 7.2/7.3 (works on 6.18 LTS) - RX 5500 XT",
@@ -32,7 +443,17 @@
       "author": "Misle",
       "description": "Markdown\n\n``Brief summary of the problem:\nI am experiencing a severe driver regression when upgrading from Kernel 6.18 LTS to recent builds (7.2 and 7.3). When running DirectX/Vulkan games through Steam/Proton, the amdgpu driver triggers a memory management page fault (`GCVM_L2_PROTECTION_FAULT_STATUS` on UTCL2 client CPG), followed by ring timeouts on `comp_1.0.1` and `gfx_0.0.0`. Ring reset fails (`Ring gfx_0.0.0 reset failed`), leaving the device wedged and crashing the KWin compositor/session with visual artifacts left on screen.\n\nHardware description:\nCPU: AMD Ryzen 5 5500\nGPU: AMD Radeon RX 5500 XT (8GB VRAM)\nSystem Memory: 32 GB DDR4 3200 MHz\nDisplay(s): Samsung Crystal UHD 42\"\nType of Display Connection: HDMI\n\nSystem information:\nDistro name and Version: CachyOS / Arch Linux\nKernel version: Linux 7.2 / 7.3 (Broken) vs 6.18 LTS (Working)\nCustom kernel: CachyOS custom kernel / Arch stock\nAMD official driver version: N/A (Using open-source amdgpu + Mesa RADV)\n\nHow to reproduce the issue:\n1. Boot into Kernel 7.2 or 7.3.\n2. Start a KDE Plasma Wayland session.\n3. Launch a Vulkan / Proton game via Steam (e.g., pso2.exe).\n4. Play until a VRAM memory allocation or state change triggers the GPU timeout/page fault.\n5. KWin crashes, frozen framebuffers remain on screen, and session drops.\n\nAttached files:\nScreenshots/video files: Attached screenshots of dmesg logs showing the page fault and failed ring resets.\n\nLog files:\n```text\nkernel: amdgpu 0000:03:00.0: [gfxhub] page fault (",
       "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
     },
     {
       "iid": 4753,
@@ -124,24 +545,6 @@
       "patchMatches": []
     },
     {
-      "iid": 4333,
-      "title": "Valve Index in bad state during shutdown/suspend sequence ( NO EDID until reconnect or reset)",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/4333",
-      "createdAt": "2025-06-17T13:14:16.194Z",
-      "updatedAt": "2026-10-05T04:02:50.611Z",
-      "labels": [
-        "6000 dGPU Series",
-        "DC"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 24,
-      "author": "Babble Bones",
-      "description": "## Brief summary of the problem:\namdgpu kernel driver confirmed, so far, on RDNA2 and RDNA3 type GPUs fails to actually find any display parameters until the replug of an HMD on boot or the very first plug into the system.\nSubsequently replugging the displayport or power cycling the unit makes the display parameters accessible.\n\nThis occurs on first plug as well so if the HMD is plugged into the system for the first time at runtime it must then be replugged or cycled to function.\n\nEDID file is null in sysfs and forcing EDID parameters in the kernel cmdline does not influence the outcome. Display still must be replugged.\n\nThis has been confirmed by multiple friends and LVRA members now and behavior appears to be a regression from some previous working state.\n\n## Hardware description:\n - CPU: Ryzen 7 7800X3D\n - GPU: Radeon Pro W6800\n - System Memory: 64GB\n - Display(s): 2 + Valve Index\n - Type of Display Connection: 1 miniDP -> dual link DVI active adapter, 1 DP monitor, 1 DP Valve Index HMD\n\n## System information:\n - Distro name and Version: Arch Linux\n - Kernel version: 6.14, 6.13, 6.15\n - Custom kernel: N/A\n - AMD official driver version: N/A\n\n## How to reproduce the issue:\n\n1. Boot system with HMD plugged in.\n2. dmesg will complain about a missing EDID at boot.\n3. Start monado or steamvr and observe the failure to acquire a display.\n4. Replug HMD or cycle power on it.\n5. Observe HMD now functional.",
-      "descriptionTruncated": false,
-      "patchMatches": []
-    },
-    {
       "iid": 4960,
       "title": "Excessive power consumption due to low default driver GPU load targeting",
       "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/4960",
@@ -156,21 +559,6 @@
       "comments": 12,
       "author": "mercats",
       "description": "When a game or graphic program doesn't fully load the GPU (e.g. due to CPU/memory bottleneck or a frame rate cap) the amdgpu driver increases the core clock frequency way too much just to keep GPU load at around 70%. This results in a way higher power consumption for no increase in frame rate.\n\nAs an example with my RX 9070, the game No Rest For The Wicked capped at 110 fps uses 220 W because the driver tries to get to 70% GPU load by increasing clocks to almost 3000 MHz. Manually setting the power limit at 130 W causes the clocks to drop to 1800 MHz while the frame rate stays the same.\n\nThis happens in any game or graphic program that loads the GPU significantly but not at 100%. It's not limited to any particular game. The default GPU load targeting of 70% seems to be way too low, at least for the RX 9070 (XT). A default GPU load target of 100% probably isn't optimal for latency, but 90-95% will lower power usage a lot without increasing latency.\n\nEdit: The GPU load target is set per profile as `PD_Data_limit_c` in `/sys/class/drm/card1/device/pp_power_profile_mode`. `BOOTUP_DEFAULT` has a value of 4587520, which is 70\\*(2^16). `3D_FULL_SCREEN` has a value of 5570560, which is 85\\*(2^16). And `POWER_SAVING` has a value of 5898240, which is 90\\*(2^16). This corresponds exactly to the GPU load targets of 70%, 85% and 90% for the respective profiles.\n\nThe problem seems to be that `BOOTUP_DEFAULT` is always active and never changes to `3D_FULL_SCREEN` in games or graphic program",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5940,
-      "title": "amdgpu: Since 7.2, firmware brightness curve causes large steps near 0%",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5940",
-      "createdAt": "2026-10-04T20:46:06.313Z",
-      "updatedAt": "2026-10-04T20:53:36.165Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "mvn23",
-      "description": "Before updating my Arch install from kernel 7.1.9 to 7.2.x, I could control my screen brightness in hundreds (thousands? Didn't really count them at the time) of small steps, even at values close to 0%. Since upgrading to 7.2.x this behavior has changed.\n\nNow it seems that the brightness control is limited to 101 discrete steps, with some very large jumps in brightness between the first 2 steps. Initially these jumps seemed to happen around 10-15% when using `xbacklight` to set the value, but after searching online and adding `amdgpu.dcdebugmask=0x40000` to my kernel cmdline they align with 0% and 1% when using `xbacklight`.\n\nTo be precise, the first 5 discrete brightness steps and their input values are:\n\n```\n# values taken from /sys/class/backlight/amdgpu_bl1\n# /brightness  /actual_brightness\n0-327          0\n328-983        1799\n984-1638       3598\n1639-2293      3855\n2294-2949      4112\n```\n\nMy `max_brightness` is reported as `65535`.\n\nDigging deeper, I stumbled upon #5723, which inspired me to look into the brightness curve reported by the firmware. I used a function from one of the patch files in that issue and added `drm.debug=0x04` to my cmdline to dump the curve values and got the following:\n\n```\n[ 1558.769454] amdgpu 0000:c1:00.0: [drm:amdgpu_dm_update_backlight_caps [amdgpu]] ACPI backlight curve: bl_idx=0, points=49\n[ 1558.769726] amdgpu 0000:c1:00.0: [drm:amdgpu_dm_update_backlight_caps [amdgpu]]   point[0]: input_signal=14, luminance=2%\n[ 1558.769964] amdgpu 0000",
       "descriptionTruncated": true,
       "patchMatches": []
     },
@@ -191,22 +579,17 @@
       "author": "ZancudoRage",
       "description": "When an RX 9070 XT is connected as an eGPU over USB4 and configured as the primary display device, KWin logs “Pageflip timed out! This is a bug in the amdgpu kernel driver” roughly once per second for \\~12 seconds, then tears down. The screen shows white, then black. The compositor never renders a frame.\n\nThe same GPU works correctly as a secondary render device on the same system.\n\nHardware\n\n● Lenovo Legion Go S (official SteamOS SKU), Ryzen Z1 Extreme, Phoenix1 iGPU at 0000:c3:00.0\n\n● AMD Radeon RX 9070 XT (Navi 48, gfx1201, ASRock) at 0000:09:00.0\n\n● AOOSTAR AG03 dock, USB4 (ASMedia 246x bridge)\n\n● Link status: LnkSta: Speed 32GT/s, Width x16\n\nSoftware\n\n● SteamOS 3.10, build 20260910.1000\n\n● Kernel: 7.2.4-valve1-1-neptune-72-g5ab4af5e2eb9\n\n● KWin/Wayland, Mesa radeonsi\n\n● Primary GPU set via all-ways-egpu (boot_vga flag + compositor variables)\n\nWhat works\n\n● Cold boot with dock attached: card enumerates, amdgpu binds cleanly\n\n● Thunderbolt auto-authorized, no manual step\n\n● DRI_PRIME=1 glxinfo returns: AMD Radeon RX 9070 XT (radeonsi, gfx1201, ACO, DRM 3.65, 7.2.4-valve1...)\n\n● Hot-plug into a running Desktop Mode session works\n\n● Full PCIe link speed and width\n\nWhat fails\n\nWith boot_vga set to 0000:09:00.0 and a display connected to the eGPU’s own output, the KWin session starts and immediately loops:\n\nkwin_wayland: Pageflip timed out! This is a bug in the amdgpu kernel driver\n\nkwin_wayland: Please report this at https://gitlab.freedesktop.org/drm/amd/-/issues\n\n \n\nAfter \\",
       "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5939,
-      "title": "Panel Replay on DCN 3.5 (Strix Point, eDP): screen stops updating in Xorg without compositor, refreshes only on cursor movement",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5939",
-      "createdAt": "2026-10-04T15:44:25.390Z",
-      "updatedAt": "2026-10-04T15:44:25.390Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "slitte",
-      "description": "## **Brief summary of the problem:**\n\nOn a ThinkPad P14s Gen 7 AMD (Strix Point, Radeon 890M, DCN 3.5), the LightDM login screen using slick-greeter under Xorg without a compositor stops showing frame updates once Panel Replay appears to have entered its active state.\n\nTyped characters do not appear in the password field, although the keyboard input is delivered normally. The displayed frame can remain stale for tens of seconds.\n\nMoving the touchpad slightly immediately makes the panel show the current frame. After that, the stale-frame state can recur.\n\nThe issue is easily reproducible on every tested boot with the default configuration.\n\nBooting with:\n\n`amdgpu.dcdebugmask=0x400`\n\nwhich disables Panel Replay, fully resolves the issue while leaving PSR enabled.\n\nThis appears to be a remaining variant of #3682 / #3686, which were addressed by commit:\n\n`bd8a9576617439bdc907c9ce0875909aea4221cb` (“drm/amd/display: Fix Panel Replay not update screen correctly”)\n\nThat commit is already included in the kernel used here (7.2.8).\n\nThe greeter appears to perform several atomic commits during startup, allowing Replay to become enabled after the commit threshold, and afterwards apparently renders through front-buffer updates without further commits.\n\n### **Additional observations**\n\nWith the default configuration:\n\n`replay_capability:\n  Sink support: yes\n  Driver support: yes\n  Config support: yes\n\nreplay_state: 68\n\npsr_capability:\n  Sink support: yes [0x04]\n  Driver support: no\n`\n\nWith",
-      "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "navi",
+            "timeout"
+          ]
+        }
+      ]
     },
     {
       "iid": 5751,
@@ -281,36 +664,6 @@
       "patchMatches": []
     },
     {
-      "iid": 5938,
-      "title": "gfx1152 (Radeon 860M): ring gfx_0.0.0 timeout => unrecoverable system-wide soft lockup; apparent regression in Ubuntu kernel 7.0.0-38",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5938",
-      "createdAt": "2026-10-04T10:53:47.232Z",
-      "updatedAt": "2026-10-04T10:53:47.232Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "EdizKesici",
-      "description": "## Summary\n\nSingle GPU ring hang on AMD Radeon 860M (gfx1152) that escalated into a total system freeze. The `ring gfx_0.0.0 timeout` never recovered (identical signaled/emitted seq on both timeout messages, no successful reset), and within \\~26 s the failure propagated into the CPU IPI/TLB-flush path (`smp_call_function_many_cond`), producing soft lockups on multiple CPUs and a complete freeze: no TTY, no SysRq response, forced power-off required. First and only occurrence in the retained journal history, \\~3 days after a routine kernel update.\n\n## Hardware\n\n- Laptop: Lenovo IdeaPad Pro 5 16AKP10 (LENOVO 83JN / LNVNB161216)\n- BIOS: R1CN56WW, 2025-08-13\n- GPU: AMD Radeon 860M (gfx1152), PCI 1002:1114, subsystem 17AA:3DC7, DCN 3.5, VBIOS 113-STRIXEMU-001, DRM 3.64, DMUB 0x09003F00\n- Memory: LPDDR5 (GTT 15.6 GB, VRAM 512 MB)\n- Panel: internal eDP, PSR capable (\"PSR support 1, DC PSR ver 0, sink PSR ver 1\")\n- Storage: UMIS RPJYJ1T24MML1AWY NVMe\n\n## Software at time of hang (2026-10-04 11:52 CEST)\n\n- OS: Zorin OS (Ubuntu 24.04 \"noble\" base)\n- Kernel: 7.0.0-38-generic #38\\~24.04.4-Ubuntu, PREEMPT(lazy); tainted L (SOFTLOCKUP)\n- Mesa: 25.2.8-0ubuntu0.24.04.2\n- Session: Xorg (amdgpu DDX), GNOME\n- Kernel cmdline: default (\"quiet splash\") — no amdgpu parameters at the time\n- Suspend: s2idle default (\"Low-power S0 idle used by default for system suspend\"); no suspend/resume involved in the incident\n- Load: light web browsing with a YouTube video playing in the background; GPU at 31 °C,",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5937,
-      "title": "Granite Ridge (1002:13c0): gfxhub SQC permission fault in Chrome GPU process, gfx ring timeout, MODE2 reset and GNOME session loss",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5937",
-      "createdAt": "2026-10-04T10:33:37.491Z",
-      "updatedAt": "2026-10-04T10:33:37.491Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "Sisyphus H",
-      "description": "## Summary\n\nOn 2026-10-04, a GPU VM fault on the integrated AMD Granite Ridge GPU was\nassociated with Chrome's GPU process, followed by a gfx ring timeout associated\nwith GNOME Shell, a failed per-ring reset, and a successful full MODE2 reset.\nGNOME Shell then aborted in Mesa's libgallium on its graphics submission thread,\nand the entire Wayland desktop session was closed. The machine did not reboot.\n\nI am reporting the observed sequence, not claiming that Chrome, Mesa, kernel\namdgpu, firmware or hardware has been established as the initiating defect.\nThere is no reliable minimal reproducer or known-good version comparison yet.\n\n## Environment\n\n- Laptop: MECHREVO JIAOLONG Series / JIAOLONG Series-X6xR55xK.\n- BIOS: N.1.15MRO19, 2025-08-07.\n- Affected GPU: AMD Granite Ridge Radeon Graphics, PCI 1002:13c0 rev d8,\n  subsystem 1d05:5004, PCI 0000:06:00.0, kernel driver amdgpu.\n- Chrome render node `/dev/dri/renderD129` maps to this AMD device.\n- Ubuntu 26.04, kernel 7.0.0-38-generic (package 7.0.0-38.38).\n- Mesa libgl1-mesa-dri: 26.0.8-1ubuntu0.3.\n- GNOME Shell: 50.1-0ubuntu1.3; libmutter-18-0: 50.1-0ubuntu2.4; Wayland.\n- Google Chrome: 154.0.8037.97-1, Wayland/Ozone GPU process.\n- linux-firmware: 20260319.git217ca6e4.1ubuntu; reset log reports DMUB 0x05002E00.\n- Display configuration checked after re-login: built-in eDP-2 (BOE\n  NE160QDM-NZL) plus forced virtual DP-2 EDID output used for Sunshine streaming.\n  The virtual output is not a second physical monitor. No incident-time m",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
       "iid": 5005,
       "title": "amdgpu: \"DDC communication failed\" with `ddcutil` + Display Core + RX 570",
       "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5005",
@@ -329,61 +682,6 @@
       "patchMatches": []
     },
     {
-      "iid": 5936,
-      "title": "Displayport monitor freezing with dual monitors - pageflip timed out",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5936",
-      "createdAt": "2026-10-04T08:36:27.681Z",
-      "updatedAt": "2026-10-04T08:36:27.681Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "JuustoKakku",
-      "description": "## Brief summary of the problem:\n\nHave this happen a few times within the past few weeks since setting up a computer with Fedora + KDE on RX 9070 XT.\n\nI have two monitors, one is 4k 60Hz, one is 1440p 144Hz. The 1440p monitor suddenly freezes, appliactions on it seem to be running normally, but the picture won't update. The 2nd monitor works fine (which is where I'm now doing this bug report on). I can bring up terminal and try to reboot, but that usually hangs and I have to force shutdown by pressing the power button.\n\nIn journalctl I get\n\n```\nloka 04 11:18:11 afterlife kwin_wayland[2384]: Pageflip timed out! This is a bug in the amdgpu kernel driver\nloka 04 11:18:11 afterlife kwin_wayland[2384]: Please report this at https://gitlab.freedesktop.org/drm/amd/-/issues\nloka 04 11:18:11 afterlife kwin_wayland[2384]: With the output of 'sudo dmesg' and 'journalctl --user-unit plasma-kwin_wayland --boot 0'\n```\n\nWhich is how I ended up here. I've attached output of both commands.\n\n## Hardware description:\n\n- CPU: Ryzen 7 9800X3D\n- GPU: 03:00.0 VGA compatible controller \\[0300\\]: Advanced Micro Devices, Inc. \\[AMD/ATI\\] Navi 48 \\[Radeon RX 9070/9070 XT/9070 GRE\\] \\[1002:7550\\] (rev c0)\n- System Memory: 32 GiB\n- Display(s):\n  * DP 1440p 144Hz\n  * DP 4k 60Hz\n\n## System information:\n\n- Distro name and Version: Fedora KDE 44\n- Kernel version: Linux afterlife 7.2.8-200.fc44.x86_64 #1 SMP PREEMPT_DYNAMIC Fri Sep 25 21:05:44 UTC 2026 x86_64 GNU/Linux\n- Custom kernel: N/A\n- AMD official driv",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5935,
-      "title": "[RDNA4 / SMU 14.0.2] Raising power1_cap above the default after a pp_od_clk_voltage commit silently drops the voltage offset",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5935",
-      "createdAt": "2026-10-04T08:32:34.400Z",
-      "updatedAt": "2026-10-04T08:32:34.400Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "luigi-lauro",
-      "description": "## Summary\n\nOn an RX 9070 XT (Navi 48, SMU 14.0.2), a voltage offset committed through `pp_od_clk_voltage` stops taking effect once\n`power1_cap` is raised above its default afterwards. The firmware goes back to the stock voltage curve, while\n`pp_od_clk_voltage` still reads the offset. Setting the cap first and then the offset plus commit works. A `fan_ctrl` commit\nafter the offset does not drop it, so only the power-limit path is affected.\n\n## Hardware and software\n\n- GPU: Radeon RX 9070 XT, PCI 1002:7550 rev c0, subsystem 1002:0124, VBIOS 113-1E4893U-N8K\n- SMC firmware: 0x00684f00 (104.79.0)\n- Kernel: 7.2.7 (Fedora-based Bazzite, `amdgpu.ppfeaturemask=0xfff7ffff`)\n- `power1_cap_default` 330 W, `power1_cap_max` 374 W\n\n## Reproduction\n\nThe script below writes only sysfs and samples `freq1_input`, `in0_input` and `power1_average` for 15 s under a sustained\nload. Any sustained GPU load works; memtest_vulkan was used here. Stock is restored at the end.\n\n```bash\n#!/bin/bash\nD=/sys/class/drm/card1/device; H=$(ls -d $D/hwmon/hwmon*)\nLOAD=${LOAD:-\"timeout -s INT 35 memtest_vulkan\"}\nod(){ echo \"$1\" | sudo tee -a $D/pp_od_clk_voltage >/dev/null; }\ncap(){ echo \"$1\" | sudo tee $H/power1_cap >/dev/null; }\nDEF=$(cat $H/power1_cap_default); HI=$(( DEF + 22000000 ))\nstock(){ od r; od c; cap $DEF; }\ntrap stock EXIT\nrun(){ $LOAD >/dev/null 2>&1 & P=$!; sleep 15\n  for i in $(seq 15); do echo \"$(cat $H/freq1_input) $(cat $H/in0_input)\"; sleep 1; done |\n    awk -v n=\"$1\" '{f+=$1;v+=$2} END {print",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5934,
-      "title": "DCN 4.0.1 (RDNA4): recurring `enabling link 3 failed: 19` and  `CRB Config Warning` DSC buffer overflow on HDMI 2.1 FRL+DSC display,  intermittent white noise / failed link establishment",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5934",
-      "createdAt": "2026-10-04T08:05:04.499Z",
-      "updatedAt": "2026-10-04T08:05:04.499Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "K Tenon",
-      "description": "**Summary:** On a Radeon RX 9070-series GPU (DCN 4.0.1), connecting a Samsung Q90A OLED TV via a certified HDMI 2.1 Ultra High Speed cable (48Gbps, 2m) at 3840x2160@120Hz with the TV's Game Mode active (which engages VRR/ALLM signaling) produces intermittent white noise/static on the display, requiring 2-3 TV picture-mode switches to establish a stable picture. This occurs in both a KDE Plasma/KWin session and a Gamescope session — in the KWin case it can escalate to a full unresponsive session requiring recovery. Cable quality has been ruled out (tested with both a 6.1m and a verified-certified 2m 48Gbps cable, same behavior on both).\n\n**Kernel version:** `7.2.7-ogc1.1.fc44.x86_64`\n\n**GPU:** `Radeon RX 9070 XT` — DCN 4.0.1, PCI ID `0000:03:00.0`\n\n**Relevant dmesg output:**\n\n`amdgpu 0000:03:00.0: [drm] enabling link 3 failed: 19\namdgpu 0000:03:00.0: [drm] CRB Config Warning: DET size (3,14,8,0) + Compbuf size (1) > CRB segments (21)\n`\n\n(recurring throughout the session)\n\n**Display EDID:** `edid-decode` output — shows TV declares full HDMI 2.1 FRL support (`Max Fixed Rate Link: 3 and 6 Gbps per lane on 3 lanes, 6, 8 and 10 Gbps on 4 lanes`) and VESA DSC 1.2a support with a 4-slice, 6144-byte-per-line configuration.\n\n**Steps to reproduce:**\n\n1. Connect a DCN 4.0.1 (RDNA4) GPU to a display via a genuine HDMI 2.1 FRL+DSC-capable connection (verified via EDID, not just cable spec).\n2. Set the display to 3840x2160@120Hz.\n3. Trigger a signal-metadata change that re-negotiates the li",
-      "descriptionTruncated": true,
-      "patchMatches": [
-        {
-          "subject": "[PATCH 11/17] drm/amd/display: Update link training no timeout behaviour on HDMI",
-          "url": "https://lore.kernel.org/amd-gfx/20261002193240.3441018-12-Roman.Li@amd.com/",
-          "date": "2026-10-02T19:33:25Z",
-          "shared": [
-            "link",
-            "hdmi"
-          ]
-        }
-      ]
-    },
-    {
       "iid": 5917,
       "title": "RX9070XT, 7.3.0-rc5 kernel, ring comp_1.0.1 timeout, screen output freeze with The Last of Us Part1, Overwatch (steam) after unclear time",
       "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5917",
@@ -398,7 +696,17 @@
       "author": "Matthew B",
       "description": "## Brief summary of the problem:\n\nregression (?)\n\nRX9070XT, newer mesa HEAD states after \\~ 09/17/2026 and different kernels lead to ring comp timeout with dx11, dx12, radv games (The Last Of Us Part1 almost immediately after loading and looking around with mouse; Overwatch taking significantly longer, in shop display, while queued or in-match)\n\n7.3.0-rc5 kernel\n\n7.3.0-rc5, drm-next applied\n\nring comp_1.0.1 timeout, screen output freeze with \"The Last of Us Part1\" (almost immediately after loading savegame & doing a quick camera look around with mosue) & Overwatch (steam) after unclear time\n\n7.2.8 also had ring timeout (not sure if exact the same) with Overwatch. \\[\\<---- 1st noticing it after using 7.2.8 for some time - thus suspecting the kernel changes\\]\n\nFirst suspected kernel and amdgpu side, but it seems to be mostly mesa (since newer commit states are the trigger)\n\n## Hardware description:\n\n- CPU: 5800X3D\n- GPU:\n- 06:00.0 PCI bridge \\[0604\\]: Advanced Micro Devices, Inc. \\[AMD/ATI\\] Navi 10 XL Upstream Port of PCI Expre\\\n  ss Switch \\[1002:1478\\] (rev 24) \\\n  07:00.0 PCI bridge \\[0604\\]: Advanced Micro Devices, Inc. \\[AMD/ATI\\] Navi 10 XL Downstream Port of PCI Exp\\\n  ress Switch \\[1002:1479\\] (rev 24) \\\n  08:00.0 VGA compatible controller \\[0300\\]: Advanced Micro Devices, Inc. \\[AMD/ATI\\] Navi 48 \\[Radeon RX 907\\\n  0/9070 XT/9070 GRE\\] \\[1002:7550\\] (rev c0) \\\n  08:00.1 Audio device \\[0403\\]: Advanced Micro Devices, Inc. \\[AMD/ATI\\] Navi 48 HDMI/DP Audio Controller \\[",
       "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
     },
     {
       "iid": 5759,
@@ -432,37 +740,17 @@
       "author": "regtm",
       "description": "## Brief summary of the problem:\nI experience repeated, but rather random, screen freezes that lead to a split second of black screen before losing my gnome session and ending up on the login screen. In one instance the system was able to recover from the freeze and operation continued after a few seconds.\nI, so far, experienced the issue in gnome-shell and firefox as pointed out by this specific log entries:\n```\nzen4 kernel: [drm:amdgpu_job_timedout [amdgpu]] *ERROR* ring gfx_0.0.0 timeout, signaled seq=1928292, emitted seq=1928295\nzen4 kernel: [drm:amdgpu_job_timedout [amdgpu]] *ERROR* Process information: process gnome-shell pid 6717 thread gnome-shel:cs0 pid 6773\n```\nSince this is a fresh install of fedora 40 workstation, i did hardly run anything else.\nYesterday there was a mesa update, which explicitly mentions fixing gnome and kde crashes but the issue seems to prevail:\n```\n2024-06-28 - José Expósito <jexposit@redhat.com> - 24.1.2-5\n- Fix GNOME and KDE crash with some AMD GPUs\n\n    Upgrade  libxslt-1.1.41-2.fc40.x86_64                    @updates\n    Upgraded libxslt-1.1.41-1.fc40.x86_64                    @@System\n    Upgrade  mesa-dri-drivers-24.1.2-7.fc40.x86_64           @updates\n    Upgraded mesa-dri-drivers-24.1.2-2.fc40.x86_64           @@System\n    Upgrade  mesa-filesystem-24.1.2-7.fc40.x86_64            @updates\n    Upgraded mesa-filesystem-24.1.2-2.fc40.x86_64            @@System\n    Upgrade  mesa-libEGL-24.1.2-7.fc40.x86_64                @updates\n    Upgrad",
       "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5933,
-      "title": "[Rembrandt/DCN31] REG_WAIT timeout in dcn31_program_compbuf_size + WARNING at dcn31_hubbub.c:151 when a DP-MST display is unplugged while eDP is active; external monitor then flickers on every input until reboot",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5933",
-      "createdAt": "2026-10-03T21:24:32.419Z",
-      "updatedAt": "2026-10-03T21:24:32.419Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "and wur",
-      "description": "Hardware / software\n\n- Lenovo Yoga 7 14ARB7 (82QF), BIOS K5CN48WW 12/06/2024\n- AMD Ryzen 7 6800U, Radeon 680M (Rembrandt, DCN 3.1.x)\n- Kernel 7.2.6-arch2-1 (Arch/EndeavourOS), mesa 26.2.3, libdrm 2.4.134, KWin 6.7.5 (Wayland)\n- linux-firmware-amdgpu 20260810-2 (DMUB 0x0400004C, DMCUB loads fine; 20260910-1 does not load DMCUB on this machine, so it is pinned to the older package)\n- Kernel not tainted by out-of-tree modules when reproduced (/proc/sys/kernel/tainted = 512, only the W from this warning)\n- Displays: internal eDP 2880x1800@90; external 3440x1440 monitor via Lenovo ThinkPad Universal USB-C Dock (DP-MST, Synaptics, DP14, 2-lane); also tested directly via the laptop HDMI port\n\nWhat happens\n\nWhen the external display goes away (dock unplugged / dock power lost) while the desktop is running and the internal panel is active, the kernel logs:\n\n\\[drm\\] DM_MST: stopping TM on aconnector ... amdgpu 0000:33:00.0: \\[drm\\] REG_WAIT timeout 1us \\* 100 tries - dcn31_program_compbuf_size line:141 WARNING: drivers/gpu/drm/amd/amdgpu/../display/dc/hubbub/dcn31/dcn31_hubbub.c:151 at dcn31_program_compbuf_size+0xd0/0x220 \\[amdgpu\\], CPU#3: kwin_wayland Call Trace: dcn20_optimize_bandwidth+0x104/0x260 \\[amdgpu\\] dc_commit_state_no_check+0xcbe/0xee0 \\[amdgpu\\] dc_commit_streams+0x297/0x560 \\[amdgpu\\] amdgpu_dm_atomic_commit_tail+0x34d/0x3640 \\[amdgpu\\] commit_tail+0xc1/0x160 drm_atomic_helper_commit+0x158/0x1a0 drm_atomic_commit+0xb1/0xe0 drm_mode_atomic_ioctl+0xbe7/0xe30 drm_ioctl_ker",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5932,
-      "title": "[amdgpu][DC] Shutdown hangs every time when a monitor is connected through a USB4 dock (DMUB HPD RX IRQ), regression 7.1.8 -> 7.2.8",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5932",
-      "createdAt": "2026-10-03T18:12:57.705Z",
-      "updatedAt": "2026-10-03T18:12:57.705Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "lunapura",
-      "description": "## Brief summary of the problem:\n\nOn kernel 7.2.8, shutdown hangs every time (a forced power off is needed) when an external monitor is connected through a Lenovo ThinkPad USB4 5000 dock. The dock is connected to the laptop via USB4 and the monitor is on the dock's DisplayPort. If only the monitor's DP cable is unplugged from the dock, shutdown completes normally. On another install with kernel 7.1.8 (believed), the same dock and monitor never hang.\n\nPossibly related to #5931 (boot-time kernel panic in dp_parse_link_loss_status with the same dock and monitor, in the same amdgpu HPD RX IRQ path).\n\nFindings so far (all with the same dock and monitor):\n- Without the dock: no hang.\n- Dock connected via USB4 with the monitor on the dock's DP: hangs on every shutdown (no exception so far).\n- Dock connected via USB4, but the monitor's DP cable unplugged from the dock: shutdown is normal.\n- Booted with the dock and monitor connected, then unplugged the dock before shutting down: still hangs (tested earlier).\n- Running `niri msg output \"Dell Inc. AW2725QF\" off` before shutting down: shutdown completed normally (tried only once).\n- 7.1.8 (believed) on another install (Arch + Hyprland): no hang.\n\nThe journal of a hung shutdown ends right after systemd-shutdown sends SIGTERM and journald stops, so nothing more is logged. The last lines were (MAC address masked):\n\n```\namdgpu 0000:c3:00.0: [drm] DMUB HPD RX IRQ callback: link_index=7   (repeated many times)\nwlp194s0: deauthenticating from ",
-      "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
     },
     {
       "iid": 5861,
@@ -479,36 +767,6 @@
       "author": "Richard Lane",
       "description": "I used a X-rite Colorimeter to verify that my 5K iMac has a max brightness in Linux of 400 nits, instead of 500 nits. Incidentally this is true whether using the mainline kernel 7.2/7.3, or one patched to offer 5K resolution.\n\nUsing the following I now get 500 nits brightness. How can this be made into a quirk? It probably affects all 5K iMacs.\n\nAlso, for anyone reading this with a 5K iMac, it would be good if you can dump your backlight data using the attached script to help understand this problem.\n\nWorkaround / Verification (ACPI Table Override):\n\nTo verify the hardware behavior, I created a script that overrides the GPU SSDT via an early-initrd CPIO archive (CONFIG_ACPI_TABLE_UPGRADE):\n\nExtracts & Disassembles: Dumps system ACPI tables and decompiles the graphics SSDT containing Method (ABCL).\n\nPatches Levels: Bumps the DefinitionBlock OEM revision by +1 and rewrites the package returned by ABCL from levels 1..80 to 1..100.\n\nRecompiles & Injects: Recompiles the table with iasl, packages it into an uncompressed CPIO archive under kernel/firmware/acpi/, and sets GRUB to load it on early boot.\n\nResult:\n\nThe kernel successfully overrides the table on boot. Setting the backlight slider to 100% calls BSET(100), driving the PWM register to 65500 / 65535 (~99.9%) and restoring the panel's full native 500-nit luminance without issues.\n\n[AppleBrightnessTableDump.sh](/uploads/d4ffbda470210cb8c05c9f2438a01adc/AppleBrightnessTableDump.sh)",
       "descriptionTruncated": false,
-      "patchMatches": []
-    },
-    {
-      "iid": 5931,
-      "title": "[amdgpu][DC] stack-protector panic in dp_parse_link_loss_status (HPD RX IRQ) when external monitor via USB4 dock comes up - 7.2.8",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5931",
-      "createdAt": "2026-10-03T17:11:21.487Z",
-      "updatedAt": "2026-10-03T17:28:18.801Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "lunapura",
-      "description": "## Brief summary of the problem:\n\nOn a ThinkPad with a Lenovo ThinkPad USB4 5000 dock (connected via USB4), the kernel panicked at boot with \"stack-protector: Kernel stack is corrupted in: dp_parse_link_loss_status+0x158/0x160\" at the moment the external display (connected to the dock's DisplayPort) was being brought up. The internal display had been working normally until then.\n\nFrequency: happened once. It was the first boot after a shutdown where I had run `niri msg output \"Dell Inc. AW2725QF\" off` before powering off (a workaround for the shutdown hang described below). I have never seen this panic in many earlier boots with the same dock and monitor. I don't know whether the \"output off\" is related.\n\nAbout 25 s after boot, a burst of \"DMUB HPD RX IRQ callback: link_index=8\" (roughly every 5 ms) and \"pre_validate_dsc:1821 MST_DSC crtc[1] needs mode_change\" appeared, then:\n\n```\nKernel panic - not syncing: stack-protector: Kernel stack is corrupted in: dp_parse_link_loss_status+0x158/0x160\nCPU: 10 UID: 0 PID: 121 Comm: kworker/u64:2 Not tainted 7.2.8-1-cachyos #1 PREEMPT(full)\nHardware name: LENOVO 21RMCTO1WW/21RMCTO1WW, BIOS R32ET27W (1.10) 03/23/2026\nWorkqueue: amdgpu_dm_hpd_wq dm_handle_hpd_work [amdgpu]\n```\n\nCall trace (transcribed by hand from the attached photo, may contain typos):\n\n```\npanic -> __stack_chk_fail -> dp_parse_link_loss_status -> dp_handle_hpd_rx_irq\n-> handle_hpd_rx_irq -> dmub_hpd_callback -> dm_handle_hpd_work\n```\n\n(core_link_read_dpcd also appears as",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5930,
-      "title": "[amdgpu] no video output on HD-7850 since kernel 6.19",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5930",
-      "createdAt": "2026-10-03T16:15:48.739Z",
-      "updatedAt": "2026-10-03T16:16:26.635Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "Nicolas Masse",
-      "description": "## Brief summary of the problem:\n\nSince kernel 6.19, I get a black screen on one of my 2 monitors (no display output).\n\nIn the dmesg, I see the following error:\n\n```\n[    4.929456] amdgpu 0000:01:00.0: [drm:dc_create [amdgpu]] Display Core initialized\n[    4.929921] amdgpu 0000:01:00.0: [drm] Display Core v3.2.384 initialized on DCE 6.0\n[    5.129350] [drm:hwss_wait_for_blank_complete [amdgpu]] *ERROR* DC: failed to blank crtc!\n```\n\nThe issue is still present in the latest kernel.\n\n## Workaround :\n\ndeactivate dc by adding \"amdgpu.dc=0\" in the kernel command line.\n\nBoth monitors are working and I dont get the error message.\n\n## Hardware description:\n\n- CPU: Intel(R) Core(TM) i5-3570 CPU @ 3.40GHz\n- GPU: 01:00.0 VGA compatible controller \\[0300\\]: Advanced Micro Devices, Inc. \\[AMD/ATI\\] Pitcairn PRO \\[Radeon HD 7850 / R7 265 / R9 270 1024SP\\] \\[1002:6819\\]\n- System Memory: 16Go (4x4Go)\n- Display(s):\n  * Screen 0: minimum 320 x 200, current 5120 x 1440, maximum 16384 x 16384\n  * DisplayPort-0 connected primary 2560x1440+2560+0 (normal left inverted right x axis y axis) 597mm x 336mm\n  * HDMI-A-0 connected 2560x1440+0+0 (normal left inverted right x axis y axis) 597mm x 336mm\n\n## System information:\n\n- Distro name and Version: archlinux\n- Kernel version: Linux arch64 7.2.8-zen1-2-zen\n- Custom kernel: Problem already present in 6.19-rc1 (no problem with kernels 6.18.x)\n- AMD official driver version: n/a\n\n## How to reproduce the issue:\n\nThe problem appears systematically on boot.\n",
-      "descriptionTruncated": true,
       "patchMatches": []
     },
     {
@@ -531,21 +789,6 @@
       "patchMatches": []
     },
     {
-      "iid": 5929,
-      "title": "ThinkPad P14s Gen 6 AMD (Krackan Point): system never resumes from s2idle with IOMMU enabled",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5929",
-      "createdAt": "2026-10-03T12:55:36.416Z",
-      "updatedAt": "2026-10-03T12:55:36.416Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "Fredrik Stipps",
-      "description": "## Brief summary of the problem:\n\nWith IOMMU enabled (default or iommu=pt), the system enters s2idle (power LED blinks as expected) but never resumes. No wake source works (power button, lid, keyboard). Only a forced power-off recovers it.\n\nThe issue is 100% reproducible on every suspend attempt, on both the current and the LTS kernel. BIOS is the latest available.\n\nFindings so far:\n\n- /sys/power/pm_test \"devices\" and \"platform\" both resume fine; the hang only occurs once the SoC actually enters hardware sleep.\n- Unloading mt7925e before suspend: no change.\n- amd_iommu=off: suspend/resume works reliably when undocked (attached amd-s2idle report: 66% HW sleep, no failures). With a USB4/TB dock attached, the system wakes immediately, and the dock no longer works (expected without IOMMU).\n- IVRS contains IVMD exclusion ranges for C1:00.0 (NVMe) and C4:00.7 (no such device present), possibly relevant.\n- The amd-s2idle run shows gpe14 increasing from 905 to 1179 during a 12 s cycle.\n- Same symptoms reported by other users of this model: https://bbs.archlinux.org/viewtopic.php?id=313173 https://www.reddit.com/r/thinkpad/comments/1rzzd0c/\n\n## Hardware description:\n\n- Lenovo ThinkPad P14s Gen 6 AMD (21QL), Ryzen AI 7 PRO 350 (family 1a model 60)\n- BIOS R2XET42W (1.22), 2026-09-07, EC 1.12\n- PMFW 101.26.0\n- WLAN: MediaTek MT7925 (mt7925e)\n- amd_s2idle report: attached (captured with amd_iommu=off, since with IOMMU enabled the system never resumes and no report can be written)\n\n## Syst",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
       "iid": 5807,
       "title": "[amdgpu] Pageflip timed out / CRTC flip_done timeout freezes KWin Wayland (RX 9070 XT, RDNA4)",
       "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5807",
@@ -560,54 +803,6 @@
       "comments": 3,
       "author": "Jhon Rodriguez",
       "description": "## Summary\n\nRecurrent and reproducible compositor (KWin/Wayland, Plasma 6) freezes caused by `amdgpu` on a Radeon RX 9070 XT (Navi 48 / RDNA4). Symptom: the screen freezes completely (mouse and keyboard stop responding in the compositor), the kernel reports pageflip timeouts on the CRTC, and after \\~20-40s the compositor dies and the kernel takes over the framebuffer console (`fbcon: Taking over console`), forcing the graphical session to restart.\n\nThis exact pattern has been repeating for several months (first recorded occurrence: 2026-06-19), on average every 1-2 weeks, always with the same error signature and always on the same CRTC.\n\n## Hardware\n\n- Discrete GPU: AMD Radeon RX 9070 XT (Navi 48, RDNA4) — PCI `1002:7550`, rev c0, bus `0000:03:00.0`\n- Integrated GPU: AMD Granite Ridge (Radeon Graphics, APU) — PCI `1002:13c0`, rev c6, bus `0000:0d:00.0`\n- Motherboard: ASRock (dGPU), ASUS (mainboard / APU)\n- Two monitors connected:\n  - `HDMI-A-1`: 1920x1080 @144Hz, **VRR: Always** (FreeSync forced always on)\n  - `DP-3`: 1920x1080 @144Hz, VRR: Never\n\n## Software\n\n- Distro: Fedora Linux 43\n- Kernel: `7.1.13-100.fc43.x86_64` (the bug also reproduces on `7.1.8`, `7.1.10`, and earlier versions going back to June 2026)\n- Mesa: `25.3.6-3.fc43`\n- Compositor: KWin Wayland (Plasma 6.7.4), Wayland session\n- GPU firmware: DMUB `0x0A000C00`, SMU fw `104.79.0`, `linux-firmware-20260810-1.fc43`\n\n## amdgpu module parameters\n\nNo custom boot parameters (`ppfeaturemask` and the rest are left at t",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5928,
-      "title": "Phoenix (DCN 3.1.4): USB-C MST dock never link-trains at HBR3 after hotplug, no fallback, and HBR2 link loss is not retrained",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5928",
-      "createdAt": "2026-10-03T11:01:22.094Z",
-      "updatedAt": "2026-10-03T11:01:22.094Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "Svenja Kernig",
-      "description": "## Summary\n\nA USB-C dock with an MST hub works on this laptop only when the firmware has trained the link at boot. Every link training the driver performs itself fails at HBR3 (0 of 356 attempts, 3 different USB-C ports), always at VS=0 PE=0, and the driver never falls back to a lower link rate, so the screens stay black. Forcing HBR2 through debugfs lets training pass, but the link then loses lock within seconds to minutes, and the driver logs the link loss without retraining. The same hardware works under Windows.\n\n## Hardware and software\n\n- Laptop: Framework Laptop 13 (AMD Ryzen 7040 Series), BIOS 03.20 (also reproduced on 03.03).\n- Kernel: 6.12.108 (Manjaro); also reproduced on 6.6.156.\n- DMUB firmware 0x08005E00, linux-firmware 20260810.\n- Compositor: KDE Plasma, Wayland.\n- Dock: AV Access iDock C10 (4KSW21-DK), USB-C DisplayPort alternate mode with 2 lanes plus USB 3.\n- MST branch: OUI 00:60:AD, device id `KT50X`, hardware 2.1, software 0.d.\n- Sinks: 2 × MSI G27CQ4 at 2560×1440, 100 Hz, DSC active at 9 bpp.\n- LTTPR capabilities (DPCD 0xF0000): `14 1e 80 55 04`, so one repeater, revision 1.4, maximum HBR3.\n- Driver choice: `chose LTTPR_MODE_NON_TRANSPARENT by default due to VBIOS not set DCE_INFO_CAPS_LTTPR_SUPPORT_ENABLE set to 1.`\n\n## Observations\n\n1. After hotplug, HBR3x2 training fails on every attempt (`EQ failed`, `CR failed in EQ`, `CR failed lane0`), always at `VS=0, PE=0`. Over 356 attempts on three USB-C ports, none passed. The driver keeps retrying at HBR3 an",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5923,
-      "title": "[gfx1036] GPU memory writes vanish after idle with agent-scope dispatch fences",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5923",
-      "createdAt": "2026-10-02T09:41:01.336Z",
-      "updatedAt": "2026-10-03T07:50:16.159Z",
-      "labels": [
-        "Raphael / Granite Ridge",
-        "amdkfd"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 2,
-      "author": "Tim Besard",
-      "description": "While testing out Julia's AMDGPU.jl package on the APU of my AMD 9950x CPU, I encountered data corruption issues that would only be remedied by setting `AMD_OPT_FLUSH=0`. That's not ideal, so I had my LLM investigate the underlying cause. Although the diagnosis looks reasonable, I'm not familiar with AMD hardware or its driver stack, so I can only verify as much as I can... In any case, a non-Julia reproducer is included, faithfully reproducing the issue.\n\nPlease let me know what else I can provide. I'd also be happy to let an agent try out potential fixes, so feel free to suggest any (e.g. kernel patches), but I didn't want to pollute the trackers here or on other repositories with slop PRs so I refrained from doing that right now.\n\n## Problem\n\nOn the integrated RDNA2 GPU of a Ryzen 9 9950X (gfx1036, PCI `1002:13c0`), a kernel's writes to GPU-allocated memory can silently disappear when the GPU is idle for about 200 µs before host synchronization. A subsequent system-scope HSA barrier does not recover the values. The result can be stale data with no HIP/HSA error or GPU reset.\n\nThis reproduces with direct HSA AQL dispatches, outside Julia and HIP launch code. System-scope **release on the kernel dispatch** prevents it. GFX profiling modes that ungate the GFX block also prevent it, while disabling GFXOFF alone does not. I suspect a GFX clock gating/cache interaction in the driver, firmware, or hardware, but cannot distinguish those layers yet.\n\nOther gfx1036 reports such as [",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5927,
-      "title": "RX 6800: ring sdma2 timeout under ROCm load, fence value comes back with bit 31 set",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5927",
-      "createdAt": "2026-10-03T06:09:42.072Z",
-      "updatedAt": "2026-10-03T06:34:32.851Z",
-      "labels": [],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "安龙",
-      "description": "## Brief summary of the problem:\n\nRX 6800 running ComfyUI on ROCm (torch 2.12+rocm7.2) hangs with `ring sdma2\ntimeout` a few minutes into a run, sometimes already while models are being\nloaded. The ring reset says it succeeded, the same job times out again 2 s\nlater, KFD can't preempt the compute queues and we end up in a MODE1 reset\nthat takes the desktop with it.\n\nBackground: I got the card in 2022 and it was fine on Arch with whatever\nthe current kernel was back then. Some time in 2023 it started throwing random\n`[gfxhub] page fault` + gfx/compute timeouts under load, the RDNA2 thing the\nArch wiki talks about, and I've been running it with a capped core clock ever\nsince. Windows runs the same card at stock clocks without trouble. Since\n7.0.x the failure I actually see is the sdma2 timeout below, cap or no cap. I have it on\n7.0.5, 7.2.0, 7.2.6 and 7.2.8, linux-firmware 20260916.\n\nThe interesting part is that it is always sdma2, and always with bit 31 in the\nsignaled seq:\n\n```\nring sdma2 timeout, signaled seq=2147483999, emitted seq=353     7.0.5\nring sdma2 timeout, signaled seq=2147513348, emitted seq=29704   7.2.0\nring sdma2 timeout, signaled seq=2147484679, emitted seq=1035    7.2.6\nring sdma2 timeout, signaled seq=2147487803, emitted seq=4158    7.2.6\nring sdma2 timeout, signaled seq=2147484374, emitted seq=729     7.2.6\n```\n\n9 incidents since May, none on sdma0/1/3. The fence word is\n`0x80000000 | (emitted - 2..4)`. amdgpu_fence_process() only masks the\nvalue for the fe",
       "descriptionTruncated": true,
       "patchMatches": []
     },
@@ -770,7 +965,17 @@
       "author": "tay",
       "description": "## System info\n\n* GPU: AMD Radeon RX 5500/5500M (Navi 14, PCI ID 1002:7340), rev c5\n* Kernel: 7.1.5-76070105-generic (Pop!\\_OS)\n* Mesa: 26.1.6-1pop0\\~1787580452\\~24.04\\~a5619ea\n* Distro: Pop!\\_OS 24.04\n* Desktop: COSMIC (cosmic-comp)\n\n## Summary\n\nThe GPU intermittently hangs during normal desktop use — the gfx ring (and sometimes the compute ring as well) stops responding, causing a flood of gfxhub page faults from whatever client happens to be submitting work at the time (observed with cosmic-comp as the faulting process). The driver recovers automatically via a full GPU reset (BACO reset), but VRAM is lost and the desktop briefly glitches/flickers during recovery.\n\nThis has occurred at least 3 times over 2 days, under varying conditions: single monitor and dual monitor, light and heavy GPU load. No specific trigger (app launch, monitor hotplug, particular workload) has been identified — it appears to happen unpredictably during normal use.\n\n## Steps to reproduce\n\nNo reliable reproduction found. Occurs sporadically during normal desktop use (browsing, compositing, mixed light/heavy GPU load) on both single- and dual-monitor configurations.\n\n## Expected behavior\n\nGPU rings should not hang during normal desktop compositing / rendering workloads.\n\n## Actual behavior\n\nRing(s) stop signaling completed work, triggering a full GPU reset.\n\n## Relevant kernel log — incident 1 (single ring)\n\n`Sep 27 12:39:32 pop-os kernel: amdgpu 0000:2f:00.0: [gfxhub] page fault (src_id:0 ring:24 vmi",
       "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
     },
     {
       "iid": 5904,
@@ -818,6 +1023,15 @@
           ]
         },
         {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "navi",
+            "timeout"
+          ]
+        },
+        {
           "subject": "[RESEND PATCH v2 0/2] drm/amd: fix HDMI output with non-HDMI EDID overrides",
           "url": "https://lore.kernel.org/amd-gfx/20261003161525.23600-1-johanneswueller@gmail.com/",
           "date": "2026-10-03T16:15:54Z",
@@ -860,7 +1074,17 @@
       "author": "Christopher McGee",
       "description": "## Summary\n\nOn a dual-GPU desktop (RDNA2 iGPU + RDNA4 dGPU), the GNOME/Wayland compositor (`gnome-shell`) intermittently triggers a **GCVM_L2 protection (permission) fault** on the **integrated** GPU's GFX hub, from the UTCL2/TCP (texture) client, at a **deterministic GTT virtual address**. This times out the GFX (and sometimes SDMA) ring; the driver attempts a per-ring reset and, when that fails, escalates to a full MODE2 reset. The GPU recovers, but the compositor's context is lost and `gnome-shell` crashes and restarts. Recurs under normal desktop use, roughly every 1 to 2 days.\n\n## Hardware\n\n- **CPU / APU:** AMD Ryzen 9 9950X (Granite Ridge, Zen 5)\n- **Affected GPU:** integrated RDNA2 iGPU: `1002:13c0` (rev c1), subsystem `1043:8877`, **gfx1036**\n  - IP: GC v10.3.6, MMHUB v2.4.1, ATHUB v2.4.1, OSSSYS v5.2.1, MP1 v13.0.5, DMUB 0x05002D00\n- (Also present, unrelated to this fault: discrete RDNA4 RX 9070 `1002:7550` / gfx1201 driving a 2nd monitor + ROCm)\n- **Board:** ASUSTeK TUF GAMING B850-PLUS WIFI, BIOS 1022 (2025-03-05)\n\n## Software\n\n- **Distro:** Ubuntu 24.04.4 LTS\n- **Kernel:** 7.0.0-28-generic (Ubuntu HWE), **in-tree amdgpu** (no out-of-tree DKMS)\n- **Mesa:** 25.2.8 (distro)\n- **linux-firmware:** 20240318 (iGPU gc_10_3_6 blobs)\n- Compositor: GNOME Shell on Wayland\n\n## Symptom / dmesg (verbatim, representative crash 2026-07-21 19:01)\n\n```\namdgpu 0000:0e:00.0: ring sdma0 timeout, signaled seq=516669, emitted seq=516671\namdgpu 0000:0e:00.0: Starting sdma0 ring reset\namdg",
       "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
     },
     {
       "iid": 3200,
@@ -879,24 +1103,6 @@
       "author": "Steve Cossette",
       "description": "## Hardware description:\n - CPU: AMD Ryzen 7 6800H\n - GPU: 03:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Navi 22 [Radeon RX 6700/6700 XT/6750 XT / 6800M/6850M XT] [1002:73df] (rev cf)\n37:00.0 VGA compatible controller [0300]: Advanced Micro Devices, Inc. [AMD/ATI] Rembrandt [Radeon 680M] [1002:1681] (rev c8)\n - System Memory: 32gb\n - Display(s): (Only the onboard monitor, no external)\n - Type of Display Connection: Laptop screen only\n - Laptop Type/Make: Lenovo Legion 7 82UH (Legion AMD Advantage Laptop)\n\n## System information:\n - Distro name and Version: Fedora 40\n - Kernel version: 6.8.0-0.rc5.41.fc40.x86_64\n - Custom kernel: non-custom\n - AMD official driver version: N/A\n\n## How to reproduce the issue:\n\nIn KDE Plasma 6 RC2, enabling HDR on this laptop gives a grey screen:\n![IMG_0454-1708602840908](/uploads/726bbfd4ff4ac20e6b1249b7145abaf4/IMG_0454-1708602840908.jpeg)\n\nI did speak to KDE devs about this and they suggested submitting a bug here.\n\nNot sure what debug infos you need to help with this though.",
       "descriptionTruncated": false,
-      "patchMatches": []
-    },
-    {
-      "iid": 5857,
-      "title": "[RX 7600 / Navi 33] DisplayPort monitor not rediscovered after disconnect; repeated dal_gpio_service_open WARN on HPD — kernel 7.2.5",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5857",
-      "createdAt": "2026-09-17T21:02:48.106Z",
-      "updatedAt": "2026-10-02T16:51:30.394Z",
-      "labels": [
-        "7000 dGPU series",
-        "DC"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 3,
-      "author": "John Calcote",
-      "description": "## System\n\nFedora Linux 44 x86_64\\\nKernel: 7.2.5-200.fc44.x86_64\\\nDesktop: KDE Plasma 6.7.5 / Wayland\\\nGPU: AMD Radeon RX 7600 (Navi 33)\\\nDriver: amdgpu\\\nMotherboard: Gigabyte Z790 AORUS ELITE AX\\\nTwo monitors connected to the RX 7600.\n\nThe system also has Intel UHD Graphics 770 (i915), but the monitors are connected to the RX 7600.\n\n## Problem\n\nOne of my two monitors became disconnected from the system. Previously, power-cycling the monitor was sufficient for it to be rediscovered by Plasma/AMDGPU.\n\nThis time, power-cycling the monitor did not restore it. Physically disconnecting and reconnecting the DisplayPort cable at the RX 7600 also did not restore it.\n\nThe problem appears to be below KDE/KWin. DRM reports only one connected display:\n\n`/sys/class/drm/card2-DP-2/status              connected\n/sys/class/drm/card2-DP-3/status              disconnected\n/sys/class/drm/card2-DP-4/status              disconnected\n/sys/class/drm/card2-HDMI-A-3/status          disconnected\n/sys/class/drm/card2-Writeback-1/status       unknown\n`\n\n`card2` is the RX 7600:\n\n`/sys/bus/pci/drivers/amdgpu\n03:00.0 VGA compatible controller: Advanced Micro Devices, Inc. [AMD/ATI] Navi 33 [Radeon RX 7600/7600 XT/7600M XT/7600S/7700S / PRO W7600] (rev cf)\n`\n\nI attempted to force connector detection with:\n\n`echo detect | sudo tee /sys/class/drm/card2-DP-3/status\necho detect | sudo tee /sys/class/drm/card2-DP-4/status\n`\n\nBoth remained `disconnected`.\n\nI then ran `dmesg -w` while physically unplugging and rec",
-      "descriptionTruncated": true,
       "patchMatches": []
     },
     {
@@ -984,7 +1190,17 @@
       "author": "CPTN_Cosmo",
       "description": "### System Information\n\n* **Hardware:** AMD Radeon RX 7900 XTX (Navi 31 / Device ID: `29772` / PCI Rev: `c8` / gfx1100)\n* **VBIOS:** `113-3E4710U-O4X` (022.001.002.031.000001)\n* **Kernel:** `7.2.5-1-cachyos`\n* **AMDGPU Module:** In-tree module\n* **Firmware:** MES v1.145 (`0x91`), MES_KIQ v6.275 (`0x113`), GC 11.0.0\n\n### Description\n\nWhile running a 3D application (WoW Classic via VKD3D/Proton), an unmapped page access (`0x0000000000000000`) caused a `ring gfx_0.0.0 timeout`.\n\nInstead of cleanly resetting the offending compute/graphics queue, the MES scheduler deadlocked when attempting the reset command (`MES failed to respond to msg=RESET`). The CPFW reported that pipe reset is unsupported, and the driver escalated to an ASIC `MODE1` reset. Because VRAM was completely lost during MODE1, the entire desktop session and all running GPU clients (Wayland compositor, Firefox, game) crashed.\n\nThe expected behavior is that the driver/MES isolates and resets only the hanging queue without hanging the microcode scheduler or dropping VRAM.\n\n### Log Output (dmesg)\n\n```text\n[Wed Sep 16 08:30:57 2026] amdgpu 0000:2f:00.0: Dumping IP State\n[Wed Sep 16 08:30:57 2026] amdgpu 0000:2f:00.0: [drm] AMDGPU device coredump file has been created\n[Wed Sep 16 08:30:57 2026] amdgpu 0000:2f:00.0: ring gfx_0.0.0 timeout, signaled seq=5873544, emitted seq=5873547\n[Wed Sep 16 08:30:57 2026] amdgpu 0000:2f:00.0:   Process WoWClassic.exe pid 26896 thread vkd3d_queue pid 26992\n[Wed Sep 16 08:30:57 2026] amdg",
       "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
     },
     {
       "iid": 5918,
@@ -1002,24 +1218,17 @@
       "author": "Ion Reguera",
       "description": "## Brief summary of the problem:\n\nOn an AMD Ryzen Embedded R2314 (Picasso/Raven2, `1002:15d8`, VCN 1.0), `amdgpu` issues DMA to addresses it holds no IOMMU mapping for once GPU memory footprint gets high. The IOMMU logs a burst of `IO_PAGE_FAULT`, its event log overflows, and about 10 s later the video ring watchdog fires with `ring vcn_dec timeout`. The GPU is then reset. At moderate pressure the reset succeeds and the machine recovers; at higher pressure it fails (`GPU reset(16) failed ... ret = -110`) and the machine needs a physical power cycle.\n\nThe ring timeout looks like a consequence rather than the fault. Over seven days of logs I have 1033 `IO_PAGE_FAULT` events and 37 `ring vcn_dec timeout` events, and **every timeout is preceded by a fault**, 10-15 s earlier in 36 of 37 - consistent with the default video-ring job timeout.\n\n**`iommu=pt` makes it disappear.** Same kernel, same firmware, same workload: the run that faulted and hit 40 resets under translation completed cleanly under passthrough, with zero faults, zero timeouts and zero resets. Since the faulting addresses are IOVAs, I think this points at the DMA-mapping path rather than at VCN - a mapping lifetime problem rather than anything VCN-specific. I'm not proposing `iommu=pt` as a fix, just as a discriminator.\n\nWhat seems to matter is **total GPU memory footprint, not how many decode sessions are running, and not GTT exhaustion**. I can get to the same chain two ways: 12 concurrent VAAPI decodes reaching a ",
       "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5920,
-      "title": "Raphael iGPU (GC 10.3.6): recurring SQC (data) read faults at float-valued addresses; ring reset fails, MODE2 reset kills the compositor",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5920",
-      "createdAt": "2026-10-01T19:30:42.956Z",
-      "updatedAt": "2026-10-01T19:32:47.815Z",
-      "labels": [
-        "Raphael / Granite Ridge"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "Andrew Hacker",
-      "description": "### Summary\n\nThe Raphael iGPU on this laptop takes `[gfxhub]` page faults with an identical signature, all reads by the SQC (data) client with `PERMISSION_FAULTS: 0x3`: 147 of them between February and October 2026. Most recover. Seven times, a fault was followed by a gfx ring timeout and a MODE2 reset; on recent kernels the per-ring reset is tried first and fails. Each time gnome-shell lost its context (\"This context is innocent\"), Mesa aborted, and the Wayland session ended.\n\nThe faulting addresses look like **32-bit float values** used as addresses (details below). That suggests a shader is loading a descriptor or pointer from memory that holds float data.\n\n### Hardware and software\n\n|  |  |\n|--|--|\n| Machine | HP OMEN Gaming Laptop 16-ap0xxx, BIOS F.11 (2025-12-16) |\n| CPU / iGPU | AMD Ryzen 9 8940HX, Raphael iGPU `1002:164e` rev d8, GC 10.3.6, at `0000:06:00.0` |\n| dGPU | NVIDIA GeForce RTX 5060 Max-Q (`01:00.0`, proprietary driver). Not involved: every fault is on the AMD device |\n| Displays | Laptop panel, plus external monitors via an HP USB-C Dock G5 (DP MST with DSC), all driven by the iGPU |\n| Kernel | 7.2.6 (Debian `7.2.6+deb14-amd64`). Faults also seen on every kernel from 6.17.13 to 7.1.13 |\n| Mesa | 26.1.6. Faults also seen on every version from 25.3.3 to 26.1.5 |\n| linux-firmware | Debian `firmware-amd-graphics` 20260810-1 |\n| GPU firmware (from the devcoredump) | ME 0x0e, PFP 0x12, CE 0x03, RLC 0x20, MEC/MEC2 0x1c, SMC 84.105.101 |\n| libdrm | 2.4.134 |\n| Desk",
-      "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
     },
     {
       "iid": 5519,
@@ -1264,25 +1473,6 @@
       "patchMatches": []
     },
     {
-      "iid": 5846,
-      "title": "[AMDGPU] Desktop Environment crash. Pageflip timed out!",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5846",
-      "createdAt": "2026-09-16T07:25:22.080Z",
-      "updatedAt": "2026-09-29T20:13:18.861Z",
-      "labels": [
-        "7000 dGPU series",
-        "DC",
-        "page flip timeout"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 5,
-      "author": "Stefan Harders",
-      "description": "#### Brief summary of the problem:\n\nWhen playing Deadlock sometimes (can not willingly reproduce) my desktop crashes. Most running application close. Desktop Environment restarts and comes back after a short while. My Browser does not seem to fully close, but Discord, Deadlock and pretty much everything else running does. The Error message I got from journalctl told me to report it here. I do not have this issue with any other game I have played over the last bit of time. (FF14, Epic Seven, Deadlock is the only one I run fullscreen though)\n\n#### Hardware description:\n\nCPU: AMD Ryzen 9 9950X (32) @ 5.76 GHz \n\nGPU: AMD Radeon RX 7900 XTX \\[Discrete\\] \n\nSystem Memory: 60 GB\n\nDisplay(s): Asus VG27AQL5A and Samsung Odyssey G9 LC49G95T. G9 is Main.\n\nType of Display Connection: DP both\n\n#### System information: \n\nDistro name and Version: Linux 7.2.5-1-cachyos \n\nKernel version: Linux Cachy-Lara 7.2.5-1-cachyos #'1 SMP PREEMPT_DYNAMIC Sun, 13 Sep 2026 08:30:47 +0000 x86_64 \n\nGNU/LinuxAMD official driver version: Mesa 26.2.2-arch3.2\n\n#### How to reproduce the issue:\n\nI can't quite do that. I can just start Deadlock and play and sometimes everything dies, sometimes I can play a whole evening without it happening and sometimes I can not play at all because it happens 5 times in the first match I play.\n\n#### Attached files:\n\nsudo dmesg -T output:\n\n[dmesg](/uploads/07469f6d292dfb1051e6d0189f818c1d/dmesg)\n\njournalctl --user-unit plasma-kwin_wayland --boot 0 output:\n\n[journalctl](/uploads/6e",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
       "iid": 5863,
       "title": "[Krackan Point] Linux panel-off power ~5.3–5.5 W vs ~2.25–2.29 W Windows natural screen-off — ThinkPad T14 Gen 6 AMD",
       "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5863",
@@ -1315,7 +1505,18 @@
       "author": "Thomas Ratouit (Thoratou)",
       "description": "## Environment\n\n| Item | Incident 1 (2026-08-31) | Incident 4 (2026-09-03) | Incident 8 (2026-09-05) |\n|------|--------------------------|---------------------------|--------------------------|\n| Kernel | `6.18.42-1-cachyos-lts` | `7.2.2-1-cachyos` | `7.2.2-1-cachyos` |\n| Mesa | `26.2.1` | `26.2.2` | `26.2.2` |\n| GPU | AMD Navi 22 `1002:73df` rev c1, Radeon RX 6700 XT, 12272 MiB VRAM (ASUS `1043:05c9`) | same | same |\n| Compositor | KDE Plasma 6 / KWin Wayland | same | same |\n| amdgpu params | stock, no overclock, no `pp_od_clk_voltage` | same | same |\n\nCmdline: `quiet splash rw rootflags=subvol=/@ root=UUID=... usbcore.autosuspend=-1 pcie_aspm=off`\n\n## Summary\n\n**Three** GPU faults across three independent application vectors with the same amdgpu\nsignature on the same board. The blamed VMID process changes each time (kwin, Chrome, Rocket\nLeague) — consistent with a buffer-lifetime race in whichever client was submitting at the\nmoment, not a per-process bug.\n\nCommon signature: `[gfxhub] page fault` (`src_id:0 ring:24`), UTCL2 client `0x1b`,\n**`PERMISSION_FAULTS: 0x3`**, `WALKER_ERROR: 0x0`, `MAPPING_ERROR: 0x0`. The GPU touched\npages absent from the process page tables while executing an IB → buffer freed / PTEs torn\ndown while still referenced by the submission. Not thermal (60 °C junction, 110 °C crit),\nnot a walker/mapping error.\n\n- Incident 1: `gfx_0.1.0` wedged in a reset loop (~8 resets), ring seq barely advanced\n  (1265044 → 1265054), system froze, hard reset required.",
       "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "navi",
+            "ring",
+            "chrome"
+          ]
+        }
+      ]
     },
     {
       "iid": 5881,
@@ -1543,7 +1744,17 @@
       "author": "Lance Coupaud",
       "description": "**System:**\n- Framework 16 (AMD), dual GPU: discrete Navi 33 (RX 7600S, PCI `c3:00.0`) + integrated Strix 880M/890M (`c4:00.0`), both on `amdgpu`\n- Kernel: `7.0.0-34-generic` (Ubuntu 26.04.1 / Kubuntu, KDE Plasma 6, Wayland/KWin)\n- Mesa: `26.0.8-1ubuntu0.3` (`mesa-libgallium`)\n- linux-firmware-amd-graphics: `20260319.git217ca6e4-0ubuntu3.1`\n- BIOS/EC/GPU firmware confirmed fully up to date via `fwupdmgr` (no pending updates)\n\n**What happens:**\nKWin's DRM backend repeatedly logs pageflip timeouts during normal desktop use (not during system suspend) until the session becomes unresponsive and requires a hard power-cycle to recover:\n\n```\nkwin_wayland_drm: Pageflip timed out! This is a bug in the amdgpu kernel driver\n```\n\nThis repeats continuously (dozens of times over ~90 seconds) rather than recovering. The journal shows the discrete GPU had gone through a runtime-PM resume (`PSP is resuming...`, `SMU is resuming...`) about 51 seconds before the first timeout, and logs a firmware/driver mismatch warning on every resume:\n\n```\namdgpu 0000:c3:00.0: smu driver if version = 0x00000035, smu fw if version = 0x00000040, smu fw program = 0, smu fw version = 0x00525f00 (82.95.0)\namdgpu 0000:c3:00.0: SMU driver if version not matched\n```\n\nSeparately, this same hardware also fails to resume from s2idle system suspend on occasion, requiring a hard reset (no deep/S3 sleep is exposed by firmware — s2idle is the only option in /sys/power/mem_sleep).\n\n**Expected:**\nPageflips should not time out",
       "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "timeout",
+            "navi"
+          ]
+        }
+      ]
     },
     {
       "iid": 5898,
@@ -1612,7 +1823,17 @@
       "author": "Lina B",
       "description": "## Brief summary of the problem:\n\nEvery 1-5 hours of gameplay (WoW Forever Beta in this case), the system irrecoverably hangs with visual snow colour artifacts alternating with no output every 2-3 seconds. This has been happening for a few months now.\n\nMy electricity supply is spotty at best with drops down to 210V, which may contribute to the problem.\n\n## Hardware description:\n\n- CPU: AMD Ryzen 5 5600X 6-Core Processor\n- GPU: AMD Radeon RX 5700 XT\n- System Memory: DDR4 16 GiB of RAM (15.5 GiB usable)\n- Display(s): Samsung Odyssey G7 G70D 144Hz\n- Type of Display Connection: DisplayPort\n\n## System information:\n\n- Distro name and Version: Fedora Linux 44 KDE Plasma Desktop Edition\n- Kernel version: 7.1.13-200.fc44.x86_64 (64-bit)\n- AMD official driver version: vainfo: Driver version: Mesa Gallium driver 26.1.8 for AMD Radeon RX 5700 XT (radeonsi, navi10, ACO, DRM 3.64, 7.1.13-200.fc44.x86_64)\n\n## How to reproduce the issue:\n\nPlay a VKD3D game on this computer (notable examples being WoW Forever Beta, WoW Midnight, It Takes Two) for a few hours, watch it hang with artifacts, hard restart the computer manually. This does not happen with simpler 2D games such as The Binding of Isaac, or while browsing with Firefox.\n\n## Attached files:\n\n### Log files (for system lockups / game freezes / crashes)\n\nHere are 3 of the last lockups:\n\n[shutdown3.log](/uploads/c265fb89f8c9073b542b3c5a7d77477b/shutdown3.log)\n\n[shutdown2.log](/uploads/7ac5f4ef005e3079c4cfffcad6d2c3a2/shutdown2.log)\n\n[shutdo",
       "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
     },
     {
       "iid": 5884,
@@ -1629,7 +1850,17 @@
       "author": "Stéphane Mallet",
       "description": "A native OpenGL game (Project Zomboid) triggered a gfx_0.0.0 ring timeout with \"Illegal opcode in command stream\". The per-queue reset through MES failed (\"MES failed to respond to msg=RESET\"), the pipe reset is not supported by the CP firmware, so the driver escalated to a MODE1 reset. VRAM was lost and the whole desktop session (GNOME on Wayland) was restarted, killing every running application.\n\nWhat may be new compared to existing reports: a ROCm compute workload (Ollama, llama.cpp backend, in a Docker container with /dev/kfd) was running a prompt on the same GPU at the same moment. During the reset, the driver also failed to evict and remove the KFD queues (\"Failed to evict queue 4\", \"remove_all_kfd_queues_mes: Failed to remove queue 3\", \"MES failed to respond to msg=REMOVE_QUEUE\"). The ROCm runtime reported \"HW Exception by GPU node-1 ... reason: GPU Hang\" two seconds after the gfx timeout.\n\n## Hardware and software\n\n- GPU: AMD Radeon RX 7900 XTX (Navi 31, PCI ID 1002:744C, subsystem 0x5304, VBIOS 113-D70201-810009), primary display GPU\n- Second GPU: integrated Radeon Graphics (Granite Ridge), not used for display\n- CPU: AMD Ryzen 7 9700X\n- Distribution: Debian 13 (trixie) with backports\n- Kernel: 7.1.8 (Debian package 7.1.8-1\\~bpo13+1)\n- Firmware: firmware-amd-graphics 20260622-1\\~bpo13+1\n- Mesa: 25.0.7-2+deb13u1 (radeonsi for the game)\n- amdgpu.user_queue: -1 (default), no amdgpu parameter on the kernel command line\n- Desktop: GNOME Shell (mutter 48.7), Wayland sessio",
       "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
     },
     {
       "iid": 5726,
@@ -1742,7 +1973,18 @@
       "author": "Jonathan Nale",
       "description": "## System\n- GPU: AMD Radeon RX 6700 XT, Navi 22, PCI 1002:73df rev c1, VBIOS 115-D512BS0-100\n- Kernel: 7.0.0-30-generic (Ubuntu 26.04.1 LTS)\n- Mesa: 26.2.2 (kisak PPA build; radeonsi, ACO)\n- Compositor: KDE Plasma / kwin 6.6.6, Wayland, DRM backend\n- Firmware: see attached amdgpu_firmware_info.txt\n- Module params: reset_method=-1, gpu_recovery=-1, noretry=-1 (auto), runpm=0\n- VRAM: memtest_vulkan 0.5.0, 3 minutes, 2587 iterations, ~16 TB written / ~24 TB checked, zero errors\n\n## What happened (2026-09-24 13:29, local time in the attached log)\n1. A burst of `[gfxhub] page fault` lines (WALKER_ERROR 0x0, MAPPING_ERROR 0x0, PERMISSION_FAULTS 0x3, src_id 0, ring 24, vmid 1) from a Chromium GPU process (radeonsi).\n2. `ring gfx_0.0.0 timeout, signaled seq=79584371, emitted seq=79584373`\n3. `Starting gfx_0.0.0 ring reset` -> `Ring gfx_0.0.0 reset succeeded` -> `[drm] device wedged, but recovered through reset`\n4. From this point on, **every newly created GL context renders wrong geometry**: for each quad drawn as two triangles, one triangle is skewed or missing. Visible in the compositor's clients (Electron apps, plasmashell), in `glxgears` (spiked, torn gears), and in a minimal offscreen EGL-surfaceless GLES2 test that draws two triangles into an FBO and reads back pixels (attached gl_selftest.c). Unaffected: CPU-rendered wl_shm clients, which the compositor composites correctly, so the compositor's own long-lived context looked fine.\n5. `MESA_SHADER_CACHE_DISABLE=true` reproduces ",
       "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "navi",
+            "ring",
+            "context"
+          ]
+        }
+      ]
     },
     {
       "iid": 5035,
@@ -2604,7 +2846,17 @@
       "author": "regtm",
       "description": "## Brief summary of the problem:\nGPU crashes which leads to restart of the gnome session.\nWhen crashing screen becomes black, returns and the session crashes.\n\nIssues started with kernels > 6.9.x and the accompanying firmware updates.\n\nLikely similar to https://gitlab.freedesktop.org/drm/amd/-/issues/3731\n\n## Hardware description:\n - Elitebook 845 G10\n - CPU: AMD Ryzen 7 7840U w/ Radeon  780M Graphics\n - Type of Display Connection: Laptop screen\n\n## System information:\n - Fedora 40\n - Linux fedora 6.10.9-200.fc40.x86_64 #1 SMP PREEMPT_DYNAMIC\n - amd-gpu-firmware.noarch 20241017-2.fc40           \n - amd-ucode-firmware.noarch 20241017-2.fc40    \n\n## How to reproduce the issue:\nJust using the system - usualy having firefox open - but from my experience with ring 0 crashes on raphael this probably isn't the cause.\n\n### Log files (for system lockups / game freezes / crashes)\n```\n[Nov13 21:50] [drm:amdgpu_job_timedout [amdgpu]] *ERROR* ring gfx_0.0.0 timeout, signaled seq=877902, emitted seq=877904\n[  +0.000228] [drm:amdgpu_job_timedout [amdgpu]] *ERROR* Process information: process firefox pid 4566 thread firefox:cs0 pid 4670\n[  +0.000181] amdgpu 0000:c3:00.0: amdgpu: GPU reset begin!\n[  +2.091943] amdgpu 0000:c3:00.0: amdgpu: MES failed to respond to msg=REMOVE_QUEUE\n[  +0.000006] [drm:amdgpu_mes_unmap_legacy_queue [amdgpu]] *ERROR* failed to unmap legacy queue\n[  +0.214187] [drm:gfx_v11_0_hw_fini [amdgpu]] *ERROR* failed to halt cp gfx\n[  +0.001609] amdgpu 0000:c3:00.0: amdgpu: ",
       "descriptionTruncated": true,
-      "patchMatches": []
+      "patchMatches": [
+        {
+          "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+          "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+          "date": "2026-10-05T13:02:21Z",
+          "shared": [
+            "ring",
+            "timeout"
+          ]
+        }
+      ]
     },
     {
       "iid": 5780,
@@ -2743,46 +2995,105 @@
       "description": "Two independent defects in `drivers/gpu/drm/amd/display/`, found while getting the internal panel of a Late-2014 Retina 5K iMac (iMac15,1, Tonga / DCE 10) working. Neither needs that machine to reproduce — both are in code shared by every DCE 6/8/10/11.x part. Reported rather than sent as patches because I can only runtime-test the second one; see the note at the end.\n\nChecked against v7.2.5.\n\n---\n\n## 1. `DCIO_GSL0_CNTL` is written through a per-CRTC offset\n\n`dce110_timing_generator_setup_global_swap_lock()` programs the global swap lock's vsync source with:\n\n```c\ndm_write_reg(tg->ctx, CRTC_REG(mmDCIO_GSL0_CNTL), value);\n```\n\n`CRTC_REG()` adds `tg110->offsets.crtc`, this timing generator's CRTC register offset (`mmCRTC1_CRTC_CONTROL - mmCRTC_CONTROL`, 0x200 per instance on DCE 10/11).\n\nBut `DCIO_GSL0_CNTL` is not a per-CRTC register. `DCIO_GSL0_CNTL`, `DCIO_GSL1_CNTL` and `DCIO_GSL2_CNTL` are three consecutive **per-GSL-group** registers — 0x4826..0x4828 on DCE 10 and 11.x, 0x1924..0x1926 on DCE 8.\n\nTwo consequences:\n\n1. The GSL vsync source is only ever programmed when the sync group happens to contain the timing generator at instance 0. Otherwise the slave locks to whatever the stale `VSYNC_SEL` selects.\n2. For any other instance the write lands 0x200 or 0x400 dwords further on, which on DCE 10/11 is `mmDIG0_AFMT_GENERIC_1` (0x4a26) or `mmDIG2_AFMT_GENERIC_1` (0x4c26) — **the infoframe/SDP payload memory of an unrelated display output** — and it happens on every `dc_trigger",
       "descriptionTruncated": true,
       "patchMatches": []
-    },
-    {
-      "iid": 5581,
-      "title": "Hard lockup in dmub_srv_wait_for_idle via IPS exit from drm_vblank_enable (DCN 3.5, Strix Point)",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5581",
-      "createdAt": "2026-08-07T12:47:10.597Z",
-      "updatedAt": "2026-09-18T12:33:13.849Z",
-      "labels": [
-        "DC",
-        "Strix / Kraken"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 1,
-      "author": "Alexandre DUVAL",
-      "description": "## Summary\n\nOn a Strix Point (Radeon 890M, DCN 3.5) laptop, the machine hard-freezes every one\nto two days. A pstore dump from one of these freezes shows a **kernel panic — Hard\nLOCKUP** with the CPU stuck in `delay_halt` inside `dmub_srv_wait_for_idle()`,\nreached from the IPS-exit path that `dm_read_reg_func()` triggers while reading a\ndisplay register.\n\nThe critical detail is the context: this busy-wait is entered from\n`drm_vblank_get()` → `drm_vblank_enable()`, which holds `dev->vbl_lock` with\n**interrupts disabled**. The register dump confirms it — `EFLAGS: 00000807`, IF\n(0x200) clear. So when DMUB fails to report idle, the CPU spins forever with IRQs\noff, which is why this manifests as an NMI hard lockup and a dead machine rather\nthan a recoverable stall or a soft lockup.\n\n`amdgpu.dcdebugmask=0x800` (`DC_DISABLE_IPS`) is an effective workaround.\n\n## Hardware\n\n- TUXEDO InfinityBook Pro AMD Gen10 (`XxKK4NAx_XxSP4NAx`)\n- AMD Strix, Radeon 880M / 890M — `1002:150e` (rev c1)\n- BIOS N.1.20A13, 10/14/2025\n- Display: eDP-1 internal panel only, no external outputs attached\n\n## Software\n\n- Kernel 7.1.5-arch1-2 (Arch Linux); also seen on 7.1.3 and 7.1.4\n- Display Core v3.2.378 on DCN 3.5\n- DMUB firmware 0x09004A00 (9.0.74), loaded via PSP\n- linux-firmware 20260622\n- Compositor: sway (wlroots), Wayland\n\n## Panic\n\n```\n<0>[17678.902583] watchdog: CPU16: Watchdog detected hard LOCKUP on cpu 16\n<4>[17678.902675] CPU: 16 UID: 0 PID: 1069683 Comm: kworker/u97:5 Tainted: G           OE    ",
-      "descriptionTruncated": true,
-      "patchMatches": []
-    },
-    {
-      "iid": 5855,
-      "title": "VRR refused on DP (vrr_range 0 0) but works on HDMI (48–240),  MSI MAG 274QPF X30MV, RX 7800 XT",
-      "url": "https://gitlab.freedesktop.org/drm/amd/-/work_items/5855",
-      "createdAt": "2026-09-17T08:47:32.280Z",
-      "updatedAt": "2026-09-18T11:51:44.874Z",
-      "labels": [
-        "7000 dGPU series",
-        "DC",
-        "VRR"
-      ],
-      "assigned": false,
-      "assignees": [],
-      "comments": 0,
-      "author": "Lucas Cottle",
-      "description": "Monitor: MSI MAG 274QPF X30MV (MAG 274 X30MV, mfg week 9/2025)\\\nGPU: AMD RX 7800 XT (Navi 32)\\\nKernel: 7.2.5-200.fc44.x86_64\\\nCompositor: sway 1.11, `output DP-3 adaptive_sync on`\n\nSymptoms:\n\n- Over DisplayPort, `vrr_range` reads `Min: 0 / Max: 0` and sway reports\\\n  `adaptive_sync_status: disabled`, at 120Hz, 240Hz and 300Hz. VRR never engages.\n- Same monitor over HDMI: `vrr_range` reads `Min: 48 / Max: 240` and VRR works\\\n  (mode-limited to 120Hz, no FRL yet).\n- Second monitor on the same GPU (LG Ultragear over DP): `vrr_range 60–165`,\\\n  VRR works. So this is per-connector capability detection, not compositor config.\n- OSD Adaptive-Sync is ON, and VRR works on this panel + GPU port + cable under Windows.\n\nNotes i gathered from inspecting the EDID:\n\n- Display Range Limits: 48–300 Hz (offset-encoded: raw max byte 0x2D = 45 + 255)\n- AMD FreeSync VSDB v3: min 48 Hz, max 240 Hz\n- 300 Hz mode is in a DisplayID block (pixel clock 1208.5 MHz, needs DSC at 10bpc)\n\n  Full EDID dump is here: [msi-edid.bin](/uploads/d44e2b3f8a7b80421afac2d07234e9d6/msi-edid.bin)\n\nSuspected cause: on the DP path, `amdgpu_dm_update_freesync_caps()` gates on\\\n`dc_link->dpcd_caps.allow_invalid_MSA_timing_param` and amdgpu's own\\\n`parse_amd_vsdb()` only handles v3 replay-mode — so the valid VSDB 48–240 range\\\nis ignored on DP while the HDMI path (`parse_hdmi_amd_vsdb` via DMUB) picks it\\\nup fine. Request: quirk or DP-path handling so the VSDB range is honored.\n\nvrr_range outputs:\n\n`sudo cat /sys/kernel/deb",
-      "descriptionTruncated": true,
-      "patchMatches": []
     }
   ],
   "patches": [
+    {
+      "subject": "[PATCH 0/3] drm/amdkfd: Add support for discontiguous and CPU-less NUMA topologies",
+      "url": "https://lore.kernel.org/amd-gfx/cover.1791208447.git.dhruv.b@linux.ibm.com/",
+      "date": "2026-10-06T07:35:19Z",
+      "author": "Dhruv B"
+    },
+    {
+      "subject": "[PATCH 3/3] drm/amdkfd: Restrict CU and memory entries to resource nodes",
+      "url": "https://lore.kernel.org/amd-gfx/82a530038f8eb9ea0cc95bb6bf93420fc74073bb.1791208447.git.dhruv.b@linux.ibm.com/",
+      "date": "2026-10-06T07:35:18Z",
+      "author": "Dhruv B"
+    },
+    {
+      "subject": "[RESEND PATCH] drm/amdgpu: check amdgpu_vm_ready() in dma-buf move notify",
+      "url": "https://lore.kernel.org/amd-gfx/20261005212814.341475-1-darekm@google.com/",
+      "date": "2026-10-06T07:35:17Z",
+      "author": "Dariusz Marcinkiewicz"
+    },
+    {
+      "subject": "[PATCH 2/3] drm/amdkfd: Add support for discontiguous NUMA node topology",
+      "url": "https://lore.kernel.org/amd-gfx/b167aff82d52fde5bf1568ac886bc80b042a10a1.1791208447.git.dhruv.b@linux.ibm.com/",
+      "date": "2026-10-06T07:35:17Z",
+      "author": "Dhruv B"
+    },
+    {
+      "subject": "[PATCH 1/3] drm/amdkfd: Remove unused code in CRAT initialization",
+      "url": "https://lore.kernel.org/amd-gfx/c10cf71b7923704e8f4ebfe97077dd51b9ff1737.1791208447.git.dhruv.b@linux.ibm.com/",
+      "date": "2026-10-06T07:35:17Z",
+      "author": "Dhruv B"
+    },
+    {
+      "subject": "[PATCH v3 2/2] gpu/buddy: search lower orders in contiguous try-harder fallback",
+      "url": "https://lore.kernel.org/amd-gfx/20261006072643.211568-2-arunpravin.paneerselvam@amd.com/",
+      "date": "2026-10-06T07:27:13Z",
+      "author": "Arunpravin Paneer Selvam"
+    },
+    {
+      "subject": "[PATCH v3 1/2] gpu/buddy: add range-restricted contiguous allocation fallback",
+      "url": "https://lore.kernel.org/amd-gfx/20261006072643.211568-1-arunpravin.paneerselvam@amd.com/",
+      "date": "2026-10-06T07:27:09Z",
+      "author": "Arunpravin Paneer Selvam"
+    },
+    {
+      "subject": "[PATCH v2] drm/amdkfd: Fix svm_bo use after free in svm_range_clone",
+      "url": "https://lore.kernel.org/amd-gfx/20261005203247.1363226-1-Philip.Yang@amd.com/",
+      "date": "2026-10-05T20:33:07Z",
+      "author": "Philip Yang"
+    },
+    {
+      "subject": "[PATCH v2 1/2] drm/edid: Add a connector-specific DDC probe callback",
+      "url": "https://lore.kernel.org/amd-gfx/20261005194546.1712792-2-mario.limonciello@amd.com/",
+      "date": "2026-10-05T19:46:13Z",
+      "author": "Mario Limonciello"
+    },
+    {
+      "subject": "[PATCH v2 2/2] drm/amd/display: Honor EDID overrides for connected sinks",
+      "url": "https://lore.kernel.org/amd-gfx/20261005194546.1712792-3-mario.limonciello@amd.com/",
+      "date": "2026-10-05T19:46:12Z",
+      "author": "Mario Limonciello"
+    },
+    {
+      "subject": "[PATCH v2 0/2] drm/edid: Honor overrides when DDC is unresponsive",
+      "url": "https://lore.kernel.org/amd-gfx/20261005194546.1712792-1-mario.limonciello@amd.com/",
+      "date": "2026-10-05T19:46:07Z",
+      "author": "Mario Limonciello"
+    },
+    {
+      "subject": "[PATCH] drm/amdgpu/psp: Fail on VCN firmware load error",
+      "url": "https://lore.kernel.org/amd-gfx/20261005183245.432709-1-boyuan.zhang@amd.com/",
+      "date": "2026-10-05T18:33:19Z",
+      "author": "boyuan.zhang"
+    },
+    {
+      "subject": "[PATCH v2 2/2] drm/amdkfd: stop userptr restore retries on device unplug",
+      "url": "https://lore.kernel.org/amd-gfx/20261005165638.28961-1-olivier.kaloudoff@gmail.com/",
+      "date": "2026-10-05T16:56:42Z",
+      "author": "Olivier Kaloudoff"
+    },
+    {
+      "subject": "[PATCH] drm/amdgpu: make Mac FB workaround generic",
+      "url": "https://lore.kernel.org/amd-gfx/20261005132822.2486852-1-alexander.deucher@amd.com/",
+      "date": "2026-10-05T13:28:49Z",
+      "author": "Alex Deucher"
+    },
+    {
+      "subject": "[PATCH?] Navi 22 (DCN 3.0): gfx_0.1.0 (pipe1) ring timeout from Chrome Vulkan context — not covered by the IP_VERSION(10,3,2) guard",
+      "url": "https://lore.kernel.org/amd-gfx/CABMfxq7Q1=900dezQw7P_twCgP+mrNqmUndpC_ZPTPufwJAHWg@mail.gmail.com/",
+      "date": "2026-10-05T13:02:21Z",
+      "author": "Wayne Pitterson"
+    },
+    {
+      "subject": "[PATCH v1] drm/amdgpu: exclude npa_vmid from the userq vmids too",
+      "url": "https://lore.kernel.org/amd-gfx/20261005125629.1688549-1-sunil.khatri@amd.com/",
+      "date": "2026-10-05T12:56:39Z",
+      "author": "Sunil Khatri"
+    },
     {
       "subject": "[PATCH] drm/amdgpu: Fix double runtime PM put in amdgpu_debugfs_gpr_read()",
       "url": "https://lore.kernel.org/amd-gfx/20261004024700.53610-1-yaolu@kylinos.cn/",
@@ -2812,12 +3123,6 @@
       "url": "https://lore.kernel.org/amd-gfx/20261003131523.1502250-1-miguel@miguelmesa.com/",
       "date": "2026-10-05T07:28:16Z",
       "author": "Miguel Mesa"
-    },
-    {
-      "subject": "[PATCH 2/2] drm/amdkfd: stop userptr restore retries on device unplug",
-      "url": "https://lore.kernel.org/amd-gfx/20261003063817.36606-3-olivier.kaloudoff@gmail.com/",
-      "date": "2026-10-03T06:38:24Z",
-      "author": "Olivier Kaloudoff"
     },
     {
       "subject": "[PATCH 1/2] drm/amdkfd: fix NULL deref and unbounded wait in teardown_processes on surprise removal",
@@ -2932,96 +3237,6 @@
       "url": "https://lore.kernel.org/amd-gfx/20261002193240.3441018-12-Roman.Li@amd.com/",
       "date": "2026-10-02T19:33:25Z",
       "author": "Roman.Li"
-    },
-    {
-      "subject": "[PATCH 02/17] drm/amd/display: log MCM shaper and 3D LUT mode in the DTN log",
-      "url": "https://lore.kernel.org/amd-gfx/20261002193240.3441018-3-Roman.Li@amd.com/",
-      "date": "2026-10-02T19:33:25Z",
-      "author": "Roman.Li"
-    },
-    {
-      "subject": "[PATCH 06/17] drm/amd/display: Refactor DMUB fast lock sequencing",
-      "url": "https://lore.kernel.org/amd-gfx/20261002193240.3441018-7-Roman.Li@amd.com/",
-      "date": "2026-10-02T19:33:24Z",
-      "author": "Roman.Li"
-    },
-    {
-      "subject": "[PATCH 10/17] drm/amd/display: Assign alt wa bit in fams2 cmd",
-      "url": "https://lore.kernel.org/amd-gfx/20261002193240.3441018-11-Roman.Li@amd.com/",
-      "date": "2026-10-02T19:33:23Z",
-      "author": "Roman.Li"
-    },
-    {
-      "subject": "[PATCH 03/17] drm/amd/display: only reprogram DRR when v_total values change",
-      "url": "https://lore.kernel.org/amd-gfx/20261002193240.3441018-4-Roman.Li@amd.com/",
-      "date": "2026-10-02T19:33:23Z",
-      "author": "Roman.Li"
-    },
-    {
-      "subject": "[PATCH 04/17] drm/amd/display: Add HDMI RR and SCDC skips",
-      "url": "https://lore.kernel.org/amd-gfx/20261002193240.3441018-5-Roman.Li@amd.com/",
-      "date": "2026-10-02T19:33:22Z",
-      "author": "Roman.Li"
-    },
-    {
-      "subject": "[PATCH 07/17] drm/amd/display: Skip link off frame count for general UI",
-      "url": "https://lore.kernel.org/amd-gfx/20261002193240.3441018-8-Roman.Li@amd.com/",
-      "date": "2026-10-02T19:33:20Z",
-      "author": "Roman.Li"
-    },
-    {
-      "subject": "[PATCH 00/17] DC Patches October 2, 2026",
-      "url": "https://lore.kernel.org/amd-gfx/20261002193240.3441018-1-Roman.Li@amd.com/",
-      "date": "2026-10-02T19:33:11Z",
-      "author": "Roman.Li"
-    },
-    {
-      "subject": "[PATCH v9 20/21] drm/bridge: add PS8622 connector luminance support",
-      "url": "https://lore.kernel.org/amd-gfx/20261002190030.211356-21-mario.limonciello@amd.com/",
-      "date": "2026-10-02T19:02:04Z",
-      "author": "Mario Limonciello"
-    },
-    {
-      "subject": "[PATCH v9 21/21] drm/solomon: add SSD130x connector luminance support",
-      "url": "https://lore.kernel.org/amd-gfx/20261002190030.211356-22-mario.limonciello@amd.com/",
-      "date": "2026-10-02T19:02:03Z",
-      "author": "Mario Limonciello"
-    },
-    {
-      "subject": "[PATCH v9 19/21] drm/gma500: add connector luminance support",
-      "url": "https://lore.kernel.org/amd-gfx/20261002190030.211356-20-mario.limonciello@amd.com/",
-      "date": "2026-10-02T19:02:01Z",
-      "author": "Mario Limonciello"
-    },
-    {
-      "subject": "[PATCH v9 03/21] drm/amd: add luminance property support",
-      "url": "https://lore.kernel.org/amd-gfx/20261002190030.211356-4-mario.limonciello@amd.com/",
-      "date": "2026-10-02T19:01:54Z",
-      "author": "Mario Limonciello"
-    },
-    {
-      "subject": "[PATCH v9 11/21] drm/tiny: migrate ILI9163 to connector luminance",
-      "url": "https://lore.kernel.org/amd-gfx/20261002190030.211356-12-mario.limonciello@amd.com/",
-      "date": "2026-10-02T19:01:50Z",
-      "author": "Mario Limonciello"
-    },
-    {
-      "subject": "[PATCH v9 18/21] drm/radeon: add connector luminance support",
-      "url": "https://lore.kernel.org/amd-gfx/20261002190030.211356-19-mario.limonciello@amd.com/",
-      "date": "2026-10-02T19:01:46Z",
-      "author": "Mario Limonciello"
-    },
-    {
-      "subject": "[PATCH v9 13/21] drm/tiny: migrate ILI9486 to connector luminance",
-      "url": "https://lore.kernel.org/amd-gfx/20261002190030.211356-14-mario.limonciello@amd.com/",
-      "date": "2026-10-02T19:01:45Z",
-      "author": "Mario Limonciello"
-    },
-    {
-      "subject": "[PATCH v9 08/21] drm/mipi-dbi: add connector luminance helpers",
-      "url": "https://lore.kernel.org/amd-gfx/20261002190030.211356-9-mario.limonciello@amd.com/",
-      "date": "2026-10-02T19:01:41Z",
-      "author": "Mario Limonciello"
     }
   ]
 }
